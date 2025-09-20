@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Entities.Models;
 
-namespace Entities;
+namespace Entities.Models;
 
 [Table("Inventory")]
 public class Inventory

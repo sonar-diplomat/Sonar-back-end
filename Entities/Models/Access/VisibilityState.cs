@@ -3,16 +3,17 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Entities.Models;
 
+[Table("VisibilityState")]
 public class VisibilityState
 {
-    [Key]
+    [Key] 
     public int Id { get; set; }
-    [Required]
+    [Required] 
     public DateTime SetPublicOn { get; set; }
-    
-    [Required]
+
+    [Required] 
     public int StatusId { get; set; }
-    
+
     /// <summary>
     /// 
     /// </summary>

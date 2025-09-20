@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Entities;
+namespace Entities.Models;
 
 [Table("File")]
 public class File

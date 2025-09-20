@@ -1,28 +1,27 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Entities.Models
+namespace Entities.Models;
+
+[Table("Suspension")]
+public class Suspension
 {
-    [Table("Suspension")]
-    public class Suspension
-    {
-        [Key]
-        int Id { get; set; }
-        [Required, MaxLength(500)]
-        public string Reason { get; set; }
-        [Required] 
-        public DateTime DateTime { get; set; }
-        [Required]
-        public int PunisherId { get; set; }
-        [Required]
-        public int AssociatedReportedId { get; set; }
+    [Key]
+    public int Id { get; set; }
+    [Required, MaxLength(500)]
+    public string Reason { get; set; }
+    [Required] 
+    public DateTime DateTime { get; set; }
+    [Required]
+    public int PunisherId { get; set; }
+    [Required]
+    public int AssociatedReportedId { get; set; }
         
-        /// <summary>
-        /// 
-        /// </summary>
-        [ForeignKey("PunisherId")]
-        public virtual User Punisher { get; set; }
-        [ForeignKey("AssociatedReportId")]
-        public virtual Report AssociatedReport { get; set; }
-    }
+    /// <summary>
+    /// 
+    /// </summary>
+    [ForeignKey("PunisherId")]
+    public virtual User Punisher { get; set; }
+    [ForeignKey("AssociatedReportId")]
+    public virtual Report AssociatedReport { get; set; }
 }
