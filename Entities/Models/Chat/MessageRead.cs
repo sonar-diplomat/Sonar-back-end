@@ -1,13 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Infrastructure;
 
 namespace Entities.Models;
 
 [Table("MessageRead")]
-public class MessageRead
+public class MessageRead : BaseModel
 {
-    [Key]
-    public int Id { get; set; }
     public DateTime? ReadAt { get; set; }
     
     [Required]

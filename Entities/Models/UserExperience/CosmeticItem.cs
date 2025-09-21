@@ -1,13 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Infrastructure;
 
 namespace Entities.Models;
 
 [Table("CosmeticItem")]
-public class CosmeticItem
+public class CosmeticItem : BaseModel
 {
-    [Key]
-    public int Id { get; set; }
     [Required]
     public int Price { get; set; }
     

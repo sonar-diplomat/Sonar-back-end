@@ -1,13 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Infrastructure;
 
 namespace Entities.Models
 {
     [Table("AchievementProgress")]
-    public class AchievementProgress
+    public class AchievementProgress : BaseModel
     {
-        [Key]
-        public int Id { get; set; }
         [Required, MaxLength(500)]
         public string Value { get; set; }
         

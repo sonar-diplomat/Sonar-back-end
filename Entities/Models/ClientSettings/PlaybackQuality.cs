@@ -1,13 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Infrastructure;
 
 namespace Entities.Models
 {
     [Table("PlaybackQuality")]
-    public class PlaybackQuality
+    public class PlaybackQuality : BaseModel
     {
-        [Key]
-        public int Id { get; set; }
         [Required, MaxLength(50)]
         public string Name { get; set; }
         [Required]

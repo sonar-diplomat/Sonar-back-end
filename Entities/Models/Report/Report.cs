@@ -1,13 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Infrastructure;
 
 namespace Entities.Models
 {
     [Table("Report")]
-    public class Report
+    public class Report : BaseModel
     {
-        [Key]
-        public int Id { get; set; }
         [Required] 
         public bool IsClosed { get; set; }
         [Required] 

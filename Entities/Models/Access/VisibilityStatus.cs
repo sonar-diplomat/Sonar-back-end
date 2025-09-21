@@ -1,13 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Infrastructure;
 
 namespace Entities.Models;
 
 [Table("VisibilityStatus")]
-public class VisibilityStatus
+public class VisibilityStatus : BaseModel
 {
-    [Key]
-    public int Id { get; set; }
     [Required, MaxLength(30)]
     public string Name { get; set; }
     

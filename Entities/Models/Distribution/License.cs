@@ -1,13 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Infrastructure;
 
 namespace Entities.Models;
 
 [Table("License")]
-public class License
+public class License : BaseModel
 {
-    [Key]
-    public int Id { get; set; }
     [Required]
     public DateTime IssuingDate { get; set; }
     [Required]

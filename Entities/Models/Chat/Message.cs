@@ -1,13 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Infrastructure;
 
 namespace Entities.Models
 {
     [Table("Message")]
-    public class Message
+    public class Message : BaseModel
     {
-        [Key]
-        public int Id { get; set; }
         [Required, MaxLength(2000)]
         public string TextContent { get; set; }
         

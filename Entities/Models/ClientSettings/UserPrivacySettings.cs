@@ -1,14 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Infrastructure;
 
 namespace Entities.Models
 {
     [Table("UserPrivacySettings")]
-    public class UserPrivacySettings
+    public class UserPrivacySettings : BaseModel
     {
-        [Key]
-        public int Id { get; set; }
-        
         [Required]
         public int SettingsId { get; set; }
         [Required]

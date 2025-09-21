@@ -1,14 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Infrastructure;
 
 namespace Entities.Models;
 
 [Table("Artist")]
-public class Artist
+public class Artist : BaseModel
 {
-    [Key]
-    public int Id { get; set; }
-    
     [Required]
     public int UserId { get; set; }
     
