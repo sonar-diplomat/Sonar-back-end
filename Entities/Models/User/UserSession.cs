@@ -1,14 +1,13 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Net;
+using Infrastructure;
 
 namespace Entities.Models
 {
     [Table("UserSession")]
-    public class UserSession
+    public class UserSession : BaseModel
     {
-        [Key]
-        public int Id { get; set; }
         [Required, MinLength(4), MaxLength(16)]
         private byte[] IpAddressBytes;
         [Required, MaxLength(30)]

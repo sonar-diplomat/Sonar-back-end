@@ -3,7 +3,4 @@
 namespace Entities.Models;
 
 [Table("Blend")]
-public class Blend : Collection
-{
-    public virtual ICollection<User> Users { get; set; }
-}
+public class Blend : Collection;

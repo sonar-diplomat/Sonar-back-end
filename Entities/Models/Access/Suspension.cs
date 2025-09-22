@@ -1,13 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Infrastructure;
 
 namespace Entities.Models;
 
 [Table("Suspension")]
-public class Suspension
+public class Suspension : BaseModel
 {
-    [Key]
-    public int Id { get; set; }
     [Required, MaxLength(500)]
     public string Reason { get; set; }
     [Required] 

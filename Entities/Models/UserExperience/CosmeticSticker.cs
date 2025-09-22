@@ -1,14 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Infrastructure;
 
 namespace Entities.Models;
 
 [Table("CosmeticSticker")]
-public class CosmeticSticker
+public class CosmeticSticker : BaseModel
 {
-    [Key]
-    public int Id { get; set; }
-    
     [Required]
     public double X { get; set; }
     [Required]

@@ -1,13 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Infrastructure;
 
 namespace Entities.Models
 {
     [Table("Settings")]
-    public class Settings
+    public class Settings : BaseModel
     {
-        [Key]
-        public int Id { get; set; }
         [Required]
         public bool AutoPlay { get; set; }
         [Required]

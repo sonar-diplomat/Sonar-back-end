@@ -1,13 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Infrastructure;
 
 namespace Entities.Models;
 
 [Table("Track")]
-public class Track
+public class Track : BaseModel
 {
-    [Key]
-    public int Id { get; set; }
     [Required, MaxLength(100)]
     public string Title { get; set; }
     public TimeSpan Duration { get; set; }

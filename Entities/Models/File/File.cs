@@ -1,13 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Infrastructure;
 
 namespace Entities.Models;
 
 [Table("File")]
-public class File
+public class File : BaseModel
 {
-    [Key]
-    public int Id { get; set; }
     [Required, MaxLength(100)]
     public string ItemName { get; set; }
     [Required, MaxLength(1000), Url, ConcurrencyCheck]

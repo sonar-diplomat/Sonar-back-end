@@ -1,14 +1,13 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Infrastructure;
 
 namespace Entities.Models
 {
     [Table("SubscriptionPayment")]
-    public class SubscriptionPayment
+    public class SubscriptionPayment : BaseModel
     {
-        [Key]
-        public int Id { get; set; }
-        [Required, Column(TypeName = "decimal(18,2)")]
+        [Required, Column(TypeName = "numeric(18,2)")]
         public decimal Amount { get; set; }
         
         [Required]

@@ -1,13 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Infrastructure;
 
 namespace Entities.Models
 {
     [Table("User")]
-    public class User
+    public class User : BaseModel
     {
-        [Key]
-        public int Id { get; set; }
         [Required, MaxLength(100)]
         public string FirstName { get; set; }
         [Required, MaxLength(100)]

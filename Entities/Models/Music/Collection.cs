@@ -1,13 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Infrastructure;
 
 namespace Entities.Models;
 
-public abstract class Collection
+public abstract class Collection : BaseModel
 {
-    [Key]
-    public int Id { get; set; }
-    
     [Required, MaxLength(100)]
     public string Name { get; set; }
     

@@ -1,13 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Infrastructure;
 
 namespace Entities.Models
 {
     [Table("Language")]
-    public class Language
+    public class Language : BaseModel
     {
-        [Key]
-        public int Id { get; set; }
         [Required, MaxLength(10)]
         public string Locale { get; set; }
         [Required, MaxLength(150)]

@@ -1,13 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Infrastructure;
 
 namespace Entities.Models
 {
     [Table("UserState")]
-    public class UserState
+    public class UserState : BaseModel
     {
-        [Key]
-        public int Id { get; set; }
         public int Track { get; set; }
         public int Position { get; set; }
         
