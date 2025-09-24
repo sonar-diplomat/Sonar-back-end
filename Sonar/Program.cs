@@ -1,5 +1,7 @@
-using Microsoft.EntityFrameworkCore;
+using Application.Exception;
 using Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
+using Sonar.Middleware;
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<SonarContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("SonarContext") ?? throw new InvalidOperationException("Connection string 'SonarContext' not found.")));
@@ -11,6 +13,9 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
+
+
+app.UseMiddleware<ExceptionMiddleware>(new ExceptionHandler());
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

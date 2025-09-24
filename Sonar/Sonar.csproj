@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
@@ -6,6 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>58440c77-fb6c-4c77-91e2-38554624fd9b</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <DockerComposeProjectPath>..\docker-compose.dcproj</DockerComposeProjectPath>
   </PropertyGroup>
 
   <ItemGroup>
@@ -27,14 +28,12 @@
 
   <ItemGroup>
     <Folder Include="Controllers\Chat\" />
-    <Folder Include="Controllers\ClientSettings\" />
     <Folder Include="Controllers\Distribution\" />
     <Folder Include="Controllers\File\" />
     <Folder Include="Controllers\Library\" />
     <Folder Include="Controllers\Music\" />
     <Folder Include="Controllers\Report\" />
     <Folder Include="Controllers\UserExperience\" />
-    <Folder Include="Controllers\User\" />
   </ItemGroup>
 
 </Project>

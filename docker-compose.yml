@@ -1,0 +1,29 @@
+services:
+  sonar:
+    image: ${DOCKER_REGISTRY-}sonar
+    container_name: sonar-app
+    build:
+      context: .
+      dockerfile: Sonar/Dockerfile
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    environment:
+      ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=sonardb;Username=sonaruser;Password=sonarpass"
+    depends_on:
+      - db
+
+  db:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+        POSTGRES_DB: sonardb
+        POSTGRES_USER: sonaruser
+        POSTGRES_PASSWORD: sonarpass
+    ports:
+    - "5432:5432"
+    volumes:
+    - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

@@ -1,7 +1,7 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Entities.Models;
 using Infrastructure.Data;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Sonar.Controllers.User
 {
@@ -16,38 +16,38 @@ namespace Sonar.Controllers.User
             _context = context;
         }
 
-        // GET: api/UserState
+        // GET: api/UserStatus
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<UserState>>> GetUserStates()
+        public async Task<ActionResult<IEnumerable<UserStatus>>> GetUserStatuses()
         {
-            return await _context.UserStates.ToListAsync();
+            return await _context.UserStatuses.ToListAsync();
         }
 
-        // GET: api/UserState/5
+        // GET: api/UserStatus/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<UserState>> GetUserState(int id)
+        public async Task<ActionResult<UserStatus>> GetUserStatus(int id)
         {
-            var userState = await _context.UserStates.FindAsync(id);
+            var userStatus = await _context.UserStatuses.FindAsync(id);
 
-            if (userState == null)
+            if (userStatus == null)
             {
                 return NotFound();
             }
 
-            return userState;
+            return userStatus;
         }
 
-        // PUT: api/UserState/5
+        // PUT: api/UserStatus/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutUserState(int id, UserState userState)
+        public async Task<IActionResult> PutUserStatus(int id, UserStatus userStatus)
         {
-            if (id != userState.Id)
+            if (id != userStatus.Id)
             {
                 return BadRequest();
             }
 
-            _context.Entry(userState).State = EntityState.Modified;
+            _context.Entry(userStatus).State = EntityState.Modified;
 
             try
             {
@@ -55,7 +55,7 @@ namespace Sonar.Controllers.User
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!UserStateExists(id))
+                if (!UserStatusExists(id))
                 {
                     return NotFound();
                 }
@@ -68,36 +68,36 @@ namespace Sonar.Controllers.User
             return NoContent();
         }
 
-        // POST: api/UserState
+        // POST: api/UserStatus
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<UserState>> PostUserState(UserState userState)
+        public async Task<ActionResult<UserStatus>> PostUserStatus(UserStatus userStatus)
         {
-            _context.UserStates.Add(userState);
+            _context.UserStatuses.Add(userStatus);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetUserState", new { id = userState.Id }, userState);
+            return CreatedAtAction("GetUserStatus", new { id = userStatus.Id }, userStatus);
         }
 
-        // DELETE: api/UserState/5
+        // DELETE: api/UserStatus/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteUserState(int id)
+        public async Task<IActionResult> DeleteUserStatus(int id)
         {
-            var userState = await _context.UserStates.FindAsync(id);
-            if (userState == null)
+            var userStatus = await _context.UserStatuses.FindAsync(id);
+            if (userStatus == null)
             {
                 return NotFound();
             }
 
-            _context.UserStates.Remove(userState);
+            _context.UserStatuses.Remove(userStatus);
             await _context.SaveChangesAsync();
 
             return NoContent();
         }
 
-        private bool UserStateExists(int id)
+        private bool UserStatusExists(int id)
         {
-            return _context.UserStates.Any(e => e.Id == id);
+            return _context.UserStatuses.Any(e => e.Id == id);
         }
     }
 }

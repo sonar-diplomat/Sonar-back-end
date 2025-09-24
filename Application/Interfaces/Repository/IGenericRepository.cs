@@ -1,6 +1,6 @@
 ﻿using Infrastructure;
 
-namespace Application.Interfaces;
+namespace Application.Interfaces.Repository;
 
 public interface IGenericRepository
 {
