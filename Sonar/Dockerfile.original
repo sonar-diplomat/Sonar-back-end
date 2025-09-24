@@ -13,9 +13,6 @@ FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["Sonar/Sonar.csproj", "Sonar/"]
-COPY ["Application/Application.csproj", "Application/"]
-COPY ["Entities/Entities.csproj", "Entities/"]
-COPY ["Infrastructure/Infrastructure.csproj", "Infrastructure/"]
 RUN dotnet restore "./Sonar/Sonar.csproj"
 COPY . .
 WORKDIR "/src/Sonar"
