@@ -28,13 +28,14 @@ namespace Sonar.Middleware
 
         private async Task HandleExceptionAsync(HttpContext context, Exception exception)
         {
-            if (exception is AppException)
+            if (exception.Data["ErrorType"] != null)
             {
-                var appException = exceptionHandler.GetExceptionResponse((ErrorType)(exception.Data["ErrorType"])!);
-
+                AppException appException = exceptionHandler.GetExceptionResponse((ErrorType)(exception.Data["ErrorType"])!);
                 await CreateErrorResponse(context, appException);
+
                 return;
             }
+
         }
 
         private async Task CreateErrorResponse(HttpContext context, AppException appException)
@@ -44,7 +45,5 @@ namespace Sonar.Middleware
 
             await context.Response.WriteAsJsonAsync(appException.ToJson);
         }
-
     }
-
 }

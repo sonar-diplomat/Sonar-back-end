@@ -1,0 +1,6 @@
+﻿namespace Application.Abstractions.Interfaces.Repository.Distribution
+{
+    public interface IDistributorRepository : IGenericRepository<Entities.Models.Distributor>
+    {
+    }
+}
