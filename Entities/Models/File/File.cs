@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Infrastructure;
 
-namespace Entities.Models;
+namespace Entities.Models.File;
 
 [Table("File")]
 public class File : BaseModel

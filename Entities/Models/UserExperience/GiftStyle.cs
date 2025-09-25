@@ -2,12 +2,11 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Infrastructure;
 
-namespace Entities.Models
+namespace Entities.Models.UserExperience;
+
+[Table("GiftStyle")]
+public class GiftStyle : BaseModel
 {
-    [Table("GiftStyle")]
-    public class GiftStyle : BaseModel
-    {
-        [Required, MaxLength(200)]
-        public string Name { get; set; }
-    }
+    [Required, MaxLength(200)]
+    public string Name { get; set; }
 }

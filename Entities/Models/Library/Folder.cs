@@ -1,8 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Entities.Models.Music;
 using Infrastructure;
 
-namespace Entities.Models;
+namespace Entities.Models.Library;
 
 [Table("Folder")]
 public class Folder : BaseModel

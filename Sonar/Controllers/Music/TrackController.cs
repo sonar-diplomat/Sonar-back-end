@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Entities.Models;
+using Entities.Models.Music;
 using Infrastructure.Data;
 
 namespace Sonar.Controllers.Music

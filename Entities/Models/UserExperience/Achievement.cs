@@ -2,29 +2,28 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Infrastructure;
 
-namespace Entities.Models
-{
-    [Table("Achievement")]
-    public class Achievement : BaseModel
-    {
-        [Required, MaxLength(200)]
-        public string Name { get; set; }
-        [Required, MaxLength(1000)]
-        public string Description { get; set; }
-        [Required]
-        public string Condition { get; set; }
-        [Required]
-        public string Target { get; set; }
-        [Required]
-        public string Reward { get; set; }
-        
-        [Required]
-        public int CategoryId { get; set; }
+namespace Entities.Models.UserExperience;
 
-        /// <summary>
-        /// 
-        /// </summary>
-        [ForeignKey("CategoryId")]
-        public virtual AchievementCategory AchievementCategory { get; set; }
-    }
+[Table("Achievement")]
+public class Achievement : BaseModel
+{
+    [Required, MaxLength(200)]
+    public string Name { get; set; }
+    [Required, MaxLength(1000)]
+    public string Description { get; set; }
+    [Required]
+    public string Condition { get; set; }
+    [Required]
+    public string Target { get; set; }
+    [Required]
+    public string Reward { get; set; }
+        
+    [Required]
+    public int CategoryId { get; set; }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    [ForeignKey("CategoryId")]
+    public virtual AchievementCategory AchievementCategory { get; set; }
 }

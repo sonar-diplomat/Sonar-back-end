@@ -1,8 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Entities.Models.Music;
 using Infrastructure;
 
-namespace Entities.Models;
+namespace Entities.Models.Distribution;
 
 [Table("Artist")]
 public class Artist : BaseModel
@@ -14,7 +15,7 @@ public class Artist : BaseModel
     /// 
     /// </summary>
     [ForeignKey("UserId")]
-    public virtual User User { get; set; }
+    public virtual User.User User { get; set; }
     
     public virtual ICollection<Track> Tracks { get; set; }
     public virtual ICollection<Album> Albums { get; set; }

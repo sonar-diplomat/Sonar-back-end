@@ -2,26 +2,25 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Infrastructure;
 
-namespace Entities.Models
+namespace Entities.Models.Chat;
+
+[Table("Message")]
+public class Message : BaseModel
 {
-    [Table("Message")]
-    public class Message : BaseModel
-    {
-        [Required, MaxLength(2000)]
-        public string TextContent { get; set; }
+    [Required, MaxLength(2000)]
+    public string TextContent { get; set; }
         
-        public int? ReplyMessageId { get; set; }
-        [Required]
-        public int ChatId { get; set; }
+    public int? ReplyMessageId { get; set; }
+    [Required]
+    public int ChatId { get; set; }
         
-        /// <summary>
-        /// 
-        /// </summary>
-        [ForeignKey("ReplyMessageId")]
-        public virtual Message? ReplyMessage { get; set; }
-        [ForeignKey("ChatId")]
-        public virtual Chat Chat { get; set; }
+    /// <summary>
+    /// 
+    /// </summary>
+    [ForeignKey("ReplyMessageId")]
+    public virtual Message? ReplyMessage { get; set; }
+    [ForeignKey("ChatId")]
+    public virtual Chat Chat { get; set; }
         
-        public virtual ICollection<User> users { get; set; }
-    }
+    public virtual ICollection<User.User> users { get; set; }
 }

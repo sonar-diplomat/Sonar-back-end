@@ -1,8 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Entities.Models.Access;
 using Infrastructure;
 
-namespace Entities.Models;
+namespace Entities.Models.Chat;
 
 [Table("Post")]
 public class Post : BaseModel
@@ -23,9 +24,9 @@ public class Post : BaseModel
     /// 
     /// </summary>
     [ForeignKey("UserId")]
-    public virtual User User { get; set; }
+    public virtual User.User User { get; set; }
     [ForeignKey("VisibilityStateId")]
     public virtual VisibilityState VisibilityState { get; set; }
     
-    public virtual ICollection<File> Files { get; set; }
+    public virtual ICollection<File.File> Files { get; set; }
 }

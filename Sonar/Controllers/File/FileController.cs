@@ -17,14 +17,14 @@ namespace Sonar.Controllers.File
 
         // GET: api/File
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Entities.Models.File>>> GetFiles()
+        public async Task<ActionResult<IEnumerable<Entities.Models.File.File>>> GetFiles()
         {
             return await _context.Files.ToListAsync();
         }
 
         // GET: api/File/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Entities.Models.File>> GetFile(int id)
+        public async Task<ActionResult<Entities.Models.File.File>> GetFile(int id)
         {
             var @file = await _context.Files.FindAsync(id);
 
@@ -39,7 +39,7 @@ namespace Sonar.Controllers.File
         // PUT: api/File/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutFile(int id, Entities.Models.File @file)
+        public async Task<IActionResult> PutFile(int id, Entities.Models.File.File @file)
         {
             if (id != @file.Id)
             {
@@ -70,7 +70,7 @@ namespace Sonar.Controllers.File
         // POST: api/File
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Entities.Models.File>> PostFile(Entities.Models.File @file)
+        public async Task<ActionResult<Entities.Models.File.File>> PostFile(Entities.Models.File.File @file)
         {
             _context.Files.Add(@file);
             await _context.SaveChangesAsync();

@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Entities.Models;
+namespace Entities.Models.Music;
 
 [Table("Playlist")]
 public class Playlist : Collection
@@ -13,5 +13,5 @@ public class Playlist : Collection
     /// 
     /// </summary>
     [ForeignKey("CreatorId")]
-    public virtual User Creator { get; set; }
+    public virtual User.User Creator { get; set; }
 }

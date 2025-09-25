@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Entities.Models;
+using Entities.Models.Library;
 using Infrastructure.Data;
 
 namespace Sonar.Controllers.Library

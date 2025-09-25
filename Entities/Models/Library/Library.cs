@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Infrastructure;
 
-namespace Entities.Models;
+namespace Entities.Models.Library;
 
 [Table("Library")]
 public class Library : BaseModel
@@ -14,5 +14,5 @@ public class Library : BaseModel
     /// 
     /// </summary>
     [ForeignKey("UserId")]
-    public virtual User User { get; set; }
+    public virtual User.User User { get; set; }
 }

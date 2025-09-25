@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Entities.Models;
+using Entities.Models.UserExperience;
 using Infrastructure.Data;
 
 namespace Sonar.Controllers.UserExperience

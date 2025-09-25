@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Infrastructure;
 
-namespace Entities.Models;
+namespace Entities.Models.Access;
 
 [Table("AccessFeature")]
 public class AccessFeature : BaseModel
@@ -13,5 +13,5 @@ public class AccessFeature : BaseModel
     /// <summary>
     /// 
     /// </summary>
-    public virtual ICollection<User> Users { get; set; }
+    public virtual ICollection<User.User> Users { get; set; }
 }

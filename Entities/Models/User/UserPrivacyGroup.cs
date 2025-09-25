@@ -2,12 +2,11 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Infrastructure;
 
-namespace Entities.Models
+namespace Entities.Models.User;
+
+[Table("UserPrivacyGroup")]
+public class UserPrivacyGroup : BaseModel
 {
-    [Table("UserPrivacyGroup")]
-    public class UserPrivacyGroup : BaseModel
-    {
-        [Required, MaxLength(50)]
-        public string Name { get; set; }
-    }
+    [Required, MaxLength(50)]
+    public string Name { get; set; }
 }

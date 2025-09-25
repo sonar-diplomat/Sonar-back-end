@@ -2,14 +2,13 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Infrastructure;
 
-namespace Entities.Models
+namespace Entities.Models.ClientSettings;
+
+[Table("Theme")]
+public class Theme : BaseModel
 {
-    [Table("Theme")]
-    public class Theme : BaseModel
-    {
-        [Required, MaxLength(50)] 
-        public string Name { get; set; }
-        [MaxLength(500)] 
-        public string? Description { get; set; }
-    }
+    [Required, MaxLength(50)] 
+    public string Name { get; set; }
+    [MaxLength(500)] 
+    public string? Description { get; set; }
 }

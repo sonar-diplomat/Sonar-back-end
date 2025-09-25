@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Infrastructure;
 
-namespace Entities.Models;
+namespace Entities.Models.Access;
 
 [Table("VisibilityStatus")]
 public class VisibilityStatus : BaseModel

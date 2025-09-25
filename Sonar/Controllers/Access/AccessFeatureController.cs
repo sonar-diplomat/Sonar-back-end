@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Infrastructure.Data;
 using Entities.Models;
+using Entities.Models.Access;
 
 namespace Sonar.Controllers
 {

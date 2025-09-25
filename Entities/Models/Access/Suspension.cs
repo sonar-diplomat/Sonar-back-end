@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Infrastructure;
 
-namespace Entities.Models;
+namespace Entities.Models.Access;
 
 [Table("Suspension")]
 public class Suspension : BaseModel
@@ -20,7 +20,7 @@ public class Suspension : BaseModel
     /// 
     /// </summary>
     [ForeignKey("PunisherId")]
-    public virtual User Punisher { get; set; }
+    public virtual User.User Punisher { get; set; }
     [ForeignKey("AssociatedReportId")]
-    public virtual Report AssociatedReport { get; set; }
+    public virtual Report.Report AssociatedReport { get; set; }
 }

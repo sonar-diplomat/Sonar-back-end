@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using Entities.Models;
 using Infrastructure;
 
-namespace Entities.Models;
+namespace Entities.Models.UserExperience;
 
 [Table("Inventory")]
 public class Inventory : BaseModel
@@ -15,7 +15,7 @@ public class Inventory : BaseModel
     /// 
     /// </summary>
     [ForeignKey("UserId")]
-    public User User { get; set; }
+    public User.User User { get; set; }
     
     public ICollection<CosmeticItem> CosmeticItems { get; set; }
 }
