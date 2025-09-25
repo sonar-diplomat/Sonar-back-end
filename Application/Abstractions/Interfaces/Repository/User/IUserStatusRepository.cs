@@ -1,6 +1,8 @@
-﻿namespace Application.Abstractions.Interfaces.Repository.User
+﻿using Entities.Models.User;
+
+namespace Application.Abstractions.Interfaces.Repository.User
 {
-    public interface IUserStatusRepository : IGenericRepository<Entities.Models.UserStatus>
+    public interface IUserStatusRepository : IGenericRepository<UserStatus>
     {
     }
 }

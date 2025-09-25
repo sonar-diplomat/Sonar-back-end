@@ -2,17 +2,16 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Infrastructure;
 
-namespace Entities.Models
+namespace Entities.Models.Report;
+
+[Table("ReportableEntityType")]
+public class ReportableEntityType : BaseModel
 {
-    [Table("ReportableEntityType")]
-    public class ReportableEntityType : BaseModel
-    {
-        [Required, MaxLength(100)]
-        public string Name { get; set; }
+    [Required, MaxLength(100)]
+    public string Name { get; set; }
         
-        /// <summary>
-        /// 
-        /// </summary>
-        public virtual ICollection<Report> Reports { get; set; }
-    }
+    /// <summary>
+    /// 
+    /// </summary>
+    public virtual ICollection<Report> Reports { get; set; }
 }

@@ -1,8 +1,9 @@
 ﻿using Entities.Models;
+using Entities.Models.Access;
 
 namespace Application.Abstractions.Interfaces.Repository.Access
 {
-    internal interface IVisibilityStateRepository : IGenericRepository<VisibilityState>
+    public interface IVisibilityStateRepository : IGenericRepository<VisibilityState>
     {
     }
 }

@@ -1,6 +1,8 @@
-﻿namespace Application.Abstractions.Interfaces.Repository.UserExperience
+﻿using Entities.Models.UserExperience;
+
+namespace Application.Abstractions.Interfaces.Repository.UserExperience
 {
-    public interface ISubscriptionPaymentRepository : IGenericRepository<Entities.Models.SubscriptionPayment>
+    public interface ISubscriptionPaymentRepository : IGenericRepository<SubscriptionPayment>
     {
     }
 }

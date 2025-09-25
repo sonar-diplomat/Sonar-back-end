@@ -1,8 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Entities.Models.Access;
 using Infrastructure;
 
-namespace Entities.Models;
+namespace Entities.Models.Music;
 
 public abstract class Collection : BaseModel
 {
@@ -20,8 +21,8 @@ public abstract class Collection : BaseModel
     [ForeignKey("VisibilityStateId")]
     public virtual VisibilityState VisibilityState { get; set; }
     [ForeignKey("CoverId")]
-    public virtual File Cover { get; set; }
+    public virtual File.File Cover { get; set; }
     
-    public virtual ICollection<User> Users { get; set; }
+    public virtual ICollection<User.User> Users { get; set; }
     public virtual ICollection<Track> Tracks { get; set; }
 }

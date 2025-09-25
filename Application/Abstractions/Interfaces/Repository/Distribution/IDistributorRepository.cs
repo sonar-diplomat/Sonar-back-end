@@ -1,6 +1,8 @@
-﻿namespace Application.Abstractions.Interfaces.Repository.Distribution
+﻿using Entities.Models.Distribution;
+
+namespace Application.Abstractions.Interfaces.Repository.Distribution
 {
-    public interface IDistributorRepository : IGenericRepository<Entities.Models.Distributor>
+    public interface IDistributorRepository : IGenericRepository<Distributor>
     {
     }
 }

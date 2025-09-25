@@ -1,6 +1,8 @@
-﻿namespace Application.Abstractions.Interfaces.Repository.Music
+﻿using Entities.Models.Music;
+
+namespace Application.Abstractions.Interfaces.Repository.Music
 {
-    public interface IBlendRepository : IGenericRepository<Entities.Models.Blend>
+    public interface IBlendRepository : IGenericRepository<Blend>
     {
     }
 }

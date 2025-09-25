@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Infrastructure;
 
-namespace Entities.Models;
+namespace Entities.Models.Chat;
 
 [Table("MessageRead")]
 public class MessageRead : BaseModel
@@ -20,5 +20,5 @@ public class MessageRead : BaseModel
     [ForeignKey("MessageId")]
     public virtual Message Message { get; set; }
     [ForeignKey("UserId")]
-    public virtual User User { get; set; }
+    public virtual User.User User { get; set; }
 }

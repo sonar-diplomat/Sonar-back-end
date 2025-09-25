@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Infrastructure;
 
-namespace Entities.Models;
+namespace Entities.Models.UserExperience;
 
 [Table("CosmeticItemType")]
 public class CosmeticItemType : BaseModel

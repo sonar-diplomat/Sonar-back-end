@@ -1,6 +1,15 @@
 using Entities;
 using Microsoft.EntityFrameworkCore;
 using Entities.Models;
+using Entities.Models.Access;
+using Entities.Models.Chat;
+using Entities.Models.ClientSettings;
+using Entities.Models.Distribution;
+using Entities.Models.Library;
+using Entities.Models.Music;
+using Entities.Models.Report;
+using Entities.Models.User;
+using Entities.Models.UserExperience;
 using File = Entities.Models.File;
 
 namespace Infrastructure.Data
@@ -39,8 +48,8 @@ namespace Infrastructure.Data
         public DbSet<License> Licenses { get; set; } = null!;
         
         // File
-        public DbSet<File> Files { get; set; } = null!;
-        public DbSet<FileType> FileTypes { get; set; } = null!;
+        public DbSet<File.File> Files { get; set; } = null!;
+        public DbSet<File.FileType> FileTypes { get; set; } = null!;
         
         // Library
         public DbSet<Folder> Folders { get; set; } = null!;

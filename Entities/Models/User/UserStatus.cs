@@ -2,12 +2,11 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Infrastructure;
 
-namespace Entities.Models
+namespace Entities.Models.User;
+
+[Table("UserStatus")]
+public class UserStatus : BaseModel
 {
-    [Table("UserStatus")]
-    public class UserStatus : BaseModel
-    {
-        [Required, MaxLength(50)]
-        public string Name { get; set; } //online   offline  dontDisturb  inactive/idle
-    }
+    [Required, MaxLength(50)]
+    public string Name { get; set; } //online   offline  dontDisturb  inactive/idle
 }

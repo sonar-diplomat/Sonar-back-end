@@ -2,25 +2,24 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Infrastructure;
 
-namespace Entities.Models
-{
-    [Table("SubscriptionPayment")]
-    public class SubscriptionPayment : BaseModel
-    {
-        [Required, Column(TypeName = "numeric(18,2)")]
-        public decimal Amount { get; set; }
-        
-        [Required]
-        public int BuyerId { get; set; }
-        [Required]
-        public int SubscriptionPackId { get; set; }
+namespace Entities.Models.UserExperience;
 
-        /// <summary>
-        /// 
-        /// </summary>
-        [ForeignKey("BuyerId")]
-        public virtual User Buyer { get; set; }
-        [ForeignKey("SubscriptionPackId")]
-        public virtual SubscriptionPack SubscriptionPack { get; set; }
-    }
+[Table("SubscriptionPayment")]
+public class SubscriptionPayment : BaseModel
+{
+    [Required, Column(TypeName = "numeric(18,2)")]
+    public decimal Amount { get; set; }
+        
+    [Required]
+    public int BuyerId { get; set; }
+    [Required]
+    public int SubscriptionPackId { get; set; }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    [ForeignKey("BuyerId")]
+    public virtual User.User Buyer { get; set; }
+    [ForeignKey("SubscriptionPackId")]
+    public virtual SubscriptionPack SubscriptionPack { get; set; }
 }

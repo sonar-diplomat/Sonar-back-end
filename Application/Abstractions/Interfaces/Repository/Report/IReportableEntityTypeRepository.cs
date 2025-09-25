@@ -1,6 +1,8 @@
-﻿namespace Application.Abstractions.Interfaces.Repository.Report
+﻿using Entities.Models.Report;
+
+namespace Application.Abstractions.Interfaces.Repository.Report
 {
-    public interface IReportableEntityTypeRepository : IGenericRepository<Entities.Models.ReportableEntityType>
+    public interface IReportableEntityTypeRepository : IGenericRepository<ReportableEntityType>
     {
     }
 }

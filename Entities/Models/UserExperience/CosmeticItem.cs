@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Infrastructure;
 
-namespace Entities.Models;
+namespace Entities.Models.UserExperience;
 
 [Table("CosmeticItem")]
 public class CosmeticItem : BaseModel
@@ -21,7 +21,7 @@ public class CosmeticItem : BaseModel
     [ForeignKey("TypeId")]
     public virtual CosmeticItemType Type { get; set; }
     [ForeignKey("FileId")]
-    public virtual File File { get; set; }
+    public virtual File.File File { get; set; }
     
     public virtual ICollection<Inventory> Inventories { get; set; }
 }

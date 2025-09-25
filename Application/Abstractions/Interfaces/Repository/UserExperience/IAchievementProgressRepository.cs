@@ -1,6 +1,8 @@
-﻿namespace Application.Abstractions.Interfaces.Repository.UserExperience
+﻿using Entities.Models.UserExperience;
+
+namespace Application.Abstractions.Interfaces.Repository.UserExperience
 {
-    public interface IAchievementProgressRepository : IGenericRepository<Entities.Models.AchievementProgress>
+    public interface IAchievementProgressRepository : IGenericRepository<AchievementProgress>
     {
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
+using Entities.Models.Distribution;
 
-namespace Entities.Models;
+namespace Entities.Models.Music;
 
 [Table("Album")]
 public class Album : Collection

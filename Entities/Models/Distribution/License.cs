@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Infrastructure;
 
-namespace Entities.Models;
+namespace Entities.Models.Distribution;
 
 [Table("License")]
 public class License : BaseModel
@@ -16,5 +16,5 @@ public class License : BaseModel
     public int IssuerId { get; set; }
     
     [ForeignKey("IssuerId")]
-    public virtual User Issuer { get; set; }
+    public virtual User.User Issuer { get; set; }
 }

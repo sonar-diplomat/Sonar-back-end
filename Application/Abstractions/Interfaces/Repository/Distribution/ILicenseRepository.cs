@@ -1,6 +1,8 @@
-﻿namespace Application.Abstractions.Interfaces.Repository.Distribution
+﻿using Entities.Models.Distribution;
+
+namespace Application.Abstractions.Interfaces.Repository.Distribution
 {
-    public interface ILicenseRepository : IGenericRepository<Entities.Models.License>
+    public interface ILicenseRepository : IGenericRepository<License>
     {
     }
 }

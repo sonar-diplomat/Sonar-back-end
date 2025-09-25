@@ -1,6 +1,8 @@
-﻿namespace Application.Abstractions.Interfaces.Repository.Chat
+﻿using Entities.Models.Chat;
+
+namespace Application.Abstractions.Interfaces.Repository.Chat
 {
-    public interface IMessageRepository : IGenericRepository<Entities.Models.Message>
+    public interface IMessageRepository : IGenericRepository<Message>
     {
     }
 }

@@ -2,25 +2,24 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Infrastructure;
 
-namespace Entities.Models
+namespace Entities.Models.UserExperience;
+
+[Table("AchievementProgress")]
+public class AchievementProgress : BaseModel
 {
-    [Table("AchievementProgress")]
-    public class AchievementProgress : BaseModel
-    {
-        [Required, MaxLength(500)]
-        public string Value { get; set; }
+    [Required, MaxLength(500)]
+    public string Value { get; set; }
         
-        [Required]
-        public int AchievementId { get; set; }
-        [Required]
-        public int UserId { get; set; }
+    [Required]
+    public int AchievementId { get; set; }
+    [Required]
+    public int UserId { get; set; }
         
-        /// <summary>
-        /// 
-        /// </summary>
-        [ForeignKey("AchievementId")]
-        public virtual Achievement Achievement { get; set; }
-        [ForeignKey("UserId")]
-        public virtual User User { get; set; }
-    }
+    /// <summary>
+    /// 
+    /// </summary>
+    [ForeignKey("AchievementId")]
+    public virtual Achievement Achievement { get; set; }
+    [ForeignKey("UserId")]
+    public virtual User.User User { get; set; }
 }

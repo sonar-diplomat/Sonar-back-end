@@ -1,6 +1,8 @@
-﻿namespace Application.Abstractions.Interfaces.Repository.File
+﻿using Entities.Models.File;
+
+namespace Application.Abstractions.Interfaces.Repository.File
 {
-    public interface IFileTypeRepository : IGenericRepository<Entities.Models.FileType>
+    public interface IFileTypeRepository : IGenericRepository<FileType>
     {
     }
 }

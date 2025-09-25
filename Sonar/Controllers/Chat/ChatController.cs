@@ -17,14 +17,14 @@ namespace Sonar.Controllers.Chat
 
         // GET: api/Chat
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Entities.Models.Chat>>> GetChats()
+        public async Task<ActionResult<IEnumerable<Entities.Models.Chat.Chat>>> GetChats()
         {
             return await _context.Chats.ToListAsync();
         }
 
         // GET: api/Chat/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Entities.Models.Chat>> GetChat(int id)
+        public async Task<ActionResult<Entities.Models.Chat.Chat>> GetChat(int id)
         {
             var chat = await _context.Chats.FindAsync(id);
 
@@ -39,7 +39,7 @@ namespace Sonar.Controllers.Chat
         // PUT: api/Chat/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutChat(int id, Entities.Models.Chat chat)
+        public async Task<IActionResult> PutChat(int id, Entities.Models.Chat.Chat chat)
         {
             if (id != chat.Id)
             {
@@ -70,7 +70,7 @@ namespace Sonar.Controllers.Chat
         // POST: api/Chat
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Entities.Models.Chat>> PostChat(Entities.Models.Chat chat)
+        public async Task<ActionResult<Entities.Models.Chat.Chat>> PostChat(Entities.Models.Chat.Chat chat)
         {
             _context.Chats.Add(chat);
             await _context.SaveChangesAsync();

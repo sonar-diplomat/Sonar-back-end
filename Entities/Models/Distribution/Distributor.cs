@@ -1,8 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Entities.Models.Music;
 using Infrastructure;
 
-namespace Entities.Models;
+namespace Entities.Models.Distribution;
 
 [Table("Distributor")]
 public class Distributor : BaseModel
@@ -25,7 +26,7 @@ public class Distributor : BaseModel
     [ForeignKey("LicenseId")]
     public virtual License License { get; set; }
     [ForeignKey("CoverId")]
-    public virtual File Cover { get; set; }
+    public virtual File.File Cover { get; set; }
     
     public virtual ICollection<DistributorSession> Sessions { get; set; }
     public virtual ICollection<Album> Albums { get; set; }

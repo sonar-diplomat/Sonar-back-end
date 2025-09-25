@@ -17,14 +17,14 @@ namespace Sonar.Controllers.Report
 
         // GET: api/Report
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Entities.Models.Report>>> GetReports()
+        public async Task<ActionResult<IEnumerable<Entities.Models.Report.Report>>> GetReports()
         {
             return await _context.Reports.ToListAsync();
         }
 
         // GET: api/Report/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Entities.Models.Report>> GetReport(int id)
+        public async Task<ActionResult<Entities.Models.Report.Report>> GetReport(int id)
         {
             var report = await _context.Reports.FindAsync(id);
 
@@ -39,7 +39,7 @@ namespace Sonar.Controllers.Report
         // PUT: api/Report/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutReport(int id, Entities.Models.Report report)
+        public async Task<IActionResult> PutReport(int id, Entities.Models.Report.Report report)
         {
             if (id != report.Id)
             {
@@ -70,7 +70,7 @@ namespace Sonar.Controllers.Report
         // POST: api/Report
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Entities.Models.Report>> PostReport(Entities.Models.Report report)
+        public async Task<ActionResult<Entities.Models.Report.Report>> PostReport(Entities.Models.Report.Report report)
         {
             _context.Reports.Add(report);
             await _context.SaveChangesAsync();

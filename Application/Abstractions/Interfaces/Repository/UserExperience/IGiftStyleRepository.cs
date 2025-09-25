@@ -1,6 +1,8 @@
-﻿namespace Application.Abstractions.Interfaces.Repository.UserExperience
+﻿using Entities.Models.UserExperience;
+
+namespace Application.Abstractions.Interfaces.Repository.UserExperience
 {
-    public interface IGiftStyleRepository : IGenericRepository<Entities.Models.GiftStyle>
+    public interface IGiftStyleRepository : IGenericRepository<GiftStyle>
     {
     }
 }

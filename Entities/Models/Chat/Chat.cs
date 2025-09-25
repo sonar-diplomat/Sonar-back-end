@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Infrastructure;
 
-namespace Entities.Models;
+namespace Entities.Models.Chat;
 
 [Table("Chat")]
 public class Chat : BaseModel
@@ -19,7 +19,7 @@ public class Chat : BaseModel
     /// 
     /// </summary>
     [ForeignKey("CoverId")]
-    public virtual File Cover { get; set; } // type: Image
+    public virtual File.File Cover { get; set; } // type: Image
 
-    public virtual ICollection<User> Users { get; set; }
+    public virtual ICollection<User.User> Users { get; set; }
 }

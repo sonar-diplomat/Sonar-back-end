@@ -1,6 +1,8 @@
-﻿namespace Application.Abstractions.Interfaces.Repository.Distribution
+﻿using Entities.Models.Distribution;
+
+namespace Application.Abstractions.Interfaces.Repository.Distribution
 {
-    public interface IArtistRepository : IGenericRepository<Entities.Models.Artist>
+    public interface IArtistRepository : IGenericRepository<Artist>
     {
     }
 }

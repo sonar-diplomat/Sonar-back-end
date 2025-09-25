@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Net;
 using Infrastructure;
 
-namespace Entities.Models;
+namespace Entities.Models.Distribution;
 
 [Table("DistributorSession")]
 public class DistributorSession : BaseModel

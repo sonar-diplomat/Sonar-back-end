@@ -1,6 +1,8 @@
-﻿namespace Application.Abstractions.Interfaces.Repository.User
+﻿using Entities.Models.User;
+
+namespace Application.Abstractions.Interfaces.Repository.User
 {
-    public interface IUserSessionRepository : IGenericRepository<Entities.Models.UserSession>
+    public interface IUserSessionRepository : IGenericRepository<UserSession>
     {
     }
 }
