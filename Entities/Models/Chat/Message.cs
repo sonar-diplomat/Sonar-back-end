@@ -22,5 +22,5 @@ public class Message : BaseModel
     [ForeignKey("ChatId")]
     public virtual Chat Chat { get; set; }
         
-    public virtual ICollection<User.User> users { get; set; }
+    public virtual ICollection<UserCore.User> users { get; set; }
 }

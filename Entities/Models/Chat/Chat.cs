@@ -21,5 +21,5 @@ public class Chat : BaseModel
     [ForeignKey("CoverId")]
     public virtual File.File Cover { get; set; } // type: Image
 
-    public virtual ICollection<User.User> Users { get; set; }
+    public virtual ICollection<UserCore.User> Users { get; set; }
 }

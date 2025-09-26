@@ -15,7 +15,7 @@ public class Artist : BaseModel
     /// 
     /// </summary>
     [ForeignKey("UserId")]
-    public virtual User.User User { get; set; }
+    public virtual UserCore.User User { get; set; }
     
     public virtual ICollection<Track> Tracks { get; set; }
     public virtual ICollection<Album> Albums { get; set; }

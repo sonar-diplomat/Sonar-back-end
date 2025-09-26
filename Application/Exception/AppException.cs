@@ -3,7 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Entities.Enums;
 
-namespace Application.Exception
+namespace Application.ExceptionHandling
 {
     public class AppException : System.Exception
     {

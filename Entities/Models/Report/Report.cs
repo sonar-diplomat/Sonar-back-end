@@ -24,7 +24,7 @@ public class Report : BaseModel
     [ForeignKey("ReportableEntityTypeId")] 
     public virtual ReportableEntityType ReportableEntityType { get; set; }
     [ForeignKey("ReporterId")] 
-    public virtual User.User Reporter { get; set; }
+    public virtual UserCore.User Reporter { get; set; }
         
     public virtual ICollection<ReportReasonType> ReportReasonType { get; set; }
     public virtual ICollection<Suspension> Suspensions { get; set; }

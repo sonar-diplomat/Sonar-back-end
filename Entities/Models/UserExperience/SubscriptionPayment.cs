@@ -19,7 +19,7 @@ public class SubscriptionPayment : BaseModel
     /// 
     /// </summary>
     [ForeignKey("BuyerId")]
-    public virtual User.User Buyer { get; set; }
+    public virtual UserCore.User Buyer { get; set; }
     [ForeignKey("SubscriptionPackId")]
     public virtual SubscriptionPack SubscriptionPack { get; set; }
 }

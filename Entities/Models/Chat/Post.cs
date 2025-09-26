@@ -24,7 +24,7 @@ public class Post : BaseModel
     /// 
     /// </summary>
     [ForeignKey("UserId")]
-    public virtual User.User User { get; set; }
+    public virtual UserCore.User User { get; set; }
     [ForeignKey("VisibilityStateId")]
     public virtual VisibilityState VisibilityState { get; set; }
     

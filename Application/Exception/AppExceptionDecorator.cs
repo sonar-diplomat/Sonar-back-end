@@ -1,4 +1,4 @@
-﻿namespace Application.Exception
+﻿namespace Application.ExceptionHandling
 {
     public class AppExceptionDecorator : AppException
     {

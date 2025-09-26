@@ -17,14 +17,14 @@ namespace Sonar.Controllers.User
 
         // GET: api/User
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Entities.Models.User.User>>> GetUsers()
+        public async Task<ActionResult<IEnumerable<Entities.Models.UserCore.User>>> GetUsers()
         {
             return await _context.Users.ToListAsync();
         }
 
         // GET: api/User/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Entities.Models.User.User>> GetUser(int id)
+        public async Task<ActionResult<Entities.Models.UserCore.User>> GetUser(int id)
         {
             var user = await _context.Users.FindAsync(id);
 
@@ -39,7 +39,7 @@ namespace Sonar.Controllers.User
         // PUT: api/User/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutUser(int id, Entities.Models.User.User user)
+        public async Task<IActionResult> PutUser(int id, Entities.Models.UserCore.User user)
         {
             if (id != user.Id)
             {
@@ -70,7 +70,7 @@ namespace Sonar.Controllers.User
         // POST: api/User
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Entities.Models.User.User>> PostUser(Entities.Models.User.User user)
+        public async Task<ActionResult<Entities.Models.UserCore.User>> PostUser(Entities.Models.UserCore.User user)
         {
             _context.Users.Add(user);
             await _context.SaveChangesAsync();

@@ -15,7 +15,7 @@ public class Inventory : BaseModel
     /// 
     /// </summary>
     [ForeignKey("UserId")]
-    public User.User User { get; set; }
+    public UserCore.User User { get; set; }
     
     public ICollection<CosmeticItem> CosmeticItems { get; set; }
 }

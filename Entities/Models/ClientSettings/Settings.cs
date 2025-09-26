@@ -36,7 +36,7 @@ public class Settings : BaseModel
     [ForeignKey("NotificationTypeId")]
     public NotificationType NotificationType { get; set; }
     [ForeignKey("UserId")]
-    public User.User User { get; set; }
+    public UserCore.User User { get; set; }
     [ForeignKey("UserPrivacySettingsId")]
     public UserPrivacySettings UserPrivacy { get; set; }
 }

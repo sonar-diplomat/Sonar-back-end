@@ -4,9 +4,9 @@ using System.Threading.Tasks;
 using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Repository.User;
 using Entities.Models;
-using Entities.Models.User;
+using Entities.Models.UserCore;
 
-namespace Application.Services.User
+namespace Application.Services.UserCore
 {
     public class UserSessionService : IUserSessionService
     {

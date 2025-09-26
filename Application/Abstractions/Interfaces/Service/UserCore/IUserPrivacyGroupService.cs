@@ -1,7 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
-using Entities.Models;
-using Entities.Models.User;
+﻿using Entities.Models.UserCore;
 
 namespace Application.Abstractions.Interfaces.Services
 {

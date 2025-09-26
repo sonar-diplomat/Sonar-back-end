@@ -1,4 +1,4 @@
-﻿using Entities.Models.User;
+﻿using Entities.Models.UserCore;
 
 namespace Application.Abstractions.Interfaces.Repository.User
 {

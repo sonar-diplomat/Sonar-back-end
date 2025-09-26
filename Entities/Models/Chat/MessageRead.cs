@@ -20,5 +20,5 @@ public class MessageRead : BaseModel
     [ForeignKey("MessageId")]
     public virtual Message Message { get; set; }
     [ForeignKey("UserId")]
-    public virtual User.User User { get; set; }
+    public virtual UserCore.User User { get; set; }
 }

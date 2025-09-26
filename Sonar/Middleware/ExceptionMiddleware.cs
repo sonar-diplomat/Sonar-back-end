@@ -1,4 +1,4 @@
-﻿using Application.Exception;
+﻿using Application.ExceptionHandling;
 using Entities.Enums;
 
 namespace Sonar.Middleware

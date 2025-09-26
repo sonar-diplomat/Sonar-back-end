@@ -8,7 +8,7 @@ using Entities.Models.Music;
 using Entities.Models.UserExperience;
 using Infrastructure;
 
-namespace Entities.Models.User;
+namespace Entities.Models.UserCore;
 
 [Table("User")]
 public class User : BaseModel
@@ -42,8 +42,8 @@ public class User : BaseModel
     [StringLength(500)]
     public string GoogleAuthorizationKey { get; set; }
     // facebook .... and ect...
-        
-    [Required] 
+
+    [Required]
     public int AvatarImageId { get; set; }
     [Required]
     public int VisibilityStateId { get; set; }
@@ -62,7 +62,7 @@ public class User : BaseModel
     public virtual Inventory Inventory { get; set; }
     public virtual UserState UserState { get; set; }
     public virtual Settings Settings { get; set; }
-        
+
     public virtual ICollection<UserSession> UserSessions { get; set; }
     public virtual ICollection<Achievement> AchievementProgresses { get; set; }
     public virtual ICollection<Post> Posts { get; set; }

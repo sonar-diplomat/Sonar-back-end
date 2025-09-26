@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using Entities.Models.Music;
 using Infrastructure;
 
-namespace Entities.Models.User
+namespace Entities.Models.UserCore
 {
     [Table("UserState")]
     public class UserState : BaseModel

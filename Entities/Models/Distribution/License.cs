@@ -16,5 +16,5 @@ public class License : BaseModel
     public int IssuerId { get; set; }
     
     [ForeignKey("IssuerId")]
-    public virtual User.User Issuer { get; set; }
+    public virtual UserCore.User Issuer { get; set; }
 }

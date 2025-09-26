@@ -1,7 +1,7 @@
 using Application.Abstractions.Interfaces.Repository;
 using Application.Abstractions.Interfaces.Repository.Access;
 using Application.Abstractions.Interfaces.Repository.Chat;
-using Application.Exception;
+using Application.ExceptionHandling;
 using Entities.Models;
 using Infrastructure;
 using Infrastructure.Data;

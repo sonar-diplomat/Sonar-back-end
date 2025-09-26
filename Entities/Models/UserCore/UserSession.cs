@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Net;
 using Infrastructure;
 
-namespace Entities.Models.User
+namespace Entities.Models.UserCore
 {
     [Table("UserSession")]
     public class UserSession : BaseModel

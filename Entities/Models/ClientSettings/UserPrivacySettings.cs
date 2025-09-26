@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Entities.Models.User;
+using Entities.Models.UserCore;
 using Infrastructure;
 
 namespace Entities.Models.ClientSettings;

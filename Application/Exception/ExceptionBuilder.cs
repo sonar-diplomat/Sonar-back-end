@@ -1,7 +1,7 @@
 ﻿using System.Net;
 using Entities.Enums;
 
-namespace Application.Exception
+namespace Application.ExceptionHandling
 {
     public class ExceptionBuilder
     {

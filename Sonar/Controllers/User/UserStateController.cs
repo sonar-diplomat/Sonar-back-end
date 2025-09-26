@@ -1,5 +1,5 @@
 using Entities.Models;
-using Entities.Models.User;
+using Entities.Models.UserCore;
 using Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;

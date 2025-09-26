@@ -8,7 +8,7 @@ using Entities.Models.Distribution;
 using Entities.Models.Library;
 using Entities.Models.Music;
 using Entities.Models.Report;
-using Entities.Models.User;
+using Entities.Models.UserCore;
 using Entities.Models.UserExperience;
 using File = Entities.Models.File;
 

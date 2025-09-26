@@ -21,5 +21,5 @@ public class AchievementProgress : BaseModel
     [ForeignKey("AchievementId")]
     public virtual Achievement Achievement { get; set; }
     [ForeignKey("UserId")]
-    public virtual User.User User { get; set; }
+    public virtual UserCore.User User { get; set; }
 }

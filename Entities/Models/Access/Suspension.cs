@@ -9,18 +9,18 @@ public class Suspension : BaseModel
 {
     [Required, MaxLength(500)]
     public string Reason { get; set; }
-    [Required] 
+    [Required]
     public DateTime DateTime { get; set; }
     [Required]
     public int PunisherId { get; set; }
     [Required]
     public int AssociatedReportedId { get; set; }
-        
+
     /// <summary>
     /// 
     /// </summary>
     [ForeignKey("PunisherId")]
-    public virtual User.User Punisher { get; set; }
+    public virtual UserCore.User Punisher { get; set; }
     [ForeignKey("AssociatedReportId")]
     public virtual Report.Report AssociatedReport { get; set; }
 }

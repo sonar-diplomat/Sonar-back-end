@@ -13,5 +13,5 @@ public class AccessFeature : BaseModel
     /// <summary>
     /// 
     /// </summary>
-    public virtual ICollection<User.User> Users { get; set; }
+    public virtual ICollection<UserCore.User> Users { get; set; }
 }

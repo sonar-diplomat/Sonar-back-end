@@ -3,7 +3,7 @@ using Infrastructure.Data;
 
 namespace Sonar.Infrastructure.Repository.User
 {
-    public class UserRepository : GenericRepository<Entities.Models.User.User>, IUserRepository
+    public class UserRepository : GenericRepository<Entities.Models.UserCore.User>, IUserRepository
     {
         public UserRepository(SonarContext dbContext) : base(dbContext)
         {

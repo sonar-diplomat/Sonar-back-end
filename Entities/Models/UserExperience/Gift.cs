@@ -25,7 +25,7 @@ public class Gift : BaseModel
     /// 
     /// </summary>
     [ForeignKey("ReceiverId")]
-    public virtual User.User Receiver { get; set; }
+    public virtual UserCore.User Receiver { get; set; }
     [ForeignKey("GiftStyleId")]
     public virtual GiftStyle GiftStyle { get; set; }
     [ForeignKey("SubscriptionPaymentId")]

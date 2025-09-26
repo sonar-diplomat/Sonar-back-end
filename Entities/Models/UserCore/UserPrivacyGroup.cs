@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Infrastructure;
 
-namespace Entities.Models.User;
+namespace Entities.Models.UserCore;
 
 [Table("UserPrivacyGroup")]
 public class UserPrivacyGroup : BaseModel

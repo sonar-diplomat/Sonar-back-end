@@ -14,5 +14,5 @@ public class Library : BaseModel
     /// 
     /// </summary>
     [ForeignKey("UserId")]
-    public virtual User.User User { get; set; }
+    public virtual UserCore.User User { get; set; }
 }

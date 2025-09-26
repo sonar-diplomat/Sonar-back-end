@@ -13,5 +13,5 @@ public class Playlist : Collection
     /// 
     /// </summary>
     [ForeignKey("CreatorId")]
-    public virtual User.User Creator { get; set; }
+    public virtual UserCore.User Creator { get; set; }
 }
