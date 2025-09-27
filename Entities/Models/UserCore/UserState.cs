@@ -1,7 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Entities.Models.Music;
-using Infrastructure;
 
 namespace Entities.Models.UserCore
 {

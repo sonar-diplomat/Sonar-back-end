@@ -1,10 +1,9 @@
-using Entities.Models;
 using Entities.Models.UserCore;
 using Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace Sonar.Controllers.User
+namespace Sonar.Controllers.UserCore
 {
     [Route("api/[controller]")]
     [ApiController]

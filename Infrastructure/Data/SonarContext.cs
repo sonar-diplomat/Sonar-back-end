@@ -1,6 +1,3 @@
-using Entities;
-using Microsoft.EntityFrameworkCore;
-using Entities.Models;
 using Entities.Models.Access;
 using Entities.Models.Chat;
 using Entities.Models.ClientSettings;
@@ -10,13 +7,16 @@ using Entities.Models.Music;
 using Entities.Models.Report;
 using Entities.Models.UserCore;
 using Entities.Models.UserExperience;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using File = Entities.Models.File;
 
 namespace Infrastructure.Data
 {
-    public class SonarContext : DbContext
+    public class SonarContext : IdentityDbContext<User, IdentityRole<int>, int>
     {
-        public SonarContext (DbContextOptions<SonarContext> options)
+        public SonarContext(DbContextOptions<SonarContext> options)
             : base(options)
         {
         }
@@ -26,13 +26,13 @@ namespace Infrastructure.Data
         public DbSet<Suspension> Suspensions { get; set; } = null!;
         public DbSet<VisibilityState> VisibilityStates { get; set; } = null!;
         public DbSet<VisibilityStatus> VisibilityStatuses { get; set; } = null!;
-        
+
         // Chat
         public DbSet<Chat> Chats { get; set; } = null!;
         public DbSet<Message> Messages { get; set; } = null!;
         public DbSet<MessageRead> MessageReads { get; set; } = null!;
         public DbSet<Post> Posts { get; set; } = null!;
-        
+
         // ClientSettings
         public DbSet<Language> Languages { get; set; } = null!;
         public DbSet<NotificationType> NotificationTypes { get; set; } = null!;
@@ -40,32 +40,32 @@ namespace Infrastructure.Data
         public DbSet<Settings> Settings { get; set; } = null!;
         public DbSet<Theme> Themes { get; set; } = null!;
         public DbSet<UserPrivacySettings> UserPrivacySettings { get; set; } = null!;
-        
+
         // ClientSettings
         public DbSet<Artist> Artists { get; set; } = null!;
         public DbSet<Distributor> Distributors { get; set; } = null!;
         public DbSet<DistributorSession> DistributorSessions { get; set; } = null!;
         public DbSet<License> Licenses { get; set; } = null!;
-        
+
         // File
         public DbSet<File.File> Files { get; set; } = null!;
         public DbSet<File.FileType> FileTypes { get; set; } = null!;
-        
+
         // Library
         public DbSet<Folder> Folders { get; set; } = null!;
         public DbSet<Library> Libraries { get; set; } = null!;
-        
+
         // Music
         public DbSet<Album> Albums { get; set; } = null!;
         public DbSet<Blend> Blends { get; set; } = null!;
         public DbSet<Playlist> Playlists { get; set; } = null!;
         public DbSet<Track> Tracks { get; set; } = null!;
-        
+
         // Report
         public DbSet<Report> Reports { get; set; } = null!;
         public DbSet<ReportableEntityType> ReportableEntityTypes { get; set; } = null!;
         public DbSet<ReportReasonType> ReportReasonTypes { get; set; } = null!;
-        
+
         // User
         public DbSet<User> Users { get; set; } = null!;
         public DbSet<UserPrivacyGroup> UserPrivacyGroups { get; set; } = null!;

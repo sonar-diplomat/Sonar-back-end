@@ -1,5 +1,5 @@
 ﻿using Application.Abstractions.Interfaces.Repository;
-using Infrastructure;
+using Entities.Models;
 using Infrastructure.Data;
 
 
@@ -19,9 +19,9 @@ public class GenericRepository<T> : IGenericRepository<T> where T : BaseModel
         return await _context.Set<T>().FindAsync(id);
     }
 
-    public Task<IQueryable<T>> GetAllAsync()
+    public async Task<IQueryable<T>> GetAllAsync()
     {
-        return Task.FromResult(_context.Set<T>().AsQueryable());
+        return await Task.FromResult(_context.Set<T>().AsQueryable());
     }
 
     public async Task<T> AddAsync(T entity)
@@ -30,19 +30,19 @@ public class GenericRepository<T> : IGenericRepository<T> where T : BaseModel
         return entity;
     }
 
-    public Task UpdateAsync(T entity)
+    public async Task<Task> UpdateAsync(T entity)
     {
         _context.Set<T>().Update(entity);
         return Task.CompletedTask;
     }
 
-    public Task RemoveAsync(T entity)
+    public async Task<Task> RemoveAsync(T entity)
     {
         _context.Set<T>().Remove(entity);
         return Task.CompletedTask;
     }
 
-    public Task RemoveRangeAsync(List<T> entities)
+    public async Task<Task> RemoveRangeAsync(List<T> entities)
     {
         _context.Set<T>().RemoveRange(entities);
         return Task.CompletedTask;

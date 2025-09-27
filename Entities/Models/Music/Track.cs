@@ -2,7 +2,6 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Entities.Models.Access;
 using Entities.Models.Distribution;
-using Infrastructure;
 
 namespace Entities.Models.Music;
 

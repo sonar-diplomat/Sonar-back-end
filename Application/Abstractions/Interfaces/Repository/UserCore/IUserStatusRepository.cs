@@ -1,6 +1,6 @@
 ﻿using Entities.Models.UserCore;
 
-namespace Application.Abstractions.Interfaces.Repository.User
+namespace Application.Abstractions.Interfaces.Repository.UserCore
 {
     public interface IUserStatusRepository : IGenericRepository<UserStatus>
     {

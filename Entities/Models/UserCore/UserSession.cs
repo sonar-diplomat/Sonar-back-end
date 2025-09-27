@@ -1,7 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Net;
-using Infrastructure;
 
 namespace Entities.Models.UserCore
 {
@@ -16,10 +15,10 @@ namespace Entities.Models.UserCore
         public string DeviceName { get; set; }
         [Required]
         public DateTime LastActive { get; set; }
-        
+
         [Required]
         public int UserId { get; set; }
-        
+
         /// <summary>
         /// 
         /// </summary>

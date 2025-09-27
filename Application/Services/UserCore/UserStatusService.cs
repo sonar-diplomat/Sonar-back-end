@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Application.Abstractions.Interfaces.Services;
-using Application.Abstractions.Interfaces.Repository.User;
+using Application.Abstractions.Interfaces.Repository.UserCore;
 using Entities.Models;
 using Entities.Models.UserCore;
 

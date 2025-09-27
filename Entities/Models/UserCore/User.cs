@@ -6,12 +6,12 @@ using Entities.Models.ClientSettings;
 using Entities.Models.Distribution;
 using Entities.Models.Music;
 using Entities.Models.UserExperience;
-using Infrastructure;
+using Microsoft.AspNetCore.Identity;
 
 namespace Entities.Models.UserCore;
 
 [Table("User")]
-public class User : BaseModel
+public class User : IdentityUser<int>
 {
     [Required, MaxLength(100)]
     public string FirstName { get; set; }
@@ -19,18 +19,15 @@ public class User : BaseModel
     public string LastName { get; set; }
     [Required]
     public DateOnly DateOfBirth { get; set; }
-    [Required, MaxLength(255), EmailAddress]
-    public string Email { get; set; }
-    [Required, MaxLength(50)]
+    [Required, MaxLength(24), MinLength(1)]
     public string Username { get; set; }
+    [Required, MaxLength(16), MinLength(4)]
+    public string Login { get; set; }
     [MaxLength(4000)]
     public string Biography { get; set; } // md 
     [Required]
     public string PublicIdentifier { get; set; }
-    [Required]
-    public byte[] PasswordHash { get; set; }
-    [Required]
-    public byte[] PasswordSalt { get; set; }
+
     [Required]
     public int AvailableCurrency { get; set; }
     [Required]
@@ -57,7 +54,7 @@ public class User : BaseModel
     [ForeignKey("AvatarImageId")]
     public virtual File.File AvatarImage { get; set; }
     [ForeignKey("SubscriptionPackId")]
-    public virtual SubscriptionPack SubscriptionPack { get; set; }
+    public virtual SubscriptionPack? SubscriptionPack { get; set; }
     public virtual Artist Artist { get; set; }
     public virtual Inventory Inventory { get; set; }
     public virtual UserState UserState { get; set; }

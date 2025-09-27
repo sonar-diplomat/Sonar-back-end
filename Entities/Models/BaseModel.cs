@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Infrastructure;
+namespace Entities.Models;
 
 public abstract class BaseModel
 {

@@ -1,4 +1,4 @@
-﻿using Application.Abstractions.Interfaces.Repository.User;
+﻿using Application.Abstractions.Interfaces.Repository.UserCore;
 using Application.Abstractions.Interfaces.Services;
 using Application.DTOs;
 using Entities.Enums;

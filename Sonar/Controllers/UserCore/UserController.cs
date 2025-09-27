@@ -1,8 +1,8 @@
+using Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Infrastructure.Data;
 
-namespace Sonar.Controllers.User
+namespace Sonar.Controllers.UserCore
 {
     [Route("api/[controller]")]
     [ApiController]
@@ -80,7 +80,7 @@ namespace Sonar.Controllers.User
 
         // DELETE: api/User/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteUser(int id)
+        public async Task<IActionResult> DeleteUser(string id)
         {
             var user = await _context.Users.FindAsync(id);
             if (user == null)

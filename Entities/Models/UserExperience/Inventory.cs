@@ -1,7 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Entities.Models;
-using Infrastructure;
 
 namespace Entities.Models.UserExperience;
 
