@@ -11,33 +11,20 @@ public class AuthController : ControllerBase
 {
     private readonly UserManager<User> _userManager;
     private readonly SignInManager<User> _signInManager;
-    private readonly
-
-    public AuthController()
+    private readonly IConfiguration _configuration;
+    
+    public AuthController(UserManager<User> userManager, SignInManager<User> signInManager, IConfiguration configuration)
     {
-
+        _userManager = userManager;
+        _signInManager = signInManager;
+        _configuration = configuration;
     }
 
     [HttpPost("register")]
     public async Task<IActionResult> Register(UserRegisterDTO model)
     {
-        User user = new()
-        {
-
-        };
-        var result = await _userManager.CreateAsync(user, model.);
-        if (result.Succeeded)
-        {
-            // Assign default role
-            await _userManager.AddToRoleAsync(user, "User");
-            return Ok(new { message = "Registration successful" });
-        }
-
-
-
+        // TODO: finish registration logic
+        //var result = await _userManager.CreateAsync(user, model.Password);
+        return Ok(new { message = "Registration successful" });
     }
-
-
-
 }
-

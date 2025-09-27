@@ -21,6 +21,13 @@ namespace Infrastructure.Data
         {
         }
 
+        // TODO: Replace placeholder seed data generation with something adequate
+        protected override void OnModelCreating(ModelBuilder builder)
+        {
+            builder.Entity<UserStatus>().HasData(new UserStatus {Name = "online"}, new UserStatus {Name = "offline"}, new UserStatus {Name = "do not disturb"}, new UserStatus {Name = "idle"});
+            base.OnModelCreating(builder);
+        }
+
         // Access
         public DbSet<AccessFeature> AccessFeatures { get; set; } = null!;
         public DbSet<Suspension> Suspensions { get; set; } = null!;

@@ -7,8 +7,8 @@ namespace Entities.Models.UserCore
     [Table("UserState")]
     public class UserState : BaseModel
     {
-        public int Track { get; set; }
-        public int Position { get; set; }
+        public int? Track { get; set; }
+        public int? Position { get; set; }
         
         [Required]
         public int UserId { get; set; }
@@ -16,8 +16,7 @@ namespace Entities.Models.UserCore
         public int PrimarySessionId { get; set; }
         [Required]
         public int UserStatusId { get; set; }
-        [Required]
-        public int CollectionId { get; set; }
+        public int? CollectionId { get; set; }
 
         /// <summary>
         /// 
@@ -29,6 +28,6 @@ namespace Entities.Models.UserCore
         [ForeignKey("UserStatusId")]
         public UserStatus UserStatus { get; set; }
         [ForeignKey("CollectionId")]
-        public Collection Collection { get; set; }
+        public Collection? Collection { get; set; }
     }
 }

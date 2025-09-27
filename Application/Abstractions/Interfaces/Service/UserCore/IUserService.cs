@@ -5,7 +5,7 @@ namespace Application.Abstractions.Interfaces.Services
 {
     public interface IUserService
     {
-        Task<UserDTO> CreateUserAsync(UserRegisterDTO userRegisterDTO);
+        Task<User> CreateUserAsync(UserRegisterDTO userRegisterDTO);
         Task<bool> UpdateUserAsync(int userId, UserDTO userUpdateDTO);
         Task<bool> ChangePasswordAsync(int userId, string newPassword);
         Task<bool> ChangeUsernameAsync(int userId, string newUsername);

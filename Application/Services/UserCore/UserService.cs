@@ -1,18 +1,27 @@
 ﻿using Application.Abstractions.Interfaces.Repository.UserCore;
 using Application.Abstractions.Interfaces.Services;
 using Application.DTOs;
+using Application.Services.Access;
 using Entities.Enums;
+using Entities.Models.Access;
 using Entities.Models.UserCore;
+using Entities.Models.UserExperience;
 
 namespace Application.Services.UserCore
 {
     public class UserService : IUserService
     {
         private readonly IUserRepository userRepository;
+        private readonly IVisibilityStateService visibilityStateService;
+        private readonly IInventoryService inventoryService;
 
-        public UserService(IUserRepository userRepository)
+        public UserService(IUserRepository userRepository, 
+            IVisibilityStateService visibilityStateService, 
+            IInventoryService inventoryService)
         {
             this.userRepository = userRepository;
+            this.visibilityStateService = visibilityStateService;
+            this.inventoryService = inventoryService;
         }
 
         private async Task<User> GetUser(int userId)
@@ -57,9 +66,29 @@ namespace Application.Services.UserCore
             throw new NotImplementedException();
         }
 
-        public Task<UserDTO> CreateUserAsync(UserRegisterDTO userRegisterDTO)
+        public async Task<User> CreateUserAsync(UserRegisterDTO model)
         {
-            throw new NotImplementedException();
+            User user = new()
+            {
+                FirstName = model.FirstName,
+                LastName = model.LastName,
+                DateOfBirth = model.DateOfBirth,
+                Username = model.Username,
+                Login = model.Login,
+                Email = model.Email
+            };
+            VisibilityState tempVS = new()
+            {                
+                SetPublicOn = DateTime.UtcNow,
+                StatusId = 1
+            };
+            await visibilityStateService.CreateAsync(tempVS);
+            user.VisibilityState = tempVS;
+            Inventory tempI = new() { User = user };
+            await inventoryService.CreateAsync(tempI);
+            user.Inventory = tempI;
+            // TODO: add default access features, avatar, UserState, Settings
+            return await userRepository.AddAsync(user);
         }
 
         public Task<bool> DeleteAsync(int id)
@@ -72,7 +101,7 @@ namespace Application.Services.UserCore
             throw new NotImplementedException();
         }
 
-        public Task<Entities.Models.UserCore.User> GetByIdAsync(int id)
+        public Task<User> GetByIdAsync(int id)
         {
             throw new NotImplementedException();
         }
