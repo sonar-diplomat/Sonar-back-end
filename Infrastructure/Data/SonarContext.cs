@@ -25,6 +25,9 @@ namespace Infrastructure.Data
         protected override void OnModelCreating(ModelBuilder builder)
         {
             builder.Entity<UserStatus>().HasData(new UserStatus {Name = "online"}, new UserStatus {Name = "offline"}, new UserStatus {Name = "do not disturb"}, new UserStatus {Name = "idle"});
+
+            builder.Entity<>
+
             base.OnModelCreating(builder);
         }
 

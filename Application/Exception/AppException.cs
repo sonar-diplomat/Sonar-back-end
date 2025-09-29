@@ -1,27 +1,45 @@
 ﻿using System.Net;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using Entities.Enums;
 
-namespace Application.ExceptionHandling
+namespace Application.Exception;
+
+public interface IAppException
 {
-    public class AppException : System.Exception
+    HttpStatusCode StatusCode { get; set; }
+}
+
+public abstract class AppException : System.Exception, IAppException
+{
+    public HttpStatusCode StatusCode { get; set; }
+
+    public AppException() { }
+
+    public AppException(string message, HttpStatusCode httpStatusCode)
+        : base(message)
     {
-        [JsonIgnore]
-        public ErrorType ErrorId { get; set; }
-
-        public HttpStatusCode StatusCode { get; set; }
-
-        public virtual new string Message { get; set; } = null!;
-        public virtual string? Details { get; set; }
-
-        public string ToJson()
-        {
-            return JsonSerializer.Serialize(this, new JsonSerializerOptions
-            {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-            });
-        }
+        StatusCode = httpStatusCode;
     }
 }
+
+public class NotFoundUserException : AppException
+{
+    private NotFoundUserException(string message = "User not found") : base(message, HttpStatusCode.NotFound)
+    {
+    }
+
+}
+
+public class NotFoundTrackException : AppException
+{
+    private NotFoundTrackException(string message = "Track not found", HttpStatusCode StatusCode = HttpStatusCode.NotFound) : base(message, HttpStatusCode.NotFound)
+    {
+    }
+}
+
+public class NotFoundAlbumException : AppException
+{
+    private NotFoundAlbumException(string message = "User not found", HttpStatusCode StatusCode = HttpStatusCode.NotFound) : base(message, HttpStatusCode.NotFound)
+    {
+    }
+}
+
+

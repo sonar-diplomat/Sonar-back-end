@@ -6,6 +6,7 @@
         NotFoundUser,
 
         BadRequest,
+        BadRequestUser,
 
         Unauthorized,
 

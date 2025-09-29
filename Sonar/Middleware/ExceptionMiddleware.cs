@@ -1,17 +1,17 @@
-﻿using Application.ExceptionHandling;
-using Entities.Enums;
+﻿
+using System.Text.Json;
+using Application.Exception;
 
 namespace Sonar.Middleware
 {
     public class ExceptionMiddleware
     {
         private readonly RequestDelegate _next;
-        private readonly ExceptionHandler exceptionHandler;
 
-        public ExceptionMiddleware(RequestDelegate next, ExceptionHandler exceptionHandler)
+
+        public ExceptionMiddleware(RequestDelegate next)
         {
             _next = next;
-            this.exceptionHandler = exceptionHandler;
         }
 
         public async Task InvokeAsync(HttpContext context)
@@ -28,22 +28,21 @@ namespace Sonar.Middleware
 
         private async Task HandleExceptionAsync(HttpContext context, Exception exception)
         {
-            if (exception.Data["ErrorType"] != null)
+            if (exception is IAppException)
             {
-                AppException appException = exceptionHandler.GetExceptionResponse((ErrorType)(exception.Data["ErrorType"])!);
-                await CreateErrorResponse(context, appException);
+                context.Response.ContentType = "application/json";
 
-                return;
+                var response = new
+                {
+                    StatusCode = context.Response.StatusCode,
+                    Message = exception.Message,
+                };
+
+                var json = JsonSerializer.Serialize(response);
+                await context.Response.WriteAsync(json);
             }
-
         }
 
-        private async Task CreateErrorResponse(HttpContext context, AppException appException)
-        {
-            context.Response.ContentType = "application/json";
-            context.Response.StatusCode = (int)appException.StatusCode;
 
-            await context.Response.WriteAsJsonAsync(appException.ToJson);
-        }
     }
 }

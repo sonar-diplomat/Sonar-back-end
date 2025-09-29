@@ -1,8 +1,6 @@
 ﻿using Application.Abstractions.Interfaces.Repository.UserCore;
 using Application.Abstractions.Interfaces.Services;
 using Application.DTOs;
-using Application.Services.Access;
-using Entities.Enums;
 using Entities.Models.Access;
 using Entities.Models.UserCore;
 using Entities.Models.UserExperience;
@@ -15,8 +13,8 @@ namespace Application.Services.UserCore
         private readonly IVisibilityStateService visibilityStateService;
         private readonly IInventoryService inventoryService;
 
-        public UserService(IUserRepository userRepository, 
-            IVisibilityStateService visibilityStateService, 
+        public UserService(IUserRepository userRepository,
+            IVisibilityStateService visibilityStateService,
             IInventoryService inventoryService)
         {
             this.userRepository = userRepository;
@@ -29,9 +27,9 @@ namespace Application.Services.UserCore
             User? user = await userRepository.GetByIdAsync(userId);
             if (user == null)
             {
-                Exception exception = new();
-                exception.Data["ErrorType"] = ErrorType.NotFoundUser;
-                throw exception;
+                //Exception exception = new();
+                //exception.Data["ErrorType"] = ErrorType.NotFoundUser;
+                //throw exception;
             }
             return user;
         }
@@ -78,7 +76,7 @@ namespace Application.Services.UserCore
                 Email = model.Email
             };
             VisibilityState tempVS = new()
-            {                
+            {
                 SetPublicOn = DateTime.UtcNow,
                 StatusId = 1
             };

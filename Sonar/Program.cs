@@ -1,7 +1,8 @@
 using System.Text;
+using Application.Abstractions.Interfaces.Exception;
 using Application.Abstractions.Interfaces.Repository.Access;
 using Application.Abstractions.Interfaces.Repository.Chat;
-using Application.ExceptionHandling;
+using Application.Exception;
 using Entities.Models.UserCore;
 using Infrastructure.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -129,9 +130,15 @@ builder.Services.AddScoped<IAccessFeatureRepository, AccessFeatureRepository>();
 builder.Services.AddScoped<IAccessFeatureRepository, AccessFeatureRepository>();
 builder.Services.AddScoped<IAccessFeatureRepository, AccessFeatureRepository>();
 
+
+// Exception Handling
+builder.Services.AddSingleton<IAppExceptionFactory<IAppException>, AppExceptionFactory<IAppException>>();
+
+
+
 var app = builder.Build();
 
-app.UseMiddleware<ExceptionMiddleware>(new ExceptionHandler());
+app.UseMiddleware<ExceptionMiddleware>();
 
 
 // Configure the HTTP request pipeline.
