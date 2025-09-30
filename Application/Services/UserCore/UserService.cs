@@ -12,14 +12,22 @@ namespace Application.Services.UserCore
         private readonly IUserRepository userRepository;
         private readonly IVisibilityStateService visibilityStateService;
         private readonly IInventoryService inventoryService;
+        private readonly IAccessFeatureService accessFeatureService;
+        private readonly ISettingsService settingsService;
 
         public UserService(IUserRepository userRepository,
             IVisibilityStateService visibilityStateService,
-            IInventoryService inventoryService)
+            IInventoryService inventoryService,
+            IAccessFeatureService accessFeatureService,
+            ISettingsService settingsService
+
+            )
         {
             this.userRepository = userRepository;
             this.visibilityStateService = visibilityStateService;
             this.inventoryService = inventoryService;
+            this.accessFeatureService = accessFeatureService;
+            this.settingsService = settingsService;
         }
 
         private async Task<User> GetUser(int userId)
@@ -85,9 +93,12 @@ namespace Application.Services.UserCore
             Inventory tempI = new() { User = user };
             await inventoryService.CreateAsync(tempI);
             user.Inventory = tempI;
-            // TODO: add default access features, avatar, UserState, Settings
+            user.AccessFeatures = await accessFeatureService.GetDefaultAsync();
+            user.Settings = await settingsService.CreateDefaultAsync();
+            // TODO: add avatar, UserState, Settings
             return await userRepository.AddAsync(user);
         }
+
 
         public Task<bool> DeleteAsync(int id)
         {

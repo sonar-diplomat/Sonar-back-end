@@ -12,7 +12,7 @@ public class Settings : BaseModel
     public bool Crossfade { get; set; }
     [Required]
     public bool ExplicitContent { get; set; }
-        
+
     [Required]
     public int PreferredPlaybackQualityId { get; set; }
     [Required]
@@ -38,4 +38,6 @@ public class Settings : BaseModel
     public UserCore.User User { get; set; }
     [ForeignKey("UserPrivacySettingsId")]
     public UserPrivacySettings UserPrivacy { get; set; }
+
+    public ICollection<UserCore.User> BlockedUsers { get; set; }
 }

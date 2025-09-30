@@ -9,5 +9,17 @@ namespace Sonar.Infrastructure.Repository.Client
         public SettingsRepository(SonarContext dbContext) : base(dbContext)
         {
         }
+
+        public Task<Settings> CreateDefaultAsync()
+        {
+            Settings settings = new();
+            settings.AutoPlay = true;
+            settings.Crossfade = false;
+            settings.ExplicitContent = false;
+            settings.PreferredPlaybackQuality = context.;
+
+
+            return settings;
+        }
     }
 }

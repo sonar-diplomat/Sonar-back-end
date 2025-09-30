@@ -1,20 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿using Application.Abstractions.Interfaces.Repository.Access;
 using Application.Abstractions.Interfaces.Services;
-using Application.Abstractions.Interfaces.Repository.Access;
-using Entities.Models;
 using Entities.Models.Access;
 
 namespace Application.Services.Access
 {
     public class AccessFeatureService : IAccessFeatureService
     {
-        private readonly IAccessFeatureRepository _repository;
+        private readonly IAccessFeatureRepository repository;
 
         public AccessFeatureService(IAccessFeatureRepository repository)
         {
-            _repository = repository;
+            this.repository = repository;
         }
 
         public Task<AccessFeature> GetByIdAsync(int id)
@@ -40,6 +36,11 @@ namespace Application.Services.Access
         public Task<bool> DeleteAsync(int id)
         {
             throw new NotImplementedException();
+        }
+
+        public Task<ICollection<AccessFeature>> GetDefaultAsync()
+        {
+            return repository.GetDefaultAsync();
         }
     }
 }

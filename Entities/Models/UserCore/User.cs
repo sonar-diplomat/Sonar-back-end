@@ -69,4 +69,6 @@ public class User : IdentityUser<int>
     public virtual ICollection<Collection> Collections { get; set; }
     public virtual ICollection<License> Licenses { get; set; }
     public virtual ICollection<Track> Tracks { get; set; }
+
+    public virtual ICollection<Settings> SettingsBlockedUsers { get; set; }
 }

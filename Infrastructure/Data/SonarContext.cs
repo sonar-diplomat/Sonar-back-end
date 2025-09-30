@@ -2,11 +2,13 @@ using Entities.Models.Access;
 using Entities.Models.Chat;
 using Entities.Models.ClientSettings;
 using Entities.Models.Distribution;
+using Entities.Models.File;
 using Entities.Models.Library;
 using Entities.Models.Music;
 using Entities.Models.Report;
 using Entities.Models.UserCore;
 using Entities.Models.UserExperience;
+using Infrastructure.Seed;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -21,12 +23,40 @@ namespace Infrastructure.Data
         {
         }
 
-        // TODO: Replace placeholder seed data generation with something adequate
         protected override void OnModelCreating(ModelBuilder builder)
         {
-            builder.Entity<UserStatus>().HasData(new UserStatus {Name = "online"}, new UserStatus {Name = "offline"}, new UserStatus {Name = "do not disturb"}, new UserStatus {Name = "idle"});
+            builder.Entity<Settings>()
+                .HasOne(r => r.User)
+                .WithMany(a => a.SettingsBlockedUsers)
+                .HasForeignKey(r => r.UserId);
 
-            builder.Entity<>
+            builder.Entity<User>()
+                .HasOne(r => r.Settings)
+                .WithOne(a => a.User)
+                .HasForeignKey<Settings>(r => r.UserId);
+            // SomeEnum.SentMessage = "SentMessage SentMassegh"
+            // User.Coolection DbSet(Name Id)
+            builder.Entity<NotificationType>().HasData(NotificationTypeSeedFactory.CreateSeedData());
+
+            builder.Entity<Theme>().HasData(ThemeSeedFactory.CreateSeedData());
+
+            builder.Entity<Language>().HasData(LanguageSeedFactory.CreateSeedData());
+
+            builder.Entity<PlaybackQuality>().HasData(PlaybackQualitySeedFactory.CreateSeedData());
+
+            builder.Entity<AchievementCategory>().HasData(AchievementCategorySeedFactory.CreateSeedData());
+
+            builder.Entity<FileType>().HasData(FileTypeSeedFactory.CreateSeedData());
+
+            builder.Entity<VisibilityStatus>().HasData(VisibilityStatusSeedFactory.CreateSeedData());
+
+            builder.Entity<GiftStyle>().HasData(GiftStyleSeedFactory.CreateSeedData());
+
+            builder.Entity<ReportableEntityType>().HasData(ReportableEntityTypeSeedFactory.CreateSeedData());
+
+            builder.Entity<ReportReasonType>().HasData(ReportReasonTypeSeedFactory.CreateSeedData());
+
+
 
             base.OnModelCreating(builder);
         }

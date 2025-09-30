@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <Folder Include="Abstractions\AbstractClasses\" />
+    <Folder Include="Abstractions\Interfaces\Seed\" />
   </ItemGroup>
 
 </Project>
