@@ -1,12 +1,12 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using Entities.Models.Access;
+﻿using Entities.Models.Access;
 using Entities.Models.Chat;
 using Entities.Models.ClientSettings;
 using Entities.Models.Distribution;
 using Entities.Models.Music;
 using Entities.Models.UserExperience;
 using Microsoft.AspNetCore.Identity;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Entities.Models.UserCore;
 
@@ -45,6 +45,10 @@ public class User : IdentityUser<int>
     [Required]
     public int VisibilityStateId { get; set; }
     public int? SubscriptionPackId { get; set; }
+    [Required]
+    public int UserStateId { get; set; }
+    [Required]
+    public int SettingsId { get; set; }
 
     /// <summary>
     /// 
@@ -55,10 +59,13 @@ public class User : IdentityUser<int>
     public virtual File.File AvatarImage { get; set; }
     [ForeignKey("SubscriptionPackId")]
     public virtual SubscriptionPack? SubscriptionPack { get; set; }
+    [ForeignKey("UserStateId")]
+    public virtual UserState UserState { get; set; }
+    [ForeignKey("SettingsId")]
+    public virtual Settings Settings { get; set; }
+
     public virtual Artist Artist { get; set; }
     public virtual Inventory Inventory { get; set; }
-    public virtual UserState UserState { get; set; }
-    public virtual Settings Settings { get; set; }
 
     public virtual ICollection<UserSession> UserSessions { get; set; }
     public virtual ICollection<Achievement> AchievementProgresses { get; set; }

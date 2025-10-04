@@ -1,13 +1,9 @@
-﻿using Entities.Models.UserCore;
+﻿using Application.Abstractions.Interfaces.Service;
+using Entities.Models.UserCore;
 
 namespace Application.Abstractions.Interfaces.Services
 {
-    public interface IUserStatusService
+    public interface IUserStatusService : IGenericService<UserStatus>
     {
-        Task<UserStatus> GetByIdAsync(int id);
-        Task<IEnumerable<UserStatus>> GetAllAsync();
-        Task<UserStatus> CreateAsync(UserStatus status);
-        Task<UserStatus> UpdateAsync(UserStatus status);
-        Task<bool> DeleteAsync(int id);
     }
 }

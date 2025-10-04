@@ -1,21 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿using Application.Abstractions.Interfaces.Repository.Distribution;
 using Application.Abstractions.Interfaces.Services;
-using Application.Abstractions.Interfaces.Repository.Distribution;
-using Entities.Models;
 using Entities.Models.Distribution;
 
 namespace Application.Services.Distribution
 {
-    public class ArtistService : IArtistService
+    public class ArtistService(IArtistRepository repository) : IArtistService
     {
-        private readonly IArtistRepository _repository;
 
-        public ArtistService(IArtistRepository repository)
-        {
-            _repository = repository;
-        }
 
         public Task<Artist> GetByIdAsync(int id) => throw new NotImplementedException();
         public Task<IEnumerable<Artist>> GetAllAsync() => throw new NotImplementedException();

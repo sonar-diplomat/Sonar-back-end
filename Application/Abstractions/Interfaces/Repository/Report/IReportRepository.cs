@@ -1,6 +1,8 @@
-﻿namespace Application.Abstractions.Interfaces.Repository.Report
+﻿using ReportModel = Entities.Models.Report.Report;
+
+namespace Application.Abstractions.Interfaces.Repository.Report
 {
-    public interface IReportRepository : IGenericRepository<Entities.Models.Report.Report>
+    public interface IReportRepository : IGenericRepository<ReportModel>
     {
     }
 }

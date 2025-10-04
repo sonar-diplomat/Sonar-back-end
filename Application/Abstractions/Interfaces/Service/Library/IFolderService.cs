@@ -1,17 +1,11 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
-using Entities.Models;
+﻿using Application.Abstractions.Interfaces.Service;
 using Entities.Models.Library;
 
 namespace Application.Abstractions.Interfaces.Services
 {
-    public interface IFolderService
+    public interface IFolderService : IGenericService<Folder>
     {
-        Task<Folder> GetByIdAsync(int id);
-        Task<IEnumerable<Folder>> GetAllAsync();
-        Task<Folder> CreateAsync(Folder folder);
-        Task<Folder> UpdateAsync(Folder folder);
-        Task<bool> DeleteAsync(int id);
+
     }
 }
 

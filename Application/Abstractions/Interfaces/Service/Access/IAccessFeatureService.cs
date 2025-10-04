@@ -1,14 +1,10 @@
-﻿using Entities.Models.Access;
+﻿using Application.Abstractions.Interfaces.Service;
+using Entities.Models.Access;
 
 namespace Application.Abstractions.Interfaces.Services
 {
-    public interface IAccessFeatureService
+    public interface IAccessFeatureService : IGenericService<AccessFeature>
     {
-        Task<AccessFeature> GetByIdAsync(int id);
-        Task<IEnumerable<AccessFeature>> GetAllAsync();
         Task<ICollection<AccessFeature>> GetDefaultAsync();
-        Task<AccessFeature> CreateAsync(AccessFeature feature);
-        Task<AccessFeature> UpdateAsync(AccessFeature feature);
-        Task<bool> DeleteAsync(int id);
     }
 }

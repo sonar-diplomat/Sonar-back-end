@@ -16,14 +16,14 @@ public static class PlaybackQualitySeedFactory
         {
             Id = 2,
             Name = "Medium",
-            BitRate = 256,
+            BitRate = 320,
             Description = "Balanced quality and performance"
         },
         new PlaybackQuality
         {
             Id = 3,
             Name = "High",
-            BitRate = 320,
+            BitRate = 700,
             Description = "High quality playback for premium experience"
         }
     };

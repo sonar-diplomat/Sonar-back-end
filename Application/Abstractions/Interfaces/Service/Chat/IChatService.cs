@@ -1,16 +1,9 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
-using Entities.Models;
+﻿using Application.Abstractions.Interfaces.Service;
 using Entities.Models.Chat;
 
 namespace Application.Abstractions.Interfaces.Services
 {
-    public interface IChatService
+    public interface IChatService : IGenericService<Chat>
     {
-        Task<Chat> GetByIdAsync(int id);
-        Task<IEnumerable<Chat>> GetAllAsync();
-        Task<Chat> CreateAsync(Chat chat);
-        Task<Chat> UpdateAsync(Chat chat);
-        Task<bool> DeleteAsync(int id);
     }
 }

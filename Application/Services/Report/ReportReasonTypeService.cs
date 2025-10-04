@@ -1,21 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿using Application.Abstractions.Interfaces.Repository.Report;
 using Application.Abstractions.Interfaces.Services;
-using Application.Abstractions.Interfaces.Repository.Report;
-using Entities.Models;
 using Entities.Models.Report;
 
 namespace Application.Services.Report
 {
-    public class ReportReasonTypeService : IReportReasonTypeService
+    public class ReportReasonTypeService(IReportReasonTypeRepository repository) : IReportReasonTypeService
     {
-        private readonly IReportReasonTypeRepository _repository;
-
-        public ReportReasonTypeService(IReportReasonTypeRepository repository)
-        {
-            _repository = repository;
-        }
 
         public Task<ReportReasonType> GetByIdAsync(int id) => throw new NotImplementedException();
         public Task<IEnumerable<ReportReasonType>> GetAllAsync() => throw new NotImplementedException();

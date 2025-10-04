@@ -1,20 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿using Application.Abstractions.Interfaces.Repository.Library;
 using Application.Abstractions.Interfaces.Services;
-using Application.Abstractions.Interfaces.Repository.Library;
-using Entities.Models;
 
 namespace Application.Services.Library
 {
-    public class LibraryService : ILibraryService
+    public class LibraryService(ILibraryRepository repository) : ILibraryService
     {
-        private readonly ILibraryRepository _repository;
-
-        public LibraryService(ILibraryRepository repository)
-        {
-            _repository = repository;
-        }
 
         public Task<Entities.Models.Library.Library> GetByIdAsync(int id) => throw new NotImplementedException();
         public Task<IEnumerable<Entities.Models.Library.Library>> GetAllAsync() => throw new NotImplementedException();

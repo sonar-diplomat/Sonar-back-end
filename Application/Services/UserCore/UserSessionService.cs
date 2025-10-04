@@ -1,21 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿using Application.Abstractions.Interfaces.Repository.UserCore;
 using Application.Abstractions.Interfaces.Services;
-using Application.Abstractions.Interfaces.Repository.UserCore;
-using Entities.Models;
 using Entities.Models.UserCore;
 
 namespace Application.Services.UserCore
 {
-    public class UserSessionService : IUserSessionService
+    public class UserSessionService(IUserSessionRepository repository) : IUserSessionService
     {
-        private readonly IUserSessionRepository _repository;
-
-        public UserSessionService(IUserSessionRepository repository)
-        {
-            _repository = repository;
-        }
 
         public Task<UserSession> GetByIdAsync(int id) => throw new NotImplementedException();
         public Task<IEnumerable<UserSession>> GetAllAsync() => throw new NotImplementedException();

@@ -1,17 +1,11 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
-using Entities.Models;
+﻿using Application.Abstractions.Interfaces.Service;
 using Entities.Models.Chat;
 
 namespace Application.Abstractions.Interfaces.Services
 {
-    public interface IPostService
+    public interface IPostService : IGenericService<Post>
     {
-        Task<Post> GetByIdAsync(int id);
-        Task<IEnumerable<Post>> GetAllAsync();
-        Task<Post> CreateAsync(Post post);
-        Task<Post> UpdateAsync(Post post);
-        Task<bool> DeleteAsync(int id);
+
     }
 }
 

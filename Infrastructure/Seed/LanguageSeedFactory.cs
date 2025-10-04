@@ -8,9 +8,9 @@ public static class LanguageSeedFactory
         new Language
         {
             Id = 1,
-            Locale = "rus",
-            Name = "Russian",
-            NativeName = "Русский"
+            Locale = "eng",
+            Name = "English",
+            NativeName = "English"
         },
         new Language
         {
@@ -22,9 +22,9 @@ public static class LanguageSeedFactory
         new Language
         {
             Id = 3,
-            Locale = "eng",
-            Name = "English",
-            NativeName = "English"
-        }
+            Locale = "ro",
+            Name = "Romanian",
+            NativeName = "română"
+        },
     };
 }

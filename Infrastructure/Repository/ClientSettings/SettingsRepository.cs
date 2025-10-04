@@ -10,16 +10,6 @@ namespace Sonar.Infrastructure.Repository.Client
         {
         }
 
-        public Task<Settings> CreateDefaultAsync()
-        {
-            Settings settings = new();
-            settings.AutoPlay = true;
-            settings.Crossfade = false;
-            settings.ExplicitContent = false;
-            settings.PreferredPlaybackQuality = context.;
 
-
-            return settings;
-        }
     }
 }

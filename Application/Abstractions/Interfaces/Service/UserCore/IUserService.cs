@@ -1,9 +1,10 @@
-﻿using Application.DTOs;
+﻿using Application.Abstractions.Interfaces.Service;
+using Application.DTOs;
 using Entities.Models.UserCore;
 
 namespace Application.Abstractions.Interfaces.Services
 {
-    public interface IUserService
+    public interface IUserService : IGenericService<User>
     {
         Task<User> CreateUserAsync(UserRegisterDTO userRegisterDTO);
         Task<bool> UpdateUserAsync(int userId, UserDTO userUpdateDTO);
@@ -16,9 +17,5 @@ namespace Application.Abstractions.Interfaces.Services
         // Task<bool> connectAccount(int userId);
         Task<bool> Manage2FAAsync(int userId);
         Task<bool> Verify2FAAsync(int userId, string token);
-
-        Task<User> GetByIdAsync(int id);
-        Task<IEnumerable<UserDTO>> GetAllAsync();
-        Task<bool> DeleteAsync(int id);
     }
 }

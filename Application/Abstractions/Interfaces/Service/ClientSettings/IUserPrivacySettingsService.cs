@@ -1,17 +1,11 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
-using Entities.Models;
+﻿using Application.Abstractions.Interfaces.Service;
 using Entities.Models.ClientSettings;
 
 namespace Application.Abstractions.Interfaces.Services
 {
-    public interface IUserPrivacySettingsService
+    public interface IUserPrivacySettingsService : IGenericService<UserPrivacySettings>
     {
-        Task<UserPrivacySettings> GetByIdAsync(int id);
-        Task<IEnumerable<UserPrivacySettings>> GetAllAsync();
-        Task<UserPrivacySettings> CreateAsync(UserPrivacySettings settings);
-        Task<UserPrivacySettings> UpdateAsync(UserPrivacySettings settings);
-        Task<bool> DeleteAsync(int id);
+        Task<UserPrivacySettings> CreateDefaultAsync();
     }
 }
 

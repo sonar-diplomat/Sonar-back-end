@@ -1,27 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿using Application.Abstractions.Interfaces.Repository.UserCore;
 using Application.Abstractions.Interfaces.Services;
-using Application.Abstractions.Interfaces.Repository.UserCore;
-using Entities.Models;
 using Entities.Models.UserCore;
 
 namespace Application.Services.UserCore
 {
-    public class UserPrivacyGroupService : IUserPrivacyGroupService
+    public class UserPrivacyGroupService(IUserPrivacyGroupRepository repository) : GenericService<UserPrivacyGroup>(repository), IUserPrivacyGroupService
     {
-        private readonly IUserPrivacyGroupRepository _repository;
-
-        public UserPrivacyGroupService(IUserPrivacyGroupRepository repository)
+        public async Task<UserPrivacyGroup> GetDefaultAsync()
         {
-            _repository = repository;
+            return await repository.GetDefaultAsync();
         }
-
-        public Task<UserPrivacyGroup> GetByIdAsync(int id) => throw new NotImplementedException();
-        public Task<IEnumerable<UserPrivacyGroup>> GetAllAsync() => throw new NotImplementedException();
-        public Task<UserPrivacyGroup> CreateAsync(UserPrivacyGroup entity) => throw new NotImplementedException();
-        public Task<UserPrivacyGroup> UpdateAsync(UserPrivacyGroup entity) => throw new NotImplementedException();
-        public Task<bool> DeleteAsync(int id) => throw new NotImplementedException();
     }
 }
 

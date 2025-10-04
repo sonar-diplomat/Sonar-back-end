@@ -6,8 +6,8 @@ public static class ThemeSeedFactory
 {
     public static Theme[] CreateSeedData() => new[]
     {
-        new Theme { Id = 1, Name = "Light" },
-        new Theme { Id = 2, Name = "Dark" }
+        new Theme { Id = 1, Name = "Dark" },
+        new Theme { Id = 2, Name = "Light" }
     };
 }
 

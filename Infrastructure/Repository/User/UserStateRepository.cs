@@ -9,5 +9,6 @@ namespace Sonar.Infrastructure.Repository.UserCore
         public UserStateRepository(SonarContext dbContext) : base(dbContext)
         {
         }
+
     }
 }

@@ -1,21 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿using Application.Abstractions.Interfaces.Repository.Distribution;
 using Application.Abstractions.Interfaces.Services;
-using Application.Abstractions.Interfaces.Repository.Distribution;
-using Entities.Models;
 using Entities.Models.Distribution;
 
 namespace Application.Services.Distribution
 {
-    public class DistributorSessionService : IDistributorSessionService
+    public class DistributorSessionService(IDistributorSessionRepository repository) : IDistributorSessionService
     {
-        private readonly IDistributorSessionRepository _repository;
 
-        public DistributorSessionService(IDistributorSessionRepository repository)
-        {
-            _repository = repository;
-        }
 
         public Task<DistributorSession> GetByIdAsync(int id) => throw new NotImplementedException();
         public Task<IEnumerable<DistributorSession>> GetAllAsync() => throw new NotImplementedException();

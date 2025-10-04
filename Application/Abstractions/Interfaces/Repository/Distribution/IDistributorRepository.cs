@@ -1,8 +1,7 @@
-﻿using Entities.Models.Distribution;
-
+﻿using DistributorModel = Entities.Models.Distribution.Distributor;
 namespace Application.Abstractions.Interfaces.Repository.Distribution
 {
-    public interface IDistributorRepository : IGenericRepository<Distributor>
+    public interface IDistributorRepository : IGenericRepository<DistributorModel>
     {
     }
 }

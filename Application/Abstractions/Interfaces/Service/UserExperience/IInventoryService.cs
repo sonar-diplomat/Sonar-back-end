@@ -1,16 +1,9 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
-using Entities.Models;
+﻿using Application.Abstractions.Interfaces.Service;
 using Entities.Models.UserExperience;
 
 namespace Application.Abstractions.Interfaces.Services
 {
-    public interface IInventoryService
+    public interface IInventoryService : IGenericService<Inventory>
     {
-        Task<Inventory> GetByIdAsync(int id);
-        Task<IEnumerable<Inventory>> GetAllAsync();
-        Task<Inventory> CreateAsync(Inventory inventory);
-        Task<Inventory> UpdateAsync(Inventory inventory);
-        Task<bool> DeleteAsync(int id);
     }
 }

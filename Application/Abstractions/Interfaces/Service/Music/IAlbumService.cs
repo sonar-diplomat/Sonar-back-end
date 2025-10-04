@@ -1,17 +1,11 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
-using Entities.Models;
+﻿using Application.Abstractions.Interfaces.Service;
 using Entities.Models.Music;
 
 namespace Application.Abstractions.Interfaces.Services
 {
-    public interface IAlbumService
+    public interface IAlbumService : IGenericService<Album>
     {
-        Task<Album> GetByIdAsync(int id);
-        Task<IEnumerable<Album>> GetAllAsync();
-        Task<Album> CreateAsync(Album album);
-        Task<Album> UpdateAsync(Album album);
-        Task<bool> DeleteAsync(int id);
+
     }
 }
 

@@ -10,4 +10,6 @@ public class NotificationType : BaseModel
     public string Name { get; set; }
     [Required, MaxLength(500)]
     public string Description { get; set; }
+
+    public ICollection<Settings> Settings { get; set; }
 }

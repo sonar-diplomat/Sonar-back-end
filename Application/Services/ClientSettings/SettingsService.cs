@@ -4,26 +4,27 @@ using Entities.Models.ClientSettings;
 
 namespace Application.Services.ClientSettings
 {
-    public class SettingsService : ISettingsService
+    public class SettingsService(
+        ISettingsRepository repository,
+        IPlaybackQualityService playbackQualityService,
+        ILanguageService languageService,
+        IThemeService themeService,
+        IUserPrivacySettingsService userPrivacySettingsService) : GenericService<Settings>(repository), ISettingsService
     {
-        private readonly ISettingsRepository _repository;
-
-        public SettingsService(ISettingsRepository repository)
+        public async Task<Settings> CreateDefaultAsync(string languageLocale)
         {
-            _repository = repository;
+
+            Settings settings = new();
+            settings.AutoPlay = true;
+            settings.Crossfade = false;
+            settings.ExplicitContent = false;
+            settings.PreferredPlaybackQuality = await playbackQualityService.GetDefaultAsync();
+            settings.Language = await languageService.GetByLocaleAsync(languageLocale);
+            settings.Theme = await themeService.GetDefaultAsync();
+            settings.UserPrivacy = await userPrivacySettingsService.CreateDefaultAsync();
+
+            return settings;
         }
-
-        public Task<Settings> CreateDefaultAsync()
-        {
-            return _repository.CreateDefaultAsync();
-        }
-        public Task<Settings> GetByIdAsync(int id) => throw new NotImplementedException();
-        public Task<IEnumerable<Settings>> GetAllAsync() => throw new NotImplementedException();
-        public Task<Settings> CreateAsync(Settings entity) => throw new NotImplementedException();
-        public Task<Settings> UpdateAsync(Settings entity) => throw new NotImplementedException();
-        public Task<bool> DeleteAsync(int id) => throw new NotImplementedException();
-
-
     }
 }
 

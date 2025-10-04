@@ -19,10 +19,7 @@ public class Settings : BaseModel
     public int LanguageId { get; set; }
     [Required]
     public int ThemeId { get; set; }
-    [Required]
-    public int NotificationTypeId { get; set; }
-    [Required]
-    public int UserId { get; set; }
+
     [Required]
     public int UserPrivacySettingsId { get; set; }
 
@@ -32,12 +29,11 @@ public class Settings : BaseModel
     public Language Language { get; set; }
     [ForeignKey("ThemeId")]
     public Theme Theme { get; set; }
-    [ForeignKey("NotificationTypeId")]
-    public NotificationType NotificationType { get; set; }
-    [ForeignKey("UserId")]
-    public UserCore.User User { get; set; }
+
     [ForeignKey("UserPrivacySettingsId")]
     public UserPrivacySettings UserPrivacy { get; set; }
 
+    public UserCore.User User { get; set; }
+    public ICollection<NotificationType> NotificationTypes { get; set; }
     public ICollection<UserCore.User> BlockedUsers { get; set; }
 }

@@ -1,17 +1,10 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
-using Entities.Models;
+﻿using Application.Abstractions.Interfaces.Service;
 using Entities.Models.Distribution;
 
 namespace Application.Abstractions.Interfaces.Services
 {
-    public interface IArtistService
+    public interface IArtistService : IGenericService<Artist>
     {
-        Task<Artist> GetByIdAsync(int id);
-        Task<IEnumerable<Artist>> GetAllAsync();
-        Task<Artist> CreateAsync(Artist artist);
-        Task<Artist> UpdateAsync(Artist artist);
-        Task<bool> DeleteAsync(int id);
     }
 }
 

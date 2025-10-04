@@ -1,27 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Application.Abstractions.Interfaces.Services;
+﻿using Application.Abstractions.Interfaces.Repository;
 using Application.Abstractions.Interfaces.Repository.UserCore;
-using Entities.Models;
+using Application.Abstractions.Interfaces.Services;
 using Entities.Models.UserCore;
 
 namespace Application.Services.UserCore
 {
-    public class UserStateService : IUserStateService
+    public class UserStateService(IUserStateRepository repository, IGenericRepository<UserState> genericRepository) : GenericService<UserState>(genericRepository), IUserStateService
     {
-        private readonly IUserStateRepository _repository;
 
-        public UserStateService(IUserStateRepository repository)
+        public async Task<UserState> CreateDefaultAsync()
         {
-            _repository = repository;
+            UserState result = new UserState()
+            {
+                UserStatusId = 1 // online
+            };
+            return await genericRepository.AddAsync(result);
         }
 
-        public Task<UserState> GetByIdAsync(int id) => throw new NotImplementedException();
-        public Task<IEnumerable<UserState>> GetAllAsync() => throw new NotImplementedException();
-        public Task<UserState> CreateAsync(UserState entity) => throw new NotImplementedException();
-        public Task<UserState> UpdateAsync(UserState entity) => throw new NotImplementedException();
-        public Task<bool> DeleteAsync(int id) => throw new NotImplementedException();
     }
 }
 

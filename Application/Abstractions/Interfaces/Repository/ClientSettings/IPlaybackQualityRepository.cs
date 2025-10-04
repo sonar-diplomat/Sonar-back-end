@@ -4,5 +4,6 @@ namespace Application.Abstractions.Interfaces.Repository.Client
 {
     public interface IPlaybackQualityRepository : IGenericRepository<PlaybackQuality>
     {
+        Task<PlaybackQuality> GetDefaultAsync();
     }
 }

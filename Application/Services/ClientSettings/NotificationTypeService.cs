@@ -1,21 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿using Application.Abstractions.Interfaces.Repository.Client;
 using Application.Abstractions.Interfaces.Services;
-using Application.Abstractions.Interfaces.Repository.Client;
-using Entities.Models;
 using Entities.Models.ClientSettings;
 
 namespace Application.Services.ClientSettings
 {
-    public class NotificationTypeService : INotificationTypeService
+    public class NotificationTypeService(INotificationTypeRepository repository) : INotificationTypeService
     {
-        private readonly INotificationTypeRepository _repository;
-
-        public NotificationTypeService(INotificationTypeRepository repository)
-        {
-            _repository = repository;
-        }
+        private readonly INotificationTypeRepository repository = repository;
 
         public Task<NotificationType> GetByIdAsync(int id) => throw new NotImplementedException();
         public Task<IEnumerable<NotificationType>> GetAllAsync() => throw new NotImplementedException();

@@ -1,17 +1,10 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
-using Entities.Models;
+﻿using Application.Abstractions.Interfaces.Service;
 using Entities.Models.Music;
 
 namespace Application.Abstractions.Interfaces.Services
 {
-    public interface ITrackService
+    public interface ITrackService : IGenericService<Track>
     {
-        Task<Track> GetByIdAsync(int id);
-        Task<IEnumerable<Track>> GetAllAsync();
-        Task<Track> CreateAsync(Track track);
-        Task<Track> UpdateAsync(Track track);
-        Task<bool> DeleteAsync(int id);
     }
 }
 

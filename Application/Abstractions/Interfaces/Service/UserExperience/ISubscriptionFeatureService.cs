@@ -1,16 +1,9 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
-using Entities.Models;
+﻿using Application.Abstractions.Interfaces.Service;
 using Entities.Models.UserExperience;
 
 namespace Application.Abstractions.Interfaces.Services
 {
-    public interface ISubscriptionFeatureService
+    public interface ISubscriptionFeatureService : IGenericService<SubscriptionFeature>
     {
-        Task<SubscriptionFeature> GetByIdAsync(int id);
-        Task<IEnumerable<SubscriptionFeature>> GetAllAsync();
-        Task<SubscriptionFeature> CreateAsync(SubscriptionFeature feature);
-        Task<SubscriptionFeature> UpdateAsync(SubscriptionFeature feature);
-        Task<bool> DeleteAsync(int id);
     }
 }

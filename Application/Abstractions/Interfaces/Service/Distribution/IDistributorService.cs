@@ -1,16 +1,10 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
-using Entities.Models;
+﻿using Application.Abstractions.Interfaces.Service;
 using Entities.Models.Distribution;
 
 namespace Application.Abstractions.Interfaces.Services
 {
-    public interface IDistributorService
+    public interface IDistributorService : IGenericService<Distributor>
     {
-        Task<Distributor> GetByIdAsync(int id);
-        Task<IEnumerable<Distributor>> GetAllAsync();
-        Task<Distributor> CreateAsync(Distributor distributor);
-        Task<Distributor> UpdateAsync(Distributor distributor);
-        Task<bool> DeleteAsync(int id);
+
     }
 }

@@ -1,13 +1,9 @@
-﻿using Entities.Models.UserCore;
+﻿using Application.Abstractions.Interfaces.Service;
+using Entities.Models.UserCore;
 
 namespace Application.Abstractions.Interfaces.Services
 {
-    public interface IUserSessionService
+    public interface IUserSessionService : IGenericService<UserSession>
     {
-        Task<UserSession> GetByIdAsync(int id);
-        Task<IEnumerable<UserSession>> GetAllAsync();
-        Task<UserSession> CreateAsync(UserSession session);
-        Task<UserSession> UpdateAsync(UserSession session);
-        Task<bool> DeleteAsync(int id);
     }
 }

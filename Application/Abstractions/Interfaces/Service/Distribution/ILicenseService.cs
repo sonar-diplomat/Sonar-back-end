@@ -1,17 +1,10 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
-using Entities.Models;
+﻿using Application.Abstractions.Interfaces.Service;
 using Entities.Models.Distribution;
 
 namespace Application.Abstractions.Interfaces.Services
 {
-    public interface ILicenseService
+    public interface ILicenseService : IGenericService<License>
     {
-        Task<License> GetByIdAsync(int id);
-        Task<IEnumerable<License>> GetAllAsync();
-        Task<License> CreateAsync(License license);
-        Task<License> UpdateAsync(License license);
-        Task<bool> DeleteAsync(int id);
     }
 }
 

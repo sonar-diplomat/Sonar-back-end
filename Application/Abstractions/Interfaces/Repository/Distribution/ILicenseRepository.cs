@@ -1,4 +1,4 @@
-﻿using Entities.Models.Distribution;
+﻿using System.ComponentModel;
 
 namespace Application.Abstractions.Interfaces.Repository.Distribution
 {

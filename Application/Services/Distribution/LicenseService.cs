@@ -1,21 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿using Application.Abstractions.Interfaces.Repository.Distribution;
 using Application.Abstractions.Interfaces.Services;
-using Application.Abstractions.Interfaces.Repository.Distribution;
-using Entities.Models;
 using Entities.Models.Distribution;
 
 namespace Application.Services.Distribution
 {
-    public class LicenseService : ILicenseService
+    public class LicenseService(ILicenseRepository repository) : ILicenseService
     {
-        private readonly ILicenseRepository _repository;
 
-        public LicenseService(ILicenseRepository repository)
-        {
-            _repository = repository;
-        }
 
         public Task<License> GetByIdAsync(int id) => throw new NotImplementedException();
         public Task<IEnumerable<License>> GetAllAsync() => throw new NotImplementedException();

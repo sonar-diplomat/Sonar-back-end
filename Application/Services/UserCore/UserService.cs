@@ -7,37 +7,21 @@ using Entities.Models.UserExperience;
 
 namespace Application.Services.UserCore
 {
-    public class UserService : IUserService
+    public class UserService(IUserRepository userRepository,
+        IVisibilityStateService visibilityStateService,
+        IInventoryService inventoryService,
+        IAccessFeatureService accessFeatureService,
+        ISettingsService settingsService,
+        IUserStateService stateService) : GenericService<User>, IUserService
     {
-        private readonly IUserRepository userRepository;
-        private readonly IVisibilityStateService visibilityStateService;
-        private readonly IInventoryService inventoryService;
-        private readonly IAccessFeatureService accessFeatureService;
-        private readonly ISettingsService settingsService;
 
-        public UserService(IUserRepository userRepository,
-            IVisibilityStateService visibilityStateService,
-            IInventoryService inventoryService,
-            IAccessFeatureService accessFeatureService,
-            ISettingsService settingsService
-
-            )
-        {
-            this.userRepository = userRepository;
-            this.visibilityStateService = visibilityStateService;
-            this.inventoryService = inventoryService;
-            this.accessFeatureService = accessFeatureService;
-            this.settingsService = settingsService;
-        }
 
         private async Task<User> GetUser(int userId)
         {
             User? user = await userRepository.GetByIdAsync(userId);
             if (user == null)
             {
-                //Exception exception = new();
-                //exception.Data["ErrorType"] = ErrorType.NotFoundUser;
-                //throw exception;
+
             }
             return user;
         }
@@ -94,8 +78,9 @@ namespace Application.Services.UserCore
             await inventoryService.CreateAsync(tempI);
             user.Inventory = tempI;
             user.AccessFeatures = await accessFeatureService.GetDefaultAsync();
-            user.Settings = await settingsService.CreateDefaultAsync();
-            // TODO: add avatar, UserState, Settings
+            user.Settings = await settingsService.CreateDefaultAsync(model.Locale);
+            user.UserState = await stateService.CreateDefaultAsync();
+            // TODO: add avatar
             return await userRepository.AddAsync(user);
         }
 

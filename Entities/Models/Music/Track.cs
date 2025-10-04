@@ -1,7 +1,8 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using Entities.Models.Access;
+﻿using Entities.Models.Access;
 using Entities.Models.Distribution;
+using Entities.Models.UserCore;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Entities.Models.Music;
 
@@ -35,4 +36,6 @@ public class Track : BaseModel
 
     public virtual ICollection<Artist> Artists { get; set; }
     public virtual ICollection<Collection> Collections { get; set; }
+    public virtual ICollection<Queue> Queues { get; set; }
+
 }

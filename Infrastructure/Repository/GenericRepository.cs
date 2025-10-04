@@ -14,41 +14,41 @@ public class GenericRepository<T> : IGenericRepository<T> where T : BaseModel
         this.context = context;
     }
 
-    public async Task<T?> GetByIdAsync(int? id)
+    public virtual async Task<T?> GetByIdAsync(int? id)
     {
         return await context.Set<T>().FindAsync(id);
     }
 
-    public async Task<IQueryable<T>> GetAllAsync()
+    public virtual async Task<IQueryable<T>> GetAllAsync()
     {
         return await Task.FromResult(context.Set<T>().AsQueryable());
     }
 
-    public async Task<T> AddAsync(T entity)
+    public virtual async Task<T> AddAsync(T entity)
     {
         await context.Set<T>().AddAsync(entity);
         return entity;
     }
 
-    public async Task<Task> UpdateAsync(T entity)
+    public virtual async Task<Task> UpdateAsync(T entity)
     {
         context.Set<T>().Update(entity);
         return Task.CompletedTask;
     }
 
-    public async Task<Task> RemoveAsync(T entity)
+    public virtual async Task<Task> RemoveAsync(T entity)
     {
         context.Set<T>().Remove(entity);
         return Task.CompletedTask;
     }
 
-    public async Task<Task> RemoveRangeAsync(List<T> entities)
+    public virtual async Task<Task> RemoveRangeAsync(List<T> entities)
     {
         context.Set<T>().RemoveRange(entities);
         return Task.CompletedTask;
     }
 
-    public async Task SaveChangesAsync()
+    public virtual async Task SaveChangesAsync()
     {
         await context.SaveChangesAsync();
     }

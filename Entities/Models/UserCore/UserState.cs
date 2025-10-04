@@ -1,33 +1,28 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Entities.Models.Music;
 
 namespace Entities.Models.UserCore
 {
     [Table("UserState")]
     public class UserState : BaseModel
     {
-        public int? Track { get; set; }
-        public int? Position { get; set; }
-        
-        [Required]
-        public int UserId { get; set; }
-        [Required]
-        public int PrimarySessionId { get; set; }
+
+        public int? PrimarySessionId { get; set; }
         [Required]
         public int UserStatusId { get; set; }
-        public int? CollectionId { get; set; }
+        public int? QueueId { get; set; }
 
         /// <summary>
         /// 
         /// </summary>
-        [ForeignKey("UserId")]
-        public User User { get; set; }
         [ForeignKey("PrimarySessionId")]
-        public UserSession PrimarySession { get; set; }
+        public virtual UserSession PrimarySession { get; set; }
         [ForeignKey("UserStatusId")]
-        public UserStatus UserStatus { get; set; }
-        [ForeignKey("CollectionId")]
-        public Collection? Collection { get; set; }
+        public virtual UserStatus UserStatus { get; set; }
+        [ForeignKey("QueueId")]
+        public virtual Queue? Queue { get; set; }
+        public virtual User User { get; set; }
+
+
     }
 }

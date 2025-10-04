@@ -1,13 +1,10 @@
-﻿using Entities.Models.UserCore;
+﻿using Application.Abstractions.Interfaces.Service;
+using Entities.Models.UserCore;
 
 namespace Application.Abstractions.Interfaces.Services
 {
-    public interface IUserPrivacyGroupService
+    public interface IUserPrivacyGroupService : IGenericService<UserPrivacyGroup>
     {
-        Task<UserPrivacyGroup> GetByIdAsync(int id);
-        Task<IEnumerable<UserPrivacyGroup>> GetAllAsync();
-        Task<UserPrivacyGroup> CreateAsync(UserPrivacyGroup privacyGroup);
-        Task<UserPrivacyGroup> UpdateAsync(UserPrivacyGroup privacyGroup);
-        Task<bool> DeleteAsync(int id);
+        Task<UserPrivacyGroup> GetDefaultAsync();
     }
 }
