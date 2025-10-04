@@ -1,8 +1,9 @@
 using Application.Abstractions.Interfaces.Repository.Library;
 using Entities.Models.Library;
 using Infrastructure.Data;
+using Sonar.Infrastructure.Repository;
 
-namespace Sonar.Infrastructure.Repository.Library
+namespace Infrastructure.Repository.Library
 {
     public class FolderRepository : GenericRepository<Folder>, IFolderRepository
     {

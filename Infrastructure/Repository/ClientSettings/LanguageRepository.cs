@@ -2,8 +2,9 @@ using Application.Abstractions.Interfaces.Repository.Client;
 using Entities.Models.ClientSettings;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Sonar.Infrastructure.Repository;
 
-namespace Sonar.Infrastructure.Repository.Client
+namespace Infrastructure.Repository.ClientSettings
 {
     public class LanguageRepository(SonarContext dbContext) : GenericRepository<Language>(dbContext), ILanguageRepository
     {

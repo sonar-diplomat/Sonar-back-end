@@ -1,7 +1,8 @@
 using Application.Abstractions.Interfaces.Repository.Library;
 using Infrastructure.Data;
+using Sonar.Infrastructure.Repository;
 
-namespace Sonar.Infrastructure.Repository.Library
+namespace Infrastructure.Repository.Library
 {
     public class LibraryRepository : GenericRepository<Entities.Models.Library.Library>, ILibraryRepository
     {

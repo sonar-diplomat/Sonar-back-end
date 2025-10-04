@@ -1,8 +1,9 @@
 using Application.Abstractions.Interfaces.Repository.UserExperience;
 using Entities.Models.UserExperience;
 using Infrastructure.Data;
+using Sonar.Infrastructure.Repository;
 
-namespace Sonar.Infrastructure.Repository.UserExperience
+namespace Infrastructure.Repository.UserExperience
 {
     public class AchievementRepository : GenericRepository<Achievement>, IAchievementRepository
     {

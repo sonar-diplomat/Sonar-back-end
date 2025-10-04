@@ -3,8 +3,9 @@ using Entities.Enums;
 using Entities.Models.Access;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Sonar.Infrastructure.Repository;
 
-namespace Sonar.Infrastructure.Repository.Access
+namespace Infrastructure.Repository.Access
 {
     public class AccessFeatureRepository : GenericRepository<AccessFeature>, IAccessFeatureRepository
     {

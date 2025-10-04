@@ -1,8 +1,9 @@
 using Application.Abstractions.Interfaces.Repository.File;
 using Entities.Models.File;
 using Infrastructure.Data;
+using Sonar.Infrastructure.Repository;
 
-namespace Sonar.Infrastructure.Repository.File
+namespace Infrastructure.Repository.File
 {
     public class FileTypeRepository : GenericRepository<FileType>, IFileTypeRepository
     {

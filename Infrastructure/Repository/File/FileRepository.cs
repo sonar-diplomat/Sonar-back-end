@@ -1,12 +1,16 @@
 using Application.Abstractions.Interfaces.Repository.File;
 using Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
+using Sonar.Infrastructure.Repository;
 
-namespace Sonar.Infrastructure.Repository.File
+namespace Infrastructure.Repository.File
 {
-    public class FileRepository : GenericRepository<Entities.Models.File.File>, IFileRepository
+    public class FileRepository(SonarContext dbContext)
+        : GenericRepository<Entities.Models.File.File>(dbContext), IFileRepository
     {
-        public FileRepository(SonarContext dbContext) : base(dbContext)
+        public async Task<Entities.Models.File.File> GetDefaultAsync()
         {
+            return (await context.Files.FirstOrDefaultAsync(f => f.Id == 1))!;
         }
     }
 }

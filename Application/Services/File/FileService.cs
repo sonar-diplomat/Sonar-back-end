@@ -4,9 +4,13 @@ using Application.Abstractions.Interfaces.Services;
 
 namespace Application.Services.File
 {
-    public class FileService(IFileRepository repository, IGenericRepository<Entities.Models.File.File> genericRepository) : GenericService<Entities.Models.File.File>(genericRepository), IFileService
+    public class FileService(IFileRepository repository, IGenericRepository<Entities.Models.File.File> genericRepository) 
+        : GenericService<Entities.Models.File.File>(genericRepository), IFileService
     {
-
+        public async Task<Entities.Models.File.File> GetDefaultAsync()
+        {
+            return await repository.GetDefaultAsync();
+        }
     }
 }
 

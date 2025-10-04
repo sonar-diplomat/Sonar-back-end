@@ -1,7 +1,8 @@
 using Application.Abstractions.Interfaces.Repository.Chat;
 using Infrastructure.Data;
+using Sonar.Infrastructure.Repository;
 
-namespace Sonar.Infrastructure.Repository.Chat
+namespace Infrastructure.Repository.Chat
 {
     public class ChatRepository : GenericRepository<Entities.Models.Chat.Chat>, IChatRepository
     {

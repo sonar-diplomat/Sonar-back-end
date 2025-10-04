@@ -2,8 +2,9 @@ using Application.Abstractions.Interfaces.Repository.UserCore;
 using Entities.Models.UserCore;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Sonar.Infrastructure.Repository;
 
-namespace Sonar.Infrastructure.Repository.UserCore
+namespace Infrastructure.Repository.User
 {
     public class UserPrivacyGroupRepository(SonarContext dbContext) : GenericRepository<UserPrivacyGroup>(dbContext), IUserPrivacyGroupRepository
     {

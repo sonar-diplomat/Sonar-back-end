@@ -5,7 +5,7 @@ namespace Application.Abstractions.Interfaces.Services
 {
     public interface IFileService : IGenericService<File>
     {
-
+        Task<File> GetDefaultAsync();
     }
 }
 

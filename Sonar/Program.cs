@@ -31,14 +31,22 @@ using Sonar.Infrastructure.Repository.Access;
 using Sonar.Infrastructure.Repository.Chat;
 using Sonar.Infrastructure.Repository.Client;
 using Sonar.Infrastructure.Repository.Distribution;
-using Sonar.Infrastructure.Repository.File;
-using Sonar.Infrastructure.Repository.Library;
 using Sonar.Infrastructure.Repository.Music;
 using Sonar.Infrastructure.Repository.Report;
 using Sonar.Infrastructure.Repository.UserCore;
 using Sonar.Infrastructure.Repository.UserExperience;
 using Sonar.Middleware;
 using System.Text;
+using Infrastructure.Repository.Access;
+using Infrastructure.Repository.Chat;
+using Infrastructure.Repository.ClientSettings;
+using Infrastructure.Repository.Distribution;
+using Infrastructure.Repository.File;
+using Infrastructure.Repository.Library;
+using Infrastructure.Repository.Music;
+using Infrastructure.Repository.Report;
+using Infrastructure.Repository.User;
+using Infrastructure.Repository.UserExperience;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<SonarContext>(options =>

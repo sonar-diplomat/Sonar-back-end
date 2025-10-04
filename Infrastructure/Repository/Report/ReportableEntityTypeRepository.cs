@@ -1,8 +1,9 @@
 using Application.Abstractions.Interfaces.Repository.Report;
 using Entities.Models.Report;
 using Infrastructure.Data;
+using Sonar.Infrastructure.Repository;
 
-namespace Sonar.Infrastructure.Repository.Report
+namespace Infrastructure.Repository.Report
 {
     public class ReportableEntityTypeRepository : GenericRepository<ReportableEntityType>, IReportableEntityTypeRepository
     {
