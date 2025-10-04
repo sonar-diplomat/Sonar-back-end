@@ -2,7 +2,7 @@
 
 namespace Application.Abstractions.Interfaces.Repository.UserCore
 {
-    public interface IUserRepository : IGenericRepository<User>
+    public interface IUserRepository
     {
         Task<User?> GetByIdAsync(int? id);
         Task<IQueryable<User>> GetAllAsync();

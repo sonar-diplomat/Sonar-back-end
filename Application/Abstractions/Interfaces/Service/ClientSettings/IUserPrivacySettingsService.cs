@@ -5,7 +5,7 @@ namespace Application.Abstractions.Interfaces.Services
 {
     public interface IUserPrivacySettingsService : IGenericService<UserPrivacySettings>
     {
-        Task<UserPrivacySettings> CreateDefaultAsync();
+        Task<UserPrivacySettings> GetDefaultAsync();
     }
 }
 

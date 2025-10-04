@@ -10,6 +10,9 @@ namespace Sonar.Infrastructure.Repository.Client
         {
         }
 
-
+        public Task<Settings> CreateDefaultAsync()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

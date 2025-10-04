@@ -1,10 +1,9 @@
-﻿using Application.Abstractions.Interfaces.Service;
-using Application.DTOs;
+﻿using Application.DTOs;
 using Entities.Models.UserCore;
 
 namespace Application.Abstractions.Interfaces.Services
 {
-    public interface IUserService : IGenericService<User>
+    public interface IUserService
     {
         Task<User> CreateUserAsync(UserRegisterDTO userRegisterDTO);
         Task<bool> UpdateUserAsync(int userId, UserDTO userUpdateDTO);

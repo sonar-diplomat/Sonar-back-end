@@ -1,4 +1,3 @@
-using Entities.Enums;
 using Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -98,16 +97,6 @@ namespace Sonar.Controllers.UserCore
         // register
         private bool UserExists(int id)
         {
-            // 8 полей  1 2 3 4 5 6 7 8
-            // неправильные/отсутствуют 2 4 7 8 
-            // неправильные/отсутствуют 2 7 8 
-            Exception exception = new();
-            exception.Data["ErrorType"] = ErrorType.NotFoundUser;
-            throw new exception(str);
-
-            // message -> непрпавильные поля 2 4 7 8
-            // message -> непрпавильные поля 2 7 8
-
             return _context.Users.Any(e => e.Id == id);
         }
     }

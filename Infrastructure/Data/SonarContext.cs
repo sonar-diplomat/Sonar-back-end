@@ -25,17 +25,9 @@ namespace Infrastructure.Data
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
-            builder.Entity<Settings>()
-                .HasOne(r => r.User)
-                .WithMany(a => a.SettingsBlockedUsers)
-                .HasForeignKey(r => r.UserId);
-
-            builder.Entity<User>()
-                .HasOne(r => r.Settings)
-                .WithOne(a => a.User)
-                .HasForeignKey<Settings>(r => r.UserId);
             // SomeEnum.SentMessage = "SentMessage SentMassegh"
             // User.Coolection DbSet(Name Id)
+
             builder.Entity<NotificationType>().HasData(NotificationTypeSeedFactory.CreateSeedData());
 
             builder.Entity<Theme>().HasData(ThemeSeedFactory.CreateSeedData());

@@ -6,9 +6,9 @@ namespace Application.Services.ClientSettings
 {
     public class LanguageService(ILanguageRepository repository) : GenericService<Language>(repository), ILanguageService
     {
-        public async Task<Language> GetDefault()
+        public async Task<Language> GetByLocaleAsync(string languageLocale)
         {
-            return await repository.GetDefault();
+            return await repository.GetByLocaleAsync(languageLocale);
         }
     }
 }

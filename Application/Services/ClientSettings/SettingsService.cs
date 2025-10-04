@@ -21,7 +21,7 @@ namespace Application.Services.ClientSettings
             settings.PreferredPlaybackQuality = await playbackQualityService.GetDefaultAsync();
             settings.Language = await languageService.GetByLocaleAsync(languageLocale);
             settings.Theme = await themeService.GetDefaultAsync();
-            settings.UserPrivacy = await userPrivacySettingsService.CreateDefaultAsync();
+            settings.UserPrivacy = await userPrivacySettingsService.GetDefaultAsync();
 
             return settings;
         }

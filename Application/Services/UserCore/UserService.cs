@@ -12,7 +12,8 @@ namespace Application.Services.UserCore
         IInventoryService inventoryService,
         IAccessFeatureService accessFeatureService,
         ISettingsService settingsService,
-        IUserStateService stateService) : GenericService<User>, IUserService
+        IUserStateService stateService)
+        : IUserService
     {
 
 
@@ -80,7 +81,11 @@ namespace Application.Services.UserCore
             user.AccessFeatures = await accessFeatureService.GetDefaultAsync();
             user.Settings = await settingsService.CreateDefaultAsync(model.Locale);
             user.UserState = await stateService.CreateDefaultAsync();
+
+
             // TODO: add avatar
+
+
             return await userRepository.AddAsync(user);
         }
 
