@@ -13,8 +13,6 @@ public abstract class AppException : System.Exception, IAppException
     {
     }
 
-    public AppException() { }
-
     public AppException(HttpStatusCode httpStatusCode, string message)
         : base(message)
     {
