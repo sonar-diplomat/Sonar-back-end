@@ -2,6 +2,7 @@
 
 public interface IEmailSenderService
 {
-    Task SendEmailAsync(string toEmail, string subject, string message);
+    public Task SendEmailAsync(string to, string template, Dictionary<string, string>? variables = null);
+
     //Task SendVeryficationEmailAsync(string toEmail, string );
 }

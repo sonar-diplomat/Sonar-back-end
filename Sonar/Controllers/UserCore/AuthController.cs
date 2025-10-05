@@ -3,9 +3,11 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using Application.Abstractions.Interfaces.Exception;
+using Application.Abstractions.Interfaces.Service.Utilities;
 using Application.Abstractions.Interfaces.Services;
 using Application.DTOs;
 using Application.Exception;
+using Entities.Enums;
 using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -21,18 +23,21 @@ public class AuthController : ControllerBase
 {
     private readonly IAppExceptionFactory<AppException> appExceptionFactory;
     private readonly IConfiguration configuration;
+    private readonly IEmailSenderService emailSenderService;
     private readonly SignInManager<User> signInManager;
     private readonly UserManager<User> userManager;
     private readonly IUserService userService;
 
     public AuthController(UserManager<User> userManager, SignInManager<User> signInManager,
-        IConfiguration configuration, IUserService userService, IAppExceptionFactory<AppException> appExceptionFactory)
+        IConfiguration configuration, IUserService userService, IAppExceptionFactory<AppException> appExceptionFactory,
+        IEmailSenderService emailSenderService)
     {
         this.userManager = userManager;
         this.signInManager = signInManager;
         this.configuration = configuration;
         this.userService = userService;
         this.appExceptionFactory = appExceptionFactory;
+        this.emailSenderService = emailSenderService;
     }
 
     [HttpPost("register")]
@@ -86,11 +91,29 @@ public class AuthController : ControllerBase
 
 
     [HttpPost("2fa")]
-    public async Task<IActionResult> TwoFactorAuthentication()
+    public async Task<IActionResult> TwoFactorAuthentication(string email)
     {
         // manager.GetCode
         // mailSendler(code)
-        throw new NotImplementedException();
+
+
+        try
+        {
+            string code = "191981";
+            await emailSenderService.SendEmailAsync(
+                email,
+                MailGunTemplates.twoFA,
+                new Dictionary<string, string>
+                {
+                    { "code", code }
+                });
+        }
+        catch (Exception e)
+        {
+            throw new NotImplementedException();
+        }
+
+        return Ok(new { message = "2FA code sent" });
     }
 
     [HttpPost("verify/{code}")]

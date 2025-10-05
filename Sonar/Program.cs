@@ -10,6 +10,7 @@ using Application.Abstractions.Interfaces.Repository.Music;
 using Application.Abstractions.Interfaces.Repository.Report;
 using Application.Abstractions.Interfaces.Repository.UserCore;
 using Application.Abstractions.Interfaces.Repository.UserExperience;
+using Application.Abstractions.Interfaces.Service.Utilities;
 using Application.Abstractions.Interfaces.Services;
 using Application.Exception;
 using Application.Services.Access;
@@ -22,6 +23,7 @@ using Application.Services.Music;
 using Application.Services.Report;
 using Application.Services.UserCore;
 using Application.Services.UserExperience;
+using Application.Services.Utilities;
 using Entities.Models.UserCore;
 using Infrastructure.Data;
 using Infrastructure.Repository.Access;
@@ -36,7 +38,6 @@ using Infrastructure.Repository.User;
 using Infrastructure.Repository.UserExperience;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Sonar.Infrastructure.Repository.Access;
 using Sonar.Infrastructure.Repository.Chat;
@@ -49,9 +50,9 @@ using Sonar.Infrastructure.Repository.UserExperience;
 using Sonar.Middleware;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
-builder.Services.AddDbContext<SonarContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("SonarContext") ??
-                      throw new InvalidOperationException("Connection string 'SonarContext' not found.")));
+//builder.Services.AddDbContext<SonarContext>(options =>
+//    options.UseNpgsql(builder.Configuration.GetConnectionString("SonarContext") ??
+//                      throw new InvalidOperationException("Connection string 'SonarContext' not found.")));
 
 // Add services to the container.
 
@@ -236,7 +237,13 @@ builder.Services.AddScoped<ISubscriptionFeatureService, SubscriptionFeatureServi
 builder.Services.AddScoped<ISubscriptionPackService, SubscriptionPackService>();
 builder.Services.AddScoped<ISubscriptionPaymentService, SubscriptionPaymentService>();
 
+
+builder.Services.AddHttpClient<HttpClient, HttpClient>();
+// Utility Services
+builder.Services.AddScoped<IEmailSenderService, MailgunEmailService>();
+
 #endregion
+
 
 // Exception Handling
 builder.Services.AddSingleton<IAppExceptionFactory<IAppException>, AppExceptionFactory<IAppException>>();
