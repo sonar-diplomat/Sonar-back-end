@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Entities.Models.UserCore;
 
 namespace Entities.Models.Library;
 
@@ -10,8 +11,7 @@ public class Library : BaseModel
     public int UserId { get; set; }
 
     /// <summary>
-    /// 
     /// </summary>
     [ForeignKey("UserId")]
-    public virtual UserCore.User User { get; set; }
+    public virtual User User { get; set; }
 }

@@ -1,11 +1,8 @@
 ﻿using Application.Abstractions.Interfaces.Service;
 using Entities.Models.Distribution;
 
-namespace Application.Abstractions.Interfaces.Services
+namespace Application.Abstractions.Interfaces.Services;
+
+public interface IDistributorSessionService : IGenericService<DistributorSession>
 {
-    public interface IDistributorSessionService : IGenericService<DistributorSession>
-    {
-
-    }
 }
-

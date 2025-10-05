@@ -2,11 +2,8 @@
 using Application.Abstractions.Interfaces.Services;
 using Entities.Models.Chat;
 
-namespace Application.Services.Chat
+namespace Application.Services.Chat;
+
+public class PostService(IPostRepository repository) : GenericService<Post>(repository), IPostService
 {
-    public class PostService(IPostRepository repository) : GenericService<Post>(repository), IPostService
-    {
-
-    }
 }
-

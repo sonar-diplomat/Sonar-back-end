@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Entities.Models.Music;
+using Entities.Models.UserCore;
 
 namespace Entities.Models.Distribution;
 
@@ -9,13 +10,12 @@ public class Artist : BaseModel
 {
     [Required]
     public int UserId { get; set; }
-    
+
     /// <summary>
-    /// 
     /// </summary>
     [ForeignKey("UserId")]
-    public virtual UserCore.User User { get; set; }
-    
+    public virtual User User { get; set; }
+
     public virtual ICollection<Track> Tracks { get; set; }
     public virtual ICollection<Album> Albums { get; set; }
 }

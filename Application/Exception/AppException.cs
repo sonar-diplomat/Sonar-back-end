@@ -9,7 +9,9 @@ public interface IAppException
 
 public abstract class AppException : System.Exception, IAppException
 {
-    public HttpStatusCode StatusCode { get; set; }
+    public AppException()
+    {
+    }
 
     public AppException() { }
 
@@ -18,6 +20,8 @@ public abstract class AppException : System.Exception, IAppException
     {
         StatusCode = httpStatusCode;
     }
+
+    public HttpStatusCode StatusCode { get; set; }
 }
 
 public class BadRequestException(string[]? args = null)

@@ -1,10 +1,9 @@
 ﻿using Application.DTOs;
 
-namespace Application.Abstractions.Interfaces.Service.UserCore
+namespace Application.Abstractions.Interfaces.Service.UserCore;
+
+public interface IAuthService
 {
-    public interface IAuthService
-    {
-        Task<UserDTO> Register(UserRegisterDTO userRegisterDTO);
-        // Task<string> Login(string , string password);
-    }
+    Task<UserDTO> Register(UserRegisterDTO userRegisterDTO);
+    // Task<string> Login(string , string password);
 }

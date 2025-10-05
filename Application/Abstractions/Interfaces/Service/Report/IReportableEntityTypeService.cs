@@ -1,11 +1,8 @@
 ﻿using Application.Abstractions.Interfaces.Service;
 using Entities.Models.Report;
 
-namespace Application.Abstractions.Interfaces.Services
+namespace Application.Abstractions.Interfaces.Services;
+
+public interface IReportableEntityTypeService : IGenericService<ReportableEntityType>
 {
-    public interface IReportableEntityTypeService : IGenericService<ReportableEntityType>
-    {
-
-    }
 }
-

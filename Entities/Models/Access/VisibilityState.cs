@@ -6,14 +6,13 @@ namespace Entities.Models.Access;
 [Table("VisibilityState")]
 public class VisibilityState : BaseModel
 {
-    [Required] 
+    [Required]
     public DateTime SetPublicOn { get; set; }
 
-    [Required] 
+    [Required]
     public int StatusId { get; set; }
 
     /// <summary>
-    /// 
     /// </summary>
     [ForeignKey("StatusId")]
     public virtual VisibilityStatus Status { get; set; }

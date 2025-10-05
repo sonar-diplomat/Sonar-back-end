@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Entities.Models.UserCore;
 
 namespace Entities.Models.Distribution;
 
@@ -8,12 +9,13 @@ public class License : BaseModel
 {
     [Required]
     public DateTime IssuingDate { get; set; }
+
     [Required]
     public DateTime ExpirationDate { get; set; }
-    
+
     [Required]
     public int IssuerId { get; set; }
-    
+
     [ForeignKey("IssuerId")]
-    public virtual UserCore.User Issuer { get; set; }
+    public virtual User Issuer { get; set; }
 }

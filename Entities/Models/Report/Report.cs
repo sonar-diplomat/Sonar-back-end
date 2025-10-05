@@ -1,30 +1,33 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Entities.Models.Access;
+using Entities.Models.UserCore;
 
 namespace Entities.Models.Report;
 
 [Table("Report")]
 public class Report : BaseModel
 {
-    [Required] 
+    [Required]
     public bool IsClosed { get; set; }
-    [Required] 
+
+    [Required]
     public int EntityIdentifier { get; set; }
-        
-    [Required] 
+
+    [Required]
     public int ReportableEntityTypeId { get; set; }
-    [Required] 
+
+    [Required]
     public int ReporterId { get; set; }
 
     /// <summary>
-    /// 
     /// </summary>
-    [ForeignKey("ReportableEntityTypeId")] 
+    [ForeignKey("ReportableEntityTypeId")]
     public virtual ReportableEntityType ReportableEntityType { get; set; }
-    [ForeignKey("ReporterId")] 
-    public virtual UserCore.User Reporter { get; set; }
-        
+
+    [ForeignKey("ReporterId")]
+    public virtual User Reporter { get; set; }
+
     public virtual ICollection<ReportReasonType> ReportReasonType { get; set; }
     public virtual ICollection<Suspension> Suspensions { get; set; }
 }

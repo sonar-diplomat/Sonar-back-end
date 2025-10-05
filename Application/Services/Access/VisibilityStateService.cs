@@ -2,11 +2,9 @@
 using Application.Abstractions.Interfaces.Services;
 using Entities.Models.Access;
 
-namespace Application.Services.Access
+namespace Application.Services.Access;
+
+public class VisibilityStateService(IVisibilityStateRepository repository)
+    : GenericService<VisibilityState>(repository), IVisibilityStateService
 {
-    public class VisibilityStateService(IVisibilityStateRepository repository) : GenericService<VisibilityState>(repository), IVisibilityStateService
-    {
-
-    }
 }
-

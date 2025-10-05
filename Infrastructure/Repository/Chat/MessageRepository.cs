@@ -2,12 +2,11 @@ using Application.Abstractions.Interfaces.Repository.Chat;
 using Entities.Models.Chat;
 using Infrastructure.Data;
 
-namespace Sonar.Infrastructure.Repository.Chat
+namespace Sonar.Infrastructure.Repository.Chat;
+
+public class MessageRepository : GenericRepository<Message>, IMessageRepository
 {
-    public class MessageRepository : GenericRepository<Message>, IMessageRepository
+    public MessageRepository(SonarContext dbContext) : base(dbContext)
     {
-        public MessageRepository(SonarContext dbContext) : base(dbContext)
-        {
-        }
     }
 }

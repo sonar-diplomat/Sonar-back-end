@@ -17,6 +17,7 @@ public class UserRepository : IUserRepository
     {
         return await _context.Set<User>().FindAsync(id);
     }
+
     public async Task<IQueryable<User>> GetAllAsync()
     {
         return await Task.FromResult(_context.Set<User>().AsQueryable());
@@ -27,6 +28,7 @@ public class UserRepository : IUserRepository
         await _context.Set<User>().AddAsync(user);
         return user;
     }
+
     public async Task<Task> UpdateAsync(User user)
     {
         _context.Set<User>().Update(user);
@@ -50,4 +52,3 @@ public class UserRepository : IUserRepository
         await _context.SaveChangesAsync();
     }
 }
-

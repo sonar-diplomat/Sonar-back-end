@@ -8,14 +8,14 @@ public class CosmeticSticker : BaseModel
 {
     [Required]
     public double X { get; set; }
+
     [Required]
     public double Y { get; set; }
-    
+
     [Required]
     public int CosmeticItemId { get; set; }
-    
+
     /// <summary>
-    /// 
     /// </summary>
     [ForeignKey("CosmeticItemId")]
     public virtual CosmeticItem CosmeticItem { get; set; }

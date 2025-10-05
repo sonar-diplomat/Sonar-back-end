@@ -1,10 +1,8 @@
 ﻿using Application.Abstractions.Interfaces.Service;
 using Entities.Models.ClientSettings;
 
-namespace Application.Abstractions.Interfaces.Services
-{
-    public interface INotificationTypeService : IGenericService<NotificationType>
-    {
-    }
-}
+namespace Application.Abstractions.Interfaces.Services;
 
+public interface INotificationTypeService : IGenericService<NotificationType>
+{
+}

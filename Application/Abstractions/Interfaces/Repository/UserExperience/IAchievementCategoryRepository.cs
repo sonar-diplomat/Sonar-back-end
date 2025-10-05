@@ -1,9 +1,7 @@
 ﻿using Entities.Models.UserExperience;
 
-namespace Application.Abstractions.Interfaces.Repository.UserExperience
-{
-    public interface IAchievementCategoryRepository : IGenericRepository<AchievementCategory>
-    {
+namespace Application.Abstractions.Interfaces.Repository.UserExperience;
 
-    }
+public interface IAchievementCategoryRepository : IGenericRepository<AchievementCategory>
+{
 }

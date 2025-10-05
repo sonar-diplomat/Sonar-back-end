@@ -4,11 +4,12 @@ namespace Infrastructure.Seed;
 
 public static class ThemeSeedFactory
 {
-    public static Theme[] CreateSeedData() => new[]
+    public static Theme[] CreateSeedData()
     {
-        new Theme { Id = 1, Name = "Dark" },
-        new Theme { Id = 2, Name = "Light" }
-    };
+        return new[]
+        {
+            new Theme { Id = 1, Name = "Dark" },
+            new Theme { Id = 2, Name = "Light" }
+        };
+    }
 }
-
-

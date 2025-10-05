@@ -1,26 +1,25 @@
-﻿namespace Entities.Enums
+﻿namespace Entities.Enums;
+
+public struct AccessFeatureStruct
 {
-    public struct AccessFeatureStruct
-    {
-        // --- Social ---
-        public const string SendFriendRequest = "SendFriendRequest";
-        public const string SendMessage = "SendMessage";
-        public const string ReportContent = "ReportContent";
+    // --- Social ---
+    public const string SendFriendRequest = "SendFriendRequest";
+    public const string SendMessage = "SendMessage";
+    public const string ReportContent = "ReportContent";
 
-        // --- Content ---
-        public const string ListenContent = "ListenContent";
+    // --- Content ---
+    public const string ListenContent = "ListenContent";
 
-        // --- Access ---
-        public const string UserLogin = "UserLogin";
+    // --- Access ---
+    public const string UserLogin = "UserLogin";
 
-        // --- Moderate ---
-        public const string ManageUsers = "ManageUsers";
-        public const string ManageContent = "ManageContent";
-        public const string ManageDistributors = "ManageDistributors";
-        public const string ManageReports = "ManageReports";
-        public const string IamAGod = "IamAGod";
+    // --- Moderate ---
+    public const string ManageUsers = "ManageUsers";
+    public const string ManageContent = "ManageContent";
+    public const string ManageDistributors = "ManageDistributors";
+    public const string ManageReports = "ManageReports";
+    public const string IamAGod = "IamAGod";
 
-        // --- Artists ---
-        public const string CreatePost = "CreatePost";
-    }
+    // --- Artists ---
+    public const string CreatePost = "CreatePost";
 }

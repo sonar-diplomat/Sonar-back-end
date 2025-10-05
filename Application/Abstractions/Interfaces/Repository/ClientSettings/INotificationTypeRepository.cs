@@ -1,8 +1,7 @@
 ﻿using Entities.Models.ClientSettings;
 
-namespace Application.Abstractions.Interfaces.Repository.Client
+namespace Application.Abstractions.Interfaces.Repository.Client;
+
+public interface INotificationTypeRepository : IGenericRepository<NotificationType>
 {
-    public interface INotificationTypeRepository : IGenericRepository<NotificationType>
-    {
-    }
 }

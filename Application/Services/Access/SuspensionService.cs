@@ -2,11 +2,9 @@
 using Application.Abstractions.Interfaces.Services;
 using Entities.Models.Access;
 
-namespace Application.Services.Access
+namespace Application.Services.Access;
+
+public class SuspensionService(ISuspensionRepository repository)
+    : GenericService<Suspension>(repository), ISuspensionService
 {
-    public class SuspensionService(ISuspensionRepository repository) : GenericService<Suspension>(repository), ISuspensionService
-    {
-
-    }
 }
-
