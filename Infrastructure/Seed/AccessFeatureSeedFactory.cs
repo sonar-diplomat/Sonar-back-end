@@ -1,10 +1,12 @@
 ﻿using Entities.Models.Access;
 
-namespace Infrastructure.Seed
+namespace Infrastructure.Seed;
+
+public static class AccessFeatureSeedFactory
 {
-    public static class AccessFeatureSeedFactory
+    public static AccessFeature[] CreateSeedData()
     {
-        public static AccessFeature[] CreateSeedData() => new[]
+        return new[]
         {
             new AccessFeature
             {

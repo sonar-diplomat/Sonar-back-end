@@ -110,7 +110,7 @@ public class AuthController : ControllerBase
             return BadRequest("Invalid token");
         string newAccessToken = GenerateJwtToken(user);
         RefreshToken newRefreshToken = GenerateRefreshToken();
-        
+
         // Remove old refresh token
         user.RefreshTokens.RemoveAll(t => t.Token == refreshTokenDto.Token);
         user.RefreshTokens.Add(newRefreshToken);

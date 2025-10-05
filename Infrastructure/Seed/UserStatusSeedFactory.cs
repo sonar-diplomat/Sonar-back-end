@@ -1,10 +1,12 @@
 ﻿using Entities.Models.UserCore;
 
-namespace Infrastructure.Seed
+namespace Infrastructure.Seed;
+
+public static class UserStatusSeedFactory
 {
-    public static class UserStatusSeedFactory
+    public static UserStatus[] CreateSeedData()
     {
-        public static UserStatus[] CreateSeedData() => new[]
+        return new[]
         {
             new UserStatus { Id = 1, Name = "online" },
             new UserStatus { Id = 2, Name = "offline" },

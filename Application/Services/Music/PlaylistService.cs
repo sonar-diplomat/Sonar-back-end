@@ -6,7 +6,4 @@ namespace Application.Services.Music;
 
 public class PlaylistService(IPlaylistRepository repository) : GenericService<Playlist>(repository), IPlaylistService
 {
-
 }
-
-

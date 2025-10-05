@@ -3,12 +3,11 @@ using Entities.Models.Music;
 using Infrastructure.Data;
 using Sonar.Infrastructure.Repository;
 
-namespace Infrastructure.Repository.Music
+namespace Infrastructure.Repository.Music;
+
+public class AlbumRepository : GenericRepository<Album>, IAlbumRepository
 {
-    public class AlbumRepository : GenericRepository<Album>, IAlbumRepository
+    public AlbumRepository(SonarContext dbContext) : base(dbContext)
     {
-        public AlbumRepository(SonarContext dbContext) : base(dbContext)
-        {
-        }
     }
 }

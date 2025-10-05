@@ -6,6 +6,4 @@ namespace Application.Services.Music;
 
 public class TrackService(ITrackRepository repository) : GenericService<Track>(repository), ITrackService
 {
-
 }
-

@@ -20,7 +20,7 @@ public class UserService(
 {
     public async Task<int> ChangeCurrencyAsync(int userId, int modifier)
     {
-        var user = await GetUser(userId);
+        User user = await GetUser(userId);
 
 
         user.AvailableCurrency += modifier;
@@ -30,7 +30,7 @@ public class UserService(
     // TODO: implement email change verification by service
     public async Task<bool> ChangeEmailAsync(int userId, string newEmail)
     {
-        var user = await GetUser(userId);
+        User user = await GetUser(userId);
 
 
         return true;
@@ -91,7 +91,7 @@ public class UserService(
 
     private async Task<User> GetUser(int userId)
     {
-        var user = await userRepository.GetByIdAsync(userId);
+        User? user = await userRepository.GetByIdAsync(userId);
         if (user == null)
         {
         }

@@ -5,14 +5,16 @@ using Entities.Models.UserCore;
 
 namespace Application.Services.ClientSettings;
 
-public class UserPrivacySettingsService(IUserPrivacySettingsRepository repository, IUserPrivacyGroupService userPrivacyGroupService)
+public class UserPrivacySettingsService(
+    IUserPrivacySettingsRepository repository,
+    IUserPrivacyGroupService userPrivacyGroupService)
     : GenericService<UserPrivacySettings>(repository), IUserPrivacySettingsService
 {
     public async Task<UserPrivacySettings> GetDefaultAsync()
     {
         UserPrivacyGroup userPrivacyGroup = await userPrivacyGroupService.GetDefaultAsync();
 
-        UserPrivacySettings userPrivacySettings = new UserPrivacySettings()
+        UserPrivacySettings userPrivacySettings = new()
         {
             WhichCanMessage = userPrivacyGroup,
             WhichCanViewProfile = userPrivacyGroup

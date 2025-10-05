@@ -17,13 +17,13 @@ services:
     image: postgres:16-alpine
     restart: always
     environment:
-        POSTGRES_DB: sonardb
-        POSTGRES_USER: sonaruser
-        POSTGRES_PASSWORD: sonarpass
+      POSTGRES_DB: sonardb
+      POSTGRES_USER: sonaruser
+      POSTGRES_PASSWORD: sonarpass
     ports:
-    - "5432:5432"
+      - "5432:5432"
     volumes:
-    - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
 
 volumes:
   postgres_data:

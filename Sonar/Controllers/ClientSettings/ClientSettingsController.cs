@@ -1,6 +1,5 @@
-﻿namespace Sonar.Controllers.ClientSettings
+﻿namespace Sonar.Controllers.ClientSettings;
+
+public class ClientSettingsController
 {
-    public class ClientSettingsController
-    {
-    }
 }

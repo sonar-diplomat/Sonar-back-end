@@ -1,10 +1,8 @@
 ﻿using Application.Abstractions.Interfaces.Service;
 using Entities.Models.UserExperience;
 
-namespace Application.Abstractions.Interfaces.Services
-{
-    public interface ICosmeticItemTypeService : IGenericService<CosmeticItemType>
-    {
-    }
-}
+namespace Application.Abstractions.Interfaces.Services;
 
+public interface ICosmeticItemTypeService : IGenericService<CosmeticItemType>
+{
+}

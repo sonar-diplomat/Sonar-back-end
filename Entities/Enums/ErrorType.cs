@@ -1,21 +1,20 @@
-﻿namespace Entities.Enums
+﻿namespace Entities.Enums;
+
+public enum ErrorType
 {
-    public enum ErrorType
-    {
-        NotFound,
-        NotFoundUser,
+    NotFound,
+    NotFoundUser,
 
-        BadRequest,
-        BadRequestUser,
+    BadRequest,
+    BadRequestUser,
 
-        Unauthorized,
+    Unauthorized,
 
-        PaymentRequired,
+    PaymentRequired,
 
-        Forbidden,
+    Forbidden,
 
-        MethodNotAllowed,
+    MethodNotAllowed,
 
-        InternalServerError
-    }
+    InternalServerError
 }

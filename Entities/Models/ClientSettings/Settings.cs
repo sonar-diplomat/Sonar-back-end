@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Entities.Models.UserCore;
 
 namespace Entities.Models.ClientSettings;
 
@@ -8,15 +9,19 @@ public class Settings : BaseModel
 {
     [Required]
     public bool AutoPlay { get; set; }
+
     [Required]
     public bool Crossfade { get; set; }
+
     [Required]
     public bool ExplicitContent { get; set; }
 
     [Required]
     public int PreferredPlaybackQualityId { get; set; }
+
     [Required]
     public int LanguageId { get; set; }
+
     [Required]
     public int ThemeId { get; set; }
 
@@ -25,15 +30,17 @@ public class Settings : BaseModel
 
     [ForeignKey("PreferredPlaybackQualityId")]
     public PlaybackQuality PreferredPlaybackQuality { get; set; }
+
     [ForeignKey("LanguageId")]
     public Language Language { get; set; }
+
     [ForeignKey("ThemeId")]
     public Theme Theme { get; set; }
 
     [ForeignKey("UserPrivacySettingsId")]
     public UserPrivacySettings UserPrivacy { get; set; }
 
-    public UserCore.User User { get; set; }
+    public User User { get; set; }
     public ICollection<NotificationType> NotificationTypes { get; set; }
-    public ICollection<UserCore.User> BlockedUsers { get; set; }
+    public ICollection<User> BlockedUsers { get; set; }
 }

@@ -2,11 +2,9 @@
 using Application.Abstractions.Interfaces.Services;
 using Entities.Models.UserExperience;
 
-namespace Application.Services.UserExperience
+namespace Application.Services.UserExperience;
+
+public class CosmeticStickerService(ICosmeticStickerRepository repository)
+    : GenericService<CosmeticSticker>(repository), ICosmeticStickerService
 {
-    public class CosmeticStickerService(ICosmeticStickerRepository repository) : GenericService<CosmeticSticker>(repository), ICosmeticStickerService
-    {
-
-    }
 }
-

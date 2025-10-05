@@ -1,8 +1,7 @@
 ﻿using Entities.Models.ClientSettings;
 
-namespace Application.Abstractions.Interfaces.Repository.Client
+namespace Application.Abstractions.Interfaces.Repository.Client;
+
+public interface IUserPrivacySettingsRepository : IGenericRepository<UserPrivacySettings>
 {
-    public interface IUserPrivacySettingsRepository : IGenericRepository<UserPrivacySettings>
-    {
-    }
 }

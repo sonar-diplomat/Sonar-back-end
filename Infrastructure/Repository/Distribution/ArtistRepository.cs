@@ -3,12 +3,11 @@ using Entities.Models.Distribution;
 using Infrastructure.Data;
 using Sonar.Infrastructure.Repository;
 
-namespace Infrastructure.Repository.Distribution
+namespace Infrastructure.Repository.Distribution;
+
+public class ArtistRepository : GenericRepository<Artist>, IArtistRepository
 {
-    public class ArtistRepository : GenericRepository<Artist>, IArtistRepository
+    public ArtistRepository(SonarContext dbContext) : base(dbContext)
     {
-        public ArtistRepository(SonarContext dbContext) : base(dbContext)
-        {
-        }
     }
 }

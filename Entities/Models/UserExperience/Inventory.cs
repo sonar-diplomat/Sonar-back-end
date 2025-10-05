@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Entities.Models.UserCore;
 
 namespace Entities.Models.UserExperience;
 
@@ -8,12 +9,11 @@ public class Inventory : BaseModel
 {
     [Required]
     public int UserId { get; set; }
-    
+
     /// <summary>
-    /// 
     /// </summary>
     [ForeignKey("UserId")]
-    public UserCore.User User { get; set; }
-    
+    public User User { get; set; }
+
     public ICollection<CosmeticItem> CosmeticItems { get; set; }
 }

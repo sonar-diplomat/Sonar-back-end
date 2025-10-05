@@ -6,6 +6,7 @@ namespace Entities.Models.UserCore;
 [Table("UserPrivacyGroup")]
 public class UserPrivacyGroup : BaseModel
 {
-    [Required, MaxLength(50)]
+    [Required]
+    [MaxLength(50)]
     public string Name { get; set; }
 }

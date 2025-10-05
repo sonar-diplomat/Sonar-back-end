@@ -1,8 +1,7 @@
 ﻿using Entities.Models.UserExperience;
 
-namespace Application.Abstractions.Interfaces.Repository.UserExperience
+namespace Application.Abstractions.Interfaces.Repository.UserExperience;
+
+public interface ISubscriptionPackRepository : IGenericRepository<SubscriptionPack>
 {
-    public interface ISubscriptionPackRepository : IGenericRepository<SubscriptionPack>
-    {
-    }
 }

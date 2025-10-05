@@ -4,9 +4,7 @@ using Entities.Models.Report;
 
 namespace Application.Services.Report;
 
-public class ReportableEntityTypeService(IReportableEntityTypeRepository repository) : GenericService<ReportableEntityType>(repository), IReportableEntityTypeService
+public class ReportableEntityTypeService(IReportableEntityTypeRepository repository)
+    : GenericService<ReportableEntityType>(repository), IReportableEntityTypeService
 {
-
-
 }
-

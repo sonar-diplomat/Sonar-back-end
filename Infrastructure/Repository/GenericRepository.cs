@@ -2,7 +2,6 @@
 using Entities.Models;
 using Infrastructure.Data;
 
-
 namespace Sonar.Infrastructure.Repository;
 
 public class GenericRepository<T> : IGenericRepository<T> where T : BaseModel

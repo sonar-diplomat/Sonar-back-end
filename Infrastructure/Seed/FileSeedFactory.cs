@@ -4,16 +4,18 @@ namespace Infrastructure.Seed;
 
 public class FileSeedFactory
 {
-    public static File[] CreateSeedData() => new[]
+    public static File[] CreateSeedData()
     {
-        new File
+        return new[]
         {
-            Id = 1,
-            ItemName = "Default avatar",
-            // TODO: Add url to default user image
-            Url = "",
-            TypeId = 1
-        },
-
-    };
+            new File
+            {
+                Id = 1,
+                ItemName = "Default avatar",
+                // TODO: Add url to default user image
+                Url = "",
+                TypeId = 1
+            }
+        };
+    }
 }

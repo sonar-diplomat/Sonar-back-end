@@ -1,3 +1,4 @@
+using System.Text;
 using Application.Abstractions.Interfaces.Exception;
 using Application.Abstractions.Interfaces.Repository.Access;
 using Application.Abstractions.Interfaces.Repository.Chat;
@@ -23,6 +24,16 @@ using Application.Services.UserCore;
 using Application.Services.UserExperience;
 using Entities.Models.UserCore;
 using Infrastructure.Data;
+using Infrastructure.Repository.Access;
+using Infrastructure.Repository.Chat;
+using Infrastructure.Repository.ClientSettings;
+using Infrastructure.Repository.Distribution;
+using Infrastructure.Repository.File;
+using Infrastructure.Repository.Library;
+using Infrastructure.Repository.Music;
+using Infrastructure.Repository.Report;
+using Infrastructure.Repository.User;
+using Infrastructure.Repository.UserExperience;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -36,21 +47,11 @@ using Sonar.Infrastructure.Repository.Report;
 using Sonar.Infrastructure.Repository.UserCore;
 using Sonar.Infrastructure.Repository.UserExperience;
 using Sonar.Middleware;
-using System.Text;
-using Infrastructure.Repository.Access;
-using Infrastructure.Repository.Chat;
-using Infrastructure.Repository.ClientSettings;
-using Infrastructure.Repository.Distribution;
-using Infrastructure.Repository.File;
-using Infrastructure.Repository.Library;
-using Infrastructure.Repository.Music;
-using Infrastructure.Repository.Report;
-using Infrastructure.Repository.User;
-using Infrastructure.Repository.UserExperience;
 
-var builder = WebApplication.CreateBuilder(args);
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<SonarContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("SonarContext") ?? throw new InvalidOperationException("Connection string 'SonarContext' not found.")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("SonarContext") ??
+                      throw new InvalidOperationException("Connection string 'SonarContext' not found.")));
 
 // Add services to the container.
 
@@ -58,47 +59,47 @@ builder.Services.AddControllers();
 
 // Configure Identity
 builder.Services.AddIdentity<User, IdentityRole<int>>(options =>
-{
-    // Password settings
-    options.Password.RequireDigit = true;
-    options.Password.RequireLowercase = true;
-    options.Password.RequireUppercase = true;
-    options.Password.RequiredLength = 6;
-    // Lockout settings
-    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
-    options.Lockout.MaxFailedAccessAttempts = 5;
-    // User settings
-    options.User.RequireUniqueEmail = true;
-})
-.AddEntityFrameworkStores<SonarContext>()
-.AddDefaultTokenProviders();
+    {
+        // Password settings
+        options.Password.RequireDigit = true;
+        options.Password.RequireLowercase = true;
+        options.Password.RequireUppercase = true;
+        options.Password.RequiredLength = 6;
+        // Lockout settings
+        options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+        options.Lockout.MaxFailedAccessAttempts = 5;
+        // User settings
+        options.User.RequireUniqueEmail = true;
+    })
+    .AddEntityFrameworkStores<SonarContext>()
+    .AddDefaultTokenProviders();
 
 // Configure JWT authentication
 builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
     {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = builder.Configuration["Jwt:Issuer"],
-        ValidAudience = builder.Configuration["Jwt:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
-    };
-});
-
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+        };
+    });
 
 
 builder.Services.AddOpenApi();
 
 #region RegisterRepositories
+
 // Access Repositories
 builder.Services.AddScoped<IAccessFeatureRepository, AccessFeatureRepository>();
 builder.Services.AddScoped<ISuspensionRepository, SuspensionRepository>();
@@ -164,8 +165,11 @@ builder.Services.AddScoped<IInventoryRepository, InventoryRepository>();
 builder.Services.AddScoped<ISubscriptionFeatureRepository, SubscriptionFeatureRepository>();
 builder.Services.AddScoped<ISubscriptionPackRepository, SubscriptionPackRepository>();
 builder.Services.AddScoped<ISubscriptionPaymentRepository, SubscriptionPaymentRepository>();
+
 #endregion
+
 #region RegisterServices
+
 // Access Repositories
 builder.Services.AddScoped<IAccessFeatureService, AccessFeatureService>();
 builder.Services.AddScoped<ISuspensionService, SuspensionService>();
@@ -231,22 +235,20 @@ builder.Services.AddScoped<IInventoryService, InventoryService>();
 builder.Services.AddScoped<ISubscriptionFeatureService, SubscriptionFeatureService>();
 builder.Services.AddScoped<ISubscriptionPackService, SubscriptionPackService>();
 builder.Services.AddScoped<ISubscriptionPaymentService, SubscriptionPaymentService>();
+
 #endregion
+
 // Exception Handling
 builder.Services.AddSingleton<IAppExceptionFactory<IAppException>, AppExceptionFactory<IAppException>>();
 
 
-
-var app = builder.Build();
+WebApplication app = builder.Build();
 
 app.UseMiddleware<ExceptionMiddleware>();
 
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
+if (app.Environment.IsDevelopment()) app.MapOpenApi();
 
 app.UseHttpsRedirection();
 
