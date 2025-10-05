@@ -1,7 +1,9 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using Application.Abstractions.Interfaces.Exception;
+using Application.Abstractions.Interfaces.Services;
+using Application.DTOs;
+using Application.Exception;
 using Entities.Models.UserExperience;
-using Infrastructure.Data;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Sonar.Controllers.UserExperience
 {
@@ -9,191 +11,149 @@ namespace Sonar.Controllers.UserExperience
     [ApiController]
     public class GiftController : ControllerBase
     {
-        private readonly SonarContext _context;
+        private readonly IGiftService giftService;
+        private readonly IAppExceptionFactory<AppException> appExceptionFactory;
 
-        public GiftController(SonarContext context)
+        public GiftController(IGiftService giftService, IAppExceptionFactory<AppException> appExceptionFactory)
         {
-            _context = context;
+            this.giftService = giftService;
+            this.appExceptionFactory = appExceptionFactory;
         }
 
-        #region Gift CRUD
-
-        // GET: api/Gift
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Gift>>> GetGifts()
+        /// <summary>
+        /// Send a gift subscription to another user
+        /// </summary>
+        /// <param name="giftDto">Gift details including subscription pack and receiver</param>
+        /// <returns>Created gift</returns>
+        [HttpPost("send")]
+        public async Task<ActionResult<Gift>> SendGift([FromBody] SendGiftDTO giftDto)
         {
-            return await _context.Gifts
-                .Include(g => g.Receiver)
-                .Include(g => g.GiftStyle)
-                .Include(g => g.SubscriptionPayment)
-                .ToListAsync();
+            try
+            {
+                Gift gift = await giftService.SendGiftAsync(giftDto);
+                return CreatedAtAction(nameof(GetGift), new { id = gift.Id }, gift);
+            }
+            catch (Exception)
+            {
+                throw appExceptionFactory.CreateBadRequest(); //appExceptionFactory.CreateInternalServerError();
+            }
         }
 
-        // GET: api/Gift/5
+        /// <summary>
+        /// Accept a gift and activate the subscription
+        /// </summary>
+        /// <param name="id">Gift ID</param>
+        /// <param name="receiverId">ID of the user accepting the gift</param>
+        /// <returns>Activated subscription payment</returns>
+        [HttpPost("{id}/accept")]
+        public async Task<ActionResult<SubscriptionPayment>> AcceptGift(int id, [FromBody] int receiverId)
+        {
+            try
+            {
+                SubscriptionPayment payment = await giftService.AcceptGiftAsync(id, receiverId);
+                return Ok(payment);
+            }
+            catch (Exception)
+            {
+                throw appExceptionFactory.CreateBadRequest(); //appExceptionFactory.CreateInternalServerError();
+            }
+        }
+
+        /// <summary>
+        /// Get all gifts received by a user
+        /// </summary>
+        /// <param name="receiverId">ID of the receiver</param>
+        /// <returns>List of gifts received</returns>
+        [HttpGet("received/{receiverId}")]
+        public async Task<ActionResult<IEnumerable<Gift>>> GetReceivedGifts(int receiverId)
+        {
+            try
+            {
+                IEnumerable<Gift> gifts = await giftService.GetReceivedGiftsAsync(receiverId);
+                return Ok(gifts);
+            }
+            catch (Exception)
+            {
+                throw appExceptionFactory.CreateBadRequest(); //appExceptionFactory.CreateInternalServerError();
+            }
+        }
+
+        /// <summary>
+        /// Get all gifts sent by a user (including planned)
+        /// </summary>
+        /// <param name="senderId">ID of the sender</param>
+        /// <returns>List of gifts sent</returns>
+        [HttpGet("sent/{senderId}")]
+        public async Task<ActionResult<IEnumerable<Gift>>> GetSentGifts(int senderId)
+        {
+            try
+            {
+                IEnumerable<Gift> gifts = await giftService.GetSentGiftsAsync(senderId);
+                return Ok(gifts);
+            }
+            catch (Exception)
+            {
+                throw appExceptionFactory.CreateBadRequest(); //appExceptionFactory.CreateInternalServerError();
+            }
+        }
+
+        /// <summary>
+        /// Get a specific gift by ID
+        /// </summary>
+        /// <param name="id">Gift ID</param>
+        /// <returns>Gift details</returns>
         [HttpGet("{id}")]
         public async Task<ActionResult<Gift>> GetGift(int id)
         {
-            var gift = await _context.Gifts
-                .Include(g => g.Receiver)
-                .Include(g => g.GiftStyle)
-                .Include(g => g.SubscriptionPayment)
-                .FirstOrDefaultAsync(g => g.Id == id);
-
-            if (gift == null)
-            {
-                return NotFound();
-            }
-
-            return gift;
-        }
-
-        // PUT: api/Gift/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutGift(int id, Gift gift)
-        {
-            if (id != gift.Id)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(gift).State = EntityState.Modified;
-
             try
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!GiftExists(id))
+                Gift gift = await giftService.GetGiftByIdAsync(id);
+
+                if (gift == null)
                 {
-                    return NotFound();
+                    throw appExceptionFactory.CreateNotFound();
                 }
-                else
-                {
-                    throw;
-                }
+
+                return Ok(gift);
             }
-
-            return NoContent();
-        }
-
-        // POST: api/Gift
-        [HttpPost]
-        public async Task<ActionResult<Gift>> PostGift(Gift gift)
-        {
-            _context.Gifts.Add(gift);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetGift", new { id = gift.Id }, gift);
-        }
-
-        // DELETE: api/Gift/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteGift(int id)
-        {
-            var gift = await _context.Gifts.FindAsync(id);
-            if (gift == null)
+            catch (AppException)
             {
-                return NotFound();
+                throw;
             }
-
-            _context.Gifts.Remove(gift);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
-        private bool GiftExists(int id)
-        {
-            return _context.Gifts.Any(e => e.Id == id);
-        }
-
-        #endregion
-
-        #region GiftStyle CRUD
-
-        // GET: api/Gift/Style
-        [HttpGet("Style")]
-        public async Task<ActionResult<IEnumerable<GiftStyle>>> GetGiftStyles()
-        {
-            return await _context.GiftStyles.ToListAsync();
-        }
-
-        // GET: api/Gift/Style/5
-        [HttpGet("Style/{id}")]
-        public async Task<ActionResult<GiftStyle>> GetGiftStyle(int id)
-        {
-            var giftStyle = await _context.GiftStyles.FindAsync(id);
-
-            if (giftStyle == null)
+            catch (Exception)
             {
-                return NotFound();
+                throw appExceptionFactory.CreateBadRequest(); //appExceptionFactory.CreateInternalServerError();
             }
-
-            return giftStyle;
         }
 
-        // PUT: api/Gift/Style/5
-        [HttpPut("Style/{id}")]
-        public async Task<IActionResult> PutGiftStyle(int id, GiftStyle giftStyle)
+        /// <summary>
+        /// Cancel a planned gift (only before it's accepted)
+        /// </summary>
+        /// <param name="id">Gift ID</param>
+        /// <param name="senderId">ID of the sender</param>
+        /// <returns>Success status</returns>
+        [HttpDelete("{id}/cancel")]
+        public async Task<IActionResult> CancelGift(int id, [FromBody] int senderId)
         {
-            if (id != giftStyle.Id)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(giftStyle).State = EntityState.Modified;
-
             try
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!GiftStyleExists(id))
+                bool result = await giftService.CancelGiftAsync(id, senderId);
+
+                if (!result)
                 {
-                    return NotFound();
+                    throw appExceptionFactory.CreateBadRequest();
                 }
-                else
-                {
-                    throw;
-                }
+
+                return NoContent();
             }
-
-            return NoContent();
-        }
-
-        // POST: api/Gift/Style
-        [HttpPost("Style")]
-        public async Task<ActionResult<GiftStyle>> PostGiftStyle(GiftStyle giftStyle)
-        {
-            _context.GiftStyles.Add(giftStyle);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetGiftStyle", new { id = giftStyle.Id }, giftStyle);
-        }
-
-        // DELETE: api/Gift/Style/5
-        [HttpDelete("Style/{id}")]
-        public async Task<IActionResult> DeleteGiftStyle(int id)
-        {
-            var giftStyle = await _context.GiftStyles.FindAsync(id);
-            if (giftStyle == null)
+            catch (AppException)
             {
-                return NotFound();
+                throw;
             }
-
-            _context.GiftStyles.Remove(giftStyle);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            catch (Exception)
+            {
+                throw appExceptionFactory.CreateBadRequest(); //appExceptionFactory.CreateInternalServerError();
+            }
         }
-
-        private bool GiftStyleExists(int id)
-        {
-            return _context.GiftStyles.Any(e => e.Id == id);
-        }
-
-        #endregion
     }
 }
