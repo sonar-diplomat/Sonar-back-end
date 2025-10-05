@@ -1,8 +1,9 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Entities.Models;
+using Application.Abstractions.Interfaces.Exception;
+using Application.Abstractions.Interfaces.Services;
+using Application.DTOs;
+using Application.Exception;
 using Entities.Models.UserExperience;
-using Infrastructure.Data;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Sonar.Controllers.UserExperience
 {
@@ -10,95 +11,149 @@ namespace Sonar.Controllers.UserExperience
     [ApiController]
     public class GiftController : ControllerBase
     {
-        private readonly SonarContext _context;
+        private readonly IGiftService giftService;
+        private readonly IAppExceptionFactory<AppException> appExceptionFactory;
 
-        public GiftController(SonarContext context)
+        public GiftController(IGiftService giftService, IAppExceptionFactory<AppException> appExceptionFactory)
         {
-            _context = context;
+            this.giftService = giftService;
+            this.appExceptionFactory = appExceptionFactory;
         }
 
-        // GET: api/Gift
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Gift>>> GetGifts()
+        /// <summary>
+        /// Send a gift subscription to another user
+        /// </summary>
+        /// <param name="giftDto">Gift details including subscription pack and receiver</param>
+        /// <returns>Created gift</returns>
+        [HttpPost("send")]
+        public async Task<ActionResult<Gift>> SendGift([FromBody] SendGiftDTO giftDto)
         {
-            return await _context.Gifts.ToListAsync();
+            try
+            {
+                Gift gift = await giftService.SendGiftAsync(giftDto);
+                return CreatedAtAction(nameof(GetGift), new { id = gift.Id }, gift);
+            }
+            catch (Exception)
+            {
+                throw appExceptionFactory.CreateBadRequest(); //appExceptionFactory.CreateInternalServerError();
+            }
         }
 
-        // GET: api/Gift/5
+        /// <summary>
+        /// Accept a gift and activate the subscription
+        /// </summary>
+        /// <param name="id">Gift ID</param>
+        /// <param name="receiverId">ID of the user accepting the gift</param>
+        /// <returns>Activated subscription payment</returns>
+        [HttpPost("{id}/accept")]
+        public async Task<ActionResult<SubscriptionPayment>> AcceptGift(int id, [FromBody] int receiverId)
+        {
+            try
+            {
+                SubscriptionPayment payment = await giftService.AcceptGiftAsync(id, receiverId);
+                return Ok(payment);
+            }
+            catch (Exception)
+            {
+                throw appExceptionFactory.CreateBadRequest(); //appExceptionFactory.CreateInternalServerError();
+            }
+        }
+
+        /// <summary>
+        /// Get all gifts received by a user
+        /// </summary>
+        /// <param name="receiverId">ID of the receiver</param>
+        /// <returns>List of gifts received</returns>
+        [HttpGet("received/{receiverId}")]
+        public async Task<ActionResult<IEnumerable<Gift>>> GetReceivedGifts(int receiverId)
+        {
+            try
+            {
+                IEnumerable<Gift> gifts = await giftService.GetReceivedGiftsAsync(receiverId);
+                return Ok(gifts);
+            }
+            catch (Exception)
+            {
+                throw appExceptionFactory.CreateBadRequest(); //appExceptionFactory.CreateInternalServerError();
+            }
+        }
+
+        /// <summary>
+        /// Get all gifts sent by a user (including planned)
+        /// </summary>
+        /// <param name="senderId">ID of the sender</param>
+        /// <returns>List of gifts sent</returns>
+        [HttpGet("sent/{senderId}")]
+        public async Task<ActionResult<IEnumerable<Gift>>> GetSentGifts(int senderId)
+        {
+            try
+            {
+                IEnumerable<Gift> gifts = await giftService.GetSentGiftsAsync(senderId);
+                return Ok(gifts);
+            }
+            catch (Exception)
+            {
+                throw appExceptionFactory.CreateBadRequest(); //appExceptionFactory.CreateInternalServerError();
+            }
+        }
+
+        /// <summary>
+        /// Get a specific gift by ID
+        /// </summary>
+        /// <param name="id">Gift ID</param>
+        /// <returns>Gift details</returns>
         [HttpGet("{id}")]
         public async Task<ActionResult<Gift>> GetGift(int id)
         {
-            var gift = await _context.Gifts.FindAsync(id);
-
-            if (gift == null)
-            {
-                return NotFound();
-            }
-
-            return gift;
-        }
-
-        // PUT: api/Gift/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutGift(int id, Gift gift)
-        {
-            if (id != gift.Id)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(gift).State = EntityState.Modified;
-
             try
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!GiftExists(id))
+                Gift gift = await giftService.GetGiftByIdAsync(id);
+
+                if (gift == null)
                 {
-                    return NotFound();
+                    throw appExceptionFactory.CreateNotFound();
                 }
-                else
-                {
-                    throw;
-                }
+
+                return Ok(gift);
             }
-
-            return NoContent();
-        }
-
-        // POST: api/Gift
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        public async Task<ActionResult<Gift>> PostGift(Gift gift)
-        {
-            _context.Gifts.Add(gift);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetGift", new { id = gift.Id }, gift);
-        }
-
-        // DELETE: api/Gift/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteGift(int id)
-        {
-            var gift = await _context.Gifts.FindAsync(id);
-            if (gift == null)
+            catch (AppException)
             {
-                return NotFound();
+                throw;
             }
-
-            _context.Gifts.Remove(gift);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            catch (Exception)
+            {
+                throw appExceptionFactory.CreateBadRequest(); //appExceptionFactory.CreateInternalServerError();
+            }
         }
 
-        private bool GiftExists(int id)
+        /// <summary>
+        /// Cancel a planned gift (only before it's accepted)
+        /// </summary>
+        /// <param name="id">Gift ID</param>
+        /// <param name="senderId">ID of the sender</param>
+        /// <returns>Success status</returns>
+        [HttpDelete("{id}/cancel")]
+        public async Task<IActionResult> CancelGift(int id, [FromBody] int senderId)
         {
-            return _context.Gifts.Any(e => e.Id == id);
+            try
+            {
+                bool result = await giftService.CancelGiftAsync(id, senderId);
+
+                if (!result)
+                {
+                    throw appExceptionFactory.CreateBadRequest();
+                }
+
+                return NoContent();
+            }
+            catch (AppException)
+            {
+                throw;
+            }
+            catch (Exception)
+            {
+                throw appExceptionFactory.CreateBadRequest(); //appExceptionFactory.CreateInternalServerError();
+            }
         }
     }
 }
