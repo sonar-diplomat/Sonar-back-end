@@ -1,0 +1,10 @@
+﻿using Application.Abstractions.Interfaces.Services;
+using Entities.Models.Access;
+
+namespace Application.Abstractions.Interfaces.Services
+{
+    public interface IAccessFeatureService : IGenericService<AccessFeature>
+    {
+        Task<ICollection<AccessFeature>> GetDefaultAsync();
+    }
+}

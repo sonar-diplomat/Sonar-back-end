@@ -1,0 +1,10 @@
+﻿using Application.Abstractions.Interfaces.Services;
+using Entities.Models.Report;
+
+namespace Application.Abstractions.Interfaces.Services
+{
+    public interface IReportService : IGenericService<Report>
+    {
+    }
+}
+
