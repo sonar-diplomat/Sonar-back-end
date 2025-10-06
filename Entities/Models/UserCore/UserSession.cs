@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Net;
+using Microsoft.EntityFrameworkCore;
 
 namespace Entities.Models.UserCore;
 
@@ -29,6 +30,7 @@ public class UserSession : BaseModel
     /// <summary>
     /// </summary>
     [ForeignKey("UserId")]
+    [DeleteBehavior(DeleteBehavior.NoAction)]
     public User User { get; set; }
 
     [NotMapped]

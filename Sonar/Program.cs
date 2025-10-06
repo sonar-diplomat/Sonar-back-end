@@ -1,5 +1,4 @@
 using System.Text;
-using Application.Abstractions.Interfaces.Exception;
 using Application.Abstractions.Interfaces.Repository.Access;
 using Application.Abstractions.Interfaces.Repository.Chat;
 using Application.Abstractions.Interfaces.Repository.Client;
@@ -38,6 +37,7 @@ using Infrastructure.Repository.User;
 using Infrastructure.Repository.UserExperience;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Sonar.Infrastructure.Repository.Access;
 using Sonar.Infrastructure.Repository.Chat;
@@ -50,12 +50,11 @@ using Sonar.Infrastructure.Repository.UserExperience;
 using Sonar.Middleware;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
-//builder.Services.AddDbContext<SonarContext>(options =>
-//    options.UseNpgsql(builder.Configuration.GetConnectionString("SonarContext") ??
-//                      throw new InvalidOperationException("Connection string 'SonarContext' not found.")));
+builder.Services.AddDbContext<SonarContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("SonarContext") ??
+                      throw new InvalidOperationException("Connection string 'SonarContext' not found.")));
 
 // Add services to the container.
-
 builder.Services.AddControllers();
 
 // Configure Identity
@@ -92,7 +91,7 @@ builder.Services.AddAuthentication(options =>
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidAudience = builder.Configuration["Jwt:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
         };
     });
 
@@ -237,22 +236,16 @@ builder.Services.AddScoped<ISubscriptionFeatureService, SubscriptionFeatureServi
 builder.Services.AddScoped<ISubscriptionPackService, SubscriptionPackService>();
 builder.Services.AddScoped<ISubscriptionPaymentService, SubscriptionPaymentService>();
 
-
-builder.Services.AddHttpClient<HttpClient, HttpClient>();
 // Utility Services
 builder.Services.AddScoped<IEmailSenderService, MailgunEmailService>();
+builder.Services.AddHttpClient<HttpClient, HttpClient>();
+builder.Services.AddSingleton<AppExceptionFactory>();
 
 #endregion
-
-
-// Exception Handling
-builder.Services.AddSingleton<IAppExceptionFactory<IAppException>, AppExceptionFactory<IAppException>>();
-
 
 WebApplication app = builder.Build();
 
 app.UseMiddleware<ExceptionMiddleware>();
-
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment()) app.MapOpenApi();
@@ -260,8 +253,8 @@ if (app.Environment.IsDevelopment()) app.MapOpenApi();
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
-app.UseAuthorization();
 
+app.UseAuthorization();
 
 app.MapControllers();
 

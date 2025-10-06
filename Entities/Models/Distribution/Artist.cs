@@ -2,6 +2,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Entities.Models.Music;
 using Entities.Models.UserCore;
+using Microsoft.EntityFrameworkCore;
 
 namespace Entities.Models.Distribution;
 
@@ -14,6 +15,7 @@ public class Artist : BaseModel
     /// <summary>
     /// </summary>
     [ForeignKey("UserId")]
+    [DeleteBehavior(DeleteBehavior.Cascade)]
     public virtual User User { get; set; }
 
     public virtual ICollection<Track> Tracks { get; set; }

@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Entities.Models.Music;
+using Microsoft.EntityFrameworkCore;
 
 namespace Entities.Models.Distribution;
 
@@ -27,9 +28,11 @@ public class Distributor : BaseModel
     /// <summary>
     /// </summary>
     [ForeignKey("LicenseId")]
+    [DeleteBehavior(DeleteBehavior.Cascade)]
     public virtual License License { get; set; }
 
     [ForeignKey("CoverId")]
+    [DeleteBehavior(DeleteBehavior.Cascade)]
     public virtual File.File Cover { get; set; }
 
     public virtual ICollection<DistributorSession> Sessions { get; set; }

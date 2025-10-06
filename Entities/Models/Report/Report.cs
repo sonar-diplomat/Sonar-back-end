@@ -2,6 +2,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Entities.Models.Access;
 using Entities.Models.UserCore;
+using Microsoft.EntityFrameworkCore;
 
 namespace Entities.Models.Report;
 
@@ -23,9 +24,11 @@ public class Report : BaseModel
     /// <summary>
     /// </summary>
     [ForeignKey("ReportableEntityTypeId")]
+    [DeleteBehavior(DeleteBehavior.NoAction)]
     public virtual ReportableEntityType ReportableEntityType { get; set; }
 
     [ForeignKey("ReporterId")]
+    [DeleteBehavior(DeleteBehavior.NoAction)]
     public virtual User Reporter { get; set; }
 
     public virtual ICollection<ReportReasonType> ReportReasonType { get; set; }

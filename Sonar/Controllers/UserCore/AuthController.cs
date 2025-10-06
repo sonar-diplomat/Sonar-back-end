@@ -2,7 +2,6 @@
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using Application.Abstractions.Interfaces.Exception;
 using Application.Abstractions.Interfaces.Service.Utilities;
 using Application.Abstractions.Interfaces.Services;
 using Application.DTOs;
@@ -19,26 +18,16 @@ namespace Sonar.Controllers.UserCore;
 
 [Route("api/[controller]")]
 [ApiController]
-public class AuthController : ControllerBase
+public class AuthController(
+    UserManager<User> userManager,
+    SignInManager<User> signInManager,
+    IConfiguration configuration,
+    IUserService userService,
+    AppExceptionFactory appExceptionFactory,
+    IEmailSenderService emailSenderService)
+    : ControllerBase
 {
-    private readonly IAppExceptionFactory<AppException> appExceptionFactory;
-    private readonly IConfiguration configuration;
-    private readonly IEmailSenderService emailSenderService;
-    private readonly SignInManager<User> signInManager;
-    private readonly UserManager<User> userManager;
-    private readonly IUserService userService;
-
-    public AuthController(UserManager<User> userManager, SignInManager<User> signInManager,
-        IConfiguration configuration, IUserService userService, IAppExceptionFactory<AppException> appExceptionFactory,
-        IEmailSenderService emailSenderService)
-    {
-        this.userManager = userManager;
-        this.signInManager = signInManager;
-        this.configuration = configuration;
-        this.userService = userService;
-        this.appExceptionFactory = appExceptionFactory;
-        this.emailSenderService = emailSenderService;
-    }
+    private readonly AppExceptionFactory appExceptionFactory = appExceptionFactory;
 
     [HttpPost("register")]
     public async Task<IActionResult> Register(UserRegisterDTO model)
@@ -84,7 +73,6 @@ public class AuthController : ControllerBase
             });
         }
 
-
         // TODO: Тимоша вызовет исключение
         throw new NotImplementedException();
     }
@@ -93,10 +81,6 @@ public class AuthController : ControllerBase
     [HttpPost("2fa")]
     public async Task<IActionResult> TwoFactorAuthentication(string email)
     {
-        // manager.GetCode
-        // mailSendler(code)
-
-
         try
         {
             string code = "191981";
@@ -156,13 +140,13 @@ public class AuthController : ControllerBase
 
     private string GenerateJwtToken(User user)
     {
-        Claim[] claims = new[]
-        {
-            new Claim(JwtRegisteredClaimNames.Sub, user.Email),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            new Claim(ClaimTypes.NameIdentifier, user.Login)
-        };
-        SymmetricSecurityKey key = new(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]));
+        Claim[] claims =
+        [
+            new(JwtRegisteredClaimNames.Sub, user.Email!),
+            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new(ClaimTypes.NameIdentifier, user.Login)
+        ];
+        SymmetricSecurityKey key = new(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!));
         SigningCredentials creds = new(key, SecurityAlgorithms.HmacSha256);
         JwtSecurityToken token = new(
             configuration["Jwt:Issuer"],

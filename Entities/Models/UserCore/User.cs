@@ -7,22 +7,18 @@ using Entities.Models.Distribution;
 using Entities.Models.Music;
 using Entities.Models.UserExperience;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace Entities.Models.UserCore;
 
 [Table("User")]
 public class User : IdentityUser<int>
 {
-    [Required]
-    [MaxLength(100)]
-    public string FirstName { get; set; }
+    [Required] [MaxLength(100)] public string FirstName { get; set; }
 
-    [Required]
-    [MaxLength(100)]
-    public string LastName { get; set; }
+    [Required] [MaxLength(100)] public string LastName { get; set; }
 
-    [Required]
-    public DateOnly DateOfBirth { get; set; }
+    [Required] public DateOnly DateOfBirth { get; set; }
 
     [Required]
     [MaxLength(24)]
@@ -34,56 +30,49 @@ public class User : IdentityUser<int>
     [MinLength(4)]
     public string Login { get; set; }
 
-    [MaxLength(4000)]
-    public string Biography { get; set; } // md 
+    [MaxLength(4000)] public string Biography { get; set; } // md 
 
-    [Required]
-    public string PublicIdentifier { get; set; }
+    [Required] public string PublicIdentifier { get; set; }
 
-    [Required]
-    public int AvailableCurrency { get; set; }
+    [Required] public int AvailableCurrency { get; set; }
 
-    [Required]
-    public DateTime RegistrationDate { get; set; }
+    [Required] public DateTime RegistrationDate { get; set; }
 
-    [Required]
-    public bool Enabled2FA { get; set; }
+    [Required] public bool Enabled2FA { get; set; }
 
     // Authenticator apps
-    [StringLength(500)]
-    public string GoogleAuthorizationKey { get; set; }
+    [MaxLength(500)] public string GoogleAuthorizationKey { get; set; }
     // facebook .... and ect...
 
 
-    [Required]
-    public int AvatarImageId { get; set; }
+    [Required] public int AvatarImageId { get; set; }
 
-    [Required]
-    public int VisibilityStateId { get; set; }
+    [Required] public int VisibilityStateId { get; set; }
 
     public int? SubscriptionPackId { get; set; }
 
-    [Required]
-    public int UserStateId { get; set; }
+    [Required] public int UserStateId { get; set; }
 
-    [Required]
-    public int SettingsId { get; set; }
+    [Required] public int SettingsId { get; set; }
+    
+    
 
     /// <summary>
     /// </summary>
     [ForeignKey("VisibilityStateId")]
+    [DeleteBehavior(DeleteBehavior.Cascade)]
     public virtual VisibilityState VisibilityState { get; set; }
 
-    [ForeignKey("AvatarImageId")]
-    public virtual File.File AvatarImage { get; set; }
+    [ForeignKey("AvatarImageId")] public virtual File.File AvatarImage { get; set; }
 
-    [ForeignKey("SubscriptionPackId")]
-    public virtual SubscriptionPack? SubscriptionPack { get; set; }
+    [ForeignKey("SubscriptionPackId")] public virtual SubscriptionPack? SubscriptionPack { get; set; }
 
     [ForeignKey("UserStateId")]
+    [DeleteBehavior(DeleteBehavior.Cascade)]
     public virtual UserState UserState { get; set; }
 
     [ForeignKey("SettingsId")]
+    [DeleteBehavior(DeleteBehavior.Cascade)]
     public virtual Settings Settings { get; set; }
 
     public virtual Artist Artist { get; set; }
@@ -98,8 +87,6 @@ public class User : IdentityUser<int>
     public virtual ICollection<Collection> Collections { get; set; }
     public virtual ICollection<License> Licenses { get; set; }
     public virtual ICollection<Track> Tracks { get; set; }
-
     public virtual ICollection<Settings> SettingsBlockedUsers { get; set; }
-
-    public List<RefreshToken> RefreshTokens { get; set; } = new();
+    public virtual List<RefreshToken> RefreshTokens { get; set; }
 }

@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using Entities.Models.Access;
 using Entities.Models.Distribution;
 using Entities.Models.UserCore;
+using Microsoft.EntityFrameworkCore;
 
 namespace Entities.Models.Music;
 
@@ -33,12 +34,15 @@ public class Track : BaseModel
     /// <summary>
     /// </summary>
     [ForeignKey("VisibilityStateId")]
+    [DeleteBehavior(DeleteBehavior.Cascade)]
     public virtual VisibilityState VisibilityState { get; set; }
 
     [ForeignKey("AudioFileId")]
+    [DeleteBehavior(DeleteBehavior.Cascade)]
     public virtual File.File AudioFile { get; set; }
 
     [ForeignKey("CoverId")]
+    [DeleteBehavior(DeleteBehavior.Cascade)]
     public virtual File.File Cover { get; set; }
 
     public virtual ICollection<Artist> Artists { get; set; }

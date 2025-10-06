@@ -2,6 +2,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Entities.Models.Access;
 using Entities.Models.UserCore;
+using Microsoft.EntityFrameworkCore;
 
 namespace Entities.Models.Music;
 
@@ -20,9 +21,11 @@ public abstract class Collection : BaseModel
     /// <summary>
     /// </summary>
     [ForeignKey("VisibilityStateId")]
+    [DeleteBehavior(DeleteBehavior.Cascade)]
     public virtual VisibilityState VisibilityState { get; set; }
 
     [ForeignKey("CoverId")]
+    [DeleteBehavior(DeleteBehavior.Cascade)]
     public virtual File.File Cover { get; set; }
 
     public virtual ICollection<User> Users { get; set; }

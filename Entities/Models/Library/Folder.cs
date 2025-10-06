@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Entities.Models.Music;
+using Microsoft.EntityFrameworkCore;
 
 namespace Entities.Models.Library;
 
@@ -19,9 +20,11 @@ public class Folder : BaseModel
     /// <summary>
     ///     <summary>
     [ForeignKey("LibraryId")]
+    [DeleteBehavior(DeleteBehavior.NoAction)]
     public virtual Library Library { get; set; }
 
     [ForeignKey("ParentFolderId")]
+    [DeleteBehavior(DeleteBehavior.NoAction)]
     public virtual Folder ParentFolder { get; set; }
 
     public virtual ICollection<Folder> SubFolders { get; set; }

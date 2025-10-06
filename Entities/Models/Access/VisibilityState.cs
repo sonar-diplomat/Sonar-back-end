@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace Entities.Models.Access;
 
@@ -15,5 +16,6 @@ public class VisibilityState : BaseModel
     /// <summary>
     /// </summary>
     [ForeignKey("StatusId")]
+    [DeleteBehavior(DeleteBehavior.NoAction)]
     public virtual VisibilityStatus Status { get; set; }
 }

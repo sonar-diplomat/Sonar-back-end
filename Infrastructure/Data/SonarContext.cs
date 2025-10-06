@@ -15,13 +15,9 @@ using File = Entities.Models.File;
 
 namespace Infrastructure.Data;
 
-public class SonarContext : IdentityDbContext<User, IdentityRole<int>, int>
+public class SonarContext(DbContextOptions<SonarContext> options)
+    : IdentityDbContext<User, IdentityRole<int>, int>(options)
 {
-    public SonarContext(DbContextOptions<SonarContext> options)
-        : base(options)
-    {
-    }
-
     // Access
     public DbSet<AccessFeature> AccessFeatures { get; set; } = null!;
     public DbSet<Suspension> Suspensions { get; set; } = null!;
@@ -90,30 +86,19 @@ public class SonarContext : IdentityDbContext<User, IdentityRole<int>, int>
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
-        // SomeEnum.SentMessage = "SentMessage SentMassegh"
-        // User.Coolection DbSet(Name Id)
+        builder.Entity<User>().HasOne(u => u.Settings).WithOne(s => s.User).HasForeignKey<User>(s => s.SettingsId);
+        builder.Entity<Settings>().HasMany(s => s.BlockedUsers).WithMany(s => s.SettingsBlockedUsers);
 
         builder.Entity<NotificationType>().HasData(NotificationTypeSeedFactory.CreateSeedData());
-
         builder.Entity<Theme>().HasData(ThemeSeedFactory.CreateSeedData());
-
         builder.Entity<Language>().HasData(LanguageSeedFactory.CreateSeedData());
-
         builder.Entity<PlaybackQuality>().HasData(PlaybackQualitySeedFactory.CreateSeedData());
-
         builder.Entity<AchievementCategory>().HasData(AchievementCategorySeedFactory.CreateSeedData());
-
         builder.Entity<File.FileType>().HasData(FileTypeSeedFactory.CreateSeedData());
-
         builder.Entity<VisibilityStatus>().HasData(VisibilityStatusSeedFactory.CreateSeedData());
-
         builder.Entity<GiftStyle>().HasData(GiftStyleSeedFactory.CreateSeedData());
-
         builder.Entity<ReportableEntityType>().HasData(ReportableEntityTypeSeedFactory.CreateSeedData());
-
         builder.Entity<ReportReasonType>().HasData(ReportReasonTypeSeedFactory.CreateSeedData());
-
-
         base.OnModelCreating(builder);
     }
 }

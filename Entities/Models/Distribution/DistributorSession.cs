@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Net;
+using Microsoft.EntityFrameworkCore;
 
 namespace Entities.Models.Distribution;
 
@@ -29,6 +30,7 @@ public class DistributorSession : BaseModel
     /// <summary>
     ///     <summary>
     [ForeignKey("DistributorId")]
+    [DeleteBehavior(DeleteBehavior.NoAction)]
     public virtual Distributor Distributor { get; set; }
 
     [NotMapped]

@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Entities.Models.UserCore;
+using Microsoft.EntityFrameworkCore;
 
 namespace Entities.Models.UserExperience;
 
@@ -29,9 +30,11 @@ public class Gift : BaseModel
     /// <summary>
     /// </summary>
     [ForeignKey("ReceiverId")]
+    [DeleteBehavior(DeleteBehavior.NoAction)]
     public virtual User Receiver { get; set; }
 
     [ForeignKey("GiftStyleId")]
+    [DeleteBehavior(DeleteBehavior.NoAction)]
     public virtual GiftStyle GiftStyle { get; set; }
 
     [ForeignKey("SubscriptionPaymentId")]

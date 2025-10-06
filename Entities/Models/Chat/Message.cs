@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Entities.Models.UserCore;
+using Microsoft.EntityFrameworkCore;
 
 namespace Entities.Models.Chat;
 
@@ -19,9 +20,11 @@ public class Message : BaseModel
     /// <summary>
     /// </summary>
     [ForeignKey("ReplyMessageId")]
+    [DeleteBehavior(DeleteBehavior.NoAction)]
     public virtual Message? ReplyMessage { get; set; }
 
     [ForeignKey("ChatId")]
+    [DeleteBehavior(DeleteBehavior.NoAction)]
     public virtual Chat Chat { get; set; }
 
     public virtual ICollection<User> users { get; set; }

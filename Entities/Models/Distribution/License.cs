@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Entities.Models.UserCore;
+using Microsoft.EntityFrameworkCore;
 
 namespace Entities.Models.Distribution;
 
@@ -17,5 +18,6 @@ public class License : BaseModel
     public int IssuerId { get; set; }
 
     [ForeignKey("IssuerId")]
+    [DeleteBehavior(DeleteBehavior.NoAction)]
     public virtual User Issuer { get; set; }
 }

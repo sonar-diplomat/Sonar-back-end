@@ -4,7 +4,7 @@ namespace Application.Exception
 {
     public class AppExceptionFactory
     {
-        public T Create<T>(string[]? args = null)
+        public static T Create<T>(string[]? args = null) where T : AppException
         {
             return (T)Activator.CreateInstance(
                 typeof(T),

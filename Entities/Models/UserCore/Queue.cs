@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Entities.Models.Music;
+using Microsoft.EntityFrameworkCore;
 
 namespace Entities.Models.UserCore;
 
@@ -14,6 +15,7 @@ public class Queue : BaseModel
     public int CollectionId { get; set; }
 
     [ForeignKey("CollectionId")]
+    [DeleteBehavior(DeleteBehavior.NoAction)]
     public virtual Collection Collection { get; set; }
 
     public virtual UserState UserState { get; set; }

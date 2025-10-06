@@ -12,7 +12,6 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.0"/>
-        <PackageReference Include="StackExchange.Redis" Version="2.9.17"/>
     </ItemGroup>
 
     <ItemGroup>

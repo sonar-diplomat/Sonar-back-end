@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Entities.Models.UserCore;
+using Microsoft.EntityFrameworkCore;
 
 namespace Entities.Models.Library;
 
@@ -13,5 +14,6 @@ public class Library : BaseModel
     /// <summary>
     /// </summary>
     [ForeignKey("UserId")]
+    [DeleteBehavior(DeleteBehavior.Restrict)]
     public virtual User User { get; set; }
 }

@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Entities.Models.UserCore;
+using Microsoft.EntityFrameworkCore;
 
 namespace Entities.Models.Music;
 
@@ -13,5 +14,6 @@ public class Playlist : Collection
     /// <summary>
     /// </summary>
     [ForeignKey("CreatorId")]
+    [DeleteBehavior(DeleteBehavior.NoAction)]
     public virtual User Creator { get; set; }
 }

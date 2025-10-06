@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace Entities.Models.File;
 
@@ -22,5 +23,6 @@ public class File : BaseModel
     /// <summary>
     /// </summary>
     [ForeignKey("TypeId")]
+    [DeleteBehavior(DeleteBehavior.NoAction)]
     public FileType Type { get; set; }
 }

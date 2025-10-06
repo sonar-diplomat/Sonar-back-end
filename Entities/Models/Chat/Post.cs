@@ -2,6 +2,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Entities.Models.Access;
 using Entities.Models.UserCore;
+using Microsoft.EntityFrameworkCore;
 
 namespace Entities.Models.Chat;
 
@@ -28,10 +29,12 @@ public class Post : BaseModel
     /// <summary>
     /// </summary>
     [ForeignKey("UserId")]
-    public virtual User User { get; set; }
+    [DeleteBehavior(DeleteBehavior.NoAction)]
+    public User User { get; set; }
 
     [ForeignKey("VisibilityStateId")]
-    public virtual VisibilityState VisibilityState { get; set; }
+    [DeleteBehavior(DeleteBehavior.NoAction)]
+    public VisibilityState VisibilityState { get; set; }
 
-    public virtual ICollection<File.File> Files { get; set; }
+    public ICollection<File.File> Files { get; set; }
 }

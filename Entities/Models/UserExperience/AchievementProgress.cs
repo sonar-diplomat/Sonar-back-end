@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Entities.Models.UserCore;
+using Microsoft.EntityFrameworkCore;
 
 namespace Entities.Models.UserExperience;
 
@@ -20,6 +21,7 @@ public class AchievementProgress : BaseModel
     /// <summary>
     /// </summary>
     [ForeignKey("AchievementId")]
+    [DeleteBehavior(DeleteBehavior.NoAction)]
     public virtual Achievement Achievement { get; set; }
 
     [ForeignKey("UserId")]
