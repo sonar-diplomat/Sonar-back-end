@@ -1,5 +1,4 @@
-﻿using Application.Abstractions.Interfaces.Exception;
-using Application.Abstractions.Interfaces.Repository.UserCore;
+﻿using Application.Abstractions.Interfaces.Repository.UserCore;
 using Application.Abstractions.Interfaces.Repository.UserExperience;
 using Application.Abstractions.Interfaces.Services;
 using Application.DTOs;
@@ -11,7 +10,7 @@ namespace Application.Services.UserExperience
     public class SubscriptionPaymentService(
         ISubscriptionPaymentRepository repository,
         IUserRepository userRepository,
-        IAppExceptionFactory<AppException> appExceptionFactory)
+        AppExceptionFactory appExceptionFactory)
         : GenericService<SubscriptionPayment>(repository), ISubscriptionPaymentService
     {
         public async Task<SubscriptionPayment> PurchaseSubscriptionAsync(PurchaseSubscriptionDTO dto)
@@ -30,7 +29,7 @@ namespace Application.Services.UserExperience
             var user = await userRepository.GetByIdAsync(dto.UserId);
             if (user == null)
             {
-                throw appExceptionFactory.CreateNotFound();
+                throw new NotImplementedException();
             }
 
             user.SubscriptionPackId = dto.SubscriptionPackId;

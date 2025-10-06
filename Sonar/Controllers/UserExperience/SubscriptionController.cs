@@ -1,4 +1,3 @@
-using Application.Abstractions.Interfaces.Exception;
 using Application.Abstractions.Interfaces.Services;
 using Application.DTOs;
 using Application.Exception;
@@ -14,13 +13,13 @@ namespace Sonar.Controllers.UserExperience
         private readonly ISubscriptionPackService subscriptionPackService;
         private readonly ISubscriptionPaymentService subscriptionPaymentService;
         private readonly ISubscriptionFeatureService subscriptionFeatureService;
-        private readonly IAppExceptionFactory<AppException> appExceptionFactory;
+        private readonly AppExceptionFactory appExceptionFactory;
 
         public SubscriptionController(
             ISubscriptionPackService subscriptionPackService,
             ISubscriptionPaymentService subscriptionPaymentService,
             ISubscriptionFeatureService subscriptionFeatureService,
-            IAppExceptionFactory<AppException> appExceptionFactory)
+            AppExceptionFactory appExceptionFactory)
         {
             this.subscriptionPackService = subscriptionPackService;
             this.subscriptionPaymentService = subscriptionPaymentService;
@@ -44,7 +43,7 @@ namespace Sonar.Controllers.UserExperience
             }
             catch (Exception)
             {
-                throw appExceptionFactory.CreateBadRequest();
+                throw new NotImplementedException();
             }
         }
 
@@ -62,7 +61,7 @@ namespace Sonar.Controllers.UserExperience
 
                 if (pack == null)
                 {
-                    throw appExceptionFactory.CreateNotFound();
+                    throw new NotImplementedException();
                 }
 
                 return Ok(pack);
@@ -73,7 +72,7 @@ namespace Sonar.Controllers.UserExperience
             }
             catch (Exception)
             {
-                throw appExceptionFactory.CreateBadRequest();
+                throw new NotImplementedException();
             }
         }
 
@@ -92,7 +91,7 @@ namespace Sonar.Controllers.UserExperience
             }
             catch (Exception)
             {
-                throw appExceptionFactory.CreateBadRequest();
+                throw new NotImplementedException();
             }
         }
 
@@ -109,7 +108,7 @@ namespace Sonar.Controllers.UserExperience
             {
                 if (id != pack.Id)
                 {
-                    throw appExceptionFactory.CreateBadRequest();
+                    throw new NotImplementedException();
                 }
 
                 SubscriptionPack updatedPack = await subscriptionPackService.UpdateAsync(pack);
@@ -121,7 +120,7 @@ namespace Sonar.Controllers.UserExperience
             }
             catch (Exception)
             {
-                throw appExceptionFactory.CreateBadRequest();
+                throw new NotImplementedException();
             }
         }
 
@@ -135,13 +134,7 @@ namespace Sonar.Controllers.UserExperience
         {
             try
             {
-                bool result = await subscriptionPackService.DeleteAsync(id);
-
-                if (!result)
-                {
-                    throw appExceptionFactory.CreateNotFound();
-                }
-
+                await subscriptionPackService.DeleteAsync(id);
                 return NoContent();
             }
             catch (AppException)
@@ -150,7 +143,7 @@ namespace Sonar.Controllers.UserExperience
             }
             catch (Exception)
             {
-                throw appExceptionFactory.CreateBadRequest();
+                throw new NotImplementedException();
             }
         }
 
@@ -177,7 +170,7 @@ namespace Sonar.Controllers.UserExperience
             }
             catch (Exception)
             {
-                throw appExceptionFactory.CreateBadRequest();
+                throw new NotImplementedException();
             }
         }
 
@@ -195,7 +188,7 @@ namespace Sonar.Controllers.UserExperience
             }
             catch (Exception)
             {
-                throw appExceptionFactory.CreateBadRequest();
+                throw new NotImplementedException();
             }
         }
 
@@ -213,7 +206,7 @@ namespace Sonar.Controllers.UserExperience
 
                 if (payment == null)
                 {
-                    throw appExceptionFactory.CreateNotFound();
+                    throw new NotImplementedException();
                 }
 
                 return Ok(payment);
@@ -224,7 +217,7 @@ namespace Sonar.Controllers.UserExperience
             }
             catch (Exception)
             {
-                throw appExceptionFactory.CreateBadRequest();
+                throw new NotImplementedException();
             }
         }
 
@@ -243,7 +236,7 @@ namespace Sonar.Controllers.UserExperience
             }
             catch (Exception)
             {
-                throw appExceptionFactory.CreateBadRequest();
+                throw new NotImplementedException();
             }
         }
 
@@ -257,13 +250,7 @@ namespace Sonar.Controllers.UserExperience
         {
             try
             {
-                bool result = await subscriptionPaymentService.DeleteAsync(id);
-
-                if (!result)
-                {
-                    throw appExceptionFactory.CreateNotFound();
-                }
-
+                await subscriptionPaymentService.DeleteAsync(id);
                 return NoContent();
             }
             catch (AppException)
@@ -272,7 +259,7 @@ namespace Sonar.Controllers.UserExperience
             }
             catch (Exception)
             {
-                throw appExceptionFactory.CreateBadRequest();
+                throw new NotImplementedException();
             }
         }
 
@@ -294,7 +281,7 @@ namespace Sonar.Controllers.UserExperience
             }
             catch (Exception)
             {
-                throw appExceptionFactory.CreateBadRequest();
+                throw new NotImplementedException();
             }
         }
 
@@ -312,7 +299,7 @@ namespace Sonar.Controllers.UserExperience
 
                 if (feature == null)
                 {
-                    throw appExceptionFactory.CreateNotFound();
+                    throw new NotImplementedException();
                 }
 
                 return Ok(feature);
@@ -323,7 +310,7 @@ namespace Sonar.Controllers.UserExperience
             }
             catch (Exception)
             {
-                throw appExceptionFactory.CreateBadRequest();
+                throw new NotImplementedException();
             }
         }
 
@@ -342,7 +329,7 @@ namespace Sonar.Controllers.UserExperience
             }
             catch (Exception)
             {
-                throw appExceptionFactory.CreateBadRequest();
+                throw new NotImplementedException();
             }
         }
 
@@ -359,7 +346,7 @@ namespace Sonar.Controllers.UserExperience
             {
                 if (id != feature.Id)
                 {
-                    throw appExceptionFactory.CreateBadRequest();
+                    throw new NotImplementedException();
                 }
 
                 SubscriptionFeature updatedFeature = await subscriptionFeatureService.UpdateAsync(feature);
@@ -371,7 +358,7 @@ namespace Sonar.Controllers.UserExperience
             }
             catch (Exception)
             {
-                throw appExceptionFactory.CreateBadRequest();
+                throw new NotImplementedException();
             }
         }
 
@@ -385,13 +372,7 @@ namespace Sonar.Controllers.UserExperience
         {
             try
             {
-                bool result = await subscriptionFeatureService.DeleteAsync(id);
-
-                if (!result)
-                {
-                    throw appExceptionFactory.CreateNotFound();
-                }
-
+                await subscriptionFeatureService.DeleteAsync(id);
                 return NoContent();
             }
             catch (AppException)
@@ -400,7 +381,7 @@ namespace Sonar.Controllers.UserExperience
             }
             catch (Exception)
             {
-                throw appExceptionFactory.CreateBadRequest();
+                throw new NotImplementedException();
             }
         }
 

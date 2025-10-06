@@ -1,5 +1,4 @@
-﻿using Application.Abstractions.Interfaces.Exception;
-using Application.Abstractions.Interfaces.Repository.UserCore;
+﻿using Application.Abstractions.Interfaces.Repository.UserCore;
 using Application.Abstractions.Interfaces.Repository.UserExperience;
 using Application.Abstractions.Interfaces.Services;
 using Application.DTOs;
@@ -12,7 +11,7 @@ namespace Application.Services.UserExperience
         IGiftRepository repository,
         ISubscriptionPaymentRepository subscriptionPaymentRepository,
         IUserRepository userRepository,
-        IAppExceptionFactory<AppException> appExceptionFactory)
+        AppExceptionFactory appExceptionFactory)
         : GenericService<Gift>(repository), IGiftService
     {
         public async Task<Gift> SendGiftAsync(SendGiftDTO giftDto)
@@ -47,11 +46,11 @@ namespace Application.Services.UserExperience
             Gift gift = await repository.GetByIdAsync(giftId);
             if (gift == null)
             {
-                throw appExceptionFactory.CreateNotFound();
+                throw new NotImplementedException();
             }
             if (gift.ReceiverId != receiverId)
             {
-                throw appExceptionFactory.CreateForbidden();
+                throw new NotImplementedException();
             }
 
             // Get subscription payment details
@@ -61,7 +60,7 @@ namespace Application.Services.UserExperience
             var receiver = await userRepository.GetByIdAsync(receiverId);
             if (receiver == null)
             {
-                throw appExceptionFactory.CreateNotFound();
+                throw new NotImplementedException();
             }
 
             receiver.SubscriptionPackId = payment.SubscriptionPackId;
@@ -98,14 +97,14 @@ namespace Application.Services.UserExperience
 
             if (gift == null)
             {
-                throw appExceptionFactory.CreateNotFound();
+                throw new NotImplementedException();
             }
 
             SubscriptionPayment payment = await subscriptionPaymentRepository.GetByIdAsync(gift.SubscriptionPaymentId);
 
             if (payment.BuyerId != senderId)
             {
-                throw appExceptionFactory.CreateForbidden();
+                throw new NotImplementedException();
             }
 
             await repository.RemoveAsync(gift);

@@ -1,4 +1,3 @@
-using Application.Abstractions.Interfaces.Exception;
 using Application.Abstractions.Interfaces.Services;
 using Application.DTOs;
 using Application.Exception;
@@ -9,22 +8,12 @@ namespace Sonar.Controllers.UserExperience
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class GiftController : ControllerBase
+    public class GiftController(
+        IGiftService giftService,
+        IGiftStyleService giftStyleService,
+        AppExceptionFactory appExceptionFactory)
+        : ControllerBase
     {
-        private readonly IGiftService giftService;
-        private readonly IGiftStyleService giftStyleService;
-        private readonly IAppExceptionFactory<AppException> appExceptionFactory;
-
-        public GiftController(
-            IGiftService giftService,
-            IGiftStyleService giftStyleService,
-            IAppExceptionFactory<AppException> appExceptionFactory)
-        {
-            this.giftService = giftService;
-            this.giftStyleService = giftStyleService;
-            this.appExceptionFactory = appExceptionFactory;
-        }
-
         /// <summary>
         /// Send a gift subscription to another user
         /// </summary>
@@ -40,7 +29,7 @@ namespace Sonar.Controllers.UserExperience
             }
             catch (Exception)
             {
-                throw appExceptionFactory.CreateBadRequest(); //appExceptionFactory.CreateInternalServerError();
+                throw new NotImplementedException();
             }
         }
 
@@ -60,7 +49,7 @@ namespace Sonar.Controllers.UserExperience
             }
             catch (Exception)
             {
-                throw appExceptionFactory.CreateBadRequest(); //appExceptionFactory.CreateInternalServerError();
+                throw new NotImplementedException();
             }
         }
 
@@ -79,7 +68,7 @@ namespace Sonar.Controllers.UserExperience
             }
             catch (Exception)
             {
-                throw appExceptionFactory.CreateBadRequest(); //appExceptionFactory.CreateInternalServerError();
+                throw new NotImplementedException();
             }
         }
 
@@ -98,7 +87,7 @@ namespace Sonar.Controllers.UserExperience
             }
             catch (Exception)
             {
-                throw appExceptionFactory.CreateBadRequest(); //appExceptionFactory.CreateInternalServerError();
+                throw new NotImplementedException();
             }
         }
 
@@ -113,13 +102,7 @@ namespace Sonar.Controllers.UserExperience
             try
             {
                 Gift gift = await giftService.GetByIdAsync(id);
-
-                if (gift == null)
-                {
-                    throw appExceptionFactory.CreateNotFound();
-                }
-
-                return Ok(gift);
+                return gift == null ? throw new NotImplementedException() : Ok(gift);
             }
             catch (AppException)
             {
@@ -127,7 +110,7 @@ namespace Sonar.Controllers.UserExperience
             }
             catch (Exception)
             {
-                throw appExceptionFactory.CreateBadRequest(); //appExceptionFactory.CreateInternalServerError();
+                throw new NotImplementedException();
             }
         }
 
@@ -146,7 +129,7 @@ namespace Sonar.Controllers.UserExperience
 
                 if (!result)
                 {
-                    throw appExceptionFactory.CreateBadRequest();
+                    throw new NotImplementedException();
                 }
 
                 return NoContent();
@@ -157,7 +140,7 @@ namespace Sonar.Controllers.UserExperience
             }
             catch (Exception)
             {
-                throw appExceptionFactory.CreateBadRequest(); //appExceptionFactory.CreateInternalServerError();
+                throw new NotImplementedException();
             }
         }
 
@@ -177,7 +160,7 @@ namespace Sonar.Controllers.UserExperience
             }
             catch (Exception)
             {
-                throw appExceptionFactory.CreateBadRequest();
+                throw new NotImplementedException();
             }
         }
 
@@ -195,7 +178,7 @@ namespace Sonar.Controllers.UserExperience
 
                 if (style == null)
                 {
-                    throw appExceptionFactory.CreateNotFound();
+                    throw new NotImplementedException();
                 }
 
                 return Ok(style);
@@ -206,7 +189,7 @@ namespace Sonar.Controllers.UserExperience
             }
             catch (Exception)
             {
-                throw appExceptionFactory.CreateBadRequest();
+                throw new NotImplementedException();
             }
         }
 
@@ -225,7 +208,7 @@ namespace Sonar.Controllers.UserExperience
             }
             catch (Exception)
             {
-                throw appExceptionFactory.CreateBadRequest();
+                throw new NotImplementedException();
             }
         }
 
@@ -242,7 +225,7 @@ namespace Sonar.Controllers.UserExperience
             {
                 if (id != style.Id)
                 {
-                    throw appExceptionFactory.CreateBadRequest();
+                    throw new NotImplementedException();
                 }
 
                 GiftStyle updatedStyle = await giftStyleService.UpdateAsync(style);
@@ -254,7 +237,7 @@ namespace Sonar.Controllers.UserExperience
             }
             catch (Exception)
             {
-                throw appExceptionFactory.CreateBadRequest();
+                throw new NotImplementedException();
             }
         }
 
@@ -268,13 +251,7 @@ namespace Sonar.Controllers.UserExperience
         {
             try
             {
-                bool result = await giftStyleService.DeleteAsync(id);
-
-                if (!result)
-                {
-                    throw appExceptionFactory.CreateNotFound();
-                }
-
+                await giftStyleService.DeleteAsync(id);
                 return NoContent();
             }
             catch (AppException)
@@ -283,7 +260,7 @@ namespace Sonar.Controllers.UserExperience
             }
             catch (Exception)
             {
-                throw appExceptionFactory.CreateBadRequest();
+                throw new NotImplementedException();
             }
         }
 
