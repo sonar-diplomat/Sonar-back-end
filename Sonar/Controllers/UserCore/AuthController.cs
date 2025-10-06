@@ -2,8 +2,8 @@
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using Application.Abstractions.Interfaces.Service.Utilities;
 using Application.Abstractions.Interfaces.Services;
+using Application.Abstractions.Interfaces.Services.Utilities;
 using Application.DTOs;
 using Application.Exception;
 using Entities.Enums;

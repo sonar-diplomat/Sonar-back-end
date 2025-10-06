@@ -14,11 +14,16 @@ namespace Entities.Models.UserCore;
 [Table("User")]
 public class User : IdentityUser<int>
 {
-    [Required] [MaxLength(100)] public string FirstName { get; set; }
+    [Required]
+    [MaxLength(100)]
+    public string FirstName { get; set; }
 
-    [Required] [MaxLength(100)] public string LastName { get; set; }
+    [Required]
+    [MaxLength(100)]
+    public string LastName { get; set; }
 
-    [Required] public DateOnly DateOfBirth { get; set; }
+    [Required]
+    public DateOnly DateOfBirth { get; set; }
 
     [Required]
     [MaxLength(24)]
@@ -30,32 +35,41 @@ public class User : IdentityUser<int>
     [MinLength(4)]
     public string Login { get; set; }
 
-    [MaxLength(4000)] public string Biography { get; set; } // md 
+    [MaxLength(4000)]
+    public string Biography { get; set; } // md 
 
-    [Required] public string PublicIdentifier { get; set; }
+    [Required]
+    public string PublicIdentifier { get; set; }
 
-    [Required] public int AvailableCurrency { get; set; }
+    [Required]
+    public int AvailableCurrency { get; set; }
 
-    [Required] public DateTime RegistrationDate { get; set; }
+    [Required]
+    public DateTime RegistrationDate { get; set; }
 
-    [Required] public bool Enabled2FA { get; set; }
+    [Required]
+    public bool Enabled2FA { get; set; }
 
     // Authenticator apps
-    [MaxLength(500)] public string GoogleAuthorizationKey { get; set; }
+    [MaxLength(500)]
+    public string GoogleAuthorizationKey { get; set; }
     // facebook .... and ect...
 
 
-    [Required] public int AvatarImageId { get; set; }
+    [Required]
+    public int AvatarImageId { get; set; }
 
-    [Required] public int VisibilityStateId { get; set; }
+    [Required]
+    public int VisibilityStateId { get; set; }
 
     public int? SubscriptionPackId { get; set; }
 
-    [Required] public int UserStateId { get; set; }
+    [Required]
+    public int UserStateId { get; set; }
 
-    [Required] public int SettingsId { get; set; }
-    
-    
+    [Required]
+    public int SettingsId { get; set; }
+
 
     /// <summary>
     /// </summary>
@@ -63,9 +77,11 @@ public class User : IdentityUser<int>
     [DeleteBehavior(DeleteBehavior.Cascade)]
     public virtual VisibilityState VisibilityState { get; set; }
 
-    [ForeignKey("AvatarImageId")] public virtual File.File AvatarImage { get; set; }
+    [ForeignKey("AvatarImageId")]
+    public virtual File.File AvatarImage { get; set; }
 
-    [ForeignKey("SubscriptionPackId")] public virtual SubscriptionPack? SubscriptionPack { get; set; }
+    [ForeignKey("SubscriptionPackId")]
+    public virtual SubscriptionPack? SubscriptionPack { get; set; }
 
     [ForeignKey("UserStateId")]
     [DeleteBehavior(DeleteBehavior.Cascade)]

@@ -1,5 +1,5 @@
 ﻿using System.Collections.Concurrent;
-using Application.Abstractions.Interfaces.Service.File;
+using Application.Abstractions.Interfaces.Services.File;
 using Microsoft.AspNetCore.Http;
 
 namespace Infrastructure.Services;

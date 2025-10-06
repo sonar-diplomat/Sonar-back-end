@@ -4,30 +4,7 @@ using Entities.Models.UserCore;
 
 namespace Application.Services.UserCore;
 
-public class UserSessionService(IUserSessionRepository repository) : IUserSessionService
+public class UserSessionService(IUserSessionRepository repository)
+    : GenericService<UserSession>(repository), IUserSessionService
 {
-    public Task<UserSession> GetByIdAsync(int id)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<IEnumerable<UserSession>> GetAllAsync()
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<UserSession> CreateAsync(UserSession entity)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<UserSession> UpdateAsync(UserSession entity)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<bool> DeleteAsync(int id)
-    {
-        throw new NotImplementedException();
-    }
 }

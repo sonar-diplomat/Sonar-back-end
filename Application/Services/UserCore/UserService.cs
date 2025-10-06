@@ -8,7 +8,7 @@ using Entities.Models.UserExperience;
 namespace Application.Services.UserCore;
 
 public class UserService(
-    IUserRepository userRepository,
+    IUserRepository repository,
     IVisibilityStateService visibilityStateService,
     IInventoryService inventoryService,
     IAccessFeatureService accessFeatureService,
@@ -20,38 +20,41 @@ public class UserService(
 {
     public async Task<int> ChangeCurrencyAsync(int userId, int modifier)
     {
-        User user = await GetUser(userId);
-
-
+        User user = await GetByIdAsync(userId);
         user.AvailableCurrency += modifier;
         return user.AvailableCurrency;
     }
 
-    // TODO: implement email change verification by service
+    public async Task<User> GetByIdAsync(int id)
+    {
+        return (await repository.GetByIdAsync(id))!;
+    }
+
+    public async Task<IEnumerable<User>> GetAllAsync()
+    {
+        return await repository.GetAllAsync();
+    }
+
+    // TODO: implement this pile of functions
     public async Task<bool> ChangeEmailAsync(int userId, string newEmail)
     {
-        User user = await GetUser(userId);
-
-
-        return true;
+        throw new NotImplementedException();
     }
 
-    // TODO: implement 
-    public Task<bool> ChangePasswordAsync(int userId, string newPassword)
+    public async Task<bool> UpdateUserAsync(int userId, UserDTO userUpdateDTO)
     {
         throw new NotImplementedException();
     }
 
-    public Task<bool> ChangeUsernameAsync(int userId, string newUsername)
+    public async Task<bool> ChangePasswordAsync(int userId, string newPassword)
     {
         throw new NotImplementedException();
     }
 
-    public Task<User> CreateUserAsync(UserRegisterDTO userRegisterDTO)
+    public async Task<bool> ChangeUsernameAsync(int userId, string newUsername)
     {
         throw new NotImplementedException();
     }
-
 
     public async Task<User> CreateUserShellAsync(UserRegisterDTO model)
     {
@@ -77,51 +80,7 @@ public class UserService(
         user.AccessFeatures = await accessFeatureService.GetDefaultAsync();
         user.Settings = await settingsService.CreateDefaultAsync(model.Locale);
         user.UserState = await stateService.CreateDefaultAsync();
-
         user.AvatarImage = await fileService.GetDefaultAsync();
-
         return user;
-    }
-
-    public Task<bool> UpdateUserAsync(int userId, UserDTO userUpdateDTO)
-    {
-        throw new NotImplementedException();
-    }
-
-
-    private async Task<User> GetUser(int userId)
-    {
-        User? user = await userRepository.GetByIdAsync(userId);
-        if (user == null)
-        {
-        }
-
-        return user;
-    }
-
-
-    public Task<bool> DeleteAsync(int id)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<IEnumerable<UserDTO>> GetAllAsync()
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<User> GetByIdAsync(int id)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<bool> Manage2FAAsync(int userId)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<bool> Verify2FAAsync(int userId, string token)
-    {
-        throw new NotImplementedException();
     }
 }

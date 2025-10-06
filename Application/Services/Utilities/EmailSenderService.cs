@@ -1,6 +1,6 @@
 ﻿using System.Net.Http.Headers;
 using System.Text;
-using Application.Abstractions.Interfaces.Service.Utilities;
+using Application.Abstractions.Interfaces.Services.Utilities;
 using Entities.Enums;
 using Microsoft.Extensions.Options;
 

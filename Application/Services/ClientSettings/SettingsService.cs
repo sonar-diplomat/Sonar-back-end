@@ -13,15 +13,16 @@ public class SettingsService(
 {
     public async Task<Settings> CreateDefaultAsync(string languageLocale)
     {
-        Settings settings = new();
-        settings.AutoPlay = true;
-        settings.Crossfade = false;
-        settings.ExplicitContent = false;
-        settings.PreferredPlaybackQuality = await playbackQualityService.GetDefaultAsync();
-        settings.Language = await languageService.GetByLocaleAsync(languageLocale);
-        settings.Theme = await themeService.GetDefaultAsync();
-        settings.UserPrivacy = await userPrivacySettingsService.GetDefaultAsync();
-
+        Settings settings = new()
+        {
+            AutoPlay = true,
+            Crossfade = false,
+            ExplicitContent = false,
+            PreferredPlaybackQuality = await playbackQualityService.GetDefaultAsync(),
+            Language = await languageService.GetByLocaleAsync(languageLocale),
+            Theme = await themeService.GetDefaultAsync(),
+            UserPrivacy = await userPrivacySettingsService.GetDefaultAsync()
+        };
         return settings;
     }
 }

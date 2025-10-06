@@ -1,5 +1,5 @@
 ﻿using Application.Abstractions.Interfaces.Repository;
-using Application.Abstractions.Interfaces.Service;
+using Application.Abstractions.Interfaces.Services;
 using Entities.Models;
 
 namespace Application.Services;
@@ -8,26 +8,31 @@ public class GenericService<T>(IGenericRepository<T> repository) : IGenericServi
 {
     public async Task<T> CreateAsync(T entity)
     {
-        throw new NotImplementedException();
+        return await repository.AddAsync(entity);
     }
 
-    public async Task<bool> DeleteAsync(int id)
+    public async Task DeleteAsync(int id)
     {
-        throw new NotImplementedException();
+        await repository.RemoveAsync(await GetByIdAsync(id));
+    }
+
+    public async Task DeleteAsync(T entity)
+    {
+        await repository.RemoveAsync(entity);
     }
 
     public async Task<IEnumerable<T>> GetAllAsync()
     {
-        throw new NotImplementedException();
+        return await repository.GetAllAsync();
     }
 
     public async Task<T> GetByIdAsync(int id)
     {
-        throw new NotImplementedException();
+        return await repository.GetByIdAsync(id);
     }
 
     public async Task<T> UpdateAsync(T entity)
     {
-        throw new NotImplementedException();
+        return await repository.UpdateAsync(entity);
     }
 }

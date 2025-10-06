@@ -1,0 +1,7 @@
+﻿using Entities.Models.Access;
+
+namespace Application.Abstractions.Interfaces.Services;
+
+public interface IVisibilityStatusService : IGenericService<VisibilityStatus>
+{
+}

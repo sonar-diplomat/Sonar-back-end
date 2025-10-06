@@ -4,14 +4,10 @@ using Infrastructure.Data;
 
 namespace Sonar.Infrastructure.Repository;
 
-public class GenericRepository<T> : IGenericRepository<T> where T : BaseModel
+public class GenericRepository<T>(SonarContext context) : IGenericRepository<T>
+    where T : BaseModel
 {
-    protected readonly SonarContext context;
-
-    public GenericRepository(SonarContext context)
-    {
-        this.context = context;
-    }
+    protected readonly SonarContext context = context;
 
     public virtual async Task<T?> GetByIdAsync(int? id)
     {
@@ -29,22 +25,19 @@ public class GenericRepository<T> : IGenericRepository<T> where T : BaseModel
         return entity;
     }
 
-    public virtual async Task<Task> UpdateAsync(T entity)
+    public virtual async Task<T> UpdateAsync(T entity)
     {
-        context.Set<T>().Update(entity);
-        return Task.CompletedTask;
+        return context.Set<T>().Update(entity).Entity;
     }
 
-    public virtual async Task<Task> RemoveAsync(T entity)
+    public virtual async Task RemoveAsync(T entity)
     {
         context.Set<T>().Remove(entity);
-        return Task.CompletedTask;
     }
 
-    public virtual async Task<Task> RemoveRangeAsync(List<T> entities)
+    public virtual async Task RemoveRangeAsync(List<T> entities)
     {
         context.Set<T>().RemoveRange(entities);
-        return Task.CompletedTask;
     }
 
     public virtual async Task SaveChangesAsync()

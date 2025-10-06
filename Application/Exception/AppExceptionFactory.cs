@@ -1,18 +1,17 @@
 ﻿using System.Reflection;
 
-namespace Application.Exception
+namespace Application.Exception;
+
+public class AppExceptionFactory
 {
-    public class AppExceptionFactory
+    public static T Create<T>(string[]? args = null) where T : AppException
     {
-        public static T Create<T>(string[]? args = null) where T : AppException
-        {
-            return (T)Activator.CreateInstance(
-                typeof(T),
-                BindingFlags.Instance | BindingFlags.NonPublic,
-                binder: null,
-                args: args,
-                culture: null
-            )!;
-        }
+        return (T)Activator.CreateInstance(
+            typeof(T),
+            BindingFlags.Instance | BindingFlags.NonPublic,
+            null,
+            args,
+            null
+        )!;
     }
 }
