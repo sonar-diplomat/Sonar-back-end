@@ -1,4 +1,4 @@
-﻿using Application.Abstractions.Interfaces.Service;
+﻿using Application.Abstractions.Interfaces.Services;
 using Entities.Models.Report;
 
 namespace Application.Abstractions.Interfaces.Services

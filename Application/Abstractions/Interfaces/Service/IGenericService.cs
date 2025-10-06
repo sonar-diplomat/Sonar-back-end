@@ -1,6 +1,6 @@
 ﻿using Entities.Models;
 
-namespace Application.Abstractions.Interfaces.Service
+namespace Application.Abstractions.Interfaces.Services
 {
     public interface IGenericService<T> where T : BaseModel
     {

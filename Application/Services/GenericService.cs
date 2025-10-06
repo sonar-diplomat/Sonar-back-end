@@ -1,5 +1,5 @@
 ﻿using Application.Abstractions.Interfaces.Repository;
-using Application.Abstractions.Interfaces.Service;
+using Application.Abstractions.Interfaces.Services;
 using Entities.Models;
 
 namespace Application.Services

@@ -1,6 +1,6 @@
 ﻿using Application.DTOs;
 
-namespace Application.Abstractions.Interfaces.Service.UserCore
+namespace Application.Abstractions.Interfaces.Services.UserCore
 {
     public interface IAuthService
     {

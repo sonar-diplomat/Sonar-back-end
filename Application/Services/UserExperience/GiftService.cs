@@ -1,4 +1,5 @@
 ﻿using Application.Abstractions.Interfaces.Exception;
+using Application.Abstractions.Interfaces.Repository.UserCore;
 using Application.Abstractions.Interfaces.Repository.UserExperience;
 using Application.Abstractions.Interfaces.Services;
 using Application.DTOs;
@@ -7,22 +8,13 @@ using Entities.Models.UserExperience;
 
 namespace Application.Services.UserExperience
 {
-    public class GiftService : IGiftService
+    public class GiftService(
+        IGiftRepository repository,
+        ISubscriptionPaymentRepository subscriptionPaymentRepository,
+        IUserRepository userRepository,
+        IAppExceptionFactory<AppException> appExceptionFactory)
+        : GenericService<Gift>(repository), IGiftService
     {
-        private readonly IGiftRepository giftRepository;
-        private readonly ISubscriptionPaymentRepository subscriptionPaymentRepository;
-        private readonly IAppExceptionFactory<AppException> appExceptionFactory;
-
-        public GiftService(
-            IGiftRepository giftRepository,
-            ISubscriptionPaymentRepository subscriptionPaymentRepository,
-            IAppExceptionFactory<AppException> appExceptionFactory)
-        {
-            this.giftRepository = giftRepository;
-            this.subscriptionPaymentRepository = subscriptionPaymentRepository;
-            this.appExceptionFactory = appExceptionFactory;
-        }
-
         public async Task<Gift> SendGiftAsync(SendGiftDTO giftDto)
         {
             // Create the subscription payment (buyer pays for the gift)
@@ -46,39 +38,51 @@ namespace Application.Services.UserExperience
                 SubscriptionPaymentId = createdPayment.Id
             };
 
-            return await giftRepository.AddAsync(gift);
+            return await repository.AddAsync(gift);
         }
 
         public async Task<SubscriptionPayment> AcceptGiftAsync(int giftId, int receiverId)
         {
-            Gift gift = await giftRepository.GetByIdAsync(giftId);
-
+            // Validate gift exists and belongs to the receiver
+            Gift gift = await repository.GetByIdAsync(giftId);
             if (gift == null)
             {
                 throw appExceptionFactory.CreateNotFound();
             }
-
             if (gift.ReceiverId != receiverId)
             {
                 throw appExceptionFactory.CreateForbidden();
             }
 
-            // TODO: Check if gift is already accepted
-            // TODO: Activate subscription for the receiver
-            // For now, just return the subscription payment
-            return await subscriptionPaymentRepository.GetByIdAsync(gift.SubscriptionPaymentId);
+            // Get subscription payment details
+            SubscriptionPayment payment = await subscriptionPaymentRepository.GetByIdAsync(gift.SubscriptionPaymentId);
+
+            // Activate subscription for receiver
+            var receiver = await userRepository.GetByIdAsync(receiverId);
+            if (receiver == null)
+            {
+                throw appExceptionFactory.CreateNotFound();
+            }
+
+            receiver.SubscriptionPackId = payment.SubscriptionPackId;
+            await userRepository.UpdateAsync(receiver);
+            await userRepository.SaveChangesAsync();
+            await repository.RemoveAsync(gift);
+            await repository.SaveChangesAsync();
+
+            return payment;
         }
 
         public async Task<IEnumerable<Gift>> GetReceivedGiftsAsync(int receiverId)
         {
-            IEnumerable<Gift> allGifts = await giftRepository.GetAllAsync();
+            IEnumerable<Gift> allGifts = await repository.GetAllAsync();
             return allGifts.Where(g => g.ReceiverId == receiverId);
         }
 
         public async Task<IEnumerable<Gift>> GetSentGiftsAsync(int senderId)
         {
             // Get all gifts where the SubscriptionPayment.BuyerId matches senderId
-            IEnumerable<Gift> allGifts = await giftRepository.GetAllAsync();
+            IEnumerable<Gift> allGifts = await repository.GetAllAsync();
             IEnumerable<SubscriptionPayment> payments = await subscriptionPaymentRepository.GetAllAsync();
 
             var senderPaymentIds = payments
@@ -88,14 +92,9 @@ namespace Application.Services.UserExperience
             return allGifts.Where(g => senderPaymentIds.Contains(g.SubscriptionPaymentId));
         }
 
-        public async Task<Gift> GetGiftByIdAsync(int giftId)
-        {
-            return await giftRepository.GetByIdAsync(giftId);
-        }
-
         public async Task<bool> CancelGiftAsync(int giftId, int senderId)
         {
-            Gift gift = await giftRepository.GetByIdAsync(giftId);
+            Gift gift = await repository.GetByIdAsync(giftId);
 
             if (gift == null)
             {
@@ -109,10 +108,8 @@ namespace Application.Services.UserExperience
                 throw appExceptionFactory.CreateForbidden();
             }
 
-            // TODO: Check if gift is already accepted - cannot cancel accepted gifts
-
-            await giftRepository.RemoveAsync(gift);
-            await giftRepository.SaveChangesAsync();
+            await repository.RemoveAsync(gift);
+            await repository.SaveChangesAsync();
             return true;
         }
     }

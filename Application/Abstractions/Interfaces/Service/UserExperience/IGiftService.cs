@@ -1,9 +1,10 @@
-﻿using Application.DTOs;
+﻿using Application.Abstractions.Interfaces.Services;
+using Application.DTOs;
 using Entities.Models.UserExperience;
 
 namespace Application.Abstractions.Interfaces.Services
 {
-    public interface IGiftService
+    public interface IGiftService : IGenericService<Gift> 
     {
         /// <summary>
         /// Send a gift subscription to another user
@@ -24,11 +25,6 @@ namespace Application.Abstractions.Interfaces.Services
         /// Get all gifts sent by a user (including planned)
         /// </summary>
         Task<IEnumerable<Gift>> GetSentGiftsAsync(int senderId);
-
-        /// <summary>
-        /// Get a specific gift by ID
-        /// </summary>
-        Task<Gift> GetGiftByIdAsync(int giftId);
 
         /// <summary>
         /// Cancel a planned gift (only before it's accepted)
