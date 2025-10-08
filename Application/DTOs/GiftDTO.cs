@@ -1,7 +1,7 @@
 ﻿namespace Application.DTOs;
 
 /// <summary>
-/// DTO for sending a gift subscription
+///     DTO for sending a gift subscription
 /// </summary>
 public class SendGiftDTO
 {

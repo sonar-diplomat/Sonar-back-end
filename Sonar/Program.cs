@@ -57,6 +57,18 @@ builder.Services.AddDbContext<SonarContext>(options =>
 // Add services to the container.
 builder.Services.AddControllers();
 
+// CORS policy configuration
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("ArtemRomanovich", policy =>
+    {
+        policy.AllowAnyOrigin()
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+        // .AllowCredentials();
+    });
+});
+
 // Configure Identity
 builder.Services.AddIdentity<User, IdentityRole<int>>(options =>
     {
@@ -236,9 +248,20 @@ builder.Services.AddScoped<ISubscriptionFeatureService, SubscriptionFeatureServi
 builder.Services.AddScoped<ISubscriptionPackService, SubscriptionPackService>();
 builder.Services.AddScoped<ISubscriptionPaymentService, SubscriptionPaymentService>();
 
+builder.Services.AddScoped<MailgunSettings>(sp =>
+    new MailgunSettings
+    {
+        ApiKey = builder.Configuration["Mailgun:ApiKey"] ?? throw new InvalidOperationException("Mailgun ApiKey not found."),
+        Domain = builder.Configuration["Mailgun:Domain"] ?? throw new InvalidOperationException("Mailgun Domain not found."),
+        From = builder.Configuration["Mailgun:From"] ?? throw new InvalidOperationException("Mailgun From not found.")
+    }
+);
+Console.WriteLine("Settings");
+
 // Utility Services
 builder.Services.AddScoped<IEmailSenderService, MailgunEmailService>();
-builder.Services.AddHttpClient<HttpClient, HttpClient>();
+
+builder.Services.AddHttpClient();
 builder.Services.AddSingleton<AppExceptionFactory>();
 
 #endregion
@@ -252,8 +275,11 @@ if (app.Environment.IsDevelopment()) app.MapOpenApi();
 
 app.UseHttpsRedirection();
 
-app.UseAuthentication();
+app.UseRouting();
 
+app.UseCors("ArtemRomanovich");
+
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

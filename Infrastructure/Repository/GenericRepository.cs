@@ -22,22 +22,31 @@ public class GenericRepository<T>(SonarContext context) : IGenericRepository<T>
     public virtual async Task<T> AddAsync(T entity)
     {
         await context.Set<T>().AddAsync(entity);
+        await context.SaveChangesAsync();
+
         return entity;
     }
 
     public virtual async Task<T> UpdateAsync(T entity)
     {
-        return context.Set<T>().Update(entity).Entity;
+        context.Set<T>().Update(entity);
+        await context.SaveChangesAsync();
+
+        return entity;
     }
 
     public virtual async Task RemoveAsync(T entity)
     {
         context.Set<T>().Remove(entity);
+
+        await context.SaveChangesAsync();
     }
 
     public virtual async Task RemoveRangeAsync(List<T> entities)
     {
         context.Set<T>().RemoveRange(entities);
+
+        await context.SaveChangesAsync();
     }
 
     public virtual async Task SaveChangesAsync()

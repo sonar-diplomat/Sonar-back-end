@@ -77,9 +77,8 @@ public class AuthController(
         throw new NotImplementedException();
     }
 
-
     [HttpPost("2fa")]
-    public async Task<IActionResult> TwoFactorAuthentication(string email)
+    public async Task<IActionResult> TwoFactorAuthentication([FromBody] string email)
     {
         try
         {

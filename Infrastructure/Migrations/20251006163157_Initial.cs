@@ -1595,11 +1595,6 @@ namespace Infrastructure.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_AspNetUserRoles_RoleId",
-                table: "AspNetUserRoles",
-                column: "RoleId");
-
-            migrationBuilder.CreateIndex(
                 name: "EmailIndex",
                 table: "AspNetUsers",
                 column: "NormalizedEmail");
@@ -2018,14 +2013,6 @@ namespace Infrastructure.Migrations
                 onDelete: ReferentialAction.Cascade);
 
             migrationBuilder.AddForeignKey(
-                name: "FK_AspNetUserRoles_AspNetUsers_UserId",
-                table: "AspNetUserRoles",
-                column: "UserId",
-                principalTable: "AspNetUsers",
-                principalColumn: "Id",
-                onDelete: ReferentialAction.Cascade);
-
-            migrationBuilder.AddForeignKey(
                 name: "FK_AspNetUsers_File_AvatarImageId",
                 table: "AspNetUsers",
                 column: "AvatarImageId",
@@ -2075,9 +2062,6 @@ namespace Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "AspNetUserLogins");
-
-            migrationBuilder.DropTable(
-                name: "AspNetUserRoles");
 
             migrationBuilder.DropTable(
                 name: "AspNetUserTokens");

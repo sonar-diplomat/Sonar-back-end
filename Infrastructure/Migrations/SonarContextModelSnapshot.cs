@@ -156,6 +156,9 @@ namespace Infrastructure.Migrations
                     b.Property<int>("AssociatedReportId")
                         .HasColumnType("integer");
 
+                    b.Property<int>("AssociatedReportedId")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime>("DateTime")
                         .HasColumnType("timestamp with time zone");
 
@@ -1058,12 +1061,16 @@ namespace Infrastructure.Migrations
 
                     b.Property<string>("Token")
                         .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)");
+                        .HasColumnType("text");
+
+                    b.Property<int?>("UserId")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
-                    b.ToTable("RefreshTokens");
+                    b.HasIndex("UserId");
+
+                    b.ToTable("RefreshToken");
                 });
 
             modelBuilder.Entity("Entities.Models.UserCore.User", b =>
@@ -1161,6 +1168,9 @@ namespace Infrastructure.Migrations
                     b.Property<int>("SettingsId")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("SettingsId1")
+                        .HasColumnType("integer");
+
                     b.Property<int?>("SubscriptionPackId")
                         .HasColumnType("integer");
 
@@ -1195,6 +1205,8 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("SettingsId")
                         .IsUnique();
+
+                    b.HasIndex("SettingsId1");
 
                     b.HasIndex("SubscriptionPackId");
 
@@ -1680,7 +1692,7 @@ namespace Infrastructure.Migrations
 
                     b.ToTable("MessageUser");
                 });
-            
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<int>", b =>
                 {
                     b.Property<int>("Id")
@@ -1775,21 +1787,6 @@ namespace Infrastructure.Migrations
                     b.ToTable("QueueTrack");
                 });
 
-            modelBuilder.Entity("RefreshTokenUser", b =>
-                {
-                    b.Property<int>("RefreshTokensId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("UsersId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("RefreshTokensId", "UsersId");
-
-                    b.HasIndex("UsersId");
-
-                    b.ToTable("RefreshTokenUser");
-                });
-
             modelBuilder.Entity("ReportReportReasonType", b =>
                 {
                     b.Property<int>("ReportReasonTypeId")
@@ -1803,21 +1800,6 @@ namespace Infrastructure.Migrations
                     b.HasIndex("ReportsId");
 
                     b.ToTable("ReportReportReasonType");
-                });
-
-            modelBuilder.Entity("SettingsUser", b =>
-                {
-                    b.Property<int>("BlockedUsersId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("SettingsBlockedUsersId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("BlockedUsersId", "SettingsBlockedUsersId");
-
-                    b.HasIndex("SettingsBlockedUsersId");
-
-                    b.ToTable("SettingsUser");
                 });
 
             modelBuilder.Entity("SubscriptionFeatureSubscriptionPack", b =>
@@ -1982,7 +1964,7 @@ namespace Infrastructure.Migrations
                     b.HasOne("Entities.Models.UserCore.User", "Punisher")
                         .WithMany()
                         .HasForeignKey("PunisherId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("AssociatedReport");
@@ -1995,7 +1977,7 @@ namespace Infrastructure.Migrations
                     b.HasOne("Entities.Models.Access.VisibilityStatus", "Status")
                         .WithMany("VisibilityStates")
                         .HasForeignKey("StatusId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Status");
@@ -2006,7 +1988,7 @@ namespace Infrastructure.Migrations
                     b.HasOne("Entities.Models.File.File", "Cover")
                         .WithMany()
                         .HasForeignKey("CoverId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Cover");
@@ -2017,13 +1999,12 @@ namespace Infrastructure.Migrations
                     b.HasOne("Entities.Models.Chat.Chat", "Chat")
                         .WithMany()
                         .HasForeignKey("ChatId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Entities.Models.Chat.Message", "ReplyMessage")
                         .WithMany()
-                        .HasForeignKey("ReplyMessageId")
-                        .OnDelete(DeleteBehavior.NoAction);
+                        .HasForeignKey("ReplyMessageId");
 
                     b.Navigation("Chat");
 
@@ -2035,13 +2016,13 @@ namespace Infrastructure.Migrations
                     b.HasOne("Entities.Models.Chat.Message", "Message")
                         .WithMany()
                         .HasForeignKey("MessageId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Entities.Models.UserCore.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Message");
@@ -2054,13 +2035,13 @@ namespace Infrastructure.Migrations
                     b.HasOne("Entities.Models.UserCore.User", "User")
                         .WithMany("Posts")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Entities.Models.Access.VisibilityState", "VisibilityState")
                         .WithMany()
                         .HasForeignKey("VisibilityStateId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("User");
@@ -2073,19 +2054,19 @@ namespace Infrastructure.Migrations
                     b.HasOne("Entities.Models.ClientSettings.Language", "Language")
                         .WithMany()
                         .HasForeignKey("LanguageId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Entities.Models.ClientSettings.PlaybackQuality", "PreferredPlaybackQuality")
                         .WithMany()
                         .HasForeignKey("PreferredPlaybackQualityId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Entities.Models.ClientSettings.Theme", "Theme")
                         .WithMany()
                         .HasForeignKey("ThemeId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Entities.Models.ClientSettings.UserPrivacySettings", "UserPrivacy")
@@ -2108,13 +2089,13 @@ namespace Infrastructure.Migrations
                     b.HasOne("Entities.Models.UserCore.UserPrivacyGroup", "WhichCanMessage")
                         .WithMany()
                         .HasForeignKey("WhichCanMessageId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Entities.Models.UserCore.UserPrivacyGroup", "WhichCanViewProfile")
                         .WithMany()
                         .HasForeignKey("WhichCanViewProfileId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("WhichCanMessage");
@@ -2157,7 +2138,7 @@ namespace Infrastructure.Migrations
                     b.HasOne("Entities.Models.Distribution.Distributor", "Distributor")
                         .WithMany("Sessions")
                         .HasForeignKey("DistributorId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Distributor");
@@ -2168,7 +2149,7 @@ namespace Infrastructure.Migrations
                     b.HasOne("Entities.Models.UserCore.User", "Issuer")
                         .WithMany("Licenses")
                         .HasForeignKey("IssuerId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Issuer");
@@ -2183,7 +2164,7 @@ namespace Infrastructure.Migrations
                     b.HasOne("Entities.Models.File.FileType", "Type")
                         .WithMany()
                         .HasForeignKey("TypeId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Type");
@@ -2194,13 +2175,12 @@ namespace Infrastructure.Migrations
                     b.HasOne("Entities.Models.Library.Library", "Library")
                         .WithMany()
                         .HasForeignKey("LibraryId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Entities.Models.Library.Folder", "ParentFolder")
                         .WithMany("SubFolders")
-                        .HasForeignKey("ParentFolderId")
-                        .OnDelete(DeleteBehavior.NoAction);
+                        .HasForeignKey("ParentFolderId");
 
                     b.Navigation("Library");
 
@@ -2212,7 +2192,7 @@ namespace Infrastructure.Migrations
                     b.HasOne("Entities.Models.UserCore.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("User");
@@ -2277,13 +2257,13 @@ namespace Infrastructure.Migrations
                     b.HasOne("Entities.Models.Report.ReportableEntityType", "ReportableEntityType")
                         .WithMany("Reports")
                         .HasForeignKey("ReportableEntityTypeId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Entities.Models.UserCore.User", "Reporter")
                         .WithMany()
                         .HasForeignKey("ReporterId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("ReportableEntityType");
@@ -2296,10 +2276,17 @@ namespace Infrastructure.Migrations
                     b.HasOne("Entities.Models.Music.Collection", "Collection")
                         .WithMany()
                         .HasForeignKey("CollectionId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Collection");
+                });
+
+            modelBuilder.Entity("Entities.Models.UserCore.RefreshToken", b =>
+                {
+                    b.HasOne("Entities.Models.UserCore.User", null)
+                        .WithMany("RefreshTokens")
+                        .HasForeignKey("UserId");
                 });
 
             modelBuilder.Entity("Entities.Models.UserCore.User", b =>
@@ -2315,6 +2302,11 @@ namespace Infrastructure.Migrations
                         .HasForeignKey("Entities.Models.UserCore.User", "SettingsId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("Entities.Models.ClientSettings.Settings", null)
+                        .WithMany("BlockedUsers")
+                        .HasForeignKey("SettingsId1")
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("Entities.Models.UserExperience.SubscriptionPack", "SubscriptionPack")
                         .WithMany()
@@ -2348,7 +2340,7 @@ namespace Infrastructure.Migrations
                     b.HasOne("Entities.Models.UserCore.User", "User")
                         .WithMany("UserSessions")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("User");
@@ -2358,18 +2350,16 @@ namespace Infrastructure.Migrations
                 {
                     b.HasOne("Entities.Models.UserCore.UserSession", "PrimarySession")
                         .WithMany()
-                        .HasForeignKey("PrimarySessionId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .HasForeignKey("PrimarySessionId");
 
                     b.HasOne("Entities.Models.UserCore.Queue", "Queue")
                         .WithOne("UserState")
-                        .HasForeignKey("Entities.Models.UserCore.UserState", "QueueId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .HasForeignKey("Entities.Models.UserCore.UserState", "QueueId");
 
                     b.HasOne("Entities.Models.UserCore.UserStatus", "UserStatus")
                         .WithMany()
                         .HasForeignKey("UserStatusId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("PrimarySession");
@@ -2384,7 +2374,7 @@ namespace Infrastructure.Migrations
                     b.HasOne("Entities.Models.UserExperience.AchievementCategory", "AchievementCategory")
                         .WithMany()
                         .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Entities.Models.UserCore.User", null)
@@ -2399,7 +2389,7 @@ namespace Infrastructure.Migrations
                     b.HasOne("Entities.Models.UserExperience.Achievement", "Achievement")
                         .WithMany()
                         .HasForeignKey("AchievementId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Entities.Models.UserCore.User", "User")
@@ -2424,7 +2414,7 @@ namespace Infrastructure.Migrations
                     b.HasOne("Entities.Models.UserExperience.CosmeticItemType", "Type")
                         .WithMany()
                         .HasForeignKey("TypeId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("File");
@@ -2448,13 +2438,13 @@ namespace Infrastructure.Migrations
                     b.HasOne("Entities.Models.UserExperience.GiftStyle", "GiftStyle")
                         .WithMany()
                         .HasForeignKey("GiftStyleId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Entities.Models.UserCore.User", "Receiver")
                         .WithMany()
                         .HasForeignKey("ReceiverId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Entities.Models.UserExperience.SubscriptionPayment", "SubscriptionPayment")
@@ -2475,7 +2465,7 @@ namespace Infrastructure.Migrations
                     b.HasOne("Entities.Models.UserCore.User", "User")
                         .WithOne("Inventory")
                         .HasForeignKey("Entities.Models.UserExperience.Inventory", "UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("User");
@@ -2486,13 +2476,13 @@ namespace Infrastructure.Migrations
                     b.HasOne("Entities.Models.UserCore.User", "Buyer")
                         .WithMany()
                         .HasForeignKey("BuyerId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Entities.Models.UserExperience.SubscriptionPack", "SubscriptionPack")
                         .WithMany()
                         .HasForeignKey("SubscriptionPackId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Buyer");
@@ -2514,16 +2504,7 @@ namespace Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
-
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>
-                {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole<int>", null)
-                        .WithMany()
-                        .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
+            
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<int>", b =>
                 {
                     b.HasOne("Entities.Models.UserCore.User", null)
@@ -2535,21 +2516,6 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<int>", b =>
                 {
-                    b.HasOne("Entities.Models.UserCore.User", null)
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<int>", b =>
-                {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole<int>", null)
-                        .WithMany()
-                        .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("Entities.Models.UserCore.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
@@ -2596,21 +2562,6 @@ namespace Infrastructure.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("RefreshTokenUser", b =>
-                {
-                    b.HasOne("Entities.Models.UserCore.RefreshToken", null)
-                        .WithMany()
-                        .HasForeignKey("RefreshTokensId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Entities.Models.UserCore.User", null)
-                        .WithMany()
-                        .HasForeignKey("UsersId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("ReportReportReasonType", b =>
                 {
                     b.HasOne("Entities.Models.Report.ReportReasonType", null)
@@ -2622,21 +2573,6 @@ namespace Infrastructure.Migrations
                     b.HasOne("Entities.Models.Report.Report", null)
                         .WithMany()
                         .HasForeignKey("ReportsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("SettingsUser", b =>
-                {
-                    b.HasOne("Entities.Models.UserCore.User", null)
-                        .WithMany()
-                        .HasForeignKey("BlockedUsersId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Entities.Models.ClientSettings.Settings", null)
-                        .WithMany()
-                        .HasForeignKey("SettingsBlockedUsersId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -2683,7 +2619,7 @@ namespace Infrastructure.Migrations
                     b.HasOne("Entities.Models.UserCore.User", "Creator")
                         .WithMany()
                         .HasForeignKey("CreatorId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Entities.Models.Music.Collection", null)
@@ -2707,6 +2643,8 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Entities.Models.ClientSettings.Settings", b =>
                 {
+                    b.Navigation("BlockedUsers");
+
                     b.Navigation("User")
                         .IsRequired();
                 });
@@ -2754,6 +2692,8 @@ namespace Infrastructure.Migrations
                     b.Navigation("Licenses");
 
                     b.Navigation("Posts");
+
+                    b.Navigation("RefreshTokens");
 
                     b.Navigation("Tracks");
 

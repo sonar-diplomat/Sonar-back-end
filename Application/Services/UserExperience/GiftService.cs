@@ -3,114 +3,95 @@ using Application.Abstractions.Interfaces.Repository.UserExperience;
 using Application.Abstractions.Interfaces.Services;
 using Application.DTOs;
 using Application.Exception;
+using Entities.Models.UserCore;
 using Entities.Models.UserExperience;
 
-namespace Application.Services.UserExperience
+namespace Application.Services.UserExperience;
+
+public class GiftService(
+    IGiftRepository repository,
+    ISubscriptionPaymentRepository subscriptionPaymentRepository,
+    IUserRepository userRepository,
+    AppExceptionFactory appExceptionFactory)
+    : GenericService<Gift>(repository), IGiftService
 {
-    public class GiftService(
-        IGiftRepository repository,
-        ISubscriptionPaymentRepository subscriptionPaymentRepository,
-        IUserRepository userRepository,
-        AppExceptionFactory appExceptionFactory)
-        : GenericService<Gift>(repository), IGiftService
+    public async Task<Gift> SendGiftAsync(SendGiftDTO giftDto)
     {
-        public async Task<Gift> SendGiftAsync(SendGiftDTO giftDto)
+        // Create the subscription payment (buyer pays for the gift)
+        SubscriptionPayment payment = new()
         {
-            // Create the subscription payment (buyer pays for the gift)
-            SubscriptionPayment payment = new SubscriptionPayment
-            {
-                BuyerId = giftDto.BuyerId,
-                SubscriptionPackId = giftDto.SubscriptionPackId,
-                Amount = giftDto.Amount
-            };
+            BuyerId = giftDto.BuyerId,
+            SubscriptionPackId = giftDto.SubscriptionPackId,
+            Amount = giftDto.Amount
+        };
 
-            SubscriptionPayment createdPayment = await subscriptionPaymentRepository.AddAsync(payment);
+        SubscriptionPayment createdPayment = await subscriptionPaymentRepository.AddAsync(payment);
 
-            // Create the gift with reference to the payment
-            Gift gift = new Gift
-            {
-                Title = giftDto.Title,
-                TextContent = giftDto.TextContent,
-                GiftTime = giftDto.GiftTime,
-                GiftStyleId = giftDto.GiftStyleId,
-                ReceiverId = giftDto.ReceiverId,
-                SubscriptionPaymentId = createdPayment.Id
-            };
-
-            return await repository.AddAsync(gift);
-        }
-
-        public async Task<SubscriptionPayment> AcceptGiftAsync(int giftId, int receiverId)
+        // Create the gift with reference to the payment
+        Gift gift = new()
         {
-            // Validate gift exists and belongs to the receiver
-            Gift gift = await repository.GetByIdAsync(giftId);
-            if (gift == null)
-            {
-                throw new NotImplementedException();
-            }
-            if (gift.ReceiverId != receiverId)
-            {
-                throw new NotImplementedException();
-            }
+            Title = giftDto.Title,
+            TextContent = giftDto.TextContent,
+            GiftTime = giftDto.GiftTime,
+            GiftStyleId = giftDto.GiftStyleId,
+            ReceiverId = giftDto.ReceiverId,
+            SubscriptionPaymentId = createdPayment.Id
+        };
 
-            // Get subscription payment details
-            SubscriptionPayment payment = await subscriptionPaymentRepository.GetByIdAsync(gift.SubscriptionPaymentId);
+        return await repository.AddAsync(gift);
+    }
 
-            // Activate subscription for receiver
-            var receiver = await userRepository.GetByIdAsync(receiverId);
-            if (receiver == null)
-            {
-                throw new NotImplementedException();
-            }
+    public async Task<SubscriptionPayment> AcceptGiftAsync(int giftId, int receiverId)
+    {
+        // Validate gift exists and belongs to the receiver
+        Gift gift = await repository.GetByIdAsync(giftId);
+        if (gift == null) throw new NotImplementedException();
+        if (gift.ReceiverId != receiverId) throw new NotImplementedException();
 
-            receiver.SubscriptionPackId = payment.SubscriptionPackId;
-            await userRepository.UpdateAsync(receiver);
-            await userRepository.SaveChangesAsync();
-            await repository.RemoveAsync(gift);
-            await repository.SaveChangesAsync();
+        // Get subscription payment details
+        SubscriptionPayment payment = await subscriptionPaymentRepository.GetByIdAsync(gift.SubscriptionPaymentId);
 
-            return payment;
-        }
+        // Activate subscription for receiver
+        User? receiver = await userRepository.GetByIdAsync(receiverId);
+        if (receiver == null) throw new NotImplementedException();
 
-        public async Task<IEnumerable<Gift>> GetReceivedGiftsAsync(int receiverId)
-        {
-            IEnumerable<Gift> allGifts = await repository.GetAllAsync();
-            return allGifts.Where(g => g.ReceiverId == receiverId);
-        }
+        receiver.SubscriptionPackId = payment.SubscriptionPackId;
+        await userRepository.UpdateAsync(receiver);
+        await repository.RemoveAsync(gift);
 
-        public async Task<IEnumerable<Gift>> GetSentGiftsAsync(int senderId)
-        {
-            // Get all gifts where the SubscriptionPayment.BuyerId matches senderId
-            IEnumerable<Gift> allGifts = await repository.GetAllAsync();
-            IEnumerable<SubscriptionPayment> payments = await subscriptionPaymentRepository.GetAllAsync();
+        return payment;
+    }
 
-            var senderPaymentIds = payments
-                .Where(p => p.BuyerId == senderId)
-                .Select(p => p.Id);
+    public async Task<IEnumerable<Gift>> GetReceivedGiftsAsync(int receiverId)
+    {
+        IEnumerable<Gift> allGifts = await repository.GetAllAsync();
+        return allGifts.Where(g => g.ReceiverId == receiverId);
+    }
 
-            return allGifts.Where(g => senderPaymentIds.Contains(g.SubscriptionPaymentId));
-        }
+    public async Task<IEnumerable<Gift>> GetSentGiftsAsync(int senderId)
+    {
+        // Get all gifts where the SubscriptionPayment.BuyerId matches senderId
+        IEnumerable<Gift> allGifts = await repository.GetAllAsync();
+        IEnumerable<SubscriptionPayment> payments = await subscriptionPaymentRepository.GetAllAsync();
 
-        public async Task<bool> CancelGiftAsync(int giftId, int senderId)
-        {
-            Gift gift = await repository.GetByIdAsync(giftId);
+        IEnumerable<int> senderPaymentIds = payments
+            .Where(p => p.BuyerId == senderId)
+            .Select(p => p.Id);
 
-            if (gift == null)
-            {
-                throw new NotImplementedException();
-            }
+        return allGifts.Where(g => senderPaymentIds.Contains(g.SubscriptionPaymentId));
+    }
 
-            SubscriptionPayment payment = await subscriptionPaymentRepository.GetByIdAsync(gift.SubscriptionPaymentId);
+    public async Task<bool> CancelGiftAsync(int giftId, int senderId)
+    {
+        Gift gift = await repository.GetByIdAsync(giftId);
 
-            if (payment.BuyerId != senderId)
-            {
-                throw new NotImplementedException();
-            }
+        if (gift == null) throw new NotImplementedException();
 
-            await repository.RemoveAsync(gift);
-            await repository.SaveChangesAsync();
-            return true;
-        }
+        SubscriptionPayment payment = await subscriptionPaymentRepository.GetByIdAsync(gift.SubscriptionPaymentId);
+
+        if (payment.BuyerId != senderId) throw new NotImplementedException();
+
+        await repository.RemoveAsync(gift);
+        return true;
     }
 }
-
