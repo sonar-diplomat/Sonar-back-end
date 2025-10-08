@@ -8,6 +8,7 @@ using Application.DTOs;
 using Application.Exception;
 using Entities.Enums;
 using Entities.Models.UserCore;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -24,10 +25,12 @@ public class AuthController(
     IConfiguration configuration,
     IUserService userService,
     AppExceptionFactory appExceptionFactory,
-    IEmailSenderService emailSenderService)
+    IEmailSenderService emailSenderService
+)
     : ControllerBase
 {
     private readonly AppExceptionFactory appExceptionFactory = appExceptionFactory;
+    private readonly string FrontEndUrl = configuration["FrontEnd-Url"]!;
 
     [HttpPost("register")]
     public async Task<IActionResult> Register(UserRegisterDTO model)
@@ -60,6 +63,24 @@ public class AuthController(
 
         if (result.Succeeded)
         {
+            if (user.Enabled2FA)
+            {
+                string code = await userManager.GenerateTwoFactorTokenAsync(user, TokenOptions.DefaultEmailProvider);
+                await emailSenderService.SendEmailAsync(
+                    user.Email!,
+                    MailGunTemplates.twoFA,
+                    new Dictionary<string, string>
+                    {
+                        { "code", code }
+                    });
+
+                return Ok(new
+                {
+                    require2FA = true,
+                    message = "Verification code sent to your email."
+                });
+            }
+
             // Generate both tokens
             string accessToken = GenerateJwtToken(user);
             RefreshToken refreshToken = GenerateRefreshToken();
@@ -77,33 +98,130 @@ public class AuthController(
         throw new NotImplementedException();
     }
 
-    [HttpPost("2fa")]
-    public async Task<IActionResult> TwoFactorAuthentication([FromBody] string email)
+    [HttpPost("verify-2fa")]
+    public async Task<IActionResult> Verify2Fa([FromBody] string email, [FromBody] string code)
     {
+        User? user = await userManager.Users
+            .FirstOrDefaultAsync(u => u.Email == email);
+
+        if (user == null)
+            return BadRequest("Invalid credentials");
+
+        bool isValid = await userManager.VerifyTwoFactorTokenAsync(
+            user,
+            TokenOptions.DefaultEmailProvider,
+            code);
+
+        if (!isValid)
+            return BadRequest("Invalid or expired code");
+
+
+        // Generate both tokens
+        string accessToken = GenerateJwtToken(user);
+        RefreshToken refreshToken = GenerateRefreshToken();
+        // Save refresh token to user
+        user.RefreshTokens.Add(refreshToken);
+        await userManager.UpdateAsync(user);
+        return Ok(new
+        {
+            accessToken,
+            refreshToken = refreshToken.Token
+        });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetMailChangeToken([FromBody] string newEmail)
+    {
+        // TODO: Add login
+        User? user = new(); // await userService.GetUserByLogin("login");  // userLogin
+        if (user == null)
+            // TODO: Тимоша вызывает исключение
+            throw new Exception("User not found");
+
         try
         {
-            string code = "191981";
+            string token = await userManager.GenerateChangeEmailTokenAsync(user, newEmail);
+
+            string confirmationLink =
+                $"{FrontEndUrl}/confirm-email-change?userId={user.Id}&email={newEmail}&token={Uri.EscapeDataString(token)}";
+
             await emailSenderService.SendEmailAsync(
-                email,
-                MailGunTemplates.twoFA,
+                newEmail,
+                MailGunTemplates.confirmEmail,
                 new Dictionary<string, string>
                 {
-                    { "code", code }
-                });
+                    { "link", confirmationLink }
+                }
+            );
         }
         catch (Exception e)
         {
             throw new NotImplementedException();
         }
 
-        return Ok(new { message = "2FA code sent" });
+        return Ok(new { message = "Confirm your email change" });
     }
 
-    [HttpPost("verify/{code}")]
-    public async Task<IActionResult> VerifyTwoFactorAuthentication(string code)
+
+    [HttpPost("confirm-email-change")]
+    public async Task<IActionResult> ConfirmEmailChange(string userId, string email, string token)
     {
-        throw new NotImplementedException();
+        User? user = await userManager.FindByIdAsync(userId);
+        if (user == null)
+            return BadRequest("User not found");
+
+        IdentityResult result = await userManager.ChangeEmailAsync(user, email, token);
+
+        if (!result.Succeeded)
+            return BadRequest(result.Errors);
+
+        await userManager.SetUserNameAsync(user, email);
+
+        return Ok(new { message = "Email successfully changed" });
     }
+
+    // TODO: Consider the logic of how we can change the password with two-factor authentication.
+    [Authorize]
+    [HttpPost("change-password")]
+    public async Task<IActionResult> ChangePassword([FromBody] string currentPassword, [FromBody] string newPassword)
+    {
+        User? user = await userManager.GetUserAsync(User);
+        if (user == null)
+            return Unauthorized("User not found");
+        if (user.Email != null && await userManager.GetTwoFactorEnabledAsync(user))
+        {
+            string resetToken = await userManager.GeneratePasswordResetTokenAsync(user);
+            string resetLink = $"{FrontEndUrl}/confirm-change-password/{resetToken}";
+
+
+            await emailSenderService.SendEmailAsync(
+                user.Email,
+                MailGunTemplates.passwordRecovery,
+                new Dictionary<string, string>
+                {
+                    { "link", resetLink }
+                }
+            );
+
+            return Ok(new
+            {
+                message = "2FA is enabled. Please verify the token before changing password."
+            });
+        }
+
+        IdentityResult result = await userManager.ChangePasswordAsync(user, currentPassword, newPassword);
+
+        if (!result.Succeeded)
+        {
+            IEnumerable<string> errors = result.Errors.Select(e => e.Description);
+            return BadRequest(new { message = "Password change failed", errors });
+        }
+
+        await signInManager.RefreshSignInAsync(user);
+
+        return Ok(new { message = "Password successfully changed" });
+    }
+
 
     [HttpPost("refresh-token")]
     public async Task<IActionResult> RefreshToken([FromBody] TokenDTO refreshTokenDto)
@@ -117,7 +235,6 @@ public class AuthController(
         string newAccessToken = GenerateJwtToken(user);
         RefreshToken newRefreshToken = GenerateRefreshToken();
 
-        // Remove old refresh token
         user.RefreshTokens.RemoveAll(t => t.Token == refreshTokenDto.Token);
         user.RefreshTokens.Add(newRefreshToken);
         await userManager.UpdateAsync(user);
