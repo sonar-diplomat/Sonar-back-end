@@ -10,8 +10,7 @@ namespace Sonar.Controllers.UserExperience;
 [ApiController]
 public class GiftController(
     IGiftService giftService,
-    IGiftStyleService giftStyleService,
-    AppExceptionFactory appExceptionFactory)
+    IGiftStyleService giftStyleService)
     : ControllerBase
 {
     /// <summary>

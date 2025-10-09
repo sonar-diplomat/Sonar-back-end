@@ -2,7 +2,7 @@
 
 namespace Application.Exception;
 
-public class AppExceptionFactory
+public static class AppExceptionFactory
 {
     public static T Create<T>(string[]? args = null) where T : AppException
     {

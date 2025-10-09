@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json;
 using Application.Abstractions.Interfaces.Repository.Access;
 using Application.Abstractions.Interfaces.Repository.Chat;
 using Application.Abstractions.Interfaces.Repository.Client;
@@ -55,12 +56,16 @@ builder.Services.AddDbContext<SonarContext>(options =>
                       throw new InvalidOperationException("Connection string 'SonarContext' not found.")));
 
 // Add services to the container.
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+    options.JsonSerializerOptions.Converters.Add(new AppExceptionJsonConverter());
+});
 
 // CORS policy configuration
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("ArtemRomanovich", policy =>
+    options.AddPolicy("CorsPolicy", policy =>
     {
         policy.AllowAnyOrigin()
             .AllowAnyHeader()
@@ -106,7 +111,6 @@ builder.Services.AddAuthentication(options =>
                 Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
         };
     });
-
 
 builder.Services.AddOpenApi();
 
@@ -251,18 +255,18 @@ builder.Services.AddScoped<ISubscriptionPaymentService, SubscriptionPaymentServi
 builder.Services.AddScoped<MailgunSettings>(sp =>
     new MailgunSettings
     {
-        ApiKey = builder.Configuration["Mailgun:ApiKey"] ?? throw new InvalidOperationException("Mailgun ApiKey not found."),
-        Domain = builder.Configuration["Mailgun:Domain"] ?? throw new InvalidOperationException("Mailgun Domain not found."),
+        ApiKey = builder.Configuration["Mailgun:ApiKey"] ??
+                 throw new InvalidOperationException("Mailgun ApiKey not found."),
+        Domain = builder.Configuration["Mailgun:Domain"] ??
+                 throw new InvalidOperationException("Mailgun Domain not found."),
         From = builder.Configuration["Mailgun:From"] ?? throw new InvalidOperationException("Mailgun From not found.")
     }
 );
-Console.WriteLine("Settings");
 
 // Utility Services
 builder.Services.AddScoped<IEmailSenderService, MailgunEmailService>();
 
 builder.Services.AddHttpClient();
-builder.Services.AddSingleton<AppExceptionFactory>();
 
 #endregion
 
@@ -277,9 +281,10 @@ app.UseHttpsRedirection();
 
 app.UseRouting();
 
-app.UseCors("ArtemRomanovich");
+app.UseCors("CorsPolicy");
 
 app.UseAuthentication();
+
 app.UseAuthorization();
 
 app.MapControllers();

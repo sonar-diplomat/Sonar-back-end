@@ -1,3 +1,4 @@
+using Application.Exception;
 using Entities.Models.UserCore;
 using Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;

@@ -24,13 +24,11 @@ public class AuthController(
     SignInManager<User> signInManager,
     IConfiguration configuration,
     IUserService userService,
-    AppExceptionFactory appExceptionFactory,
     IEmailSenderService emailSenderService
 )
     : ControllerBase
 {
-    private readonly AppExceptionFactory appExceptionFactory = appExceptionFactory;
-    private readonly string FrontEndUrl = configuration["FrontEnd-Url"]!;
+    private readonly string frontEndUrl = configuration["FrontEnd-Url"]!;
 
     [HttpPost("register")]
     public async Task<IActionResult> Register(UserRegisterDTO model)
@@ -39,14 +37,12 @@ public class AuthController(
         {
             User user = await userService.CreateUserShellAsync(model);
             IdentityResult result = await userManager.CreateAsync(user, model.Password);
+            return Ok(result.Succeeded ? new { message = "Registration successful" } : new { message = "Registration failed" });
         }
-        catch (Exception e)
+        catch (Exception)
         {
-            // TODO: Тимоша вызовет исключение
-            // throw appExceptionFactory.CreateBadRequest();
+            throw AppExceptionFactory.Create<BadRequestException>(["Request contents were not sufficient to complete registration"]);
         }
-
-        return Ok(new { message = "Registration successful" });
     }
 
     [HttpPost("login")]
@@ -99,10 +95,10 @@ public class AuthController(
     }
 
     [HttpPost("verify-2fa")]
-    public async Task<IActionResult> Verify2Fa([FromBody] string email, [FromBody] string code)
+    public async Task<IActionResult> Verify2Fa([FromBody] Verify2FaDTO dto)
     {
         User? user = await userManager.Users
-            .FirstOrDefaultAsync(u => u.Email == email);
+            .FirstOrDefaultAsync(u => u.Email == dto.Email);
 
         if (user == null)
             return BadRequest("Invalid credentials");
@@ -110,7 +106,7 @@ public class AuthController(
         bool isValid = await userManager.VerifyTwoFactorTokenAsync(
             user,
             TokenOptions.DefaultEmailProvider,
-            code);
+            dto.Code);
 
         if (!isValid)
             return BadRequest("Invalid or expired code");
@@ -143,7 +139,7 @@ public class AuthController(
             string token = await userManager.GenerateChangeEmailTokenAsync(user, newEmail);
 
             string confirmationLink =
-                $"{FrontEndUrl}/confirm-email-change?userId={user.Id}&email={newEmail}&token={Uri.EscapeDataString(token)}";
+                $"{frontEndUrl}/confirm-email-change?userId={user.Id}&email={newEmail}&token={Uri.EscapeDataString(token)}";
 
             await emailSenderService.SendEmailAsync(
                 newEmail,
@@ -154,7 +150,7 @@ public class AuthController(
                 }
             );
         }
-        catch (Exception e)
+        catch (Exception)
         {
             throw new NotImplementedException();
         }
@@ -183,7 +179,7 @@ public class AuthController(
     // TODO: Consider the logic of how we can change the password with two-factor authentication.
     [Authorize]
     [HttpPost("change-password")]
-    public async Task<IActionResult> ChangePassword([FromBody] string currentPassword, [FromBody] string newPassword)
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDTO dto)
     {
         User? user = await userManager.GetUserAsync(User);
         if (user == null)
@@ -191,7 +187,7 @@ public class AuthController(
         if (user.Email != null && await userManager.GetTwoFactorEnabledAsync(user))
         {
             string resetToken = await userManager.GeneratePasswordResetTokenAsync(user);
-            string resetLink = $"{FrontEndUrl}/confirm-change-password/{resetToken}";
+            string resetLink = $"{frontEndUrl}/confirm-change-password/{resetToken}";
 
 
             await emailSenderService.SendEmailAsync(
@@ -209,7 +205,7 @@ public class AuthController(
             });
         }
 
-        IdentityResult result = await userManager.ChangePasswordAsync(user, currentPassword, newPassword);
+        IdentityResult result = await userManager.ChangePasswordAsync(user, dto.OldPassword, dto.NewPassword);
 
         if (!result.Succeeded)
         {

@@ -2,7 +2,6 @@
 using Application.Abstractions.Interfaces.Repository.UserExperience;
 using Application.Abstractions.Interfaces.Services;
 using Application.DTOs;
-using Application.Exception;
 using Entities.Models.UserCore;
 using Entities.Models.UserExperience;
 
@@ -10,8 +9,7 @@ namespace Application.Services.UserExperience;
 
 public class SubscriptionPaymentService(
     ISubscriptionPaymentRepository repository,
-    IUserRepository userRepository,
-    AppExceptionFactory appExceptionFactory)
+    IUserRepository userRepository)
     : GenericService<SubscriptionPayment>(repository), ISubscriptionPaymentService
 {
     public async Task<SubscriptionPayment> PurchaseSubscriptionAsync(PurchaseSubscriptionDTO dto)

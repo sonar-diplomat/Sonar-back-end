@@ -10,20 +10,17 @@ namespace Sonar.Controllers.UserExperience;
 [ApiController]
 public class SubscriptionController : ControllerBase
 {
-    private readonly AppExceptionFactory appExceptionFactory;
     private readonly ISubscriptionFeatureService subscriptionFeatureService;
     private readonly ISubscriptionPackService subscriptionPackService;
     private readonly ISubscriptionPaymentService subscriptionPaymentService;
 
     public SubscriptionController(ISubscriptionPackService subscriptionPackService,
         ISubscriptionPaymentService subscriptionPaymentService,
-        ISubscriptionFeatureService subscriptionFeatureService,
-        AppExceptionFactory appExceptionFactory)
+        ISubscriptionFeatureService subscriptionFeatureService)
     {
         this.subscriptionPackService = subscriptionPackService;
         this.subscriptionPaymentService = subscriptionPaymentService;
         this.subscriptionFeatureService = subscriptionFeatureService;
-        this.appExceptionFactory = appExceptionFactory;
     }
 
     #region Subscription Pack Endpoints

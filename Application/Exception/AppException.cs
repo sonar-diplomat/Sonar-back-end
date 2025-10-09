@@ -1,24 +1,34 @@
 ﻿using System.Net;
+using Entities.Models.Chat;
 
 namespace Application.Exception;
 
-public abstract class AppException : System.Exception
+public abstract class AppException(HttpStatusCode httpStatusCode, string message) : System.Exception(message)
 {
-    protected AppException()
-    {
-    }
+    public HttpStatusCode StatusCode { get; } = httpStatusCode;
 
-    protected AppException(HttpStatusCode httpStatusCode, string message)
-        : base(message)
+    public virtual Dictionary<string, object> GetSerializableProperties()
     {
-        StatusCode = httpStatusCode;
+        return new Dictionary<string, object>
+        {
+            ["Type"] = GetType().Name,
+            ["StatusCode"] = (int)StatusCode,
+            ["Message"] = Message
+        };
     }
-
-    public HttpStatusCode StatusCode { get; set; }
 }
 
-public class BadRequestException(string[]? args = null)
-    : AppException(HttpStatusCode.BadRequest, args is null ? "Bad request" : $"Bad request: {args[0]}");
+// public class BadRequestException(string[]? args = null)
+//     : AppException(HttpStatusCode.BadRequest, args is null ? "Bad request" : $"Bad request: {args[0]}");
+public class BadRequestException(string details) : AppException(HttpStatusCode.BadRequest, "Bad Request")
+{
+    public override Dictionary<string, object> GetSerializableProperties()
+    {
+        Dictionary<string, object> dict = base.GetSerializableProperties();
+        dict.Add("Details", details);
+        return dict;
+    }
+}
 
 public class UnauthorizedException(string[]? args = null)
     : AppException(HttpStatusCode.Unauthorized, args is null ? "Unauthorized access" : $"Unauthorized: {args[0]}");
@@ -83,5 +93,5 @@ public class ExpectationFailedException(string[]? args = null)
         args is null ? "Expectation failed" : $"Expectation failed: {args[0]}");
 
 /// <summary>RFC 2324 / 7168: 418 I'm a teapot.</summary>
-public class ImATeapotException(string[] args) : AppException((HttpStatusCode)418,
+public class ImATeapotException(string[]? args = null) : AppException((HttpStatusCode)418,
     args is null ? "I'm a teapot — cannot brew coffee" : $"I'm a teapot: {args[0]}");

@@ -17,19 +17,13 @@ public class ExceptionMiddleware(RequestDelegate next)
         }
     }
 
-    private async Task HandleExceptionAsync(HttpContext context, Exception exception)
+    private static async Task HandleExceptionAsync(HttpContext context, Exception ex)
     {
-        if (exception is AppException)
-        {
-            context.Response.ContentType = "application/json";
+        if (ex is not AppException appException) return;
 
-            var response = new
-            {
-                context.Response.StatusCode, exception.Message
-            };
-
-            string json = JsonSerializer.Serialize(response);
-            await context.Response.WriteAsync(json);
-        }
+        context.Response.ContentType = "application/json";
+        context.Response.StatusCode = (int)appException.StatusCode;
+        string json = JsonSerializer.Serialize(appException);
+        await context.Response.WriteAsync(json);
     }
 }
