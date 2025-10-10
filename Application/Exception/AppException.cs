@@ -11,21 +11,19 @@ public abstract class AppException(HttpStatusCode httpStatusCode, string message
     {
         return new Dictionary<string, object>
         {
-            ["Type"] = GetType().Name,
             ["StatusCode"] = (int)StatusCode,
             ["Message"] = Message
         };
     }
 }
 
-// public class BadRequestException(string[]? args = null)
-//     : AppException(HttpStatusCode.BadRequest, args is null ? "Bad request" : $"Bad request: {args[0]}");
-public class BadRequestException(string details) : AppException(HttpStatusCode.BadRequest, "Bad Request")
+public class BadRequestException(string[]? args = null) : AppException(HttpStatusCode.BadRequest, "Bad Request")
 {
     public override Dictionary<string, object> GetSerializableProperties()
     {
         Dictionary<string, object> dict = base.GetSerializableProperties();
-        dict.Add("Details", details);
+        if (args == null) return dict;
+        dict.Add("Details", args[0]);
         return dict;
     }
 }

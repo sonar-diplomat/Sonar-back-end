@@ -8,9 +8,9 @@ public static class AppExceptionFactory
     {
         return (T)Activator.CreateInstance(
             typeof(T),
-            BindingFlags.Instance | BindingFlags.NonPublic,
+            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
             null,
-            args,
+            [args],
             null
         )!;
     }

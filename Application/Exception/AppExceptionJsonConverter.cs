@@ -10,14 +10,8 @@ public class AppExceptionJsonConverter : JsonConverter<AppException>
         throw new NotSupportedException("Deserialization not supported");
     }
 
-    public override void Write(Utf8JsonWriter writer, AppException? value, JsonSerializerOptions options)
+    public override void Write(Utf8JsonWriter writer, AppException value, JsonSerializerOptions options)
     {
-        if (value is null)
-        {
-            writer.WriteNullValue();
-            return;
-        }
-
         Dictionary<string, object> dict = value.GetSerializableProperties();
         JsonSerializer.Serialize(writer, dict, options);
     }

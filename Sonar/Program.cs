@@ -56,11 +56,7 @@ builder.Services.AddDbContext<SonarContext>(options =>
                       throw new InvalidOperationException("Connection string 'SonarContext' not found.")));
 
 // Add services to the container.
-builder.Services.AddControllers().AddJsonOptions(options =>
-{
-    options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
-    options.JsonSerializerOptions.Converters.Add(new AppExceptionJsonConverter());
-});
+builder.Services.AddControllers();
 
 // CORS policy configuration
 builder.Services.AddCors(options =>
