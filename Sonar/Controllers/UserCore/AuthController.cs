@@ -183,11 +183,46 @@ public class AuthController(
     {
         User? user = await userManager.GetUserAsync(User);
         if (user == null)
+            throw AppExceptionFactory.Create<UnauthorizedException>();
+
+        if (user is { Enabled2FA: true, Email: not null })
+        {
+            bool isValid = await userManager.VerifyUserTokenAsync(
+                user,
+                userManager.Options.Tokens.PasswordResetTokenProvider,
+                "ResetPassword",
+                dto.Token
+            );
+
+            if (!isValid)
+                throw AppExceptionFactory.Create<BadRequestException>();
+        }
+
+
+        IdentityResult result = await userManager.ChangePasswordAsync(user, dto.OldPassword, dto.NewPassword);
+
+        if (!result.Succeeded)
+            // TODO: Send erros to frontend
+            // IEnumerable<string> errors = result.Errors.Select(e => e.Description);
+            throw AppExceptionFactory.Create<BadRequestException>();
+
+        await signInManager.RefreshSignInAsync(user);
+
+        return Ok(new { message = "Password successfully changed" });
+    }
+
+    [Authorize]
+    [HttpPost]
+    public async Task<IActionResult> RequestPasswordChange()
+    {
+        User? user = await userManager.GetUserAsync(User);
+        if (user == null)
             return Unauthorized("User not found");
+
         if (user.Email != null && await userManager.GetTwoFactorEnabledAsync(user))
         {
             string resetToken = await userManager.GeneratePasswordResetTokenAsync(user);
-            string resetLink = $"{frontEndUrl}/confirm-change-password/{resetToken}";
+            string resetLink = $"{frontEndUrl}/approve-change/{resetToken}";
 
 
             await emailSenderService.SendEmailAsync(
@@ -205,17 +240,7 @@ public class AuthController(
             });
         }
 
-        IdentityResult result = await userManager.ChangePasswordAsync(user, dto.OldPassword, dto.NewPassword);
-
-        if (!result.Succeeded)
-        {
-            IEnumerable<string> errors = result.Errors.Select(e => e.Description);
-            return BadRequest(new { message = "Password change failed", errors });
-        }
-
-        await signInManager.RefreshSignInAsync(user);
-
-        return Ok(new { message = "Password successfully changed" });
+        return Ok(new { message = "Password reset link sent to your email." });
     }
 
 

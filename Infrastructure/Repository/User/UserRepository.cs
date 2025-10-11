@@ -41,4 +41,9 @@ public class UserRepository(SonarContext context) : IUserRepository
         context.Set<User>().RemoveRange(users);
         await context.SaveChangesAsync();
     }
+
+    public Task<bool> IsUsernameTakenAsync(string username)
+    {
+        return Task.FromResult(context.Set<User>().Any(u => u.Username == username));
+    }
 }

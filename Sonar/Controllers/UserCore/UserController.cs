@@ -1,90 +1,47 @@
+using Application.Abstractions.Interfaces.Services;
+using Application.DTOs;
 using Application.Exception;
 using Entities.Models.UserCore;
-using Infrastructure.Data;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace Sonar.Controllers.UserCore;
 
 [Route("api/[controller]")]
 [ApiController]
-public class UserController : ControllerBase
+public class UserController(
+    IUserService userService
+)
+    : ControllerBase
 {
-    private readonly SonarContext _context;
-
-    public UserController(SonarContext context)
-    {
-        _context = context;
-    }
+    private readonly UserManager<User> userManager;
 
     // GET: api/User
     [HttpGet]
     public async Task<ActionResult<IEnumerable<User>>> GetUsers()
     {
-        return await _context.Users.ToListAsync();
+        IEnumerable<User> users = await userService.GetAllAsync();
+        return Ok(users);
     }
 
     // GET: api/User/5
     [HttpGet("{id}")]
     public async Task<ActionResult<User>> GetUser(int id)
     {
-        User? user = await _context.Users.FindAsync(id);
+        User user = await userService.GetByIdAsync(id);
 
-        if (user == null) return NotFound();
-
-        return user;
+        return Ok(user);
     }
 
-    // PUT: api/User/5
-    // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-    [HttpPut("{id}")]
-    public async Task<IActionResult> PutUser(int id, User user)
+    [HttpPut("update")]
+    public async Task<IActionResult> PatchUser(UserUpdateDTO request)
     {
-        if (id != user.Id) return BadRequest();
+        User? user = await userManager.GetUserAsync(User);
+        if (user == null)
+            throw AppExceptionFactory.Create<UnauthorizedException>();
 
-        _context.Entry(user).State = EntityState.Modified;
+        user = await userService.UpdateUserAsync(user.Id, request);
 
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            if (!UserExists(id)) return NotFound();
-
-            throw;
-        }
-
-        return NoContent();
-    }
-
-    // POST: api/User
-    // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-    [HttpPost]
-    public async Task<ActionResult<User>> PostUser(User user)
-    {
-        _context.Users.Add(user);
-        await _context.SaveChangesAsync();
-
-        return CreatedAtAction("GetUser", new { id = user.Id }, user);
-    }
-
-    // DELETE: api/User/5
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteUser(string id)
-    {
-        User? user = await _context.Users.FindAsync(id);
-        if (user == null) return NotFound();
-
-        _context.Users.Remove(user);
-        await _context.SaveChangesAsync();
-
-        return NoContent();
-    }
-
-    // register
-    private bool UserExists(int id)
-    {
-        return _context.Users.Any(e => e.Id == id);
+        return Ok(user);
     }
 }
