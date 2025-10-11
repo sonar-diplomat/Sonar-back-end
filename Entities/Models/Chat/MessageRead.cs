@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Infrastructure;
+using Entities.Models.UserCore;
+using Microsoft.EntityFrameworkCore;
 
 namespace Entities.Models.Chat;
 
@@ -8,17 +9,20 @@ namespace Entities.Models.Chat;
 public class MessageRead : BaseModel
 {
     public DateTime? ReadAt { get; set; }
-    
+
     [Required]
     public int MessageId { get; set; }
+
     [Required]
     public int UserId { get; set; }
-    
+
     /// <summary>
-    /// 
     /// </summary>
     [ForeignKey("MessageId")]
+    [DeleteBehavior(DeleteBehavior.Restrict)]
     public virtual Message Message { get; set; }
+
     [ForeignKey("UserId")]
-    public virtual User.User User { get; set; }
+    [DeleteBehavior(DeleteBehavior.NoAction)]
+    public virtual User User { get; set; }
 }

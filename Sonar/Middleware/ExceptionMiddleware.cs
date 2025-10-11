@@ -1,49 +1,35 @@
-﻿using Application.Exception;
-using Entities.Enums;
+﻿using System.Text.Json;
+using Application.Exception;
 
-namespace Sonar.Middleware
+namespace Sonar.Middleware;
+
+public class ExceptionMiddleware(RequestDelegate next)
 {
-    public class ExceptionMiddleware
+    private static readonly JsonSerializerOptions SerializerOptions = new()
     {
-        private readonly RequestDelegate _next;
-        private readonly ExceptionHandler exceptionHandler;
-
-        public ExceptionMiddleware(RequestDelegate next, ExceptionHandler exceptionHandler)
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        Converters = { new AppExceptionJsonConverter() }
+    };
+    
+    public async Task InvokeAsync(HttpContext context)
+    {
+        try
         {
-            _next = next;
-            this.exceptionHandler = exceptionHandler;
+            await next(context);
         }
-
-        public async Task InvokeAsync(HttpContext context)
+        catch (Exception ex)
         {
-            try
-            {
-                await _next(context);
-            }
-            catch (Exception ex)
-            {
-                await HandleExceptionAsync(context, ex);
-            }
+            await HandleExceptionAsync(context, ex);
         }
+    }
 
-        private async Task HandleExceptionAsync(HttpContext context, Exception exception)
-        {
-            if (exception.Data["ErrorType"] != null)
-            {
-                AppException appException = exceptionHandler.GetExceptionResponse((ErrorType)(exception.Data["ErrorType"])!);
-                await CreateErrorResponse(context, appException);
-
-                return;
-            }
-
-        }
-
-        private async Task CreateErrorResponse(HttpContext context, AppException appException)
-        {
-            context.Response.ContentType = "application/json";
-            context.Response.StatusCode = (int)appException.StatusCode;
-
-            await context.Response.WriteAsJsonAsync(appException.ToJson);
-        }
+    private static async Task HandleExceptionAsync(HttpContext context, Exception ex)
+    {
+        if (ex is not AppException appException) throw ex;
+        
+        context.Response.ContentType = "application/json";
+        context.Response.StatusCode = (int)appException.StatusCode;
+        string json = JsonSerializer.Serialize(appException, SerializerOptions);
+        await context.Response.WriteAsync(json);
     }
 }

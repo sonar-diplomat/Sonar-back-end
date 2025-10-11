@@ -1,12 +1,49 @@
-using Application.Abstractions.Interfaces.Repository.User;
+using Application.Abstractions.Interfaces.Repository.UserCore;
+using Entities.Models.UserCore;
 using Infrastructure.Data;
 
-namespace Sonar.Infrastructure.Repository.User
+namespace Sonar.Infrastructure.Repository.UserCore;
+
+public class UserRepository(SonarContext context) : IUserRepository
 {
-    public class UserRepository : GenericRepository<Entities.Models.User.User>, IUserRepository
+    public async Task<User?> GetByIdAsync(int? id)
     {
-        public UserRepository(SonarContext dbContext) : base(dbContext)
-        {
-        }
+        return await context.Set<User>().FindAsync(id);
+    }
+
+    public async Task<IQueryable<User>> GetAllAsync()
+    {
+        return await Task.FromResult(context.Set<User>().AsQueryable());
+    }
+
+    public async Task<User> AddAsync(User user)
+    {
+        await context.Set<User>().AddAsync(user);
+        await context.SaveChangesAsync();
+        return user;
+    }
+
+    public async Task<User> UpdateAsync(User user)
+    {
+        context.Set<User>().Update(user);
+        await context.SaveChangesAsync();
+        return user;
+    }
+
+    public async Task RemoveAsync(User user)
+    {
+        context.Set<User>().Remove(user);
+        await context.SaveChangesAsync();
+    }
+
+    public async Task RemoveRangeAsync(List<User> users)
+    {
+        context.Set<User>().RemoveRange(users);
+        await context.SaveChangesAsync();
+    }
+
+    public Task<bool> IsUsernameTakenAsync(string username)
+    {
+        return Task.FromResult(context.Set<User>().Any(u => u.Username == username));
     }
 }

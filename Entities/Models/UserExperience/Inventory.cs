@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Entities.Models;
-using Infrastructure;
+using Entities.Models.UserCore;
+using Microsoft.EntityFrameworkCore;
 
 namespace Entities.Models.UserExperience;
 
@@ -10,12 +10,12 @@ public class Inventory : BaseModel
 {
     [Required]
     public int UserId { get; set; }
-    
+
     /// <summary>
-    /// 
     /// </summary>
     [ForeignKey("UserId")]
-    public User.User User { get; set; }
-    
+    [DeleteBehavior(DeleteBehavior.Restrict)]
+    public User User { get; set; }
+
     public ICollection<CosmeticItem> CosmeticItems { get; set; }
 }

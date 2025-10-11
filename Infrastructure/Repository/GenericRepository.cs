@@ -1,55 +1,56 @@
 ﻿using Application.Abstractions.Interfaces.Repository;
-using Infrastructure;
+using Entities.Models;
 using Infrastructure.Data;
-
 
 namespace Sonar.Infrastructure.Repository;
 
-public class GenericRepository<T> : IGenericRepository<T> where T : BaseModel
+public class GenericRepository<T>(SonarContext context) : IGenericRepository<T>
+    where T : BaseModel
 {
-    private readonly SonarContext _context;
+    protected readonly SonarContext context = context;
 
-    public GenericRepository(SonarContext context)
+    public virtual async Task<T?> GetByIdAsync(int? id)
     {
-        _context = context;
+        return await context.Set<T>().FindAsync(id);
     }
 
-    public async Task<T?> GetByIdAsync(int? id)
+    public virtual async Task<IQueryable<T>> GetAllAsync()
     {
-        return await _context.Set<T>().FindAsync(id);
+        return await Task.FromResult(context.Set<T>().AsQueryable());
     }
 
-    public Task<IQueryable<T>> GetAllAsync()
+    public virtual async Task<T> AddAsync(T entity)
     {
-        return Task.FromResult(_context.Set<T>().AsQueryable());
-    }
+        await context.Set<T>().AddAsync(entity);
+        await context.SaveChangesAsync();
 
-    public async Task<T> AddAsync(T entity)
-    {
-        await _context.Set<T>().AddAsync(entity);
         return entity;
     }
 
-    public Task UpdateAsync(T entity)
+    public virtual async Task<T> UpdateAsync(T entity)
     {
-        _context.Set<T>().Update(entity);
-        return Task.CompletedTask;
+        context.Set<T>().Update(entity);
+        await context.SaveChangesAsync();
+
+        return entity;
     }
 
-    public Task RemoveAsync(T entity)
+    public virtual async Task RemoveAsync(T entity)
     {
-        _context.Set<T>().Remove(entity);
-        return Task.CompletedTask;
+        context.Set<T>().Remove(entity);
+
+        await context.SaveChangesAsync();
     }
 
-    public Task RemoveRangeAsync(List<T> entities)
+    public virtual async Task RemoveRangeAsync(List<T> entities)
     {
-        _context.Set<T>().RemoveRange(entities);
-        return Task.CompletedTask;
+        context.Set<T>().RemoveRange(entities);
+
+        await context.SaveChangesAsync();
     }
 
-    public async Task SaveChangesAsync()
+    public virtual async Task SaveChangesAsync()
     {
-        await _context.SaveChangesAsync();
+        await context.SaveChangesAsync();
     }
 }

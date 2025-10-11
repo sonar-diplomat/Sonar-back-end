@@ -1,13 +1,11 @@
 using Application.Abstractions.Interfaces.Repository.Client;
+using Application.Abstractions.Interfaces.Services;
 using Entities.Models.ClientSettings;
 using Infrastructure.Data;
 
-namespace Sonar.Infrastructure.Repository.Client
+namespace Sonar.Infrastructure.Repository.Client;
+
+public class UserPrivacySettingsRepository(SonarContext dbContext, IUserPrivacyGroupService userPrivacyGroupService)
+    : GenericRepository<UserPrivacySettings>(dbContext), IUserPrivacySettingsRepository
 {
-    public class UserPrivacySettingsRepository : GenericRepository<UserPrivacySettings>, IUserPrivacySettingsRepository
-    {
-        public UserPrivacySettingsRepository(SonarContext dbContext) : base(dbContext)
-        {
-        }
-    }
 }

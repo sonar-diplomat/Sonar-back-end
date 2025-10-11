@@ -1,8 +1,7 @@
 ﻿using Entities.Models.File;
 
-namespace Application.Abstractions.Interfaces.Repository.File
+namespace Application.Abstractions.Interfaces.Repository.File;
+
+public interface IFileTypeRepository : IGenericRepository<FileType>
 {
-    public interface IFileTypeRepository : IGenericRepository<FileType>
-    {
-    }
 }

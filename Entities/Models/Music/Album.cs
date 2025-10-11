@@ -7,7 +7,6 @@ namespace Entities.Models.Music;
 public class Album : Collection
 {
     /// <summary>
-    /// 
     /// </summary>
     public virtual ICollection<Artist> Artists { get; set; }
 }

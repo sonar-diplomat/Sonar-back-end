@@ -1,27 +1,36 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Application.Abstractions.Interfaces.Services;
+﻿using Application.Abstractions.Interfaces.Repository.UserCore;
 using Application.Abstractions.Interfaces.Repository.UserExperience;
-using Entities.Models;
+using Application.Abstractions.Interfaces.Services;
+using Application.DTOs;
+using Entities.Models.UserCore;
 using Entities.Models.UserExperience;
 
-namespace Application.Services.UserExperience
+namespace Application.Services.UserExperience;
+
+public class SubscriptionPaymentService(
+    ISubscriptionPaymentRepository repository,
+    IUserRepository userRepository)
+    : GenericService<SubscriptionPayment>(repository), ISubscriptionPaymentService
 {
-    public class SubscriptionPaymentService : ISubscriptionPaymentService
+    public async Task<SubscriptionPayment> PurchaseSubscriptionAsync(PurchaseSubscriptionDTO dto)
     {
-        private readonly ISubscriptionPaymentRepository _repository;
-
-        public SubscriptionPaymentService(ISubscriptionPaymentRepository repository)
+        // Create the subscription payment
+        SubscriptionPayment payment = new()
         {
-            _repository = repository;
-        }
+            BuyerId = dto.UserId,
+            SubscriptionPackId = dto.SubscriptionPackId,
+            Amount = dto.Amount
+        };
 
-        public Task<SubscriptionPayment> GetByIdAsync(int id) => throw new NotImplementedException();
-        public Task<IEnumerable<SubscriptionPayment>> GetAllAsync() => throw new NotImplementedException();
-        public Task<SubscriptionPayment> CreateAsync(SubscriptionPayment entity) => throw new NotImplementedException();
-        public Task<SubscriptionPayment> UpdateAsync(SubscriptionPayment entity) => throw new NotImplementedException();
-        public Task<bool> DeleteAsync(int id) => throw new NotImplementedException();
+        SubscriptionPayment createdPayment = await repository.AddAsync(payment);
+
+        // Activate the subscription for the user
+        User? user = await userRepository.GetByIdAsync(dto.UserId);
+        if (user == null) throw new NotImplementedException();
+
+        user.SubscriptionPackId = dto.SubscriptionPackId;
+        await userRepository.UpdateAsync(user);
+
+        return createdPayment;
     }
 }
-

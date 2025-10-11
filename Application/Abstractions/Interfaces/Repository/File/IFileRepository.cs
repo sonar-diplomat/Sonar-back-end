@@ -1,6 +1,8 @@
-﻿namespace Application.Abstractions.Interfaces.Repository.File
+﻿using FileModel = Entities.Models.File.File;
+
+namespace Application.Abstractions.Interfaces.Repository.File;
+
+public interface IFileRepository : IGenericRepository<FileModel>
 {
-    public interface IFileRepository : IGenericRepository<Entities.Models.File.File>
-    {
-    }
+    Task<FileModel> GetDefaultAsync();
 }

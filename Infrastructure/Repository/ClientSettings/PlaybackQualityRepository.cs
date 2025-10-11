@@ -1,13 +1,16 @@
 using Application.Abstractions.Interfaces.Repository.Client;
 using Entities.Models.ClientSettings;
 using Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
+using Sonar.Infrastructure.Repository;
 
-namespace Sonar.Infrastructure.Repository.Client
+namespace Infrastructure.Repository.ClientSettings;
+
+public class PlaybackQualityRepository(SonarContext dbContext)
+    : GenericRepository<PlaybackQuality>(dbContext), IPlaybackQualityRepository
 {
-    public class PlaybackQualityRepository : GenericRepository<PlaybackQuality>, IPlaybackQualityRepository
+    public async Task<PlaybackQuality> GetDefaultAsync()
     {
-        public PlaybackQualityRepository(SonarContext dbContext) : base(dbContext)
-        {
-        }
+        return (await context.PlaybackQualities.FirstOrDefaultAsync(p => p.Id == 2))!;
     }
 }

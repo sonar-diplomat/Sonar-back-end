@@ -1,27 +1,28 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿using Application.Abstractions.Interfaces.Repository.Client;
 using Application.Abstractions.Interfaces.Services;
-using Application.Abstractions.Interfaces.Repository.Client;
-using Entities.Models;
 using Entities.Models.ClientSettings;
 
-namespace Application.Services.ClientSettings
+namespace Application.Services.ClientSettings;
+
+public class SettingsService(
+    ISettingsRepository repository,
+    IPlaybackQualityService playbackQualityService,
+    ILanguageService languageService,
+    IThemeService themeService,
+    IUserPrivacySettingsService userPrivacySettingsService) : GenericService<Settings>(repository), ISettingsService
 {
-    public class SettingsService : ISettingsService
+    public async Task<Settings> CreateDefaultAsync(string languageLocale)
     {
-        private readonly ISettingsRepository _repository;
-
-        public SettingsService(ISettingsRepository repository)
+        Settings settings = new()
         {
-            _repository = repository;
-        }
-
-        public Task<Settings> GetByIdAsync(int id) => throw new NotImplementedException();
-        public Task<IEnumerable<Settings>> GetAllAsync() => throw new NotImplementedException();
-        public Task<Settings> CreateAsync(Settings entity) => throw new NotImplementedException();
-        public Task<Settings> UpdateAsync(Settings entity) => throw new NotImplementedException();
-        public Task<bool> DeleteAsync(int id) => throw new NotImplementedException();
+            AutoPlay = true,
+            Crossfade = false,
+            ExplicitContent = false,
+            PreferredPlaybackQuality = await playbackQualityService.GetDefaultAsync(),
+            Language = await languageService.GetByLocaleAsync(languageLocale),
+            Theme = await themeService.GetDefaultAsync(),
+            UserPrivacy = await userPrivacySettingsService.GetDefaultAsync()
+        };
+        return settings;
     }
 }
-

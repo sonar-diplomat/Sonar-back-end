@@ -1,13 +1,16 @@
-using Application.Abstractions.Interfaces.Repository.User;
-using Entities.Models.User;
+using Application.Abstractions.Interfaces.Repository.UserCore;
+using Entities.Models.UserCore;
 using Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
+using Sonar.Infrastructure.Repository;
 
-namespace Sonar.Infrastructure.Repository.User
+namespace Infrastructure.Repository.User;
+
+public class UserPrivacyGroupRepository(SonarContext dbContext)
+    : GenericRepository<UserPrivacyGroup>(dbContext), IUserPrivacyGroupRepository
 {
-    public class UserPrivacyGroupRepository : GenericRepository<UserPrivacyGroup>, IUserPrivacyGroupRepository
+    public async Task<UserPrivacyGroup> GetDefaultAsync()
     {
-        public UserPrivacyGroupRepository(SonarContext dbContext) : base(dbContext)
-        {
-        }
+        return (await context.UserPrivacyGroups.FirstOrDefaultAsync(u => u.Id == 1))!;
     }
 }

@@ -1,8 +1,7 @@
 ﻿using Entities.Models.UserExperience;
 
-namespace Application.Abstractions.Interfaces.Repository.UserExperience
+namespace Application.Abstractions.Interfaces.Repository.UserExperience;
+
+public interface IInventoryRepository : IGenericRepository<Inventory>
 {
-    public interface IInventoryRepository : IGenericRepository<Inventory>
-    {
-    }
 }

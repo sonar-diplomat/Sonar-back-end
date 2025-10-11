@@ -1,27 +1,25 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿using Application.Abstractions.Interfaces.Repository.Client;
 using Application.Abstractions.Interfaces.Services;
-using Application.Abstractions.Interfaces.Repository.Client;
-using Entities.Models;
 using Entities.Models.ClientSettings;
+using Entities.Models.UserCore;
 
-namespace Application.Services.ClientSettings
+namespace Application.Services.ClientSettings;
+
+public class UserPrivacySettingsService(
+    IUserPrivacySettingsRepository repository,
+    IUserPrivacyGroupService userPrivacyGroupService)
+    : GenericService<UserPrivacySettings>(repository), IUserPrivacySettingsService
 {
-    public class UserPrivacySettingsService : IUserPrivacySettingsService
+    public async Task<UserPrivacySettings> GetDefaultAsync()
     {
-        private readonly IUserPrivacySettingsRepository _repository;
+        UserPrivacyGroup userPrivacyGroup = await userPrivacyGroupService.GetDefaultAsync();
 
-        public UserPrivacySettingsService(IUserPrivacySettingsRepository repository)
+        UserPrivacySettings userPrivacySettings = new()
         {
-            _repository = repository;
-        }
+            WhichCanMessage = userPrivacyGroup,
+            WhichCanViewProfile = userPrivacyGroup
+        };
 
-        public Task<UserPrivacySettings> GetByIdAsync(int id) => throw new NotImplementedException();
-        public Task<IEnumerable<UserPrivacySettings>> GetAllAsync() => throw new NotImplementedException();
-        public Task<UserPrivacySettings> CreateAsync(UserPrivacySettings entity) => throw new NotImplementedException();
-        public Task<UserPrivacySettings> UpdateAsync(UserPrivacySettings entity) => throw new NotImplementedException();
-        public Task<bool> DeleteAsync(int id) => throw new NotImplementedException();
+        return await repository.AddAsync(userPrivacySettings);
     }
 }
-

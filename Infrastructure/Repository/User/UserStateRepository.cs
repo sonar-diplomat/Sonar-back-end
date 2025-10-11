@@ -1,13 +1,12 @@
-using Application.Abstractions.Interfaces.Repository.User;
-using Entities.Models.User;
+using Application.Abstractions.Interfaces.Repository.UserCore;
+using Entities.Models.UserCore;
 using Infrastructure.Data;
 
-namespace Sonar.Infrastructure.Repository.User
+namespace Sonar.Infrastructure.Repository.UserCore;
+
+public class UserStateRepository : GenericRepository<UserState>, IUserStateRepository
 {
-    public class UserStateRepository : GenericRepository<UserState>, IUserStateRepository
+    public UserStateRepository(SonarContext dbContext) : base(dbContext)
     {
-        public UserStateRepository(SonarContext dbContext) : base(dbContext)
-        {
-        }
     }
 }
