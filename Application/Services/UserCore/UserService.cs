@@ -55,6 +55,11 @@ public class UserService(
         return await repository.UpdateAsync(user);
     }
 
+    public async Task<User> UpdateUserAsync(User user)
+    {
+        return await repository.UpdateAsync(user);
+    }
+
     public async Task ChangeUsernameAsync(int userId, string newUsername)
     {
         User user = await GetByIdAsync(userId);
@@ -92,6 +97,12 @@ public class UserService(
         user.UserState = await stateService.CreateDefaultAsync();
         user.AvatarImage = await fileService.GetDefaultAsync();
         return user;
+    }
+
+    public async Task<User> GetByIdValidatedAsync(int id)
+    {
+        User? user = await repository.GetByIdAsync(id);
+        return user ?? throw AppExceptionFactory.Create<NotFoundException>(["User not found."]);
     }
 
     public async Task<bool> DeleteUserAsync(int userId)

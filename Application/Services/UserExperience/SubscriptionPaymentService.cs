@@ -1,5 +1,4 @@
-﻿using Application.Abstractions.Interfaces.Repository.UserCore;
-using Application.Abstractions.Interfaces.Repository.UserExperience;
+﻿using Application.Abstractions.Interfaces.Repository.UserExperience;
 using Application.Abstractions.Interfaces.Services;
 using Application.DTOs;
 using Entities.Models.UserCore;
@@ -9,28 +8,23 @@ namespace Application.Services.UserExperience;
 
 public class SubscriptionPaymentService(
     ISubscriptionPaymentRepository repository,
-    IUserRepository userRepository)
+    IUserService userService,
+    ISubscriptionPackService subscriptionPackService)
     : GenericService<SubscriptionPayment>(repository), ISubscriptionPaymentService
 {
     public async Task<SubscriptionPayment> PurchaseSubscriptionAsync(PurchaseSubscriptionDTO dto)
     {
-        // Create the subscription payment
         SubscriptionPayment payment = new()
         {
-            BuyerId = dto.UserId,
-            SubscriptionPackId = dto.SubscriptionPackId,
+            Buyer = await userService.GetByIdValidatedAsync(dto.UserId),
+            SubscriptionPack = await subscriptionPackService.GetByIdValidatedAsync(dto.SubscriptionPackId),
             Amount = dto.Amount
         };
 
         SubscriptionPayment createdPayment = await repository.AddAsync(payment);
-
-        // Activate the subscription for the user
-        User? user = await userRepository.GetByIdAsync(dto.UserId);
-        if (user == null) throw new NotImplementedException();
-
+        User? user = await userService.GetByIdValidatedAsync(dto.UserId);
         user.SubscriptionPackId = dto.SubscriptionPackId;
-        await userRepository.UpdateAsync(user);
-
+        await userService.UpdateUserAsync(user);
         return createdPayment;
     }
 }

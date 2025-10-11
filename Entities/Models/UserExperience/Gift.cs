@@ -19,6 +19,9 @@ public class Gift : BaseModel
     public DateTime GiftTime { get; set; }
 
     [Required]
+    public DateTime AcceptanceDate { get; set; }
+
+    [Required]
     public int GiftStyleId { get; set; }
 
     [Required]

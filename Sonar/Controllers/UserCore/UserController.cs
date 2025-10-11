@@ -1,6 +1,5 @@
 using Application.Abstractions.Interfaces.Services;
 using Application.DTOs;
-using Application.Exception;
 using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -9,13 +8,9 @@ namespace Sonar.Controllers.UserCore;
 
 [Route("api/[controller]")]
 [ApiController]
-public class UserController(
-    IUserService userService
-)
-    : ControllerBase
+public class UserController(IUserService userService, UserManager<User> userManager)
+    : BaseController(userManager)
 {
-    private readonly UserManager<User> userManager;
-
     // GET: api/User
     [HttpGet]
     public async Task<ActionResult<IEnumerable<User>>> GetUsers()
@@ -29,19 +24,14 @@ public class UserController(
     public async Task<ActionResult<User>> GetUser(int id)
     {
         User user = await userService.GetByIdAsync(id);
-
         return Ok(user);
     }
 
     [HttpPut("update")]
     public async Task<IActionResult> PatchUser(UserUpdateDTO request)
     {
-        User? user = await userManager.GetUserAsync(User);
-        if (user == null)
-            throw AppExceptionFactory.Create<UnauthorizedException>();
-
+        User user = await GetUserByJwt();
         user = await userService.UpdateUserAsync(user.Id, request);
-
         return Ok(user);
     }
 }

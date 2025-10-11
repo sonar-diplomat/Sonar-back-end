@@ -1,7 +1,11 @@
 using Application.Abstractions.Interfaces.Services;
 using Application.DTOs;
 using Application.Exception;
+using Entities.Models.UserCore;
 using Entities.Models.UserExperience;
+using Entities.TemplateResponses;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Sonar.Controllers.UserExperience;
@@ -10,248 +14,81 @@ namespace Sonar.Controllers.UserExperience;
 [ApiController]
 public class GiftController(
     IGiftService giftService,
-    IGiftStyleService giftStyleService)
-    : ControllerBase
+    IGiftStyleService giftStyleService,
+    UserManager<User> userManager
+)
+    : BaseController(userManager)
 {
-    /// <summary>
-    ///     Send a gift subscription to another user
-    /// </summary>
-    /// <param name="giftDto">Gift details including subscription pack and receiver</param>
-    /// <returns>Created gift</returns>
     [HttpPost("send")]
+    [Authorize]
     public async Task<ActionResult<Gift>> SendGift([FromBody] SendGiftDTO giftDto)
     {
-        try
-        {
-            Gift gift = await giftService.SendGiftAsync(giftDto);
-            return CreatedAtAction(nameof(GetGift), new { id = gift.Id }, gift);
-        }
-        catch (Exception)
-        {
-            throw new NotImplementedException();
-        }
+        User user = await GetUserByJwt();
+        if (user.Id != giftDto.BuyerId)
+            AppExceptionFactory.Create<BadRequestException>();
+        Gift gift = await giftService.SendGiftAsync(giftDto);
+        return CreatedAtAction(nameof(GetGift), new { id = gift.Id }, gift);
     }
 
-    /// <summary>
-    ///     Accept a gift and activate the subscription
-    /// </summary>
-    /// <param name="id">Gift ID</param>
-    /// <param name="receiverId">ID of the user accepting the gift</param>
-    /// <returns>Activated subscription payment</returns>
     [HttpPost("{id}/accept")]
-    public async Task<ActionResult<SubscriptionPayment>> AcceptGift(int id, [FromBody] int receiverId)
+    [Authorize]
+    public async Task<ActionResult<SubscriptionPayment>> AcceptGift(int id)
     {
-        try
-        {
-            SubscriptionPayment payment = await giftService.AcceptGiftAsync(id, receiverId);
-            return Ok(payment);
-        }
-        catch (Exception)
-        {
-            throw new NotImplementedException();
-        }
+        User user = await GetUserByJwt();
+        SubscriptionPayment payment = await giftService.AcceptGiftAsync(id, user.Id);
+        return Ok(new BaseResponse<SubscriptionPayment>(payment, "Gift accepted and subscription activated."));
     }
 
-    /// <summary>
-    ///     Get all gifts received by a user
-    /// </summary>
-    /// <param name="receiverId">ID of the receiver</param>
-    /// <returns>List of gifts received</returns>
-    [HttpGet("received/{receiverId}")]
-    public async Task<ActionResult<IEnumerable<Gift>>> GetReceivedGifts(int receiverId)
+    [HttpGet("received")]
+    [Authorize]
+    public async Task<ActionResult<IEnumerable<Gift>>> GetReceivedGifts()
     {
-        try
-        {
-            IEnumerable<Gift> gifts = await giftService.GetReceivedGiftsAsync(receiverId);
-            return Ok(gifts);
-        }
-        catch (Exception)
-        {
-            throw new NotImplementedException();
-        }
+        User user = await GetUserByJwt();
+        IEnumerable<Gift> gifts = await giftService.GetReceivedGiftsAsync(user.Id);
+        return Ok(new BaseResponse<IEnumerable<Gift>>(gifts, "Received gifts retrieved successfully."));
     }
 
-    /// <summary>
-    ///     Get all gifts sent by a user (including planned)
-    /// </summary>
-    /// <param name="senderId">ID of the sender</param>
-    /// <returns>List of gifts sent</returns>
-    [HttpGet("sent/{senderId}")]
+    [HttpGet("sent")]
+    [Authorize]
     public async Task<ActionResult<IEnumerable<Gift>>> GetSentGifts(int senderId)
     {
-        try
-        {
-            IEnumerable<Gift> gifts = await giftService.GetSentGiftsAsync(senderId);
-            return Ok(gifts);
-        }
-        catch (Exception)
-        {
-            throw new NotImplementedException();
-        }
+        User user = await GetUserByJwt();
+        IEnumerable<Gift> gifts = await giftService.GetSentGiftsAsync(user.Id);
+        return Ok(new BaseResponse<IEnumerable<Gift>>(gifts, "Sent gifts retrieved successfully"));
     }
 
-    /// <summary>
-    ///     Get a specific gift by ID
-    /// </summary>
-    /// <param name="id">Gift ID</param>
-    /// <returns>Gift details</returns>
     [HttpGet("{id}")]
+    [Authorize]
     public async Task<ActionResult<Gift>> GetGift(int id)
     {
-        try
-        {
-            Gift gift = await giftService.GetByIdAsync(id);
-            return gift == null ? throw new NotImplementedException() : Ok(gift);
-        }
-        catch (AppException)
-        {
-            throw;
-        }
-        catch (Exception)
-        {
-            throw new NotImplementedException();
-        }
+        Gift gift = await giftService.GetByIdValidatedAsync(id);
+        return Ok(new BaseResponse<Gift>(gift, "Gift retrieved successfully"));
     }
 
-    /// <summary>
-    ///     Cancel a planned gift (only before it's accepted)
-    /// </summary>
-    /// <param name="id">Gift ID</param>
-    /// <param name="senderId">ID of the sender</param>
-    /// <returns>Success status</returns>
+
     [HttpDelete("{id}/cancel")]
-    public async Task<IActionResult> CancelGift(int id, [FromBody] int senderId)
+    [Authorize]
+    public async Task<IActionResult> CancelGift(int id)
     {
-        try
-        {
-            bool result = await giftService.CancelGiftAsync(id, senderId);
-
-            if (!result) throw new NotImplementedException();
-
-            return NoContent();
-        }
-        catch (AppException)
-        {
-            throw;
-        }
-        catch (Exception)
-        {
-            throw new NotImplementedException();
-        }
+        User user = await GetUserByJwt();
+        await giftService.CancelGiftAsync(id, user.Id);
+        return Ok(new BaseResponse<bool>("Gift cancelled"));
     }
 
     #region Gift Style Endpoints
 
-    /// <summary>
-    ///     Get all gift styles
-    /// </summary>
-    /// <returns>List of all gift styles</returns>
     [HttpGet("styles")]
     public async Task<ActionResult<IEnumerable<GiftStyle>>> GetAllStyles()
     {
-        try
-        {
-            IEnumerable<GiftStyle> styles = await giftStyleService.GetAllAsync();
-            return Ok(styles);
-        }
-        catch (Exception)
-        {
-            throw new NotImplementedException();
-        }
+        IEnumerable<GiftStyle> styles = await giftStyleService.GetAllAsync();
+        return Ok(new BaseResponse<IEnumerable<GiftStyle>>(styles, "Gift styles retrieved successfully"));
     }
 
-    /// <summary>
-    ///     Get a specific gift style by ID
-    /// </summary>
-    /// <param name="id">Gift style ID</param>
-    /// <returns>Gift style details</returns>
     [HttpGet("styles/{id}")]
     public async Task<ActionResult<GiftStyle>> GetStyle(int id)
     {
-        try
-        {
-            GiftStyle style = await giftStyleService.GetByIdAsync(id);
-
-            if (style == null) throw new NotImplementedException();
-
-            return Ok(style);
-        }
-        catch (AppException)
-        {
-            throw;
-        }
-        catch (Exception)
-        {
-            throw new NotImplementedException();
-        }
-    }
-
-    /// <summary>
-    ///     Create a new gift style
-    /// </summary>
-    /// <param name="style">Gift style details</param>
-    /// <returns>Created gift style</returns>
-    [HttpPost("styles")]
-    public async Task<ActionResult<GiftStyle>> CreateStyle([FromBody] GiftStyle style)
-    {
-        try
-        {
-            GiftStyle createdStyle = await giftStyleService.CreateAsync(style);
-            return CreatedAtAction(nameof(GetStyle), new { id = createdStyle.Id }, createdStyle);
-        }
-        catch (Exception)
-        {
-            throw new NotImplementedException();
-        }
-    }
-
-    /// <summary>
-    ///     Update an existing gift style
-    /// </summary>
-    /// <param name="id">Gift style ID</param>
-    /// <param name="style">Updated gift style details</param>
-    /// <returns>Updated gift style</returns>
-    [HttpPut("styles/{id}")]
-    public async Task<ActionResult<GiftStyle>> UpdateStyle(int id, [FromBody] GiftStyle style)
-    {
-        try
-        {
-            if (id != style.Id) throw new NotImplementedException();
-
-            GiftStyle updatedStyle = await giftStyleService.UpdateAsync(style);
-            return Ok(updatedStyle);
-        }
-        catch (AppException)
-        {
-            throw;
-        }
-        catch (Exception)
-        {
-            throw new NotImplementedException();
-        }
-    }
-
-    /// <summary>
-    ///     Delete a gift style
-    /// </summary>
-    /// <param name="id">Gift style ID</param>
-    /// <returns>No content on success</returns>
-    [HttpDelete("styles/{id}")]
-    public async Task<IActionResult> DeleteStyle(int id)
-    {
-        try
-        {
-            await giftStyleService.DeleteAsync(id);
-            return NoContent();
-        }
-        catch (AppException)
-        {
-            throw;
-        }
-        catch (Exception)
-        {
-            throw new NotImplementedException();
-        }
+        GiftStyle style = await giftStyleService.GetByIdValidatedAsync(id);
+        return Ok(new BaseResponse<GiftStyle>(style, "Gift style retrieved successfully"));
     }
 
     #endregion

@@ -26,9 +26,10 @@ public class AuthController(
     IUserService userService,
     IEmailSenderService emailSenderService
 )
-    : ControllerBase
+    : BaseController(userManager)
 {
     private readonly string frontEndUrl = configuration["FrontEnd-Url"]!;
+    private readonly UserManager<User> userManager = userManager;
 
     [HttpPost("register")]
     public async Task<IActionResult> Register(UserRegisterDTO model)
@@ -57,41 +58,39 @@ public class AuthController(
         SignInResult result = await signInManager.CheckPasswordSignInAsync(
             user, password, false);
 
-        if (result.Succeeded)
+        if (!result.Succeeded) throw new NotImplementedException();
+
+        if (user.Enabled2FA)
         {
-            if (user.Enabled2FA)
-            {
-                string code = await userManager.GenerateTwoFactorTokenAsync(user, TokenOptions.DefaultEmailProvider);
-                await emailSenderService.SendEmailAsync(
-                    user.Email!,
-                    MailGunTemplates.twoFA,
-                    new Dictionary<string, string>
-                    {
-                        { "code", code }
-                    });
-
-                return Ok(new
+            string code = await userManager.GenerateTwoFactorTokenAsync(user, TokenOptions.DefaultEmailProvider);
+            await emailSenderService.SendEmailAsync(
+                user.Email!,
+                MailGunTemplates.twoFA,
+                new Dictionary<string, string>
                 {
-                    require2FA = true,
-                    message = "Verification code sent to your email."
+                    { "code", code }
                 });
-            }
 
-            // Generate both tokens
-            string accessToken = GenerateJwtToken(user);
-            RefreshToken refreshToken = GenerateRefreshToken();
-            // Save refresh token to user
-            user.RefreshTokens.Add(refreshToken);
-            await userManager.UpdateAsync(user);
             return Ok(new
             {
-                accessToken,
-                refreshToken = refreshToken.Token
+                require2FA = true,
+                message = "Verification code sent to your email."
             });
         }
 
+        // Generate both tokens
+        string accessToken = GenerateJwtToken(user);
+        RefreshToken refreshToken = GenerateRefreshToken();
+        // Save refresh token to user
+        user.RefreshTokens.Add(refreshToken);
+        await userManager.UpdateAsync(user);
+        return Ok(new
+        {
+            accessToken,
+            refreshToken = refreshToken.Token
+        });
+
         // TODO: Тимоша вызовет исключение
-        throw new NotImplementedException();
     }
 
     [HttpPost("verify-2fa")]

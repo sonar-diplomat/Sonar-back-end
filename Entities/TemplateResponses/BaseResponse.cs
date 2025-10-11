@@ -4,6 +4,11 @@ public class BaseResponse<T>
 {
     public BaseResponse()
     {
+        Success = true;
+        Metadata = new Dictionary<string, object>
+        {
+            { "timestamp", DateTime.UtcNow }
+        };
     }
 
     public BaseResponse(T data, string? message = null)
@@ -22,4 +27,6 @@ public class BaseResponse<T>
     public bool Success { get; set; }
     public string? Message { get; set; }
     public T? Data { get; set; }
+
+    public Dictionary<string, object> Metadata { get; set; }
 }

@@ -1,5 +1,4 @@
 ﻿using System.Net;
-using Entities.Models.Chat;
 
 namespace Application.Exception;
 
@@ -93,3 +92,6 @@ public class ExpectationFailedException(string[]? args = null)
 /// <summary>RFC 2324 / 7168: 418 I'm a teapot.</summary>
 public class ImATeapotException(string[]? args = null) : AppException((HttpStatusCode)418,
     args is null ? "I'm a teapot — cannot brew coffee" : $"I'm a teapot: {args[0]}");
+
+public class UnprocessableContentException(string[]? args = null)
+    : AppException((HttpStatusCode)422, args is null ? "Unprocessable content" : $"Unprocessable content: {args[0]}");

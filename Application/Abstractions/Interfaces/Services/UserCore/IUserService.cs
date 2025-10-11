@@ -8,8 +8,9 @@ public interface IUserService
     Task<int> ChangeCurrencyAsync(int userId, int modifier);
     Task<User> CreateUserShellAsync(UserRegisterDTO userRegisterDTO);
     Task<User> UpdateUserAsync(int userId, UserUpdateDTO userUpdateUpdateDto);
+    Task<User> UpdateUserAsync(User user);
     Task ChangeUsernameAsync(int userId, string newUsername);
-
     Task<User> GetByIdAsync(int id);
     Task<IEnumerable<User>> GetAllAsync();
+    Task<User> GetByIdValidatedAsync(int id);
 }
