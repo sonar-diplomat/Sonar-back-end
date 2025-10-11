@@ -1,87 +1,11 @@
-using Infrastructure.Data;
+using Entities.Models.UserCore;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace Sonar.Controllers.File;
 
 [Route("api/[controller]")]
 [ApiController]
-public class FileController : ControllerBase
+public class FileController(UserManager<User> userManager) : BaseController(userManager)
 {
-    private readonly SonarContext _context;
-
-    public FileController(SonarContext context)
-    {
-        _context = context;
-    }
-
-    // GET: api/File
-    [HttpGet]
-    public async Task<ActionResult<IEnumerable<Entities.Models.File.File>>> GetFiles()
-    {
-        return await _context.Files.ToListAsync();
-    }
-
-    // GET: api/File/5
-    [HttpGet("{id}")]
-    public async Task<ActionResult<Entities.Models.File.File>> GetFile(int id)
-    {
-        Entities.Models.File.File? file = await _context.Files.FindAsync(id);
-
-        if (file == null) return NotFound();
-
-        return file;
-    }
-
-    // PUT: api/File/5
-    // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-    [HttpPut("{id}")]
-    public async Task<IActionResult> PutFile(int id, Entities.Models.File.File file)
-    {
-        if (id != file.Id) return BadRequest();
-
-        _context.Entry(file).State = EntityState.Modified;
-
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            if (!FileExists(id)) return NotFound();
-
-            throw;
-        }
-
-        return NoContent();
-    }
-
-    // POST: api/File
-    // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-    [HttpPost]
-    public async Task<ActionResult<Entities.Models.File.File>> PostFile(Entities.Models.File.File file)
-    {
-        _context.Files.Add(file);
-        await _context.SaveChangesAsync();
-
-        return CreatedAtAction("GetFile", new { id = file.Id }, file);
-    }
-
-    // DELETE: api/File/5
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteFile(int id)
-    {
-        Entities.Models.File.File? file = await _context.Files.FindAsync(id);
-        if (file == null) return NotFound();
-
-        _context.Files.Remove(file);
-        await _context.SaveChangesAsync();
-
-        return NoContent();
-    }
-
-    private bool FileExists(int id)
-    {
-        return _context.Files.Any(e => e.Id == id);
-    }
 }

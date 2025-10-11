@@ -1,5 +1,8 @@
-﻿namespace Sonar.Controllers.ClientSettings;
+﻿using Entities.Models.UserCore;
+using Microsoft.AspNetCore.Identity;
 
-public class ClientSettingsController
+namespace Sonar.Controllers.ClientSettings;
+
+public class ClientSettingsController(UserManager<User> userManager) : BaseController(userManager)
 {
 }

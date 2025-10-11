@@ -4,4 +4,5 @@ namespace Application.Abstractions.Interfaces.Repository.UserExperience;
 
 public interface ISubscriptionPackRepository : IGenericRepository<SubscriptionPack>
 {
+    Task<SubscriptionPack?> FindByExactFeatureSetAsync(List<int> featureIds);
 }

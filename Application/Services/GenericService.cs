@@ -1,10 +1,11 @@
 ﻿using Application.Abstractions.Interfaces.Repository;
 using Application.Abstractions.Interfaces.Services;
+using Application.Exception;
 using Entities.Models;
 
 namespace Application.Services;
 
-public class GenericService<T>(IGenericRepository<T> repository) : IGenericService<T> where T : BaseModel
+public abstract class GenericService<T>(IGenericRepository<T> repository) : IGenericService<T> where T : BaseModel
 {
     public async Task<T> CreateAsync(T entity)
     {
@@ -13,7 +14,8 @@ public class GenericService<T>(IGenericRepository<T> repository) : IGenericServi
 
     public async Task DeleteAsync(int id)
     {
-        await repository.RemoveAsync(await GetByIdAsync(id));
+        T entity = await GetByIdValidatedAsync(id);
+        await repository.RemoveAsync(entity);
     }
 
     public async Task DeleteAsync(T entity)
@@ -26,9 +28,15 @@ public class GenericService<T>(IGenericRepository<T> repository) : IGenericServi
         return await repository.GetAllAsync();
     }
 
-    public async Task<T> GetByIdAsync(int id)
+    public async Task<T?> GetByIdAsync(int id)
     {
         return await repository.GetByIdAsync(id);
+    }
+
+    public async Task<T> GetByIdValidatedAsync(int id)
+    {
+        T? entity = await repository.GetByIdAsync(id);
+        return entity ?? throw AppExceptionFactory.Create<NotFoundException>([$"{nameof(T)} not found"]);
     }
 
     public async Task<T> UpdateAsync(T entity)

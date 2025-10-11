@@ -9,5 +9,5 @@ public interface IGiftService : IGenericService<Gift>
     Task<SubscriptionPayment> AcceptGiftAsync(int giftId, int receiverId);
     Task<IEnumerable<Gift>> GetReceivedGiftsAsync(int receiverId);
     Task<IEnumerable<Gift>> GetSentGiftsAsync(int senderId);
-    Task<bool> CancelGiftAsync(int giftId, int senderId);
+    Task CancelGiftAsync(int giftId, int receiverId);
 }

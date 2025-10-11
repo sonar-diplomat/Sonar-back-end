@@ -10,35 +10,31 @@ namespace Application.Services.Report;
 
 public class ReportService(
     IReportRepository repository,
-    IReportReasonTypeRepository reportReasonTypeRepository,
-    IReportableEntityTypeRepository reportableEntityTypeRepository,
-    AppExceptionFactory appExceptionFactory)
+    IReportableEntityTypeService reportableEntityTypeService,
+    IReportReasonTypeService reportReasonTypeService,
+    IUserService userService
+)
     : GenericService<ReportModel>(repository), IReportService
 {
     public async Task<ReportModel> CreateReportAsync(CreateReportDTO dto)
     {
-        // Валидация типа сущности
-        ReportableEntityType? entityType = await reportableEntityTypeRepository.GetByIdAsync(dto.ReportableEntityTypeId);
-        if (entityType == null)
-            throw new NotImplementedException();
-        
-        // Валидация типа причина
-        List<ReportReasonType> reasonTypes = new();
+        List<ReportReasonType?> reasonTypes = [];
         foreach (int reasonTypeId in dto.ReportReasonTypeIds)
         {
-            ReportReasonType? reasonType = await reportReasonTypeRepository.GetByIdAsync(reasonTypeId);
-            if (reasonType == null)
-                throw new NotImplementedException();
+            ReportReasonType reasonType = await reportReasonTypeService.GetByIdAsync(reasonTypeId);
             reasonTypes.Add(reasonType);
         }
-        
+
+        if (reasonTypes.Any(rt => rt == null))
+            throw AppExceptionFactory.Create<BadRequestException>();
+
         ReportModel report = new()
         {
             EntityIdentifier = dto.EntityIdentifier,
-            ReportableEntityTypeId = dto.ReportableEntityTypeId,
-            ReporterId = dto.ReporterId,
+            ReportableEntityType = await reportableEntityTypeService.GetByIdValidatedAsync(dto.ReportableEntityTypeId),
+            Reporter = await userService.GetByIdValidatedAsync(dto.ReporterId),
             IsClosed = false,
-            ReportReasonType = reasonTypes
+            ReportReasonType = reasonTypes!
         };
 
         return await repository.AddAsync(report);
@@ -46,10 +42,7 @@ public class ReportService(
 
     public async Task CloseReportAsync(int reportId)
     {
-        ReportModel? report = await repository.GetByIdAsync(reportId);
-        if (report == null)
-            throw new NotImplementedException();
-
+        ReportModel? report = await GetByIdValidatedAsync(reportId);
         report.IsClosed = true;
         await repository.UpdateAsync(report);
     }
