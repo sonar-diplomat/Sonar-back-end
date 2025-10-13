@@ -1,34 +1,51 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Entities.Models.Access;
+using Entities.Models.Distribution;
+using Entities.Models.UserCore;
+using Microsoft.EntityFrameworkCore;
 
-namespace Entities.Models;
+namespace Entities.Models.Music;
 
 [Table("Track")]
-public class Track
+public class Track : BaseModel
 {
-    [Key]
-    public int Id { get; set; }
-    [Required, MaxLength(100)]
+    [Required]
+    [MaxLength(100)]
     public string Title { get; set; }
+
     public TimeSpan Duration { get; set; }
-    
+
+    [Required]
+    public bool IsExplicit { get; set; }
+
+    [Required]
+    public bool DrivingDisturbingNoises { get; set; }
+
     [Required]
     public int VisibilityStateId { get; set; }
+
     [Required]
     public int AudioFileId { get; set; }
+
     [Required]
     public int CoverId { get; set; }
-    
+
     /// <summary>
-    /// 
     /// </summary>
     [ForeignKey("VisibilityStateId")]
+    [DeleteBehavior(DeleteBehavior.Cascade)]
     public virtual VisibilityState VisibilityState { get; set; }
+
     [ForeignKey("AudioFileId")]
-    public virtual File AudioFile { get; set; }
+    [DeleteBehavior(DeleteBehavior.Cascade)]
+    public virtual File.File AudioFile { get; set; }
+
     [ForeignKey("CoverId")]
-    public virtual File Cover { get; set; }
-    
+    [DeleteBehavior(DeleteBehavior.Cascade)]
+    public virtual File.File Cover { get; set; }
+
     public virtual ICollection<Artist> Artists { get; set; }
     public virtual ICollection<Collection> Collections { get; set; }
+    public virtual ICollection<Queue> Queues { get; set; }
 }

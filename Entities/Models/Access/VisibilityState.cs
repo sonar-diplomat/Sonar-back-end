@@ -1,22 +1,21 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
-namespace Entities.Models;
+namespace Entities.Models.Access;
 
 [Table("VisibilityState")]
-public class VisibilityState
+public class VisibilityState : BaseModel
 {
-    [Key] 
-    public int Id { get; set; }
-    [Required] 
+    [Required]
     public DateTime SetPublicOn { get; set; }
 
-    [Required] 
+    [Required]
     public int StatusId { get; set; }
 
     /// <summary>
-    /// 
     /// </summary>
     [ForeignKey("StatusId")]
+    [DeleteBehavior(DeleteBehavior.NoAction)]
     public virtual VisibilityStatus Status { get; set; }
 }

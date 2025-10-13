@@ -1,14 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Entities.Models
+namespace Entities.Models.UserExperience;
+
+[Table("GiftStyle")]
+public class GiftStyle : BaseModel
 {
-    [Table("GiftStyle")]
-    public class GiftStyle
-    {
-        [Key]
-        public int Id { get; set; }
-        [Required, MaxLength(200)]
-        public string Name { get; set; }
-    }
+    [Required]
+    [MaxLength(200)]
+    public string Name { get; set; }
 }

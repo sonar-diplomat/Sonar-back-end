@@ -3,8 +3,8 @@ using System;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
@@ -18,17 +18,17 @@ namespace Infrastructure.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("ProductVersion", "9.0.9")
-                .HasAnnotation("Relational:MaxIdentifierLength", 128);
+                .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
-            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+            NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("AccessFeatureUser", b =>
                 {
                     b.Property<int>("AccessFeaturesId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("UsersId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("AccessFeaturesId", "UsersId");
 
@@ -40,10 +40,10 @@ namespace Infrastructure.Migrations
             modelBuilder.Entity("AlbumArtist", b =>
                 {
                     b.Property<int>("AlbumsId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("ArtistsId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("AlbumsId", "ArtistsId");
 
@@ -55,10 +55,10 @@ namespace Infrastructure.Migrations
             modelBuilder.Entity("ArtistTrack", b =>
                 {
                     b.Property<int>("ArtistsId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("TracksId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("ArtistsId", "TracksId");
 
@@ -70,10 +70,10 @@ namespace Infrastructure.Migrations
             modelBuilder.Entity("ChatUser", b =>
                 {
                     b.Property<int>("ChatsId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("UsersId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("ChatsId", "UsersId");
 
@@ -85,10 +85,10 @@ namespace Infrastructure.Migrations
             modelBuilder.Entity("CollectionTrack", b =>
                 {
                     b.Property<int>("CollectionsId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("TracksId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("CollectionsId", "TracksId");
 
@@ -100,10 +100,10 @@ namespace Infrastructure.Migrations
             modelBuilder.Entity("CollectionUser", b =>
                 {
                     b.Property<int>("CollectionsId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("UsersId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("CollectionsId", "UsersId");
 
@@ -115,10 +115,10 @@ namespace Infrastructure.Migrations
             modelBuilder.Entity("CosmeticItemInventory", b =>
                 {
                     b.Property<int>("CosmeticItemsId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("InventoriesId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("CosmeticItemsId", "InventoriesId");
 
@@ -127,125 +127,493 @@ namespace Infrastructure.Migrations
                     b.ToTable("CosmeticItemInventory");
                 });
 
-            modelBuilder.Entity("Entities.Models.AccessFeature", b =>
+            modelBuilder.Entity("Entities.Models.Access.AccessFeature", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasColumnType("character varying(200)");
 
                     b.HasKey("Id");
 
                     b.ToTable("AccessFeature");
                 });
 
-            modelBuilder.Entity("Entities.Models.Achievement", b =>
+            modelBuilder.Entity("Entities.Models.Access.Suspension", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("CategoryId")
-                        .HasColumnType("int");
+                    b.Property<int>("AssociatedReportId")
+                        .HasColumnType("integer");
 
-                    b.Property<string>("Condition")
+                    b.Property<int>("AssociatedReportedId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("DateTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("PunisherId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Reason")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssociatedReportId");
+
+                    b.HasIndex("PunisherId");
+
+                    b.ToTable("Suspension");
+                });
+
+            modelBuilder.Entity("Entities.Models.Access.VisibilityState", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("SetPublicOn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("StatusId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StatusId");
+
+                    b.ToTable("VisibilityState");
+                });
+
+            modelBuilder.Entity("Entities.Models.Access.VisibilityStatus", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("VisibilityStatus");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "Visible"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Unlisted"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "Restricted"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Name = "Hidden"
+                        });
+                });
+
+            modelBuilder.Entity("Entities.Models.Chat.Chat", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CoverId")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsGroup")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CoverId");
+
+                    b.ToTable("Chat");
+                });
+
+            modelBuilder.Entity("Entities.Models.Chat.Message", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ChatId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("ReplyMessageId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("TextContent")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChatId");
+
+                    b.HasIndex("ReplyMessageId");
+
+                    b.ToTable("Message");
+                });
+
+            modelBuilder.Entity("Entities.Models.Chat.MessageRead", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("MessageId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("ReadAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MessageId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("MessageRead");
+                });
+
+            modelBuilder.Entity("Entities.Models.Chat.Post", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TextContent")
+                        .IsRequired()
+                        .HasMaxLength(5000)
+                        .HasColumnType("character varying(5000)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("VisibilityStateId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("VisibilityStateId");
+
+                    b.ToTable("Post");
+                });
+
+            modelBuilder.Entity("Entities.Models.ClientSettings.Language", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Locale")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("NativeName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Language");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Locale = "eng",
+                            Name = "English",
+                            NativeName = "English"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Locale = "ua",
+                            Name = "Ukrainian",
+                            NativeName = "Українська"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Locale = "ro",
+                            Name = "Romanian",
+                            NativeName = "română"
+                        });
+                });
+
+            modelBuilder.Entity("Entities.Models.ClientSettings.NotificationType", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<string>("Reward")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Target")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("UserId")
-                        .HasColumnType("int");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CategoryId");
+                    b.ToTable("NotificationType");
 
-                    b.HasIndex("UserId");
-
-                    b.ToTable("Achievement");
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Description = "Notification about a new message from another user",
+                            Name = "Message"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Description = "Notification about a new friend request",
+                            Name = "FriendRequest"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Description = "Notification about system updates or alerts",
+                            Name = "SystemAlert"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Description = "Notification about promotions or special offers",
+                            Name = "Promotion"
+                        });
                 });
 
-            modelBuilder.Entity("Entities.Models.AchievementCategory", b =>
+            modelBuilder.Entity("Entities.Models.ClientSettings.PlaybackQuality", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                    b.Property<int>("BitRate")
+                        .HasColumnType("integer");
 
-                    b.HasKey("Id");
-
-                    b.ToTable("AchievementCategory");
-                });
-
-            modelBuilder.Entity("Entities.Models.AchievementProgress", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("AchievementId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Value")
+                    b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AchievementId");
+                    b.ToTable("PlaybackQuality");
 
-                    b.HasIndex("UserId");
-
-                    b.ToTable("AchievementProgress");
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            BitRate = 128,
+                            Description = "Low quality playback suitable for slow internet connections",
+                            Name = "Low"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            BitRate = 320,
+                            Description = "Balanced quality and performance",
+                            Name = "Medium"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            BitRate = 700,
+                            Description = "High quality playback for premium experience",
+                            Name = "High"
+                        });
                 });
 
-            modelBuilder.Entity("Entities.Models.Artist", b =>
+            modelBuilder.Entity("Entities.Models.ClientSettings.Settings", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("AutoPlay")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("Crossfade")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ExplicitContent")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("LanguageId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("PreferredPlaybackQualityId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ThemeId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UserPrivacySettingsId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LanguageId");
+
+                    b.HasIndex("PreferredPlaybackQualityId");
+
+                    b.HasIndex("ThemeId");
+
+                    b.HasIndex("UserPrivacySettingsId");
+
+                    b.ToTable("Settings");
+                });
+
+            modelBuilder.Entity("Entities.Models.ClientSettings.Theme", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Theme");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "Dark"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Light"
+                        });
+                });
+
+            modelBuilder.Entity("Entities.Models.ClientSettings.UserPrivacySettings", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("WhichCanMessageId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("WhichCanViewProfileId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("WhichCanMessageId");
+
+                    b.HasIndex("WhichCanViewProfileId");
+
+                    b.ToTable("UserPrivacySettings");
+                });
+
+            modelBuilder.Entity("Entities.Models.Distribution.Artist", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("UserId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -255,53 +623,233 @@ namespace Infrastructure.Migrations
                     b.ToTable("Artist");
                 });
 
-            modelBuilder.Entity("Entities.Models.Chat", b =>
+            modelBuilder.Entity("Entities.Models.Distribution.Distributor", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("CoverId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    b.Property<bool>("IsGroup")
-                        .HasColumnType("bit");
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int>("LicenseId")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("CoverId");
 
-                    b.ToTable("Chat");
+                    b.HasIndex("LicenseId");
+
+                    b.ToTable("Distributor");
                 });
 
-            modelBuilder.Entity("Entities.Models.Collection", b =>
+            modelBuilder.Entity("Entities.Models.Distribution.DistributorSession", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("DeviceName")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<int>("DistributorId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("LastActive")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UserAgent")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DistributorId");
+
+                    b.ToTable("DistributorSession");
+                });
+
+            modelBuilder.Entity("Entities.Models.Distribution.License", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("ExpirationDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("IssuerId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("IssuingDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IssuerId");
+
+                    b.ToTable("License");
+                });
+
+            modelBuilder.Entity("Entities.Models.File.File", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ItemName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int?>("PostId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TypeId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Url")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PostId");
+
+                    b.HasIndex("TypeId");
+
+                    b.ToTable("File");
+                });
+
+            modelBuilder.Entity("Entities.Models.File.FileType", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("FileType");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "image"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "audio"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "gif"
+                        });
+                });
+
+            modelBuilder.Entity("Entities.Models.Library.Folder", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("LibraryId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int?>("ParentFolderId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LibraryId");
+
+                    b.HasIndex("ParentFolderId");
+
+                    b.ToTable("Folder");
+                });
+
+            modelBuilder.Entity("Entities.Models.Library.Library", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Library");
+                });
+
+            modelBuilder.Entity("Entities.Models.Music.Collection", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("CoverId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int?>("FolderId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<int>("VisibilityStateId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -316,790 +864,39 @@ namespace Infrastructure.Migrations
                     b.UseTptMappingStrategy();
                 });
 
-            modelBuilder.Entity("Entities.Models.CosmeticItem", b =>
+            modelBuilder.Entity("Entities.Models.Music.Track", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("FileId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Price")
-                        .HasColumnType("int");
-
-                    b.Property<int>("TypeId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("FileId");
-
-                    b.HasIndex("TypeId");
-
-                    b.ToTable("CosmeticItem");
-                });
-
-            modelBuilder.Entity("Entities.Models.CosmeticItemType", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("CosmeticItemType");
-                });
-
-            modelBuilder.Entity("Entities.Models.CosmeticSticker", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CosmeticItemId")
-                        .HasColumnType("int");
-
-                    b.Property<double>("X")
-                        .HasColumnType("float");
-
-                    b.Property<double>("Y")
-                        .HasColumnType("float");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CosmeticItemId");
-
-                    b.ToTable("CosmeticSticker");
-                });
-
-            modelBuilder.Entity("Entities.Models.Distributor", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CoverId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<int>("LicenseId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CoverId");
-
-                    b.HasIndex("LicenseId");
-
-                    b.ToTable("Distributor");
-                });
-
-            modelBuilder.Entity("Entities.Models.DistributorSession", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("DeviceName")
-                        .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
-
-                    b.Property<int>("DistributorId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("LastActive")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("UserAgent")
-                        .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("DistributorId");
-
-                    b.ToTable("DistributorSession");
-                });
-
-            modelBuilder.Entity("Entities.Models.File", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("ItemName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<int?>("PostId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("TypeId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Url")
-                        .IsConcurrencyToken()
-                        .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PostId");
-
-                    b.HasIndex("TypeId");
-
-                    b.ToTable("File");
-                });
-
-            modelBuilder.Entity("Entities.Models.FileType", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("nvarchar(10)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("FileType");
-                });
-
-            modelBuilder.Entity("Entities.Models.Folder", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("LibraryId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<int?>("ParentFolderId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("LibraryId");
-
-                    b.HasIndex("ParentFolderId");
-
-                    b.ToTable("Folder");
-                });
-
-            modelBuilder.Entity("Entities.Models.Gift", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("GiftStyleId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("GiftTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("ReceiverId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("SubscriptionPaymentId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("TextContent")
-                        .IsRequired()
-                        .HasMaxLength(2000)
-                        .HasColumnType("nvarchar(2000)");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("GiftStyleId");
-
-                    b.HasIndex("ReceiverId");
-
-                    b.HasIndex("SubscriptionPaymentId");
-
-                    b.ToTable("Gift");
-                });
-
-            modelBuilder.Entity("Entities.Models.GiftStyle", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("GiftStyle");
-                });
-
-            modelBuilder.Entity("Entities.Models.Inventory", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId")
-                        .IsUnique();
-
-                    b.ToTable("Inventory");
-                });
-
-            modelBuilder.Entity("Entities.Models.Language", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Locale")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("nvarchar(10)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
-
-                    b.Property<string>("NativeName")
-                        .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Language");
-                });
-
-            modelBuilder.Entity("Entities.Models.Library", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("Library");
-                });
-
-            modelBuilder.Entity("Entities.Models.License", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("ExpirationDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("IssuerId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("IssuingDate")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("IssuerId");
-
-                    b.ToTable("License");
-                });
-
-            modelBuilder.Entity("Entities.Models.Message", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("ChatId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("ReplyMessageId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("TextContent")
-                        .IsRequired()
-                        .HasMaxLength(2000)
-                        .HasColumnType("nvarchar(2000)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ChatId");
-
-                    b.HasIndex("ReplyMessageId");
-
-                    b.ToTable("Message");
-                });
-
-            modelBuilder.Entity("Entities.Models.MessageRead", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("MessageId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("ReadAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("MessageId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("MessageRead");
-                });
-
-            modelBuilder.Entity("Entities.Models.NotificationType", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("NotificationType");
-                });
-
-            modelBuilder.Entity("Entities.Models.PlaybackQuality", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("BitRate")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("PlaybackQuality");
-                });
-
-            modelBuilder.Entity("Entities.Models.Post", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("TextContent")
-                        .IsRequired()
-                        .HasMaxLength(5000)
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("VisibilityStateId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.HasIndex("VisibilityStateId");
-
-                    b.ToTable("Post");
-                });
-
-            modelBuilder.Entity("Entities.Models.Report", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("EntityIdentifier")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("IsClosed")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("ReportableEntityTypeId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ReporterId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ReportableEntityTypeId");
-
-                    b.HasIndex("ReporterId");
-
-                    b.ToTable("Report");
-                });
-
-            modelBuilder.Entity("Entities.Models.ReportReasonType", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<TimeSpan>("RecommendedSuspensionDuration")
-                        .HasColumnType("time");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("ReportReasonType");
-                });
-
-            modelBuilder.Entity("Entities.Models.ReportableEntityType", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("ReportableEntityType");
-                });
-
-            modelBuilder.Entity("Entities.Models.Settings", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<bool>("AutoPlay")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("Crossfade")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("ExplicitContent")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("LanguageId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("NotificationTypeId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("PreferredPlaybackQualityId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ThemeId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("UserPrivacySettingsId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("LanguageId");
-
-                    b.HasIndex("NotificationTypeId");
-
-                    b.HasIndex("PreferredPlaybackQualityId");
-
-                    b.HasIndex("ThemeId");
-
-                    b.HasIndex("UserId")
-                        .IsUnique();
-
-                    b.HasIndex("UserPrivacySettingsId");
-
-                    b.ToTable("Settings");
-                });
-
-            modelBuilder.Entity("Entities.Models.SubscriptionFeature", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<decimal>("Price")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("SubscriptionFeature");
-                });
-
-            modelBuilder.Entity("Entities.Models.SubscriptionPack", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<double>("DiscountMultiplier")
-                        .HasColumnType("float");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("SubscriptionPack");
-                });
-
-            modelBuilder.Entity("Entities.Models.SubscriptionPayment", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<decimal>("Amount")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<int>("BuyerId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("SubscriptionPackId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("BuyerId");
-
-                    b.HasIndex("SubscriptionPackId");
-
-                    b.ToTable("SubscriptionPayment");
-                });
-
-            modelBuilder.Entity("Entities.Models.Suspension", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("AssociatedReportId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("AssociatedReportedId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("DateTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("PunisherId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Reason")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AssociatedReportId");
-
-                    b.HasIndex("PunisherId");
-
-                    b.ToTable("Suspension");
-                });
-
-            modelBuilder.Entity("Entities.Models.Theme", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Theme");
-                });
-
-            modelBuilder.Entity("Entities.Models.Track", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("AudioFileId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("CoverId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("DrivingDisturbingNoises")
+                        .HasColumnType("boolean");
 
                     b.Property<TimeSpan>("Duration")
-                        .HasColumnType("time");
+                        .HasColumnType("interval");
+
+                    b.Property<bool>("IsExplicit")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<int?>("UserId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("VisibilityStateId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -1114,157 +911,354 @@ namespace Infrastructure.Migrations
                     b.ToTable("Track");
                 });
 
-            modelBuilder.Entity("Entities.Models.User", b =>
+            modelBuilder.Entity("Entities.Models.Report.Report", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("EntityIdentifier")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsClosed")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("ReportableEntityTypeId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ReporterId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReportableEntityTypeId");
+
+                    b.HasIndex("ReporterId");
+
+                    b.ToTable("Report");
+                });
+
+            modelBuilder.Entity("Entities.Models.Report.ReportReasonType", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<TimeSpan>("RecommendedSuspensionDuration")
+                        .HasColumnType("interval");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ReportReasonType");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "Spam",
+                            RecommendedSuspensionDuration = new TimeSpan(1, 0, 0, 0, 0)
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Harassment",
+                            RecommendedSuspensionDuration = new TimeSpan(7, 0, 0, 0, 0)
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "Copyright Violation",
+                            RecommendedSuspensionDuration = new TimeSpan(30, 0, 0, 0, 0)
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Name = "Inappropriate Content",
+                            RecommendedSuspensionDuration = new TimeSpan(14, 0, 0, 0, 0)
+                        });
+                });
+
+            modelBuilder.Entity("Entities.Models.Report.ReportableEntityType", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ReportableEntityType");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "User"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Track"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "Album"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Name = "Comment"
+                        });
+                });
+
+            modelBuilder.Entity("Entities.Models.UserCore.Queue", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CollectionId")
+                        .HasColumnType("integer");
+
+                    b.Property<TimeSpan>("Position")
+                        .HasColumnType("interval");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CollectionId");
+
+                    b.ToTable("Queue");
+                });
+
+            modelBuilder.Entity("Entities.Models.UserCore.RefreshToken", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("ExpiryDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int?>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("RefreshToken");
+                });
+
+            modelBuilder.Entity("Entities.Models.UserCore.User", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AccessFailedCount")
+                        .HasColumnType("integer");
 
                     b.Property<int>("AvailableCurrency")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("AvatarImageId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Biography")
                         .IsRequired()
                         .HasMaxLength(4000)
-                        .HasColumnType("nvarchar(4000)");
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("text");
 
                     b.Property<DateOnly>("DateOfBirth")
                         .HasColumnType("date");
 
                     b.Property<string>("Email")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<bool>("EmailConfirmed")
+                        .HasColumnType("boolean");
 
                     b.Property<bool>("Enabled2FA")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<string>("FirstName")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("GoogleAuthorizationKey")
                         .IsRequired()
                         .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("character varying(500)");
 
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
-                    b.Property<byte[]>("PasswordHash")
-                        .IsRequired()
-                        .HasColumnType("varbinary(max)");
+                    b.Property<bool>("LockoutEnabled")
+                        .HasColumnType("boolean");
 
-                    b.Property<byte[]>("PasswordSalt")
+                    b.Property<DateTimeOffset?>("LockoutEnd")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Login")
                         .IsRequired()
-                        .HasColumnType("varbinary(max)");
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<string>("NormalizedEmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("NormalizedUserName")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("PasswordHash")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("PhoneNumberConfirmed")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("PublicIdentifier")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("RegistrationDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("SecurityStamp")
+                        .HasColumnType("text");
+
+                    b.Property<int>("SettingsId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("SettingsId1")
+                        .HasColumnType("integer");
 
                     b.Property<int?>("SubscriptionPackId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("TwoFactorEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("UserName")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<int>("UserStateId")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Username")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasMaxLength(24)
+                        .HasColumnType("character varying(24)");
 
                     b.Property<int>("VisibilityStateId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
                     b.HasIndex("AvatarImageId");
 
+                    b.HasIndex("NormalizedEmail")
+                        .HasDatabaseName("EmailIndex");
+
+                    b.HasIndex("NormalizedUserName")
+                        .IsUnique()
+                        .HasDatabaseName("UserNameIndex");
+
+                    b.HasIndex("SettingsId")
+                        .IsUnique();
+
+                    b.HasIndex("SettingsId1");
+
                     b.HasIndex("SubscriptionPackId");
+
+                    b.HasIndex("UserStateId")
+                        .IsUnique();
 
                     b.HasIndex("VisibilityStateId");
 
-                    b.ToTable("User");
+                    b.ToTable("AspNetUsers", (string)null);
                 });
 
-            modelBuilder.Entity("Entities.Models.UserPrivacyGroup", b =>
+            modelBuilder.Entity("Entities.Models.UserCore.UserPrivacyGroup", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("character varying(50)");
 
                     b.HasKey("Id");
 
                     b.ToTable("UserPrivacyGroup");
                 });
 
-            modelBuilder.Entity("Entities.Models.UserPrivacySettings", b =>
+            modelBuilder.Entity("Entities.Models.UserCore.UserSession", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("SettingsId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("WhichCanMessageId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("WhichCanViewProfileId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("SettingsId");
-
-                    b.HasIndex("WhichCanMessageId");
-
-                    b.HasIndex("WhichCanViewProfileId");
-
-                    b.ToTable("UserPrivacySettings");
-                });
-
-            modelBuilder.Entity("Entities.Models.UserSession", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("DeviceName")
                         .IsRequired()
                         .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
+                        .HasColumnType("character varying(30)");
 
                     b.Property<DateTime>("LastActive")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("UserAgent")
                         .IsRequired()
                         .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
+                        .HasColumnType("character varying(30)");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -1273,39 +1267,28 @@ namespace Infrastructure.Migrations
                     b.ToTable("UserSession");
                 });
 
-            modelBuilder.Entity("Entities.Models.UserState", b =>
+            modelBuilder.Entity("Entities.Models.UserCore.UserState", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("CollectionId")
-                        .HasColumnType("int");
+                    b.Property<int?>("PrimarySessionId")
+                        .HasColumnType("integer");
 
-                    b.Property<int>("Position")
-                        .HasColumnType("int");
-
-                    b.Property<int>("PrimarySessionId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Track")
-                        .HasColumnType("int");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
+                    b.Property<int?>("QueueId")
+                        .HasColumnType("integer");
 
                     b.Property<int>("UserStatusId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CollectionId");
-
                     b.HasIndex("PrimarySessionId");
 
-                    b.HasIndex("UserId")
+                    b.HasIndex("QueueId")
                         .IsUnique();
 
                     b.HasIndex("UserStatusId");
@@ -1313,70 +1296,395 @@ namespace Infrastructure.Migrations
                     b.ToTable("UserState");
                 });
 
-            modelBuilder.Entity("Entities.Models.UserStatus", b =>
+            modelBuilder.Entity("Entities.Models.UserCore.UserStatus", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("character varying(50)");
 
                     b.HasKey("Id");
 
                     b.ToTable("UserStatus");
                 });
 
-            modelBuilder.Entity("Entities.Models.VisibilityState", b =>
+            modelBuilder.Entity("Entities.Models.UserExperience.Achievement", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("SetPublicOn")
-                        .HasColumnType("datetime2");
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("integer");
 
-                    b.Property<int>("StatusId")
-                        .HasColumnType("int");
+                    b.Property<string>("Condition")
+                        .IsRequired()
+                        .HasColumnType("text");
 
-                    b.HasKey("Id");
-
-                    b.HasIndex("StatusId");
-
-                    b.ToTable("VisibilityState");
-                });
-
-            modelBuilder.Entity("Entities.Models.VisibilityStatus", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Reward")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Target")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int?>("UserId")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
-                    b.ToTable("VisibilityStatus");
+                    b.HasIndex("CategoryId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Achievement");
+                });
+
+            modelBuilder.Entity("Entities.Models.UserExperience.AchievementCategory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AchievementCategory");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "Listening"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Sharing"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "Collections"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Name = "Community"
+                        });
+                });
+
+            modelBuilder.Entity("Entities.Models.UserExperience.AchievementProgress", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AchievementId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AchievementId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AchievementProgress");
+                });
+
+            modelBuilder.Entity("Entities.Models.UserExperience.CosmeticItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("FileId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Price")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TypeId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FileId");
+
+                    b.HasIndex("TypeId");
+
+                    b.ToTable("CosmeticItem");
+                });
+
+            modelBuilder.Entity("Entities.Models.UserExperience.CosmeticItemType", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CosmeticItemType");
+                });
+
+            modelBuilder.Entity("Entities.Models.UserExperience.CosmeticSticker", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CosmeticItemId")
+                        .HasColumnType("integer");
+
+                    b.Property<double>("X")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("Y")
+                        .HasColumnType("double precision");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CosmeticItemId");
+
+                    b.ToTable("CosmeticSticker");
+                });
+
+            modelBuilder.Entity("Entities.Models.UserExperience.Gift", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("GiftStyleId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("GiftTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("ReceiverId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("SubscriptionPaymentId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("TextContent")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GiftStyleId");
+
+                    b.HasIndex("ReceiverId");
+
+                    b.HasIndex("SubscriptionPaymentId");
+
+                    b.ToTable("Gift");
+                });
+
+            modelBuilder.Entity("Entities.Models.UserExperience.GiftStyle", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("GiftStyle");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "Classic"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Modern"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "Festive"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Name = "Minimal"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Name = "Luxury"
+                        });
+                });
+
+            modelBuilder.Entity("Entities.Models.UserExperience.Inventory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("Inventory");
+                });
+
+            modelBuilder.Entity("Entities.Models.UserExperience.SubscriptionFeature", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<decimal>("Price")
+                        .HasColumnType("numeric(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SubscriptionFeature");
+                });
+
+            modelBuilder.Entity("Entities.Models.UserExperience.SubscriptionPack", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<double>("DiscountMultiplier")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SubscriptionPack");
+                });
+
+            modelBuilder.Entity("Entities.Models.UserExperience.SubscriptionPayment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<int>("BuyerId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("SubscriptionPackId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BuyerId");
+
+                    b.HasIndex("SubscriptionPackId");
+
+                    b.ToTable("SubscriptionPayment");
                 });
 
             modelBuilder.Entity("MessageUser", b =>
                 {
                     b.Property<int>("MessagesId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("usersId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("MessagesId", "usersId");
 
@@ -1385,13 +1693,107 @@ namespace Infrastructure.Migrations
                     b.ToTable("MessageUser");
                 });
 
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<int>", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ClaimType")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ClaimValue")
+                        .HasColumnType("text");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AspNetUserClaims", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<int>", b =>
+                {
+                    b.Property<string>("LoginProvider")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ProviderKey")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ProviderDisplayName")
+                        .HasColumnType("text");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("LoginProvider", "ProviderKey");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AspNetUserLogins", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<int>", b =>
+                {
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("LoginProvider")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Value")
+                        .HasColumnType("text");
+
+                    b.HasKey("UserId", "LoginProvider", "Name");
+
+                    b.ToTable("AspNetUserTokens", (string)null);
+                });
+
+            modelBuilder.Entity("NotificationTypeSettings", b =>
+                {
+                    b.Property<int>("NotificationTypesId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("SettingsId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("NotificationTypesId", "SettingsId");
+
+                    b.HasIndex("SettingsId");
+
+                    b.ToTable("NotificationTypeSettings");
+                });
+
+            modelBuilder.Entity("QueueTrack", b =>
+                {
+                    b.Property<int>("QueuesId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TracksId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("QueuesId", "TracksId");
+
+                    b.HasIndex("TracksId");
+
+                    b.ToTable("QueueTrack");
+                });
+
             modelBuilder.Entity("ReportReportReasonType", b =>
                 {
                     b.Property<int>("ReportReasonTypeId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("ReportsId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("ReportReasonTypeId", "ReportsId");
 
@@ -1403,10 +1805,10 @@ namespace Infrastructure.Migrations
             modelBuilder.Entity("SubscriptionFeatureSubscriptionPack", b =>
                 {
                     b.Property<int>("SubscriptionFeaturesId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("SubscriptionPacksId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("SubscriptionFeaturesId", "SubscriptionPacksId");
 
@@ -1415,31 +1817,31 @@ namespace Infrastructure.Migrations
                     b.ToTable("SubscriptionFeatureSubscriptionPack");
                 });
 
-            modelBuilder.Entity("Entities.Models.Album", b =>
+            modelBuilder.Entity("Entities.Models.Music.Album", b =>
                 {
-                    b.HasBaseType("Entities.Models.Collection");
+                    b.HasBaseType("Entities.Models.Music.Collection");
 
                     b.Property<int?>("DistributorId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasIndex("DistributorId");
 
                     b.ToTable("Album");
                 });
 
-            modelBuilder.Entity("Entities.Models.Blend", b =>
+            modelBuilder.Entity("Entities.Models.Music.Blend", b =>
                 {
-                    b.HasBaseType("Entities.Models.Collection");
+                    b.HasBaseType("Entities.Models.Music.Collection");
 
                     b.ToTable("Blend");
                 });
 
-            modelBuilder.Entity("Entities.Models.Playlist", b =>
+            modelBuilder.Entity("Entities.Models.Music.Playlist", b =>
                 {
-                    b.HasBaseType("Entities.Models.Collection");
+                    b.HasBaseType("Entities.Models.Music.Collection");
 
                     b.Property<int>("CreatorId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasIndex("CreatorId");
 
@@ -1448,13 +1850,13 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("AccessFeatureUser", b =>
                 {
-                    b.HasOne("Entities.Models.AccessFeature", null)
+                    b.HasOne("Entities.Models.Access.AccessFeature", null)
                         .WithMany()
                         .HasForeignKey("AccessFeaturesId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Entities.Models.User", null)
+                    b.HasOne("Entities.Models.UserCore.User", null)
                         .WithMany()
                         .HasForeignKey("UsersId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1463,13 +1865,13 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("AlbumArtist", b =>
                 {
-                    b.HasOne("Entities.Models.Album", null)
+                    b.HasOne("Entities.Models.Music.Album", null)
                         .WithMany()
                         .HasForeignKey("AlbumsId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Entities.Models.Artist", null)
+                    b.HasOne("Entities.Models.Distribution.Artist", null)
                         .WithMany()
                         .HasForeignKey("ArtistsId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1478,13 +1880,13 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("ArtistTrack", b =>
                 {
-                    b.HasOne("Entities.Models.Artist", null)
+                    b.HasOne("Entities.Models.Distribution.Artist", null)
                         .WithMany()
                         .HasForeignKey("ArtistsId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Entities.Models.Track", null)
+                    b.HasOne("Entities.Models.Music.Track", null)
                         .WithMany()
                         .HasForeignKey("TracksId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1493,13 +1895,13 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("ChatUser", b =>
                 {
-                    b.HasOne("Entities.Models.Chat", null)
+                    b.HasOne("Entities.Models.Chat.Chat", null)
                         .WithMany()
                         .HasForeignKey("ChatsId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Entities.Models.User", null)
+                    b.HasOne("Entities.Models.UserCore.User", null)
                         .WithMany()
                         .HasForeignKey("UsersId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1508,13 +1910,13 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("CollectionTrack", b =>
                 {
-                    b.HasOne("Entities.Models.Collection", null)
+                    b.HasOne("Entities.Models.Music.Collection", null)
                         .WithMany()
                         .HasForeignKey("CollectionsId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Entities.Models.Track", null)
+                    b.HasOne("Entities.Models.Music.Track", null)
                         .WithMany()
                         .HasForeignKey("TracksId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1523,13 +1925,13 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("CollectionUser", b =>
                 {
-                    b.HasOne("Entities.Models.Collection", null)
+                    b.HasOne("Entities.Models.Music.Collection", null)
                         .WithMany()
                         .HasForeignKey("CollectionsId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Entities.Models.User", null)
+                    b.HasOne("Entities.Models.UserCore.User", null)
                         .WithMany()
                         .HasForeignKey("UsersId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1538,403 +1940,28 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("CosmeticItemInventory", b =>
                 {
-                    b.HasOne("Entities.Models.CosmeticItem", null)
+                    b.HasOne("Entities.Models.UserExperience.CosmeticItem", null)
                         .WithMany()
                         .HasForeignKey("CosmeticItemsId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Entities.Models.Inventory", null)
+                    b.HasOne("Entities.Models.UserExperience.Inventory", null)
                         .WithMany()
                         .HasForeignKey("InventoriesId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Entities.Models.Achievement", b =>
+            modelBuilder.Entity("Entities.Models.Access.Suspension", b =>
                 {
-                    b.HasOne("Entities.Models.AchievementCategory", "AchievementCategory")
-                        .WithMany()
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Entities.Models.User", null)
-                        .WithMany("AchievementProgresses")
-                        .HasForeignKey("UserId");
-
-                    b.Navigation("AchievementCategory");
-                });
-
-            modelBuilder.Entity("Entities.Models.AchievementProgress", b =>
-                {
-                    b.HasOne("Entities.Models.Achievement", "Achievement")
-                        .WithMany()
-                        .HasForeignKey("AchievementId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Entities.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Achievement");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Entities.Models.Artist", b =>
-                {
-                    b.HasOne("Entities.Models.User", "User")
-                        .WithOne("Artist")
-                        .HasForeignKey("Entities.Models.Artist", "UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Entities.Models.Chat", b =>
-                {
-                    b.HasOne("Entities.Models.File", "Cover")
-                        .WithMany()
-                        .HasForeignKey("CoverId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Cover");
-                });
-
-            modelBuilder.Entity("Entities.Models.Collection", b =>
-                {
-                    b.HasOne("Entities.Models.File", "Cover")
-                        .WithMany()
-                        .HasForeignKey("CoverId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Entities.Models.Folder", null)
-                        .WithMany("Collections")
-                        .HasForeignKey("FolderId");
-
-                    b.HasOne("Entities.Models.VisibilityState", "VisibilityState")
-                        .WithMany()
-                        .HasForeignKey("VisibilityStateId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Cover");
-
-                    b.Navigation("VisibilityState");
-                });
-
-            modelBuilder.Entity("Entities.Models.CosmeticItem", b =>
-                {
-                    b.HasOne("Entities.Models.File", "File")
-                        .WithMany()
-                        .HasForeignKey("FileId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Entities.Models.CosmeticItemType", "Type")
-                        .WithMany()
-                        .HasForeignKey("TypeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("File");
-
-                    b.Navigation("Type");
-                });
-
-            modelBuilder.Entity("Entities.Models.CosmeticSticker", b =>
-                {
-                    b.HasOne("Entities.Models.CosmeticItem", "CosmeticItem")
-                        .WithMany()
-                        .HasForeignKey("CosmeticItemId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("CosmeticItem");
-                });
-
-            modelBuilder.Entity("Entities.Models.Distributor", b =>
-                {
-                    b.HasOne("Entities.Models.File", "Cover")
-                        .WithMany()
-                        .HasForeignKey("CoverId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Entities.Models.License", "License")
-                        .WithMany()
-                        .HasForeignKey("LicenseId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Cover");
-
-                    b.Navigation("License");
-                });
-
-            modelBuilder.Entity("Entities.Models.DistributorSession", b =>
-                {
-                    b.HasOne("Entities.Models.Distributor", "Distributor")
-                        .WithMany("Sessions")
-                        .HasForeignKey("DistributorId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Distributor");
-                });
-
-            modelBuilder.Entity("Entities.Models.File", b =>
-                {
-                    b.HasOne("Entities.Models.Post", null)
-                        .WithMany("Files")
-                        .HasForeignKey("PostId");
-
-                    b.HasOne("Entities.Models.FileType", "Type")
-                        .WithMany()
-                        .HasForeignKey("TypeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Type");
-                });
-
-            modelBuilder.Entity("Entities.Models.Folder", b =>
-                {
-                    b.HasOne("Entities.Models.Library", "Library")
-                        .WithMany()
-                        .HasForeignKey("LibraryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Entities.Models.Folder", "ParentFolder")
-                        .WithMany("SubFolders")
-                        .HasForeignKey("ParentFolderId");
-
-                    b.Navigation("Library");
-
-                    b.Navigation("ParentFolder");
-                });
-
-            modelBuilder.Entity("Entities.Models.Gift", b =>
-                {
-                    b.HasOne("Entities.Models.GiftStyle", "GiftStyle")
-                        .WithMany()
-                        .HasForeignKey("GiftStyleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Entities.Models.User", "Receiver")
-                        .WithMany()
-                        .HasForeignKey("ReceiverId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Entities.Models.SubscriptionPayment", "SubscriptionPayment")
-                        .WithMany()
-                        .HasForeignKey("SubscriptionPaymentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("GiftStyle");
-
-                    b.Navigation("Receiver");
-
-                    b.Navigation("SubscriptionPayment");
-                });
-
-            modelBuilder.Entity("Entities.Models.Inventory", b =>
-                {
-                    b.HasOne("Entities.Models.User", "User")
-                        .WithOne("Inventory")
-                        .HasForeignKey("Entities.Models.Inventory", "UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Entities.Models.Library", b =>
-                {
-                    b.HasOne("Entities.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Entities.Models.License", b =>
-                {
-                    b.HasOne("Entities.Models.User", "Issuer")
-                        .WithMany("Licenses")
-                        .HasForeignKey("IssuerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Issuer");
-                });
-
-            modelBuilder.Entity("Entities.Models.Message", b =>
-                {
-                    b.HasOne("Entities.Models.Chat", "Chat")
-                        .WithMany()
-                        .HasForeignKey("ChatId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Entities.Models.Message", "ReplyMessage")
-                        .WithMany()
-                        .HasForeignKey("ReplyMessageId");
-
-                    b.Navigation("Chat");
-
-                    b.Navigation("ReplyMessage");
-                });
-
-            modelBuilder.Entity("Entities.Models.MessageRead", b =>
-                {
-                    b.HasOne("Entities.Models.Message", "Message")
-                        .WithMany()
-                        .HasForeignKey("MessageId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Entities.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Message");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Entities.Models.Post", b =>
-                {
-                    b.HasOne("Entities.Models.User", "User")
-                        .WithMany("Posts")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Entities.Models.VisibilityState", "VisibilityState")
-                        .WithMany()
-                        .HasForeignKey("VisibilityStateId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-
-                    b.Navigation("VisibilityState");
-                });
-
-            modelBuilder.Entity("Entities.Models.Report", b =>
-                {
-                    b.HasOne("Entities.Models.ReportableEntityType", "ReportableEntityType")
-                        .WithMany("Reports")
-                        .HasForeignKey("ReportableEntityTypeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Entities.Models.User", "Reporter")
-                        .WithMany()
-                        .HasForeignKey("ReporterId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ReportableEntityType");
-
-                    b.Navigation("Reporter");
-                });
-
-            modelBuilder.Entity("Entities.Models.Settings", b =>
-                {
-                    b.HasOne("Entities.Models.Language", "Language")
-                        .WithMany()
-                        .HasForeignKey("LanguageId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Entities.Models.NotificationType", "NotificationType")
-                        .WithMany()
-                        .HasForeignKey("NotificationTypeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Entities.Models.PlaybackQuality", "PreferredPlaybackQuality")
-                        .WithMany()
-                        .HasForeignKey("PreferredPlaybackQualityId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Entities.Models.Theme", "Theme")
-                        .WithMany()
-                        .HasForeignKey("ThemeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Entities.Models.User", "User")
-                        .WithOne("Settings")
-                        .HasForeignKey("Entities.Models.Settings", "UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Entities.Models.UserPrivacySettings", "UserPrivacy")
-                        .WithMany()
-                        .HasForeignKey("UserPrivacySettingsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Language");
-
-                    b.Navigation("NotificationType");
-
-                    b.Navigation("PreferredPlaybackQuality");
-
-                    b.Navigation("Theme");
-
-                    b.Navigation("User");
-
-                    b.Navigation("UserPrivacy");
-                });
-
-            modelBuilder.Entity("Entities.Models.SubscriptionPayment", b =>
-                {
-                    b.HasOne("Entities.Models.User", "Buyer")
-                        .WithMany()
-                        .HasForeignKey("BuyerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Entities.Models.SubscriptionPack", "SubscriptionPack")
-                        .WithMany()
-                        .HasForeignKey("SubscriptionPackId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Buyer");
-
-                    b.Navigation("SubscriptionPack");
-                });
-
-            modelBuilder.Entity("Entities.Models.Suspension", b =>
-                {
-                    b.HasOne("Entities.Models.Report", "AssociatedReport")
+                    b.HasOne("Entities.Models.Report.Report", "AssociatedReport")
                         .WithMany("Suspensions")
                         .HasForeignKey("AssociatedReportId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Entities.Models.User", "Punisher")
+                    b.HasOne("Entities.Models.UserCore.User", "Punisher")
                         .WithMany()
                         .HasForeignKey("PunisherId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1945,25 +1972,274 @@ namespace Infrastructure.Migrations
                     b.Navigation("Punisher");
                 });
 
-            modelBuilder.Entity("Entities.Models.Track", b =>
+            modelBuilder.Entity("Entities.Models.Access.VisibilityState", b =>
                 {
-                    b.HasOne("Entities.Models.File", "AudioFile")
-                        .WithMany()
-                        .HasForeignKey("AudioFileId")
+                    b.HasOne("Entities.Models.Access.VisibilityStatus", "Status")
+                        .WithMany("VisibilityStates")
+                        .HasForeignKey("StatusId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Entities.Models.File", "Cover")
+                    b.Navigation("Status");
+                });
+
+            modelBuilder.Entity("Entities.Models.Chat.Chat", b =>
+                {
+                    b.HasOne("Entities.Models.File.File", "Cover")
                         .WithMany()
                         .HasForeignKey("CoverId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Entities.Models.User", null)
+                    b.Navigation("Cover");
+                });
+
+            modelBuilder.Entity("Entities.Models.Chat.Message", b =>
+                {
+                    b.HasOne("Entities.Models.Chat.Chat", "Chat")
+                        .WithMany()
+                        .HasForeignKey("ChatId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Entities.Models.Chat.Message", "ReplyMessage")
+                        .WithMany()
+                        .HasForeignKey("ReplyMessageId");
+
+                    b.Navigation("Chat");
+
+                    b.Navigation("ReplyMessage");
+                });
+
+            modelBuilder.Entity("Entities.Models.Chat.MessageRead", b =>
+                {
+                    b.HasOne("Entities.Models.Chat.Message", "Message")
+                        .WithMany()
+                        .HasForeignKey("MessageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Entities.Models.UserCore.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Message");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Entities.Models.Chat.Post", b =>
+                {
+                    b.HasOne("Entities.Models.UserCore.User", "User")
+                        .WithMany("Posts")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Entities.Models.Access.VisibilityState", "VisibilityState")
+                        .WithMany()
+                        .HasForeignKey("VisibilityStateId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+
+                    b.Navigation("VisibilityState");
+                });
+
+            modelBuilder.Entity("Entities.Models.ClientSettings.Settings", b =>
+                {
+                    b.HasOne("Entities.Models.ClientSettings.Language", "Language")
+                        .WithMany()
+                        .HasForeignKey("LanguageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Entities.Models.ClientSettings.PlaybackQuality", "PreferredPlaybackQuality")
+                        .WithMany()
+                        .HasForeignKey("PreferredPlaybackQualityId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Entities.Models.ClientSettings.Theme", "Theme")
+                        .WithMany()
+                        .HasForeignKey("ThemeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Entities.Models.ClientSettings.UserPrivacySettings", "UserPrivacy")
+                        .WithMany()
+                        .HasForeignKey("UserPrivacySettingsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Language");
+
+                    b.Navigation("PreferredPlaybackQuality");
+
+                    b.Navigation("Theme");
+
+                    b.Navigation("UserPrivacy");
+                });
+
+            modelBuilder.Entity("Entities.Models.ClientSettings.UserPrivacySettings", b =>
+                {
+                    b.HasOne("Entities.Models.UserCore.UserPrivacyGroup", "WhichCanMessage")
+                        .WithMany()
+                        .HasForeignKey("WhichCanMessageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Entities.Models.UserCore.UserPrivacyGroup", "WhichCanViewProfile")
+                        .WithMany()
+                        .HasForeignKey("WhichCanViewProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("WhichCanMessage");
+
+                    b.Navigation("WhichCanViewProfile");
+                });
+
+            modelBuilder.Entity("Entities.Models.Distribution.Artist", b =>
+                {
+                    b.HasOne("Entities.Models.UserCore.User", "User")
+                        .WithOne("Artist")
+                        .HasForeignKey("Entities.Models.Distribution.Artist", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Entities.Models.Distribution.Distributor", b =>
+                {
+                    b.HasOne("Entities.Models.File.File", "Cover")
+                        .WithMany()
+                        .HasForeignKey("CoverId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Entities.Models.Distribution.License", "License")
+                        .WithMany()
+                        .HasForeignKey("LicenseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Cover");
+
+                    b.Navigation("License");
+                });
+
+            modelBuilder.Entity("Entities.Models.Distribution.DistributorSession", b =>
+                {
+                    b.HasOne("Entities.Models.Distribution.Distributor", "Distributor")
+                        .WithMany("Sessions")
+                        .HasForeignKey("DistributorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Distributor");
+                });
+
+            modelBuilder.Entity("Entities.Models.Distribution.License", b =>
+                {
+                    b.HasOne("Entities.Models.UserCore.User", "Issuer")
+                        .WithMany("Licenses")
+                        .HasForeignKey("IssuerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Issuer");
+                });
+
+            modelBuilder.Entity("Entities.Models.File.File", b =>
+                {
+                    b.HasOne("Entities.Models.Chat.Post", null)
+                        .WithMany("Files")
+                        .HasForeignKey("PostId");
+
+                    b.HasOne("Entities.Models.File.FileType", "Type")
+                        .WithMany()
+                        .HasForeignKey("TypeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Type");
+                });
+
+            modelBuilder.Entity("Entities.Models.Library.Folder", b =>
+                {
+                    b.HasOne("Entities.Models.Library.Library", "Library")
+                        .WithMany()
+                        .HasForeignKey("LibraryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Entities.Models.Library.Folder", "ParentFolder")
+                        .WithMany("SubFolders")
+                        .HasForeignKey("ParentFolderId");
+
+                    b.Navigation("Library");
+
+                    b.Navigation("ParentFolder");
+                });
+
+            modelBuilder.Entity("Entities.Models.Library.Library", b =>
+                {
+                    b.HasOne("Entities.Models.UserCore.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Entities.Models.Music.Collection", b =>
+                {
+                    b.HasOne("Entities.Models.File.File", "Cover")
+                        .WithMany()
+                        .HasForeignKey("CoverId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Entities.Models.Library.Folder", null)
+                        .WithMany("Collections")
+                        .HasForeignKey("FolderId");
+
+                    b.HasOne("Entities.Models.Access.VisibilityState", "VisibilityState")
+                        .WithMany()
+                        .HasForeignKey("VisibilityStateId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Cover");
+
+                    b.Navigation("VisibilityState");
+                });
+
+            modelBuilder.Entity("Entities.Models.Music.Track", b =>
+                {
+                    b.HasOne("Entities.Models.File.File", "AudioFile")
+                        .WithMany()
+                        .HasForeignKey("AudioFileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Entities.Models.File.File", "Cover")
+                        .WithMany()
+                        .HasForeignKey("CoverId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Entities.Models.UserCore.User", null)
                         .WithMany("Tracks")
                         .HasForeignKey("UserId");
 
-                    b.HasOne("Entities.Models.VisibilityState", "VisibilityState")
+                    b.HasOne("Entities.Models.Access.VisibilityState", "VisibilityState")
                         .WithMany()
                         .HasForeignKey("VisibilityStateId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1976,19 +2252,73 @@ namespace Infrastructure.Migrations
                     b.Navigation("VisibilityState");
                 });
 
-            modelBuilder.Entity("Entities.Models.User", b =>
+            modelBuilder.Entity("Entities.Models.Report.Report", b =>
                 {
-                    b.HasOne("Entities.Models.File", "AvatarImage")
+                    b.HasOne("Entities.Models.Report.ReportableEntityType", "ReportableEntityType")
+                        .WithMany("Reports")
+                        .HasForeignKey("ReportableEntityTypeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Entities.Models.UserCore.User", "Reporter")
+                        .WithMany()
+                        .HasForeignKey("ReporterId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ReportableEntityType");
+
+                    b.Navigation("Reporter");
+                });
+
+            modelBuilder.Entity("Entities.Models.UserCore.Queue", b =>
+                {
+                    b.HasOne("Entities.Models.Music.Collection", "Collection")
+                        .WithMany()
+                        .HasForeignKey("CollectionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Collection");
+                });
+
+            modelBuilder.Entity("Entities.Models.UserCore.RefreshToken", b =>
+                {
+                    b.HasOne("Entities.Models.UserCore.User", null)
+                        .WithMany("RefreshTokens")
+                        .HasForeignKey("UserId");
+                });
+
+            modelBuilder.Entity("Entities.Models.UserCore.User", b =>
+                {
+                    b.HasOne("Entities.Models.File.File", "AvatarImage")
                         .WithMany()
                         .HasForeignKey("AvatarImageId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Entities.Models.SubscriptionPack", "SubscriptionPack")
+                    b.HasOne("Entities.Models.ClientSettings.Settings", "Settings")
+                        .WithOne("User")
+                        .HasForeignKey("Entities.Models.UserCore.User", "SettingsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Entities.Models.ClientSettings.Settings", null)
+                        .WithMany("BlockedUsers")
+                        .HasForeignKey("SettingsId1")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("Entities.Models.UserExperience.SubscriptionPack", "SubscriptionPack")
                         .WithMany()
                         .HasForeignKey("SubscriptionPackId");
 
-                    b.HasOne("Entities.Models.VisibilityState", "VisibilityState")
+                    b.HasOne("Entities.Models.UserCore.UserState", "UserState")
+                        .WithOne("User")
+                        .HasForeignKey("Entities.Models.UserCore.User", "UserStateId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Entities.Models.Access.VisibilityState", "VisibilityState")
                         .WithMany()
                         .HasForeignKey("VisibilityStateId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1996,41 +2326,18 @@ namespace Infrastructure.Migrations
 
                     b.Navigation("AvatarImage");
 
+                    b.Navigation("Settings");
+
                     b.Navigation("SubscriptionPack");
+
+                    b.Navigation("UserState");
 
                     b.Navigation("VisibilityState");
                 });
 
-            modelBuilder.Entity("Entities.Models.UserPrivacySettings", b =>
+            modelBuilder.Entity("Entities.Models.UserCore.UserSession", b =>
                 {
-                    b.HasOne("Entities.Models.Settings", "Settings")
-                        .WithMany()
-                        .HasForeignKey("SettingsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Entities.Models.UserPrivacyGroup", "WhichCanMessage")
-                        .WithMany()
-                        .HasForeignKey("WhichCanMessageId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Entities.Models.UserPrivacyGroup", "WhichCanViewProfile")
-                        .WithMany()
-                        .HasForeignKey("WhichCanViewProfileId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Settings");
-
-                    b.Navigation("WhichCanMessage");
-
-                    b.Navigation("WhichCanViewProfile");
-                });
-
-            modelBuilder.Entity("Entities.Models.UserSession", b =>
-                {
-                    b.HasOne("Entities.Models.User", "User")
+                    b.HasOne("Entities.Models.UserCore.User", "User")
                         .WithMany("UserSessions")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -2039,76 +2346,231 @@ namespace Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Entities.Models.UserState", b =>
+            modelBuilder.Entity("Entities.Models.UserCore.UserState", b =>
                 {
-                    b.HasOne("Entities.Models.Collection", "Collection")
+                    b.HasOne("Entities.Models.UserCore.UserSession", "PrimarySession")
                         .WithMany()
-                        .HasForeignKey("CollectionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("PrimarySessionId");
 
-                    b.HasOne("Entities.Models.UserSession", "PrimarySession")
-                        .WithMany()
-                        .HasForeignKey("PrimarySessionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Entities.Models.User", "User")
+                    b.HasOne("Entities.Models.UserCore.Queue", "Queue")
                         .WithOne("UserState")
-                        .HasForeignKey("Entities.Models.UserState", "UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("Entities.Models.UserCore.UserState", "QueueId");
 
-                    b.HasOne("Entities.Models.UserStatus", "UserStatus")
+                    b.HasOne("Entities.Models.UserCore.UserStatus", "UserStatus")
                         .WithMany()
                         .HasForeignKey("UserStatusId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Collection");
-
                     b.Navigation("PrimarySession");
 
-                    b.Navigation("User");
+                    b.Navigation("Queue");
 
                     b.Navigation("UserStatus");
                 });
 
-            modelBuilder.Entity("Entities.Models.VisibilityState", b =>
+            modelBuilder.Entity("Entities.Models.UserExperience.Achievement", b =>
                 {
-                    b.HasOne("Entities.Models.VisibilityStatus", "Status")
-                        .WithMany("VisibilityStates")
-                        .HasForeignKey("StatusId")
+                    b.HasOne("Entities.Models.UserExperience.AchievementCategory", "AchievementCategory")
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Status");
+                    b.HasOne("Entities.Models.UserCore.User", null)
+                        .WithMany("AchievementProgresses")
+                        .HasForeignKey("UserId");
+
+                    b.Navigation("AchievementCategory");
+                });
+
+            modelBuilder.Entity("Entities.Models.UserExperience.AchievementProgress", b =>
+                {
+                    b.HasOne("Entities.Models.UserExperience.Achievement", "Achievement")
+                        .WithMany()
+                        .HasForeignKey("AchievementId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Entities.Models.UserCore.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Achievement");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Entities.Models.UserExperience.CosmeticItem", b =>
+                {
+                    b.HasOne("Entities.Models.File.File", "File")
+                        .WithMany()
+                        .HasForeignKey("FileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Entities.Models.UserExperience.CosmeticItemType", "Type")
+                        .WithMany()
+                        .HasForeignKey("TypeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("File");
+
+                    b.Navigation("Type");
+                });
+
+            modelBuilder.Entity("Entities.Models.UserExperience.CosmeticSticker", b =>
+                {
+                    b.HasOne("Entities.Models.UserExperience.CosmeticItem", "CosmeticItem")
+                        .WithMany()
+                        .HasForeignKey("CosmeticItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CosmeticItem");
+                });
+
+            modelBuilder.Entity("Entities.Models.UserExperience.Gift", b =>
+                {
+                    b.HasOne("Entities.Models.UserExperience.GiftStyle", "GiftStyle")
+                        .WithMany()
+                        .HasForeignKey("GiftStyleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Entities.Models.UserCore.User", "Receiver")
+                        .WithMany()
+                        .HasForeignKey("ReceiverId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Entities.Models.UserExperience.SubscriptionPayment", "SubscriptionPayment")
+                        .WithMany()
+                        .HasForeignKey("SubscriptionPaymentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("GiftStyle");
+
+                    b.Navigation("Receiver");
+
+                    b.Navigation("SubscriptionPayment");
+                });
+
+            modelBuilder.Entity("Entities.Models.UserExperience.Inventory", b =>
+                {
+                    b.HasOne("Entities.Models.UserCore.User", "User")
+                        .WithOne("Inventory")
+                        .HasForeignKey("Entities.Models.UserExperience.Inventory", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Entities.Models.UserExperience.SubscriptionPayment", b =>
+                {
+                    b.HasOne("Entities.Models.UserCore.User", "Buyer")
+                        .WithMany()
+                        .HasForeignKey("BuyerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Entities.Models.UserExperience.SubscriptionPack", "SubscriptionPack")
+                        .WithMany()
+                        .HasForeignKey("SubscriptionPackId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Buyer");
+
+                    b.Navigation("SubscriptionPack");
                 });
 
             modelBuilder.Entity("MessageUser", b =>
                 {
-                    b.HasOne("Entities.Models.Message", null)
+                    b.HasOne("Entities.Models.Chat.Message", null)
                         .WithMany()
                         .HasForeignKey("MessagesId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Entities.Models.User", null)
+                    b.HasOne("Entities.Models.UserCore.User", null)
                         .WithMany()
                         .HasForeignKey("usersId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+            
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<int>", b =>
+                {
+                    b.HasOne("Entities.Models.UserCore.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<int>", b =>
+                {
+                    b.HasOne("Entities.Models.UserCore.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<int>", b =>
+                {
+                    b.HasOne("Entities.Models.UserCore.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("NotificationTypeSettings", b =>
+                {
+                    b.HasOne("Entities.Models.ClientSettings.NotificationType", null)
+                        .WithMany()
+                        .HasForeignKey("NotificationTypesId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Entities.Models.ClientSettings.Settings", null)
+                        .WithMany()
+                        .HasForeignKey("SettingsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("QueueTrack", b =>
+                {
+                    b.HasOne("Entities.Models.UserCore.Queue", null)
+                        .WithMany()
+                        .HasForeignKey("QueuesId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Entities.Models.Music.Track", null)
+                        .WithMany()
+                        .HasForeignKey("TracksId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
             modelBuilder.Entity("ReportReportReasonType", b =>
                 {
-                    b.HasOne("Entities.Models.ReportReasonType", null)
+                    b.HasOne("Entities.Models.Report.ReportReasonType", null)
                         .WithMany()
                         .HasForeignKey("ReportReasonTypeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Entities.Models.Report", null)
+                    b.HasOne("Entities.Models.Report.Report", null)
                         .WithMany()
                         .HasForeignKey("ReportsId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -2117,88 +2579,107 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("SubscriptionFeatureSubscriptionPack", b =>
                 {
-                    b.HasOne("Entities.Models.SubscriptionFeature", null)
+                    b.HasOne("Entities.Models.UserExperience.SubscriptionFeature", null)
                         .WithMany()
                         .HasForeignKey("SubscriptionFeaturesId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Entities.Models.SubscriptionPack", null)
+                    b.HasOne("Entities.Models.UserExperience.SubscriptionPack", null)
                         .WithMany()
                         .HasForeignKey("SubscriptionPacksId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Entities.Models.Album", b =>
+            modelBuilder.Entity("Entities.Models.Music.Album", b =>
                 {
-                    b.HasOne("Entities.Models.Distributor", null)
+                    b.HasOne("Entities.Models.Distribution.Distributor", null)
                         .WithMany("Albums")
                         .HasForeignKey("DistributorId");
 
-                    b.HasOne("Entities.Models.Collection", null)
+                    b.HasOne("Entities.Models.Music.Collection", null)
                         .WithOne()
-                        .HasForeignKey("Entities.Models.Album", "Id")
+                        .HasForeignKey("Entities.Models.Music.Album", "Id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Entities.Models.Blend", b =>
+            modelBuilder.Entity("Entities.Models.Music.Blend", b =>
                 {
-                    b.HasOne("Entities.Models.Collection", null)
+                    b.HasOne("Entities.Models.Music.Collection", null)
                         .WithOne()
-                        .HasForeignKey("Entities.Models.Blend", "Id")
+                        .HasForeignKey("Entities.Models.Music.Blend", "Id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Entities.Models.Playlist", b =>
+            modelBuilder.Entity("Entities.Models.Music.Playlist", b =>
                 {
-                    b.HasOne("Entities.Models.User", "Creator")
+                    b.HasOne("Entities.Models.UserCore.User", "Creator")
                         .WithMany()
                         .HasForeignKey("CreatorId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Entities.Models.Collection", null)
+                    b.HasOne("Entities.Models.Music.Collection", null)
                         .WithOne()
-                        .HasForeignKey("Entities.Models.Playlist", "Id")
+                        .HasForeignKey("Entities.Models.Music.Playlist", "Id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Creator");
                 });
 
-            modelBuilder.Entity("Entities.Models.Distributor", b =>
+            modelBuilder.Entity("Entities.Models.Access.VisibilityStatus", b =>
+                {
+                    b.Navigation("VisibilityStates");
+                });
+
+            modelBuilder.Entity("Entities.Models.Chat.Post", b =>
+                {
+                    b.Navigation("Files");
+                });
+
+            modelBuilder.Entity("Entities.Models.ClientSettings.Settings", b =>
+                {
+                    b.Navigation("BlockedUsers");
+
+                    b.Navigation("User")
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Entities.Models.Distribution.Distributor", b =>
                 {
                     b.Navigation("Albums");
 
                     b.Navigation("Sessions");
                 });
 
-            modelBuilder.Entity("Entities.Models.Folder", b =>
+            modelBuilder.Entity("Entities.Models.Library.Folder", b =>
                 {
                     b.Navigation("Collections");
 
                     b.Navigation("SubFolders");
                 });
 
-            modelBuilder.Entity("Entities.Models.Post", b =>
-                {
-                    b.Navigation("Files");
-                });
-
-            modelBuilder.Entity("Entities.Models.Report", b =>
+            modelBuilder.Entity("Entities.Models.Report.Report", b =>
                 {
                     b.Navigation("Suspensions");
                 });
 
-            modelBuilder.Entity("Entities.Models.ReportableEntityType", b =>
+            modelBuilder.Entity("Entities.Models.Report.ReportableEntityType", b =>
                 {
                     b.Navigation("Reports");
                 });
 
-            modelBuilder.Entity("Entities.Models.User", b =>
+            modelBuilder.Entity("Entities.Models.UserCore.Queue", b =>
+                {
+                    b.Navigation("UserState")
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Entities.Models.UserCore.User", b =>
                 {
                     b.Navigation("AchievementProgresses");
 
@@ -2212,20 +2693,17 @@ namespace Infrastructure.Migrations
 
                     b.Navigation("Posts");
 
-                    b.Navigation("Settings")
-                        .IsRequired();
+                    b.Navigation("RefreshTokens");
 
                     b.Navigation("Tracks");
 
                     b.Navigation("UserSessions");
-
-                    b.Navigation("UserState")
-                        .IsRequired();
                 });
 
-            modelBuilder.Entity("Entities.Models.VisibilityStatus", b =>
+            modelBuilder.Entity("Entities.Models.UserCore.UserState", b =>
                 {
-                    b.Navigation("VisibilityStates");
+                    b.Navigation("User")
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

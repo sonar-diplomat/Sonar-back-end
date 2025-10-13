@@ -1,36 +1,42 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Net;
+using Microsoft.EntityFrameworkCore;
 
-namespace Entities.Models;
+namespace Entities.Models.Distribution;
 
 [Table("DistributorSession")]
-public class DistributorSession
+public class DistributorSession : BaseModel
 {
-    [Key]
-    public int Id { get; set; }
-    [Required, MinLength(4), MaxLength(16)]
+    [Required]
+    [MinLength(4)]
+    [MaxLength(16)]
     private byte[] IpAddressBytes;
-    [Required, MaxLength(30)]
+
+    [Required]
+    [MaxLength(30)]
     public string UserAgent { get; set; }
-    [Required, MaxLength(30)]
+
+    [Required]
+    [MaxLength(30)]
     public string DeviceName { get; set; }
+
     [Required]
     public DateTime LastActive { get; set; }
-    
+
     [Required]
     public int DistributorId { get; set; }
-    
+
     /// <summary>
-    ///
-    /// <summary>
+    ///     <summary>
     [ForeignKey("DistributorId")]
+    [DeleteBehavior(DeleteBehavior.NoAction)]
     public virtual Distributor Distributor { get; set; }
-    
+
     [NotMapped]
     public IPAddress IPAddress
     {
-        get => new IPAddress(IpAddressBytes);
+        get => new(IpAddressBytes);
         set => IpAddressBytes = value.GetAddressBytes();
     }
 }

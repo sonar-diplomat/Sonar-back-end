@@ -1,20 +1,19 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Entities.Models.UserCore;
+using Microsoft.EntityFrameworkCore;
 
-namespace Entities.Models;
+namespace Entities.Models.Library;
 
 [Table("Library")]
-public class Library
+public class Library : BaseModel
 {
-    [Key]
-    public int Id { get; set; }
-    
     [Required]
     public int UserId { get; set; }
-    
+
     /// <summary>
-    /// 
     /// </summary>
     [ForeignKey("UserId")]
+    [DeleteBehavior(DeleteBehavior.Restrict)]
     public virtual User User { get; set; }
 }

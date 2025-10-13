@@ -1,16 +1,18 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Entities.Models
+namespace Entities.Models.ClientSettings;
+
+[Table("NotificationType")]
+public class NotificationType : BaseModel
 {
-    [Table("NotificationType")]
-    public class NotificationType
-    {
-        [Key]
-        public int Id { get; set; }
-        [Required, MaxLength(100)]
-        public string Name { get; set; }
-        [Required, MaxLength(500)]
-        public string Description { get; set; }
-    }
+    [Required]
+    [MaxLength(100)]
+    public string Name { get; set; }
+
+    [Required]
+    [MaxLength(500)]
+    public string Description { get; set; }
+
+    public ICollection<Settings> Settings { get; set; }
 }

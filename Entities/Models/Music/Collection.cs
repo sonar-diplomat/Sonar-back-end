@@ -1,29 +1,33 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Entities.Models.Access;
+using Entities.Models.UserCore;
+using Microsoft.EntityFrameworkCore;
 
-namespace Entities.Models;
+namespace Entities.Models.Music;
 
-public abstract class Collection
+public abstract class Collection : BaseModel
 {
-    [Key]
-    public int Id { get; set; }
-    
-    [Required, MaxLength(100)]
+    [Required]
+    [MaxLength(100)]
     public string Name { get; set; }
-    
+
     [Required]
     public int VisibilityStateId { get; set; }
+
     [Required]
     public int CoverId { get; set; }
-    
+
     /// <summary>
-    /// 
     /// </summary>
     [ForeignKey("VisibilityStateId")]
+    [DeleteBehavior(DeleteBehavior.Cascade)]
     public virtual VisibilityState VisibilityState { get; set; }
+
     [ForeignKey("CoverId")]
-    public virtual File Cover { get; set; }
-    
+    [DeleteBehavior(DeleteBehavior.Cascade)]
+    public virtual File.File Cover { get; set; }
+
     public virtual ICollection<User> Users { get; set; }
     public virtual ICollection<Track> Tracks { get; set; }
 }

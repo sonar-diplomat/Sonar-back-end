@@ -1,27 +1,33 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Entities.Models.UserCore;
+using Microsoft.EntityFrameworkCore;
 
-namespace Entities.Models;
+namespace Entities.Models.Access;
 
 [Table("Suspension")]
-public class Suspension
+public class Suspension : BaseModel
 {
-    [Key]
-    public int Id { get; set; }
-    [Required, MaxLength(500)]
+    [Required]
+    [MaxLength(500)]
     public string Reason { get; set; }
-    [Required] 
+
+    [Required]
     public DateTime DateTime { get; set; }
+
     [Required]
     public int PunisherId { get; set; }
+
     [Required]
-    public int AssociatedReportedId { get; set; }
-        
+    public int AssociatedReportId { get; set; }
+
     /// <summary>
-    /// 
     /// </summary>
     [ForeignKey("PunisherId")]
+    [DeleteBehavior(DeleteBehavior.Restrict)]
     public virtual User Punisher { get; set; }
+
     [ForeignKey("AssociatedReportId")]
-    public virtual Report AssociatedReport { get; set; }
+    [DeleteBehavior(DeleteBehavior.Cascade)]
+    public virtual Report.Report AssociatedReport { get; set; }
 }

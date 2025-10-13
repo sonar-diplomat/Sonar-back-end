@@ -1,29 +1,26 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Entities.Models.UserCore;
+using Microsoft.EntityFrameworkCore;
 
-namespace Entities.Models
+namespace Entities.Models.ClientSettings;
+
+[Table("UserPrivacySettings")]
+public class UserPrivacySettings : BaseModel
 {
-    [Table("UserPrivacySettings")]
-    public class UserPrivacySettings
-    {
-        [Key]
-        public int Id { get; set; }
-        
-        [Required]
-        public int SettingsId { get; set; }
-        [Required]
-        public int WhichCanViewProfileId { get; set; }
-        [Required]
-        public int WhichCanMessageId { get; set; }
+    [Required]
+    public int WhichCanViewProfileId { get; set; }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        [ForeignKey("SettingsId")]
-        public virtual Settings Settings { get; set; }
-        [ForeignKey("WhichCanViewProfileId")]
-        public virtual UserPrivacyGroup WhichCanViewProfile { get; set; }
-        [ForeignKey("WhichCanMessageId")]
-        public virtual UserPrivacyGroup WhichCanMessage { get; set; }
-    }
+    [Required]
+    public int WhichCanMessageId { get; set; }
+
+    /// <summary>
+    /// </summary>
+    [ForeignKey("WhichCanViewProfileId")]
+    [DeleteBehavior(DeleteBehavior.NoAction)]
+    public virtual UserPrivacyGroup WhichCanViewProfile { get; set; }
+
+    [ForeignKey("WhichCanMessageId")]
+    [DeleteBehavior(DeleteBehavior.NoAction)]
+    public virtual UserPrivacyGroup WhichCanMessage { get; set; }
 }
