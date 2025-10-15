@@ -1,5 +1,4 @@
 using System.Text;
-using System.Text.Json;
 using Application.Abstractions.Interfaces.Repository.Access;
 using Application.Abstractions.Interfaces.Repository.Chat;
 using Application.Abstractions.Interfaces.Repository.Client;
@@ -11,8 +10,8 @@ using Application.Abstractions.Interfaces.Repository.Report;
 using Application.Abstractions.Interfaces.Repository.UserCore;
 using Application.Abstractions.Interfaces.Repository.UserExperience;
 using Application.Abstractions.Interfaces.Services;
+using Application.Abstractions.Interfaces.Services.File;
 using Application.Abstractions.Interfaces.Services.Utilities;
-using Application.Exception;
 using Application.Services.Access;
 using Application.Services.Chat;
 using Application.Services.ClientSettings;
@@ -25,6 +24,7 @@ using Application.Services.UserCore;
 using Application.Services.UserExperience;
 using Application.Services.Utilities;
 using Entities.Models.UserCore;
+using FileSignatures;
 using Infrastructure.Data;
 using Infrastructure.Repository.Access;
 using Infrastructure.Repository.Chat;
@@ -36,10 +36,12 @@ using Infrastructure.Repository.Music;
 using Infrastructure.Repository.Report;
 using Infrastructure.Repository.User;
 using Infrastructure.Repository.UserExperience;
+using Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using QRCoder;
 using Sonar.Infrastructure.Repository.Access;
 using Sonar.Infrastructure.Repository.Chat;
 using Sonar.Infrastructure.Repository.Client;
@@ -261,7 +263,10 @@ builder.Services.AddScoped<MailgunSettings>(sp =>
 
 // Utility Services
 builder.Services.AddScoped<IEmailSenderService, MailgunEmailService>();
-
+builder.Services.AddSingleton<QRCodeGenerator>();
+builder.Services.AddSingleton<IQrCodeService, QrCodeService>();
+builder.Services.AddSingleton<IFileFormatInspector, FileFormatInspector>();
+builder.Services.AddSingleton<IFileStorageService, FileStorageService>();
 builder.Services.AddHttpClient();
 
 #endregion

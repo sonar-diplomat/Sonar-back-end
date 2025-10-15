@@ -12,7 +12,7 @@ public abstract class GenericService<T>(IGenericRepository<T> repository) : IGen
         return await repository.AddAsync(entity);
     }
 
-    public async Task DeleteAsync(int id)
+    public virtual async Task DeleteAsync(int id)
     {
         T entity = await GetByIdValidatedAsync(id);
         await repository.RemoveAsync(entity);

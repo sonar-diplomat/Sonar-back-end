@@ -4,7 +4,9 @@ using Entities.Models.Distribution;
 
 namespace Application.Services.Distribution;
 
-public class DistributorSessionService(IDistributorSessionRepository repository)
+public class DistributorSessionService(
+    IDistributorSessionRepository repository
+)
     : GenericService<DistributorSession>(repository), IDistributorSessionService
 {
 }

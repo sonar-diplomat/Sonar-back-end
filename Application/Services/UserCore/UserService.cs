@@ -5,6 +5,7 @@ using Application.Exception;
 using Entities.Models.Access;
 using Entities.Models.UserCore;
 using Entities.Models.UserExperience;
+using Microsoft.AspNetCore.Http;
 
 namespace Application.Services.UserCore;
 
@@ -15,7 +16,8 @@ public class UserService(
     IAccessFeatureService accessFeatureService,
     ISettingsService settingsService,
     IUserStateService stateService,
-    IFileService fileService
+    IFileService fileService,
+    IFileTypeService fileTypeService
 )
     : IUserService
 {
@@ -103,6 +105,17 @@ public class UserService(
     {
         User? user = await repository.GetByIdAsync(id);
         return user ?? throw AppExceptionFactory.Create<NotFoundException>(["User not found."]);
+    }
+
+    public async Task UpdateAvatar(int userId, IFormFile file)
+    {
+        User user = await GetByIdValidatedAsync(userId);
+        int oldAvatarId = user.AvatarImageId;
+        if (oldAvatarId != 1)
+            await fileService.DeleteAsync(oldAvatarId);
+
+        user.AvatarImage = await fileService.UploadFileAsync(await fileTypeService.GetByNameAsync("Image"), file);
+        await repository.UpdateAsync(user);
     }
 
     public async Task<bool> DeleteUserAsync(int userId)
