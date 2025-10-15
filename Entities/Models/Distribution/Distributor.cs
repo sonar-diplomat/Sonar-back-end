@@ -18,6 +18,11 @@ public class Distributor : BaseModel
     [Required]
     [MaxLength(500)]
     public string Description { get; set; }
+    
+    [Required]
+    [EmailAddress]
+    [MaxLength(200)]
+    public string ContactEmail { get; set; }
 
     [Required]
     public int LicenseId { get; set; }

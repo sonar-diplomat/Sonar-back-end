@@ -28,7 +28,7 @@ public class DistributorSession : BaseModel
     public int DistributorId { get; set; }
 
     /// <summary>
-    ///     <summary>
+    /// </summary>
     [ForeignKey("DistributorId")]
     [DeleteBehavior(DeleteBehavior.NoAction)]
     public virtual Distributor Distributor { get; set; }

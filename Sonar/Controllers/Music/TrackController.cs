@@ -8,4 +8,5 @@ namespace Sonar.Controllers.Music;
 [ApiController]
 public class TrackController(UserManager<User> userManager) : BaseController(userManager)
 {
+    
 }
