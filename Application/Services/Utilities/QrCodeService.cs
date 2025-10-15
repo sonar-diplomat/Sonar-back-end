@@ -1,23 +1,24 @@
 ﻿using System.Drawing;
 using Application.Abstractions.Interfaces.Services.Utilities;
 using QRCoder;
-using Svg;
+using SysFile = System.IO.File;
 
 namespace Application.Services.Utilities;
 
-public class QrCodeService(
-    QRCodeGenerator qrGenerator
-) : IQrCodeService
+public class QrCodeService(QRCodeGenerator qrGenerator) : IQrCodeService
 {
-    private static SvgDocument? svgDocument = SvgDocument.Open(
-        Path.Combine(Directory.GetCurrentDirectory(), "../AppData", "icons", "logo.svg"));
+    private static readonly string LogoPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "../AppData", "icons", "logo.svg"));
+    private static readonly string? SvgLogoContent = SysFile.Exists(LogoPath) ? SysFile.ReadAllText(LogoPath) : null;
 
-    public async Task<string> GenerateQrCode(string link)
+    public Task<string> GenerateQrCode(string link)
     {
-        QRCodeData qrCodeData = qrGenerator.CreateQrCode(link, QRCodeGenerator.ECCLevel.Q);
-        SvgQRCode qrCode = new(qrCodeData);
+        var qrCodeData = qrGenerator.CreateQrCode(link, QRCodeGenerator.ECCLevel.Q);
+        var svgQr = new SvgQRCode(qrCodeData);
+        SvgQRCode.SvgLogo? logo = null;
+        if (!string.IsNullOrWhiteSpace(SvgLogoContent))
+            logo = new SvgQRCode.SvgLogo(SvgLogoContent, 20, false);
 
-
-        return qrCode.GetGraphic(new Size(40, 40), logo: new SvgQRCode.SvgLogo(new Bitmap(svgDocument.Draw())));
+        string svg = svgQr.GetGraphic(new Size(40, 40), logo: logo);
+        return Task.FromResult(svg);
     }
 }
