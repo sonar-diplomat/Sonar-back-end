@@ -29,7 +29,7 @@ public class UserSessionService(IUserSessionRepository repository)
     }
 
     public async Task RevokeSessionAsync(UserSession session)
-    {
+    {//TODO ASK ZAHAR WHY WE DONT DELETE SESSION
         session.Revoked = true;
         await repository.UpdateAsync(session);
     }

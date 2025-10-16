@@ -3,6 +3,7 @@ using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.File;
 using Application.Exception;
 using Entities.Models.File;
+using Entities.Models.Music;
 using FileSignatures;
 using FileSignatures.Formats;
 using Microsoft.AspNetCore.Http;
@@ -23,6 +24,12 @@ public class FileService(
         { "Audio", [typeof(Mp3), typeof(Flac)] },
         { "Gif", [typeof(Gif)] }
     };
+
+    public async Task<FileStream> GetMusicStreamAsync(int fileId, long? startByte, long? length) {
+
+        FileModel file = await GetByIdValidatedAsync(fileId);
+        throw new NotImplementedException();
+    }
 
     public async Task<FileModel> GetDefaultAsync()
     {

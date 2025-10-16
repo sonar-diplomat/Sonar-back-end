@@ -36,16 +36,9 @@ public class AuthController(
     [HttpPost("register")]
     public async Task<IActionResult> Register(UserRegisterDTO model)
     {
-        try
-        {
             User user = await userService.CreateUserShellAsync(model);
             IdentityResult result = await userManager.CreateAsync(user, model.Password);
-            return Ok(result.Succeeded ? new { message = "Registration successful" } : new { message = "Registration failed" });
-        }
-        catch (Exception)
-        {
-            throw AppExceptionFactory.Create<BadRequestException>(["Request contents were not sufficient to complete registration"]);
-        }
+            return Ok(result.Succeeded ? new BaseResponse<string>("Registration successfull") : new BaseResponse<string>("Registration failed"));
     }
 
     [HttpPost("login")]
@@ -60,7 +53,7 @@ public class AuthController(
         SignInResult result = await signInManager.CheckPasswordSignInAsync(
             user!, password, false);
 
-        if (!result.Succeeded) throw new NotImplementedException();
+        if (!result.Succeeded) AppExceptionFactory.Create<ExpectationFailedException>();
 
         if (user!.Enabled2FA)
         {
@@ -113,8 +106,8 @@ public class AuthController(
         User? user = await userManager.Users
             .FirstOrDefaultAsync(u => u.Email == dto.Email);
 
-        if (user == null)
-            return BadRequest("Invalid credentials");
+        if (user == null) throw AppExceptionFactory.Create<BadRequestException>([$"Invalid credentials"]);
+
 
         bool isValid = await userManager.VerifyTwoFactorTokenAsync(
             user,
@@ -122,7 +115,7 @@ public class AuthController(
             dto.Code);
 
         if (!isValid)
-            return BadRequest("Invalid or expired code");
+            throw AppExceptionFactory.Create<BadRequestException>([$"Invalid or expired code"]);
 
 
         // Generate both tokens
@@ -156,8 +149,6 @@ public class AuthController(
     {
         User user = await GetUserByJwt();
 
-        try
-        {
             string token = await userManager.GenerateChangeEmailTokenAsync(user, newEmail);
 
             string confirmationLink =
@@ -171,11 +162,7 @@ public class AuthController(
                     { "link", confirmationLink }
                 }
             );
-        }
-        catch (Exception)
-        {
-            throw new NotImplementedException();
-        }
+
 
         // TODO: <string> 
         return Ok(new BaseResponse<string>("Email change token sent to new email address"));
@@ -187,16 +174,16 @@ public class AuthController(
     {
         User? user = await userManager.FindByIdAsync(userId);
         if (user == null)
-            return BadRequest("User not found");
+            throw AppExceptionFactory.Create<UserNotFoundException>();
 
         IdentityResult result = await userManager.ChangeEmailAsync(user, email, token);
 
         if (!result.Succeeded)
-            return BadRequest(result.Errors);
+            throw AppExceptionFactory.Create<BadRequestException>(result.Errors.Select(e => e.ToString()).ToArray()!);
 
         await userManager.SetUserNameAsync(user, email);
 
-        return Ok(new { message = "Email successfully changed" });
+        return Ok(new BaseResponse<string>("Email successfully changed"));
     }
 
     [Authorize]
@@ -238,9 +225,9 @@ public class AuthController(
     public async Task<IActionResult> RequestPasswordChange()
     {
         User? user = await userManager.GetUserAsync(User);
-        if (user == null)
-            return Unauthorized("User not found");
+        if (user == null) throw AppExceptionFactory.Create<UserNotFoundException>();
 
+        // ??????? TODO
         if (user.Email != null && await userManager.GetTwoFactorEnabledAsync(user))
         {
             string resetToken = await userManager.GeneratePasswordResetTokenAsync(user);
@@ -256,13 +243,11 @@ public class AuthController(
                 }
             );
 
-            return Ok(new
-            {
-                message = "2FA is enabled. Please verify the token before changing password."
-            });
+            return Ok(new BaseResponse<string>("2FA is enabled. Please verify the token before changing password."));
         }
+        //
 
-        return Ok(new { message = "Password reset link sent to your email." });
+        return Ok(new BaseResponse<string>( "Password reset link sent to your email." ));
     }
 
 

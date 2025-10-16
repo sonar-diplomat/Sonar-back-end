@@ -25,7 +25,7 @@ public class DistributorController(
     [HttpPost]
     public async Task<IActionResult> CreateDistributor(CreateDistributorDTO dto ,IFormFile cover)
     {
-        User user = await CheckAccessFeatures(["ManageDistributors"]);
+        User user = await CheckAccessFeatures([AccessFeatureStruct.ManageDistributors]);
 
         FileType fileType = await  fileTypeService.GetByNameAsync("image")
                                  ?? throw AppExceptionFactory.Create<NotFoundException>(["File type 'Image' not found"]);

@@ -13,11 +13,6 @@ public class LicenseService(ILicenseRepository repository, IUserService userServ
         User issuer = await userService.GetByIdValidatedAsync(issuerId);
         if (expirationDate <= DateTime.UtcNow)
             throw AppExceptionFactory.Create<BadRequestException>(["Expiration date must be in the future."]);
-
-        if (issuer.AccessFeatures.FirstOrDefault(af => af.Name == "ManageDistributors") == null)
-            throw AppExceptionFactory.Create<ForbiddenException>([
-                "Issuer does not have permission to manage distributors."
-            ]);
         
         License license = new()
         {

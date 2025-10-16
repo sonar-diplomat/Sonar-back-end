@@ -2,6 +2,7 @@
 using Application.Abstractions.Interfaces.Repository.Distribution;
 using Application.Abstractions.Interfaces.Services;
 using Application.DTOs;
+using Application.Exception;
 using Entities.Models.Distribution;
 
 namespace Application.Services.Distribution;
@@ -18,7 +19,7 @@ public class DistributorSessionService(IDistributorSessionRepository repository,
     public async Task<DistributorSession?> CreateSessionAsync(SessionDTO dto)
     {
         if (dto.IpAddress == null || dto.UserAgent == null || dto.DeviceName == null)
-            return null;
+            throw AppExceptionFactory.Create<BadRequestException>(["Cant create session."]);
         
         DistributorSession session = new()
         { 

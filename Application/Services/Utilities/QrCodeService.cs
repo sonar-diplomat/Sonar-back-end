@@ -7,7 +7,7 @@ namespace Application.Services.Utilities;
 
 public class QrCodeService(QRCodeGenerator qrGenerator) : IQrCodeService
 {
-    private static readonly string LogoPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "../AppData", "icons", "logo.svg"));
+    private static readonly string LogoPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "../app/data", "icons", "logo.svg"));
     private static readonly string? SvgLogoContent = SysFile.Exists(LogoPath) ? SysFile.ReadAllText(LogoPath) : null;
 
     public Task<string> GenerateQrCode(string link)
