@@ -7,7 +7,12 @@ public class DistributorAccount : BaseModel
     [Required]
     [MinLength(4)]
     [MaxLength(50)]
-    public string Username { get; set; }
+    public string Login { get; set; }
+    
+    [Required]
+    [EmailAddress]
+    [MaxLength(200)]
+    public string Email { get; set; }
 
     public byte[] PasswordHash { get; set; }
     public byte[] PasswordSalt { get; set; }

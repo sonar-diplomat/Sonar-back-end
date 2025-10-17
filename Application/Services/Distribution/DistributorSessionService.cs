@@ -7,13 +7,13 @@ using Entities.Models.Distribution;
 
 namespace Application.Services.Distribution;
 
-public class DistributorSessionService(IDistributorSessionRepository repository, IDistributorService distributorService)
+public class DistributorSessionService(IDistributorSessionRepository repository, IDistributorAccountService distributorAccountService)
     : GenericService<DistributorSession>(repository), IDistributorSessionService
 {
-    public async Task<IEnumerable<DistributorSession>?> GetByDistributorIdAsync(int id)
+    public async Task<IEnumerable<DistributorSession>?> GetByDistributorAccountIdAsync(int id)
     {
-        Distributor distributor = await distributorService.GetByIdValidatedAsync(id);
-        return distributor.Sessions;
+        DistributorAccount account = await distributorAccountService.GetByIdValidatedAsync(id);
+        return account.Sessions;
     }
 
     public async Task<DistributorSession?> CreateSessionAsync(SessionDTO dto)
@@ -27,7 +27,7 @@ public class DistributorSessionService(IDistributorSessionRepository repository,
             UserAgent = dto.UserAgent,
             DeviceName = dto.DeviceName,
             LastActive = DateTime.UtcNow,
-            Distributor = await distributorService.GetByIdValidatedAsync(dto.DistributorId)
+            DistributorAccount = await distributorAccountService.GetByIdValidatedAsync(dto.DistributorId)
         };
         
         return await repository.AddAsync(session);

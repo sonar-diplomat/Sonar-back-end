@@ -1,8 +1,4 @@
-﻿using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Security.Cryptography;
-using System.Text;
-using Application.Abstractions.Interfaces.Services;
+﻿using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.Utilities;
 using Application.DTOs;
 using Application.Exception;
@@ -13,7 +9,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 using SignInResult = Microsoft.AspNetCore.Identity.SignInResult;
 
 namespace Sonar.Controllers.UserCore;
@@ -26,7 +21,8 @@ public class AuthController(
     IConfiguration configuration,
     IUserService userService,
     IEmailSenderService emailSenderService,
-    IUserSessionService userSessionService
+    IUserSessionService userSessionService,
+    AuthService authService
 )
     : BaseController(userManager)
 {
@@ -72,8 +68,8 @@ public class AuthController(
         }
 
         // Generate both tokens
-        string accessToken = GenerateJwtToken(user);
-        string refreshToken = GenerateRefreshToken();
+        string accessToken = authService.GenerateJwtToken(user.Email, user.Login);
+        string refreshToken = authService.GenerateRefreshToken();
 
         UserSession session = new()
         {
@@ -81,7 +77,7 @@ public class AuthController(
             DeviceName = Request.Headers["X-Device-Name"].ToString() ?? "Unknown device",
             UserAgent = Request.Headers["User-Agent"].ToString() ?? "Unknown",
             IPAddress = HttpContext.Connection.RemoteIpAddress!,
-            RefreshTokenHash = ComputeSha256(refreshToken),
+            RefreshTokenHash = authService.ComputeSha256(refreshToken),
             ExpiresAt = DateTime.UtcNow.AddDays(30),
             CreatedAt = DateTime.UtcNow,
             LastActive = DateTime.UtcNow,
@@ -92,12 +88,6 @@ public class AuthController(
         user.UserSessions.Add(session);
         await userManager.UpdateAsync(user);
         return Ok(new BaseResponse<(string, string, int)>((accessToken, refreshToken, session.Id), "Login successful"));
-    }
-
-    private static string ComputeSha256(string input)
-    {
-        using SHA256 sha = SHA256.Create();
-        return Convert.ToBase64String(sha.ComputeHash(Encoding.UTF8.GetBytes(input)));
     }
 
     [HttpPost("verify-2fa")]
@@ -119,8 +109,8 @@ public class AuthController(
 
 
         // Generate both tokens
-        string accessToken = GenerateJwtToken(user);
-        string refreshToken = GenerateRefreshToken();
+        string accessToken = authService.GenerateJwtToken(user);
+        string refreshToken = authService.GenerateRefreshToken();
 
         UserSession session = new()
         {
@@ -128,7 +118,7 @@ public class AuthController(
             DeviceName = Request.Headers["X-Device-Name"].ToString() ?? "Unknown device",
             UserAgent = Request.Headers["User-Agent"].ToString() ?? "Unknown",
             IPAddress = HttpContext.Connection.RemoteIpAddress!,
-            RefreshTokenHash = ComputeSha256(refreshToken),
+            RefreshTokenHash = authService.ComputeSha256(refreshToken),
             ExpiresAt = DateTime.UtcNow.AddDays(30),
             CreatedAt = DateTime.UtcNow,
             LastActive = DateTime.UtcNow,
@@ -142,6 +132,18 @@ public class AuthController(
         {
             accessToken, refreshToken
         });
+    }
+    
+    [HttpPost("refresh-token")]
+    public async Task<IActionResult> RefreshToken([FromBody] string refreshToken)
+    {
+        string refreshHash = authService.ComputeSha256(refreshToken);
+        UserSession session = await userSessionService.GetValidatedByRefreshTokenAsync(refreshHash);
+        await userSessionService.UpdateLastActiveAsync(session);
+
+        string newAccessToken = authService.GenerateJwtToken(session.User.Email, session.User.Login);
+
+        return Ok(new BaseResponse<(string, string)>((newAccessToken, refreshToken), "Token refreshed successfully"));
     }
 
     [HttpGet]
@@ -167,7 +169,6 @@ public class AuthController(
         // TODO: <string> 
         return Ok(new BaseResponse<string>("Email change token sent to new email address"));
     }
-
 
     [HttpPost("confirm-email-change")]
     public async Task<IActionResult> ConfirmEmailChange(string userId, string email, string token)
@@ -250,19 +251,6 @@ public class AuthController(
         return Ok(new BaseResponse<string>("Password reset link sent to your email."));
     }
 
-
-    [HttpPost("refresh-token")]
-    public async Task<IActionResult> RefreshToken([FromBody] string refreshToken)
-    {
-        string refreshHash = ComputeSha256(refreshToken);
-        UserSession session = await userSessionService.GetValidatedByRefreshTokenAsync(refreshHash);
-        await userSessionService.UpdateLastActiveAsync(session);
-
-        string newAccessToken = GenerateJwtToken(session.User);
-
-        return Ok(new BaseResponse<(string, string)>((newAccessToken, refreshToken), "Token refreshed successfully"));
-    }
-
     [Authorize]
     [HttpPost("{sessionId:int}/revoke")]
     public async Task<IActionResult> RevokeSessionAsync(int sessionId)
@@ -297,29 +285,5 @@ public class AuthController(
         return Ok(new BaseResponse<IEnumerable<ActiveUserSessionDTO>>( 
             await userSessionService.GetAllByUserIdAsync(user.Id),
             "Sessions retrieved successfully"));
-    }
-
-    private string GenerateRefreshToken()
-    {
-        return Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
-    }
-
-    private string GenerateJwtToken(User user)
-    {
-        Claim[] claims =
-        [
-            new(JwtRegisteredClaimNames.Sub, user.Email!),
-            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            new(ClaimTypes.NameIdentifier, user.Login)
-        ];
-        SymmetricSecurityKey key = new(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!));
-        SigningCredentials creds = new(key, SecurityAlgorithms.HmacSha256);
-        JwtSecurityToken token = new(
-            configuration["Jwt:Issuer"],
-            configuration["Jwt:Audience"],
-            claims,
-            expires: DateTime.Now.AddHours(3),
-            signingCredentials: creds);
-        return new JwtSecurityTokenHandler().WriteToken(token);
     }
 }
