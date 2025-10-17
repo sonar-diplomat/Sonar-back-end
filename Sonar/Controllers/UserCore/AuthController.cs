@@ -36,9 +36,9 @@ public class AuthController(
     [HttpPost("register")]
     public async Task<IActionResult> Register(UserRegisterDTO model)
     {
-            User user = await userService.CreateUserShellAsync(model);
-            IdentityResult result = await userManager.CreateAsync(user, model.Password);
-            return Ok(result.Succeeded ? new BaseResponse<string>("Registration successfull") : new BaseResponse<string>("Registration failed"));
+        User user = await userService.CreateUserShellAsync(model);
+        IdentityResult result = await userManager.CreateAsync(user, model.Password);
+        return Ok(result.Succeeded ? new BaseResponse<string>("Registration successfull") : new BaseResponse<string>("Registration failed"));
     }
 
     [HttpPost("login")]
@@ -68,7 +68,7 @@ public class AuthController(
 
 
             // TODO: What does the frontend need to proceed with data?
-            return Ok(new BaseResponse<bool>(true, "2FA code sent to email"));
+            return Ok(new BaseResponse<string>("2FA code sent to email"));
         }
 
         // Generate both tokens
@@ -106,7 +106,7 @@ public class AuthController(
         User? user = await userManager.Users
             .FirstOrDefaultAsync(u => u.Email == dto.Email);
 
-        if (user == null) throw AppExceptionFactory.Create<BadRequestException>([$"Invalid credentials"]);
+        if (user == null) throw AppExceptionFactory.Create<BadRequestException>(["Invalid credentials"]);
 
 
         bool isValid = await userManager.VerifyTwoFactorTokenAsync(
@@ -115,7 +115,7 @@ public class AuthController(
             dto.Code);
 
         if (!isValid)
-            throw AppExceptionFactory.Create<BadRequestException>([$"Invalid or expired code"]);
+            throw AppExceptionFactory.Create<BadRequestException>(["Invalid or expired code"]);
 
 
         // Generate both tokens
@@ -149,19 +149,19 @@ public class AuthController(
     {
         User user = await GetUserByJwt();
 
-            string token = await userManager.GenerateChangeEmailTokenAsync(user, newEmail);
+        string token = await userManager.GenerateChangeEmailTokenAsync(user, newEmail);
 
-            string confirmationLink =
-                $"{frontEndUrl}/confirm-email-change?userId={user.Id}&email={newEmail}&token={Uri.EscapeDataString(token)}";
+        string confirmationLink =
+            $"{frontEndUrl}/confirm-email-change?userId={user.Id}&email={newEmail}&token={Uri.EscapeDataString(token)}";
 
-            await emailSenderService.SendEmailAsync(
-                newEmail,
-                MailGunTemplates.confirmEmail,
-                new Dictionary<string, string>
-                {
-                    { "link", confirmationLink }
-                }
-            );
+        await emailSenderService.SendEmailAsync(
+            newEmail,
+            MailGunTemplates.confirmEmail,
+            new Dictionary<string, string>
+            {
+                { "link", confirmationLink }
+            }
+        );
 
 
         // TODO: <string> 
@@ -247,7 +247,7 @@ public class AuthController(
         }
         //
 
-        return Ok(new BaseResponse<string>( "Password reset link sent to your email." ));
+        return Ok(new BaseResponse<string>("Password reset link sent to your email."));
     }
 
 
@@ -294,10 +294,9 @@ public class AuthController(
     {
         User user = await CheckAccessFeatures([]);
 
-        return Ok(new BaseResponse<IEnumerable<ActiveUserSessionDTO>>(
+        return Ok(new BaseResponse<IEnumerable<ActiveUserSessionDTO>>( 
             await userSessionService.GetAllByUserIdAsync(user.Id),
-            "Sessions retrieved successfully")
-        );
+            "Sessions retrieved successfully"));
     }
 
     private string GenerateRefreshToken()

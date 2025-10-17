@@ -24,7 +24,7 @@ public class UserService(
     public async Task<int> ChangeCurrencyAsync(int userId, int modifier)
     {
         User user = await GetByIdAsync(userId);
-        if (user == null) // TODO: create a custom exception for user without creating the dictionary object
+        if (user == null)
             throw AppExceptionFactory.Create<NotFoundException>(["User not found."]);
         user.AvailableCurrency += modifier;
         return user.AvailableCurrency;

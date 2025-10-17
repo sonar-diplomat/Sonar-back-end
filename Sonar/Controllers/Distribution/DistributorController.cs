@@ -66,4 +66,6 @@ public class DistributorController(
         await distributorService.DeleteAsync(distributor);
         return Ok(new BaseResponse<Distributor>(distributor, "Distributor deleted successfully"));
     }
+    
+    
 }

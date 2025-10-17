@@ -25,13 +25,13 @@ public class DistributorSession : BaseModel
     public DateTime LastActive { get; set; }
 
     [Required]
-    public int DistributorId { get; set; }
+    public int DistributorAccountId { get; set; }
 
     /// <summary>
     /// </summary>
-    [ForeignKey("DistributorId")]
+    [ForeignKey("DistributorAccountId")]
     [DeleteBehavior(DeleteBehavior.NoAction)]
-    public virtual Distributor Distributor { get; set; }
+    public virtual DistributorAccount DistributorAccount { get; set; }
 
     [NotMapped]
     public IPAddress IPAddress
