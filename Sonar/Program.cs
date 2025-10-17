@@ -209,6 +209,7 @@ builder.Services.AddScoped<IArtistService, ArtistService>();
 builder.Services.AddScoped<IDistributorService, DistributorService>();
 builder.Services.AddScoped<IDistributorSessionService, DistributorSessionService>();
 builder.Services.AddScoped<ILicenseService, LicenseService>();
+builder.Services.AddScoped<IApiKeyGeneratorService, ApiKeyGeneratorService>();
 
 // File Repositories
 builder.Services.AddScoped<IFileService, FileService>();

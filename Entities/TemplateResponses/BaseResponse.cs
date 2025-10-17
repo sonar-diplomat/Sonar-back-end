@@ -2,26 +2,25 @@
 
 public class BaseResponse<T>
 {
-    public BaseResponse()
-    {
-        Success = true;
-        Metadata = new Dictionary<string, object>
-        {
-            { "timestamp", DateTime.UtcNow }
-        };
-    }
-
     public BaseResponse(T data, string? message = null)
     {
         Success = true;
         Data = data;
         Message = message;
+        Metadata = new Dictionary<string, object>
+        {
+            { "timestamp", DateTime.UtcNow.ToString("dd.MM.yyyy HH:mm:ss") }
+        };
     }
 
     public BaseResponse(string message)
     {
         Success = false;
         Message = message;
+        Metadata = new Dictionary<string, object>
+        {
+            { "timestamp", DateTime.UtcNow.ToString("dd.MM.yyyy HH:mm:ss") }
+        };
     }
 
     public bool Success { get; set; }

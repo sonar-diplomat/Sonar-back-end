@@ -30,6 +30,7 @@ public class UserController(
     [HttpGet("{id}")]
     public async Task<ActionResult<User>> GetUser(int id)
     {
+        //TODO set to UserPublicDTO
         User user = await userService.GetByIdAsync(id);
         return Ok(user);
     }
