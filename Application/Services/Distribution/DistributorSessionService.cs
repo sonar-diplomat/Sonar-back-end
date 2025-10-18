@@ -20,14 +20,14 @@ public class DistributorSessionService(IDistributorSessionRepository repository,
     {
         DistributorSession? userSession = await repository.GetByRefreshTokenAsync(refreshHash);
         if (userSession == null)
-            AppExceptionFactory.Create<NotFoundException>();
+            ResponseFactory.Create<NotFoundResponse>();
         return userSession!;
     }
 
     public async Task<DistributorSession?> CreateSessionAsync(SessionDTO dto)
     {
         if (dto.IpAddress == null || dto.UserAgent == null || dto.DeviceName == null)
-            throw AppExceptionFactory.Create<BadRequestException>(["Cant create session."]);
+            throw ResponseFactory.Create<BadRequestResponse>(["Cant create session."]);
 
         DistributorSession session = new()
         {

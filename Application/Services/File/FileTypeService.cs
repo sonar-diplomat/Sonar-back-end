@@ -10,6 +10,6 @@ public class FileTypeService(IFileTypeRepository repository) : GenericService<Fi
     public async Task<FileType> GetByNameAsync(string name)
     {
         FileType? fileType = await repository.GetByNameAsync(name);
-        return fileType ?? throw AppExceptionFactory.Create<NotFoundException>([$"File type with name '{name}' not found"]);
+        return fileType ?? throw ResponseFactory.Create<NotFoundResponse>([$"File type with name '{name}' not found"]);
     }
 }

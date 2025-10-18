@@ -18,7 +18,7 @@ public class UserSessionService(IUserSessionRepository repository)
     {
         UserSession? userSession = await repository.GetByRefreshToken(refreshHash);
         if (userSession == null)
-            AppExceptionFactory.Create<NotFoundException>();
+            ResponseFactory.Create<NotFoundResponse>();
         return userSession!;
     }
 

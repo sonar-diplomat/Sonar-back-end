@@ -1,11 +1,12 @@
 ﻿using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.Utilities;
 using Application.Exception;
-using Entities.Models.Distribution;
+using Entities.Models.Chat;
 using Entities.Models.UserCore;
-using Entities.TemplateResponses;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using SysFile = System.IO.File;
 
 namespace Sonar.Controllers.Test;
 
@@ -20,14 +21,14 @@ public class TestController(
     [HttpGet("apikey")]
     public async Task<ActionResult> Ping()
     {
-        return Ok(new BaseResponse<string>(await apiKeyGeneratorService.GenerateApiKey(), "API Key generated successfully"));
+        throw ResponseFactory.Create<OkResponse<string>>(await apiKeyGeneratorService.GenerateApiKey(), ["API Key generated successfully"]);
     }
 
     [HttpGet("qr")]
     public async Task<ActionResult> GetDistributors([FromQuery] string link = "https://www.youtube.com/")
     {
         string svg = await qrCodeService.GenerateQrCode(link);
-        return Content(svg, "image/svg+xml");
+        throw ResponseFactory.Create<OkResponse<string>>(svg, ["image/svg+xml"]);
     }
 
     [HttpGet("appdata")]
@@ -40,20 +41,37 @@ public class TestController(
 
         // ✅ Пример записи файла в volume
         string testFilePath = Path.Combine(dataPath, "test.txt");
-        System.IO.File.WriteAllText(testFilePath, $"Created at {DateTime.Now}\n");
-        return Ok();
+        await SysFile.WriteAllTextAsync(testFilePath, $"Created at {DateTime.Now}\n");
+        throw ResponseFactory.Create<OkResponse>(["File read successfully"]);
     }
 
     [HttpGet("error")]
     public async Task<ActionResult> GenerateError()
     {
-        throw AppExceptionFactory.Create<BadRequestException>(["Test exception"]);
+        throw ResponseFactory.Create<BadRequestResponse>(["Test exception"]);
     }
-
-    [HttpGet("correct-answer")]
-    public async Task<ActionResult> CorrectAnswer()
+    
+    [HttpGet("ok")]
+    public async Task<ActionResult> GenerateOk()
     {
-
-        return Ok(new BaseResponse<string>("", "This is a correct answer"));
+        throw ResponseFactory.Create<OkResponse>(["Test exception"]);
+    }
+    
+    [HttpGet("okdata")]
+    public async Task<ActionResult> GenerateOkWithData()
+    {
+        IEnumerable<Message> messages = [
+            new Message
+            {
+                Id = 1,
+                ChatId = 1
+            },
+            new Message
+            {
+                Id = 2,
+                ChatId = 2
+            }
+        ];
+        throw ResponseFactory.Create<OkResponse<IEnumerable<Message>>>(messages, ["Test exception"]);
     }
 }

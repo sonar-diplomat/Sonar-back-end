@@ -22,6 +22,6 @@ public class BaseDistributorController(
                         User.FindFirst("email")?.Value;
         DistributorAccount distributorAccount = await accountService.GetByEmailAsync(email);
 
-        return distributorAccount ?? throw AppExceptionFactory.Create<UnauthorizedException>();
+        return distributorAccount ?? throw ResponseFactory.Create<UnauthorizedResponse>();
     }
 }

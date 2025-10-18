@@ -23,7 +23,7 @@ public class TrackController(UserManager<User> userManager, ITrackService trackS
 
         if (result == null)
         {
-            throw AppExceptionFactory.Create<TrackNotFoundException>();
+            throw ResponseFactory.Create<NotFoundResponse>([$"Track with ID {trackId} not found"]);
         }
 
         result.GetStreamDetails(out Stream stream, out string contentType, out bool enableRangeProcessing);

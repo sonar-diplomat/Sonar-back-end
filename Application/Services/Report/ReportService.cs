@@ -26,7 +26,7 @@ public class ReportService(
         }
 
         if (reasonTypes.Any(rt => rt == null))
-            throw AppExceptionFactory.Create<BadRequestException>();
+            throw ResponseFactory.Create<BadRequestResponse>();
 
         ReportModel report = new()
         {

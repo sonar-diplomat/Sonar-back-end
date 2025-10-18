@@ -25,7 +25,7 @@ public class UserService(
     {
         User user = await GetByIdAsync(userId);
         if (user == null)
-            throw AppExceptionFactory.Create<NotFoundException>(["User not found."]);
+            throw ResponseFactory.Create<NotFoundResponse>(["User not found."]);
         user.AvailableCurrency += modifier;
         return user.AvailableCurrency;
     }
@@ -66,9 +66,9 @@ public class UserService(
     {
         User user = await GetByIdAsync(userId);
         if (user.Username == newUsername)
-            throw AppExceptionFactory.Create<BadRequestException>(["Username is already set to this value."]);
+            throw ResponseFactory.Create<BadRequestResponse>(["Username is already set to this value."]);
         if (await repository.IsUsernameTakenAsync(newUsername))
-            throw AppExceptionFactory.Create<BadRequestException>(["Username is already taken."]);
+            throw ResponseFactory.Create<BadRequestResponse>(["Username is already taken."]);
         user.Username = newUsername;
         await repository.UpdateAsync(user);
     }
@@ -104,7 +104,7 @@ public class UserService(
     public async Task<User> GetByIdValidatedAsync(int id)
     {
         User? user = await repository.GetByIdAsync(id);
-        return user ?? throw AppExceptionFactory.Create<NotFoundException>(["User not found."]);
+        return user ?? throw ResponseFactory.Create<NotFoundResponse>(["User not found."]);
     }
 
     public async Task UpdateAvatar(int userId, IFormFile file)
@@ -122,7 +122,7 @@ public class UserService(
     {
         User? user = await GetByIdAsync(userId);
         if (user == null)
-            throw AppExceptionFactory.Create<NotFoundException>();
+            throw ResponseFactory.Create<NotFoundResponse>();
 
         await repository.RemoveAsync(user);
         return true;

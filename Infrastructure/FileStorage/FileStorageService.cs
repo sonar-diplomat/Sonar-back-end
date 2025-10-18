@@ -14,7 +14,7 @@ public class FileStorageService : IFileStorageService
     public async Task<byte[]> GetFile(string blobKey)
     {
         return blobStorage.TryGetValue(blobKey, out byte[]? data) ? data :
-            throw AppExceptionFactory.Create<NotFoundException>([$"File not found in blob storage with key '{blobKey}'"]);
+            throw ResponseFactory.Create<NotFoundResponse>([$"File not found in blob storage with key '{blobKey}'"]);
     }
 
     public async Task<bool> DeleteFile(string blobKey)
@@ -25,7 +25,7 @@ public class FileStorageService : IFileStorageService
     public async Task<string> SaveFileAsync(IFormFile file, FileType fileType)
     {
         if (file == null)
-            throw AppExceptionFactory.Create<BadRequestException>(["File not found"]);
+            throw ResponseFactory.Create<BadRequestResponse>(["File not found"]);
 
         DateTime now = DateTime.UtcNow;
         string folderPath = Path.Combine(baseFolder, fileType.Name, now.Year.ToString(), now.Month.ToString());

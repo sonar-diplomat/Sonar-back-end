@@ -14,7 +14,7 @@ public class DistributorAccountService(IDistributorAccountRepository repository,
     public async Task CheckEmailAsync(string email)
     {
         if (!await repository.ExistsByEmailAsync(email))
-            throw AppExceptionFactory.Create<ConflictException>(["Email is already in use"]);
+            throw ResponseFactory.Create<ConflictResponse>(["Email is already in use"]);
     }
 
     public async Task<DistributorAccount?> GetByEmailAsync(string email)
@@ -24,7 +24,7 @@ public class DistributorAccountService(IDistributorAccountRepository repository,
 
     public async Task<DistributorAccount> GetByEmailValidatedAsync(string email)
     {
-        return await GetByEmailAsync(email) ?? throw AppExceptionFactory.Create<NotFoundException>(["Distributor account not found"]);
+        return await GetByEmailAsync(email) ?? throw ResponseFactory.Create<NotFoundResponse>(["Distributor account not found"]);
     }
 
     public async Task<DistributorAccount> RegisterAsync(DistributorAccountRegisterDTO dto)
