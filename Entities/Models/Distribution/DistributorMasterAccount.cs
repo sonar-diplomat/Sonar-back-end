@@ -1,6 +1,5 @@
 ﻿namespace Entities.Models.Distribution;
 
-public class DistributorMasterAccount
+public class DistributorMasterAccount : DistributorAccount
 {
-    
 }

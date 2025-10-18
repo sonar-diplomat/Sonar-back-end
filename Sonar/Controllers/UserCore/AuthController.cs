@@ -109,7 +109,7 @@ public class AuthController(
 
 
         // Generate both tokens
-        string accessToken = authService.GenerateJwtToken(user);
+        string accessToken = authService.GenerateJwtToken(user.Email, user.Login);
         string refreshToken = authService.GenerateRefreshToken();
 
         UserSession session = new()
@@ -133,16 +133,14 @@ public class AuthController(
             accessToken, refreshToken
         });
     }
-    
+
     [HttpPost("refresh-token")]
     public async Task<IActionResult> RefreshToken([FromBody] string refreshToken)
     {
         string refreshHash = authService.ComputeSha256(refreshToken);
         UserSession session = await userSessionService.GetValidatedByRefreshTokenAsync(refreshHash);
         await userSessionService.UpdateLastActiveAsync(session);
-
         string newAccessToken = authService.GenerateJwtToken(session.User.Email, session.User.Login);
-
         return Ok(new BaseResponse<(string, string)>((newAccessToken, refreshToken), "Token refreshed successfully"));
     }
 
@@ -282,7 +280,7 @@ public class AuthController(
     {
         User user = await CheckAccessFeatures([]);
 
-        return Ok(new BaseResponse<IEnumerable<ActiveUserSessionDTO>>( 
+        return Ok(new BaseResponse<IEnumerable<ActiveSessionDTO>>(
             await userSessionService.GetAllByUserIdAsync(user.Id),
             "Sessions retrieved successfully"));
     }

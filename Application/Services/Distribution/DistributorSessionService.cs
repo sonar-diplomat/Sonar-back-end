@@ -16,20 +16,28 @@ public class DistributorSessionService(IDistributorSessionRepository repository,
         return account.Sessions;
     }
 
+    public async Task<DistributorSession> GetValidatedByRefreshTokenAsync(string refreshHash)
+    {
+        DistributorSession? userSession = await repository.GetByRefreshTokenAsync(refreshHash);
+        if (userSession == null)
+            AppExceptionFactory.Create<NotFoundException>();
+        return userSession!;
+    }
+
     public async Task<DistributorSession?> CreateSessionAsync(SessionDTO dto)
     {
         if (dto.IpAddress == null || dto.UserAgent == null || dto.DeviceName == null)
             throw AppExceptionFactory.Create<BadRequestException>(["Cant create session."]);
-        
+
         DistributorSession session = new()
-        { 
+        {
             IPAddress = IPAddress.Parse(dto.IpAddress),
             UserAgent = dto.UserAgent,
             DeviceName = dto.DeviceName,
             LastActive = DateTime.UtcNow,
             DistributorAccount = await distributorAccountService.GetByIdValidatedAsync(dto.DistributorId)
         };
-        
+
         return await repository.AddAsync(session);
     }
 
@@ -47,5 +55,38 @@ public class DistributorSessionService(IDistributorSessionRepository repository,
     {
         DistributorSession session = await GetByIdValidatedAsync(id);
         await repository.RemoveAsync(session);
+    }
+
+    public async Task<DistributorSession?> GetByRefreshTokenAsync(string refreshHash)
+    {
+        return await repository.GetByRefreshTokenAsync(refreshHash);
+    }
+
+    public async Task UpdateLastActiveAsync(DistributorSession session)
+    {
+        session.LastActive = DateTime.UtcNow;
+        await repository.UpdateAsync(session);
+    }
+
+    public async Task RevokeSessionAsync(DistributorSession session)
+    {
+        session.Revoked = true;
+        await repository.UpdateAsync(session);
+    }
+
+    public async Task RevokeAllDistributorSessionsAsync(int accountId)
+    {
+        IEnumerable<DistributorSession> sessions = await repository.GetAllByDistributorIdAsync(accountId);
+
+        foreach (DistributorSession session in sessions)
+        {
+            session.Revoked = true;
+            await repository.UpdateAsync(session);
+        }
+    }
+
+    public async Task<IEnumerable<ActiveSessionDTO>> GetAllByUserIdAsync(int accountId)
+    {
+        return await repository.GetAllActiveSessionsByDistributorIdAsync(accountId);
     }
 }

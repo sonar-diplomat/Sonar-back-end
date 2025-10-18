@@ -45,7 +45,7 @@ public class UserSessionService(IUserSessionRepository repository)
         }
     }
 
-    public async Task<IEnumerable<ActiveUserSessionDTO>> GetAllByUserIdAsync(int userId)
+    public async Task<IEnumerable<ActiveSessionDTO>> GetAllByUserIdAsync(int userId)
     {
         return await repository.GetAllActiveSessionsByUserIdAsync(userId);
     }

@@ -1,6 +1,6 @@
 ﻿namespace Application.DTOs;
 
-public class ActiveUserSessionDTO
+public class ActiveSessionDTO
 {
     public int Id { get; set; }
     public string DeviceName { get; set; }

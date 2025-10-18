@@ -38,9 +38,10 @@ public class SonarContext(DbContextOptions<SonarContext> options)
     public DbSet<Theme> Themes { get; set; } = null!;
     public DbSet<UserPrivacySettings> UserPrivacySettings { get; set; } = null!;
 
-    // ClientSettings
+    // Distribution
     public DbSet<Artist> Artists { get; set; } = null!;
     public DbSet<Distributor> Distributors { get; set; } = null!;
+    public DbSet<DistributorAccount> DistributorAccounts { get; set; } = null!;
     public DbSet<DistributorSession> DistributorSessions { get; set; } = null!;
     public DbSet<License> Licenses { get; set; } = null!;
 

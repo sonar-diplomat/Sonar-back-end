@@ -7,8 +7,8 @@ public class DistributorAccount : BaseModel
     [Required]
     [MinLength(4)]
     [MaxLength(50)]
-    public string Login { get; set; }
-    
+    public string Username { get; set; }
+
     [Required]
     [EmailAddress]
     [MaxLength(200)]
@@ -16,10 +16,10 @@ public class DistributorAccount : BaseModel
 
     public byte[] PasswordHash { get; set; }
     public byte[] PasswordSalt { get; set; }
-    
+
     public int DistributorId { get; set; }
 
-    
+
     public virtual Distributor Distributor { get; set; }
     public virtual ICollection<DistributorSession> Sessions { get; set; }
 }
