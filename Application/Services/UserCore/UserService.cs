@@ -82,7 +82,11 @@ public class UserService(
             DateOfBirth = model.DateOfBirth,
             Username = model.Username,
             Login = model.Login,
-            Email = model.Email
+            Email = model.Email,
+            Biography = "какуютохуйню",
+            PublicIdentifier = (new Random().Next() % 1000000).ToString(),
+            GoogleAuthorizationKey = "ALIBABA"
+            //TODO : сделать нормально
         };
         VisibilityState tempVs = new()
         {
@@ -91,9 +95,9 @@ public class UserService(
         };
         await visibilityStateService.CreateAsync(tempVs);
         user.VisibilityState = tempVs;
-        Inventory tempI = new() { User = user };
-        await inventoryService.CreateAsync(tempI);
-        user.Inventory = tempI;
+        Inventory inv = await inventoryService.CreateDefaultAsync();
+        inv.User = user;
+        user.Inventory = inv;
         user.AccessFeatures = await accessFeatureService.GetDefaultAsync();
         user.Settings = await settingsService.CreateDefaultAsync(model.Locale);
         user.UserState = await stateService.CreateDefaultAsync();

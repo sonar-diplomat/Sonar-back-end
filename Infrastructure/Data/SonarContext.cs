@@ -99,6 +99,9 @@ public class SonarContext(DbContextOptions<SonarContext> options)
         builder.Entity<GiftStyle>().HasData(GiftStyleSeedFactory.CreateSeedData());
         builder.Entity<ReportableEntityType>().HasData(ReportableEntityTypeSeedFactory.CreateSeedData());
         builder.Entity<ReportReasonType>().HasData(ReportReasonTypeSeedFactory.CreateSeedData());
+        builder.Entity<AccessFeature>().HasData(AccessFeatureSeedFactory.CreateSeedData());
+        builder.Entity<UserPrivacyGroup>().HasData(UserPrivacyGroupSeedFactory.CreateSeedData());
+        builder.Entity<UserStatus>().HasData(UserStatusSeedFactory.CreateSeedData());
         base.OnModelCreating(builder);
     }
 }

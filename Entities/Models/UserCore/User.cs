@@ -52,7 +52,7 @@ public class User : IdentityUser<int>
 
     // Authenticator apps
     [MaxLength(500)]
-    public string GoogleAuthorizationKey { get; set; }
+    public string? GoogleAuthorizationKey { get; set; }
     // facebook .... and ect...
 
 
@@ -104,5 +104,4 @@ public class User : IdentityUser<int>
     public virtual ICollection<License> Licenses { get; set; }
     public virtual ICollection<Track> Tracks { get; set; }
     public virtual ICollection<Settings> SettingsBlockedUsers { get; set; }
-    public virtual List<RefreshToken> RefreshTokens { get; set; }
 }

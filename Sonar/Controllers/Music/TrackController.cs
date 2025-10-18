@@ -18,6 +18,7 @@ public class TrackController(UserManager<User> userManager, ITrackService trackS
     [Authorize]
     public async Task<IActionResult> StreamMusic(int trackId)
     {
+        
         string? rangeHeader = Request.Headers.Range.FirstOrDefault();
         MusicStreamResultDTO? result = await trackService.GetMusicStreamAsync(trackId, rangeHeader);
 
