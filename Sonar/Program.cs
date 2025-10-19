@@ -59,6 +59,12 @@ builder.Services.AddDbContext<SonarContext>(options =>
 
 // Add services to the container.
 builder.Services.AddControllers();
+//builder.Services.AddControllers()
+//    .AddJsonOptions(options =>
+//    {
+//        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve;
+//        options.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
+//    });
 
 // CORS policy configuration
 builder.Services.AddCors(options =>
@@ -111,6 +117,8 @@ builder.Services.AddAuthentication(options =>
     });
 
 builder.Services.AddOpenApi();
+
+
 
 #region RegisterRepositories
 

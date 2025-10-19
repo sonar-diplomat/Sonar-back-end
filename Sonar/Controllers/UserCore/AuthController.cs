@@ -38,11 +38,11 @@ public class AuthController(
     {
             User user = await userService.CreateUserShellAsync(model);
             IdentityResult result = await userManager.CreateAsync(user, model.Password);
-            return Ok(result.Succeeded ? new BaseResponse<string>("Registration successfull") : new BaseResponse<string>("Registration failed"));
+            return Ok(result.Succeeded ? new BaseResponse<string>("Registration successfull") : new BaseResponse<string>($"Registration failed {string.Join("\n",result.Errors.Select(e=>e.Description).ToList())}"));
     }
 
     [HttpPost("login")]
-    public async Task<IActionResult> Login(string userIdentifier, string password)
+    public async Task<IActionResult> Login([FromQuery]string userIdentifier, [FromQuery]string password)
     {
         User? user = await userManager.Users
             .FirstOrDefaultAsync(u => u.UserName == userIdentifier || u.Email == userIdentifier);
@@ -89,9 +89,8 @@ public class AuthController(
         };
 
         // Save refresh token to user
-        user.UserSessions.Add(session);
-        await userManager.UpdateAsync(user);
-        return Ok(new BaseResponse<(string, string, int)>((accessToken, refreshToken, session.Id), "Login successful"));
+        await userSessionService.CreateAsync(session);
+        return Ok(new BaseResponse<LoginResponceDTO>(new LoginResponceDTO(accessToken, refreshToken, session.Id), "Login successful"));
     }
 
     private static string ComputeSha256(string input)
@@ -147,7 +146,7 @@ public class AuthController(
     [HttpGet]
     public async Task<IActionResult> GetMailChangeToken([FromBody] string newEmail)
     {
-        User user = await GetUserByJwt();
+        User user = await GetUserByJwtAsync();
 
             string token = await userManager.GenerateChangeEmailTokenAsync(user, newEmail);
 
@@ -309,9 +308,10 @@ public class AuthController(
     {
         Claim[] claims =
         [
-            new(JwtRegisteredClaimNames.Sub, user.Email!),
-            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            new(ClaimTypes.NameIdentifier, user.Login)
+           new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+    new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+    new(ClaimTypes.NameIdentifier, user.Login),  // ✅
+    new(ClaimTypes.Name, user.UserName == null ? user.Login : user.UserName),
         ];
         SymmetricSecurityKey key = new(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!));
         SigningCredentials creds = new(key, SecurityAlgorithms.HmacSha256);

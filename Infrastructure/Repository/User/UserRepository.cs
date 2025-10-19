@@ -1,6 +1,7 @@
 using Application.Abstractions.Interfaces.Repository.UserCore;
 using Entities.Models.UserCore;
 using Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace Sonar.Infrastructure.Repository.UserCore;
 
@@ -8,7 +9,7 @@ public class UserRepository(SonarContext context) : IUserRepository
 {
     public async Task<User?> GetByIdAsync(int? id)
     {
-        return await context.Set<User>().FindAsync(id);
+        return await context.Set<User>().Include(u => u.AccessFeatures).FirstOrDefaultAsync(u=>u.Id==id);
     }
 
     public async Task<IQueryable<User>> GetAllAsync()
@@ -44,6 +45,6 @@ public class UserRepository(SonarContext context) : IUserRepository
 
     public Task<bool> IsUsernameTakenAsync(string username)
     {
-        return Task.FromResult(context.Set<User>().Any(u => u.Username == username));
+        return Task.FromResult(context.Set<User>().Any(u => u.UserName == username));
     }
 }

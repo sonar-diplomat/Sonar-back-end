@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(SonarContext))]
-    [Migration("20251006163157_Initial")]
-    partial class Initial
+    [Migration("20251018172658_UsernameRemoved")]
+    partial class UsernameRemoved
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -146,6 +146,63 @@ namespace Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("AccessFeature");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "IamAGod"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "SendFriendRequest"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "SendMessage"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Name = "ReportContent"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Name = "ListenContent"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Name = "UserLogin"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Name = "ManageUsers"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Name = "ManageContent"
+                        },
+                        new
+                        {
+                            Id = 9,
+                            Name = "ManageDistributors"
+                        },
+                        new
+                        {
+                            Id = 10,
+                            Name = "ManageReports"
+                        },
+                        new
+                        {
+                            Id = 11,
+                            Name = "CreatePost"
+                        });
                 });
 
             modelBuilder.Entity("Entities.Models.Access.Suspension", b =>
@@ -631,6 +688,11 @@ namespace Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("ContactEmail")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.Property<int>("CoverId")
                         .HasColumnType("integer");
 
@@ -706,6 +768,14 @@ namespace Infrastructure.Migrations
 
                     b.Property<DateTime>("IssuingDate")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("LastUpdatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LicenseKey")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
 
                     b.HasKey("Id");
 
@@ -1048,27 +1118,6 @@ namespace Infrastructure.Migrations
                     b.ToTable("Queue");
                 });
 
-            modelBuilder.Entity("Entities.Models.UserCore.RefreshToken", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("ExpiryDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Token")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("RefreshTokens");
-                });
-
             modelBuilder.Entity("Entities.Models.UserCore.User", b =>
                 {
                     b.Property<int>("Id")
@@ -1114,9 +1163,11 @@ namespace Infrastructure.Migrations
                         .HasColumnType("character varying(100)");
 
                     b.Property<string>("GoogleAuthorizationKey")
-                        .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
+
+                    b.Property<int>("InventoryId")
+                        .HasColumnType("integer");
 
                     b.Property<string>("LastName")
                         .IsRequired()
@@ -1177,17 +1228,14 @@ namespace Infrastructure.Migrations
                     b.Property<int>("UserStateId")
                         .HasColumnType("integer");
 
-                    b.Property<string>("Username")
-                        .IsRequired()
-                        .HasMaxLength(24)
-                        .HasColumnType("character varying(24)");
-
                     b.Property<int>("VisibilityStateId")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
 
                     b.HasIndex("AvatarImageId");
+
+                    b.HasIndex("InventoryId");
 
                     b.HasIndex("NormalizedEmail")
                         .HasDatabaseName("EmailIndex");
@@ -1225,6 +1273,23 @@ namespace Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("UserPrivacyGroup");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "all"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "friends"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "nobody"
+                        });
                 });
 
             modelBuilder.Entity("Entities.Models.UserCore.UserSession", b =>
@@ -1235,13 +1300,27 @@ namespace Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("DeviceName")
                         .IsRequired()
                         .HasMaxLength(30)
                         .HasColumnType("character varying(30)");
 
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateTime>("LastActive")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("RefreshTokenHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<bool>("Revoked")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("UserAgent")
                         .IsRequired()
@@ -1303,6 +1382,28 @@ namespace Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("UserStatus");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "online"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "offline"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "do not disturb"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Name = "idle"
+                        });
                 });
 
             modelBuilder.Entity("Entities.Models.UserExperience.Achievement", b =>
@@ -1494,6 +1595,9 @@ namespace Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<DateTime>("AcceptanceDate")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<int>("GiftStyleId")
                         .HasColumnType("integer");
 
@@ -1580,13 +1684,7 @@ namespace Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("integer");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("UserId")
-                        .IsUnique();
 
                     b.ToTable("Inventory");
                 });
@@ -1844,21 +1942,6 @@ namespace Infrastructure.Migrations
                     b.HasIndex("TracksId");
 
                     b.ToTable("QueueTrack");
-                });
-
-            modelBuilder.Entity("RefreshTokenUser", b =>
-                {
-                    b.Property<int>("RefreshTokensId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("UsersId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("RefreshTokensId", "UsersId");
-
-                    b.HasIndex("UsersId");
-
-                    b.ToTable("RefreshTokenUser");
                 });
 
             modelBuilder.Entity("ReportReportReasonType", b =>
@@ -2252,7 +2335,7 @@ namespace Infrastructure.Migrations
                         .HasForeignKey("PostId");
 
                     b.HasOne("Entities.Models.File.FileType", "Type")
-                        .WithMany()
+                        .WithMany("File")
                         .HasForeignKey("TypeId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
@@ -2381,6 +2464,12 @@ namespace Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Entities.Models.UserExperience.Inventory", "Inventory")
+                        .WithMany()
+                        .HasForeignKey("InventoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("Entities.Models.ClientSettings.Settings", "Settings")
                         .WithOne("User")
                         .HasForeignKey("Entities.Models.UserCore.User", "SettingsId")
@@ -2404,6 +2493,8 @@ namespace Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("AvatarImage");
+
+                    b.Navigation("Inventory");
 
                     b.Navigation("Settings");
 
@@ -2541,17 +2632,6 @@ namespace Infrastructure.Migrations
                     b.Navigation("SubscriptionPayment");
                 });
 
-            modelBuilder.Entity("Entities.Models.UserExperience.Inventory", b =>
-                {
-                    b.HasOne("Entities.Models.UserCore.User", "User")
-                        .WithOne("Inventory")
-                        .HasForeignKey("Entities.Models.UserExperience.Inventory", "UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("Entities.Models.UserExperience.SubscriptionPayment", b =>
                 {
                     b.HasOne("Entities.Models.UserCore.User", "Buyer")
@@ -2667,21 +2747,6 @@ namespace Infrastructure.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("RefreshTokenUser", b =>
-                {
-                    b.HasOne("Entities.Models.UserCore.RefreshToken", null)
-                        .WithMany()
-                        .HasForeignKey("RefreshTokensId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Entities.Models.UserCore.User", null)
-                        .WithMany()
-                        .HasForeignKey("UsersId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("ReportReportReasonType", b =>
                 {
                     b.HasOne("Entities.Models.Report.ReportReasonType", null)
@@ -2789,6 +2854,11 @@ namespace Infrastructure.Migrations
                     b.Navigation("Sessions");
                 });
 
+            modelBuilder.Entity("Entities.Models.File.FileType", b =>
+                {
+                    b.Navigation("File");
+                });
+
             modelBuilder.Entity("Entities.Models.Library.Folder", b =>
                 {
                     b.Navigation("Collections");
@@ -2817,9 +2887,6 @@ namespace Infrastructure.Migrations
                     b.Navigation("AchievementProgresses");
 
                     b.Navigation("Artist")
-                        .IsRequired();
-
-                    b.Navigation("Inventory")
                         .IsRequired();
 
                     b.Navigation("Licenses");

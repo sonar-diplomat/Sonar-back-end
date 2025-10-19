@@ -3,6 +3,7 @@ using System;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(SonarContext))]
-    partial class SonarContextModelSnapshot : ModelSnapshot
+    [Migration("20251018163913_initialCreate")]
+    partial class initialCreate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -813,15 +816,6 @@ namespace Infrastructure.Migrations
                     b.HasIndex("TypeId");
 
                     b.ToTable("File");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            ItemName = "Default avatar",
-                            TypeId = 1,
-                            Url = ""
-                        });
                 });
 
             modelBuilder.Entity("Entities.Models.File.FileType", b =>
@@ -1142,6 +1136,7 @@ namespace Infrastructure.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("Biography")
+                        .IsRequired()
                         .HasMaxLength(4000)
                         .HasColumnType("character varying(4000)");
 
@@ -1232,6 +1227,11 @@ namespace Infrastructure.Migrations
 
                     b.Property<int>("UserStateId")
                         .HasColumnType("integer");
+
+                    b.Property<string>("Username")
+                        .IsRequired()
+                        .HasMaxLength(24)
+                        .HasColumnType("character varying(24)");
 
                     b.Property<int>("VisibilityStateId")
                         .HasColumnType("integer");

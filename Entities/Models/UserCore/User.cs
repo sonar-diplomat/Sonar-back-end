@@ -26,17 +26,12 @@ public class User : IdentityUser<int>
     public DateOnly DateOfBirth { get; set; }
 
     [Required]
-    [MaxLength(24)]
-    [MinLength(1)]
-    public string Username { get; set; }
-
-    [Required]
     [MaxLength(16)]
     [MinLength(4)]
     public string Login { get; set; }
 
     [MaxLength(4000)]
-    public string Biography { get; set; } // md 
+    public string? Biography { get; set; } // md 
 
     [Required]
     public string PublicIdentifier { get; set; }
@@ -70,6 +65,9 @@ public class User : IdentityUser<int>
     [Required]
     public int SettingsId { get; set; }
 
+    [Required]
+    public int InventoryId { get; set; }
+
 
     /// <summary>
     /// </summary>
@@ -91,8 +89,12 @@ public class User : IdentityUser<int>
     [DeleteBehavior(DeleteBehavior.Cascade)]
     public virtual Settings Settings { get; set; }
 
-    public virtual Artist Artist { get; set; }
+    [ForeignKey("InventoryId")]
+
+    [DeleteBehavior(DeleteBehavior.Cascade)]
     public virtual Inventory Inventory { get; set; }
+
+    public virtual Artist Artist { get; set; }
 
     public virtual ICollection<UserSession> UserSessions { get; set; }
     public virtual ICollection<Achievement> AchievementProgresses { get; set; }

@@ -9,7 +9,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class Initial : Migration
+    public partial class initialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -38,6 +38,21 @@ namespace Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_AchievementCategory", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AspNetRoles",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    NormalizedName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    ConcurrencyStamp = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AspNetRoles", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -77,6 +92,18 @@ namespace Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_GiftStyle", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Inventory",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Inventory", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -121,20 +148,6 @@ namespace Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_PlaybackQuality", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "RefreshTokens",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Token = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
-                    ExpiryDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_RefreshTokens", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -245,6 +258,27 @@ namespace Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_VisibilityStatus", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AspNetRoleClaims",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    RoleId = table.Column<int>(type: "integer", nullable: false),
+                    ClaimType = table.Column<string>(type: "text", nullable: true),
+                    ClaimValue = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AspNetRoleClaims", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_AspNetRoleClaims_AspNetRoles_RoleId",
+                        column: x => x.RoleId,
+                        principalTable: "AspNetRoles",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -531,6 +565,24 @@ namespace Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "AspNetUserRoles",
+                columns: table => new
+                {
+                    UserId = table.Column<int>(type: "integer", nullable: false),
+                    RoleId = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AspNetUserRoles", x => new { x.UserId, x.RoleId });
+                    table.ForeignKey(
+                        name: "FK_AspNetUserRoles_AspNetRoles_RoleId",
+                        column: x => x.RoleId,
+                        principalTable: "AspNetRoles",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "AspNetUsers",
                 columns: table => new
                 {
@@ -546,12 +598,13 @@ namespace Infrastructure.Migrations
                     AvailableCurrency = table.Column<int>(type: "integer", nullable: false),
                     RegistrationDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Enabled2FA = table.Column<bool>(type: "boolean", nullable: false),
-                    GoogleAuthorizationKey = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    GoogleAuthorizationKey = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     AvatarImageId = table.Column<int>(type: "integer", nullable: false),
                     VisibilityStateId = table.Column<int>(type: "integer", nullable: false),
                     SubscriptionPackId = table.Column<int>(type: "integer", nullable: true),
                     UserStateId = table.Column<int>(type: "integer", nullable: false),
                     SettingsId = table.Column<int>(type: "integer", nullable: false),
+                    InventoryId = table.Column<int>(type: "integer", nullable: false),
                     UserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
@@ -570,6 +623,12 @@ namespace Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_AspNetUsers", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_AspNetUsers_Inventory_InventoryId",
+                        column: x => x.InventoryId,
+                        principalTable: "Inventory",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_AspNetUsers_Settings_SettingsId",
                         column: x => x.SettingsId,
@@ -610,25 +669,6 @@ namespace Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Inventory",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    UserId = table.Column<int>(type: "integer", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Inventory", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Inventory_AspNetUsers_UserId",
-                        column: x => x.UserId,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Library",
                 columns: table => new
                 {
@@ -654,7 +694,9 @@ namespace Infrastructure.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     IssuingDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    LastUpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     ExpirationDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    LicenseKey = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
                     IssuerId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
@@ -692,30 +734,6 @@ namespace Infrastructure.Migrations
                         column: x => x.VisibilityStateId,
                         principalTable: "VisibilityState",
                         principalColumn: "Id");
-                });
-
-            migrationBuilder.CreateTable(
-                name: "RefreshTokenUser",
-                columns: table => new
-                {
-                    RefreshTokensId = table.Column<int>(type: "integer", nullable: false),
-                    UsersId = table.Column<int>(type: "integer", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_RefreshTokenUser", x => new { x.RefreshTokensId, x.UsersId });
-                    table.ForeignKey(
-                        name: "FK_RefreshTokenUser_AspNetUsers_UsersId",
-                        column: x => x.UsersId,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_RefreshTokenUser_RefreshTokens_RefreshTokensId",
-                        column: x => x.RefreshTokensId,
-                        principalTable: "RefreshTokens",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -804,7 +822,11 @@ namespace Infrastructure.Migrations
                     UserAgent = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: false),
                     DeviceName = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: false),
                     LastActive = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    UserId = table.Column<int>(type: "integer", nullable: false)
+                    UserId = table.Column<int>(type: "integer", nullable: false),
+                    RefreshTokenHash = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    ExpiresAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Revoked = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -928,6 +950,7 @@ namespace Infrastructure.Migrations
                     Title = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     TextContent = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: false),
                     GiftTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    AcceptanceDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     GiftStyleId = table.Column<int>(type: "integer", nullable: false),
                     ReceiverId = table.Column<int>(type: "integer", nullable: false),
                     SubscriptionPaymentId = table.Column<int>(type: "integer", nullable: false)
@@ -1041,6 +1064,7 @@ namespace Infrastructure.Migrations
                     Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    ContactEmail = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     LicenseId = table.Column<int>(type: "integer", nullable: false),
                     CoverId = table.Column<int>(type: "integer", nullable: false)
                 },
@@ -1433,6 +1457,24 @@ namespace Infrastructure.Migrations
                 });
 
             migrationBuilder.InsertData(
+                table: "AccessFeature",
+                columns: new[] { "Id", "Name" },
+                values: new object[,]
+                {
+                    { 1, "IamAGod" },
+                    { 2, "SendFriendRequest" },
+                    { 3, "SendMessage" },
+                    { 4, "ReportContent" },
+                    { 5, "ListenContent" },
+                    { 6, "UserLogin" },
+                    { 7, "ManageUsers" },
+                    { 8, "ManageContent" },
+                    { 9, "ManageDistributors" },
+                    { 10, "ManageReports" },
+                    { 11, "CreatePost" }
+                });
+
+            migrationBuilder.InsertData(
                 table: "AchievementCategory",
                 columns: new[] { "Id", "Name" },
                 values: new object[,]
@@ -1528,6 +1570,27 @@ namespace Infrastructure.Migrations
                 });
 
             migrationBuilder.InsertData(
+                table: "UserPrivacyGroup",
+                columns: new[] { "Id", "Name" },
+                values: new object[,]
+                {
+                    { 1, "all" },
+                    { 2, "friends" },
+                    { 3, "nobody" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "UserStatus",
+                columns: new[] { "Id", "Name" },
+                values: new object[,]
+                {
+                    { 1, "online" },
+                    { 2, "offline" },
+                    { 3, "do not disturb" },
+                    { 4, "idle" }
+                });
+
+            migrationBuilder.InsertData(
                 table: "VisibilityStatus",
                 columns: new[] { "Id", "Name" },
                 values: new object[,]
@@ -1585,6 +1648,17 @@ namespace Infrastructure.Migrations
                 column: "TracksId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_AspNetRoleClaims_RoleId",
+                table: "AspNetRoleClaims",
+                column: "RoleId");
+
+            migrationBuilder.CreateIndex(
+                name: "RoleNameIndex",
+                table: "AspNetRoles",
+                column: "NormalizedName",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_AspNetUserClaims_UserId",
                 table: "AspNetUserClaims",
                 column: "UserId");
@@ -1595,6 +1669,11 @@ namespace Infrastructure.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_AspNetUserRoles_RoleId",
+                table: "AspNetUserRoles",
+                column: "RoleId");
+
+            migrationBuilder.CreateIndex(
                 name: "EmailIndex",
                 table: "AspNetUsers",
                 column: "NormalizedEmail");
@@ -1603,6 +1682,11 @@ namespace Infrastructure.Migrations
                 name: "IX_AspNetUsers_AvatarImageId",
                 table: "AspNetUsers",
                 column: "AvatarImageId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AspNetUsers_InventoryId",
+                table: "AspNetUsers",
+                column: "InventoryId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetUsers_SettingsId",
@@ -1738,12 +1822,6 @@ namespace Infrastructure.Migrations
                 column: "SubscriptionPaymentId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Inventory_UserId",
-                table: "Inventory",
-                column: "UserId",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Library_UserId",
                 table: "Library",
                 column: "UserId");
@@ -1807,11 +1885,6 @@ namespace Infrastructure.Migrations
                 name: "IX_QueueTrack_TracksId",
                 table: "QueueTrack",
                 column: "TracksId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_RefreshTokenUser_UsersId",
-                table: "RefreshTokenUser",
-                column: "UsersId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Report_ReportableEntityTypeId",
@@ -2013,6 +2086,14 @@ namespace Infrastructure.Migrations
                 onDelete: ReferentialAction.Cascade);
 
             migrationBuilder.AddForeignKey(
+                name: "FK_AspNetUserRoles_AspNetUsers_UserId",
+                table: "AspNetUserRoles",
+                column: "UserId",
+                principalTable: "AspNetUsers",
+                principalColumn: "Id",
+                onDelete: ReferentialAction.Cascade);
+
+            migrationBuilder.AddForeignKey(
                 name: "FK_AspNetUsers_File_AvatarImageId",
                 table: "AspNetUsers",
                 column: "AvatarImageId",
@@ -2055,13 +2136,18 @@ namespace Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "ArtistTrack");
-            
+
+            migrationBuilder.DropTable(
+                name: "AspNetRoleClaims");
 
             migrationBuilder.DropTable(
                 name: "AspNetUserClaims");
 
             migrationBuilder.DropTable(
                 name: "AspNetUserLogins");
+
+            migrationBuilder.DropTable(
+                name: "AspNetUserRoles");
 
             migrationBuilder.DropTable(
                 name: "AspNetUserTokens");
@@ -2106,9 +2192,6 @@ namespace Infrastructure.Migrations
                 name: "QueueTrack");
 
             migrationBuilder.DropTable(
-                name: "RefreshTokenUser");
-
-            migrationBuilder.DropTable(
                 name: "ReportReportReasonType");
 
             migrationBuilder.DropTable(
@@ -2133,7 +2216,7 @@ namespace Infrastructure.Migrations
                 name: "Artist");
 
             migrationBuilder.DropTable(
-                name: "Inventory");
+                name: "AspNetRoles");
 
             migrationBuilder.DropTable(
                 name: "CosmeticItem");
@@ -2152,9 +2235,6 @@ namespace Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "Track");
-
-            migrationBuilder.DropTable(
-                name: "RefreshTokens");
 
             migrationBuilder.DropTable(
                 name: "ReportReasonType");
@@ -2185,6 +2265,9 @@ namespace Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");
+
+            migrationBuilder.DropTable(
+                name: "Inventory");
 
             migrationBuilder.DropTable(
                 name: "Settings");

@@ -23,7 +23,7 @@ public class GiftController(
     [Authorize]
     public async Task<ActionResult<Gift>> SendGift([FromBody] SendGiftDTO giftDto)
     {
-        User user = await GetUserByJwt();
+        User user = await GetUserByJwtAsync();
         if (user.Id != giftDto.BuyerId)
             AppExceptionFactory.Create<BadRequestException>();
         Gift gift = await giftService.SendGiftAsync(giftDto);
@@ -34,7 +34,7 @@ public class GiftController(
     [Authorize]
     public async Task<ActionResult<SubscriptionPayment>> AcceptGift(int id)
     {
-        User user = await GetUserByJwt();
+        User user = await GetUserByJwtAsync();
         SubscriptionPayment payment = await giftService.AcceptGiftAsync(id, user.Id);
         return Ok(new BaseResponse<SubscriptionPayment>(payment, "Gift accepted and subscription activated."));
     }
@@ -43,7 +43,7 @@ public class GiftController(
     [Authorize]
     public async Task<ActionResult<IEnumerable<Gift>>> GetReceivedGifts()
     {
-        User user = await GetUserByJwt();
+        User user = await GetUserByJwtAsync();
         IEnumerable<Gift> gifts = await giftService.GetReceivedGiftsAsync(user.Id);
         return Ok(new BaseResponse<IEnumerable<Gift>>(gifts, "Received gifts retrieved successfully."));
     }
@@ -52,7 +52,7 @@ public class GiftController(
     [Authorize]
     public async Task<ActionResult<IEnumerable<Gift>>> GetSentGifts(int senderId)
     {
-        User user = await GetUserByJwt();
+        User user = await GetUserByJwtAsync();
         IEnumerable<Gift> gifts = await giftService.GetSentGiftsAsync(user.Id);
         return Ok(new BaseResponse<IEnumerable<Gift>>(gifts, "Sent gifts retrieved successfully"));
     }
@@ -70,7 +70,7 @@ public class GiftController(
     [Authorize]
     public async Task<IActionResult> CancelGift(int id)
     {
-        User user = await GetUserByJwt();
+        User user = await GetUserByJwtAsync();
         await giftService.CancelGiftAsync(id, user.Id);
         return Ok(new BaseResponse<bool>("Gift cancelled"));
     }

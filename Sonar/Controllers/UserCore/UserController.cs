@@ -1,5 +1,7 @@
 using Application.Abstractions.Interfaces.Services;
 using Application.DTOs;
+using Application.Exception;
+using Entities.Enums;
 using Entities.Models.UserCore;
 using Entities.TemplateResponses;
 using Microsoft.AspNetCore.Identity;
@@ -22,8 +24,13 @@ public class UserController(
     [HttpGet]
     public async Task<ActionResult<IEnumerable<User>>> GetUsers()
     {
-        IEnumerable<User> users = await userService.GetAllAsync();
-        return Ok(users);
+        User u = await CheckAccessFeatures([AccessFeatureStruct.IamAGod]);
+        //if (u != default)
+        //{
+            IEnumerable<User> users = await userService.GetAllAsync();
+            return Ok(users);
+        //}
+        //else throw AppExceptionFactory.Create<ForbiddenException>();
     }
 
     // GET: api/User/5
@@ -38,7 +45,7 @@ public class UserController(
     [HttpPut("update")]
     public async Task<IActionResult> PatchUser(UserUpdateDTO request)
     {
-        User user = await GetUserByJwt();
+        User user = await GetUserByJwtAsync();
         user = await userService.UpdateUserAsync(user.Id, request);
         return Ok(user);
     }

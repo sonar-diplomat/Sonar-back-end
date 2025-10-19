@@ -65,11 +65,11 @@ public class UserService(
     public async Task ChangeUsernameAsync(int userId, string newUsername)
     {
         User user = await GetByIdAsync(userId);
-        if (user.Username == newUsername)
+        if (user.UserName == newUsername)
             throw AppExceptionFactory.Create<BadRequestException>(["Username is already set to this value."]);
         if (await repository.IsUsernameTakenAsync(newUsername))
             throw AppExceptionFactory.Create<BadRequestException>(["Username is already taken."]);
-        user.Username = newUsername;
+        user.UserName = newUsername;
         await repository.UpdateAsync(user);
     }
 
@@ -80,7 +80,7 @@ public class UserService(
             FirstName = model.FirstName,
             LastName = model.LastName,
             DateOfBirth = model.DateOfBirth,
-            Username = model.Username,
+            UserName = model.Username,
             Login = model.Login,
             Email = model.Email,
             Biography = "какуютохуйню",
@@ -95,9 +95,7 @@ public class UserService(
         };
         await visibilityStateService.CreateAsync(tempVs);
         user.VisibilityState = tempVs;
-        Inventory inv = await inventoryService.CreateDefaultAsync();
-        inv.User = user;
-        user.Inventory = inv;
+        user.Inventory = await inventoryService.CreateDefaultAsync();
         user.AccessFeatures = await accessFeatureService.GetDefaultAsync();
         user.Settings = await settingsService.CreateDefaultAsync(model.Locale);
         user.UserState = await stateService.CreateDefaultAsync();

@@ -43,6 +43,8 @@ public class UserNotFoundException(string[]? args = null)
     : NotFoundException(args);
 public class TrackNotFoundException(string[]? args = null)
     : NotFoundException(args);
+public class FileNotFoundException(string[]? args = null)
+    : NotFoundException(args);
 
 public class MethodNotAllowedException(string[]? args = null)
     : AppException(HttpStatusCode.MethodNotAllowed,
