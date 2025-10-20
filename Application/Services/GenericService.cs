@@ -36,7 +36,7 @@ public abstract class GenericService<T>(IGenericRepository<T> repository) : IGen
     public async Task<T> GetByIdValidatedAsync(int id)
     {
         T? entity = await repository.GetByIdAsync(id);
-        return entity ?? throw AppExceptionFactory.Create<NotFoundException>([typeof(T).Name,id.ToString()]);
+        return entity ?? throw ResponseFactory.Create<NotFoundResponse>([$"{nameof(T)} not found"]);
     }
 
     public async Task<T> UpdateAsync(T entity)

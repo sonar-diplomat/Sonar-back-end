@@ -18,7 +18,7 @@ public class UserSessionService(IUserSessionRepository repository)
     {
         UserSession? userSession = await repository.GetByRefreshToken(refreshHash);
         if (userSession == null)
-            AppExceptionFactory.Create<NotFoundException>();
+            ResponseFactory.Create<NotFoundResponse>();
         return userSession!;
     }
 
@@ -29,7 +29,7 @@ public class UserSessionService(IUserSessionRepository repository)
     }
 
     public async Task RevokeSessionAsync(UserSession session)
-    {//TODO ASK ZAHAR WHY WE DONT DELETE SESSION
+    {
         session.Revoked = true;
         await repository.UpdateAsync(session);
     }
@@ -44,8 +44,8 @@ public class UserSessionService(IUserSessionRepository repository)
             await repository.UpdateAsync(session);
         }
     }
-    
-    public async Task<IEnumerable<ActiveUserSessionDTO>> GetAllByUserIdAsync(int userId)
+
+    public async Task<IEnumerable<ActiveSessionDTO>> GetAllByUserIdAsync(int userId)
     {
         return await repository.GetAllActiveSessionsByUserIdAsync(userId);
     }

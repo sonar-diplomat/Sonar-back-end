@@ -24,8 +24,8 @@ public class UserService(
     public async Task<int> ChangeCurrencyAsync(int userId, int modifier)
     {
         User user = await GetByIdAsync(userId);
-        if (user == null) // TODO: create a custom exception for user without creating the dictionary object
-            throw AppExceptionFactory.Create<NotFoundException>(["User not found."]);
+        if (user == null)
+            throw ResponseFactory.Create<NotFoundResponse>(["User not found."]);
         user.AvailableCurrency += modifier;
         return user.AvailableCurrency;
     }
@@ -65,11 +65,11 @@ public class UserService(
     public async Task ChangeUsernameAsync(int userId, string newUsername)
     {
         User user = await GetByIdAsync(userId);
-        if (user.UserName == newUsername)
-            throw AppExceptionFactory.Create<BadRequestException>(["Username is already set to this value."]);
+        if (user.Username == newUsername)
+            throw ResponseFactory.Create<BadRequestResponse>(["Username is already set to this value."]);
         if (await repository.IsUsernameTakenAsync(newUsername))
-            throw AppExceptionFactory.Create<BadRequestException>(["Username is already taken."]);
-        user.UserName = newUsername;
+            throw ResponseFactory.Create<BadRequestResponse>(["Username is already taken."]);
+        user.Username = newUsername;
         await repository.UpdateAsync(user);
     }
 
@@ -80,13 +80,9 @@ public class UserService(
             FirstName = model.FirstName,
             LastName = model.LastName,
             DateOfBirth = model.DateOfBirth,
-            UserName = model.Username,
+            Username = model.Username,
             Login = model.Login,
-            Email = model.Email,
-            Biography = "какуютохуйню",
-            PublicIdentifier = (new Random().Next() % 1000000).ToString(),
-            GoogleAuthorizationKey = "ALIBABA"
-            //TODO : сделать нормально
+            Email = model.Email
         };
         VisibilityState tempVs = new()
         {
@@ -95,7 +91,9 @@ public class UserService(
         };
         await visibilityStateService.CreateAsync(tempVs);
         user.VisibilityState = tempVs;
-        user.Inventory = await inventoryService.CreateDefaultAsync();
+        Inventory tempI = new() { User = user };
+        await inventoryService.CreateAsync(tempI);
+        user.Inventory = tempI;
         user.AccessFeatures = await accessFeatureService.GetDefaultAsync();
         user.Settings = await settingsService.CreateDefaultAsync(model.Locale);
         user.UserState = await stateService.CreateDefaultAsync();
@@ -106,7 +104,7 @@ public class UserService(
     public async Task<User> GetByIdValidatedAsync(int id)
     {
         User? user = await repository.GetByIdAsync(id);
-        return user ?? throw AppExceptionFactory.Create<NotFoundException>(["User not found."]);
+        return user ?? throw ResponseFactory.Create<NotFoundResponse>(["User not found."]);
     }
 
     public async Task UpdateAvatar(int userId, IFormFile file)
@@ -124,7 +122,7 @@ public class UserService(
     {
         User? user = await GetByIdAsync(userId);
         if (user == null)
-            throw AppExceptionFactory.Create<NotFoundException>();
+            throw ResponseFactory.Create<NotFoundResponse>();
 
         await repository.RemoveAsync(user);
         return true;

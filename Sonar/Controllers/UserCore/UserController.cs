@@ -1,9 +1,7 @@
 using Application.Abstractions.Interfaces.Services;
 using Application.DTOs;
 using Application.Exception;
-using Entities.Enums;
 using Entities.Models.UserCore;
-using Entities.TemplateResponses;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using FileModel = Entities.Models.File.File;
@@ -24,13 +22,8 @@ public class UserController(
     [HttpGet]
     public async Task<ActionResult<IEnumerable<User>>> GetUsers()
     {
-        User u = await CheckAccessFeatures([AccessFeatureStruct.IamAGod]);
-        //if (u != default)
-        //{
-            IEnumerable<User> users = await userService.GetAllAsync();
-            return Ok(users);
-        //}
-        //else throw AppExceptionFactory.Create<ForbiddenException>();
+        IEnumerable<User> users = await userService.GetAllAsync();
+        throw ResponseFactory.Create<OkResponse<IEnumerable<User>>>(users, ["Users retrieved successfully"]);
     }
 
     // GET: api/User/5
@@ -39,26 +32,22 @@ public class UserController(
     {
         //TODO set to UserPublicDTO
         User user = await userService.GetByIdAsync(id);
-        return Ok(user);
+        throw ResponseFactory.Create<OkResponse<User>>(user, ["User retrieved successfully"]);
     }
 
     [HttpPut("update")]
     public async Task<IActionResult> PatchUser(UserUpdateDTO request)
     {
-        User user = await GetUserByJwtAsync();
+        User user = await CheckAccessFeatures([]);
         user = await userService.UpdateUserAsync(user.Id, request);
-        return Ok(user);
+        throw ResponseFactory.Create<OkResponse<User>>(user, ["User updated successfully"]);
     }
 
     [HttpPost("update-avatar")]
     [Consumes("multipart/form-data")]
     public async Task<IActionResult> Index([FromForm] IFormFile file)
     {
-        FileModel fileModel = await fileService.UploadFileAsync(
-            await fileTypeService.GetByNameAsync("image"),
-            file
-        );
-
-        return Ok(new BaseResponse<FileModel>(fileModel, "File uploaded successfully"));
+        FileModel fileModel = await fileService.UploadFileAsync(await fileTypeService.GetByNameAsync("image"), file);
+        throw ResponseFactory.Create<CreatedResponse<FileModel>>(fileModel, ["File uploaded successfully"]);
     }
 }

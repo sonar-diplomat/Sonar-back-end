@@ -104,7 +104,7 @@ public class FileService(
         FileModel file = await GetByIdValidatedAsync(id);
         bool success = await fileStorageService.DeleteFile(file.Url);
         if (!success)
-            throw AppExceptionFactory.Create<ConflictException>();
+            throw ResponseFactory.Create<ConflictResponse>();
         await base.DeleteAsync(file);
     }
 
@@ -117,7 +117,7 @@ public class FileService(
             if (formats.Any(f => f == format?.GetType()))
                 return;
 
-        throw AppExceptionFactory.Create<BadRequestException>(["Invalid file type"]);
+        throw ResponseFactory.Create<BadRequestResponse>(["Invalid file type"]);
     }
 }
 

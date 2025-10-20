@@ -7,5 +7,5 @@ public interface IUserSessionRepository : IGenericRepository<UserSession>
 {
     public Task<UserSession?> GetByRefreshToken(string refreshHash);
     public Task<IEnumerable<UserSession>> GetAllByUserIdAsync(int userId);
-    public Task<IEnumerable<ActiveUserSessionDTO>> GetAllActiveSessionsByUserIdAsync(int userId);
+    public Task<IEnumerable<ActiveSessionDTO>> GetAllActiveSessionsByUserIdAsync(int userId);
 }

@@ -40,6 +40,6 @@ public class Distributor : BaseModel
     [DeleteBehavior(DeleteBehavior.Cascade)]
     public virtual File.File Cover { get; set; }
 
-    public virtual ICollection<DistributorSession> Sessions { get; set; }
+    public virtual ICollection<DistributorAccount> Accounts { get; set; }
     public virtual ICollection<Album> Albums { get; set; }
 }
