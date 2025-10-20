@@ -90,16 +90,34 @@ public class SonarContext(DbContextOptions<SonarContext> options)
         builder.Entity<User>().HasOne(u => u.Settings).WithOne(s => s.User).HasForeignKey<User>(s => s.SettingsId);
         builder.Entity<Settings>().HasMany(s => s.BlockedUsers).WithMany(s => s.SettingsBlockedUsers);
 
-        builder.Entity<NotificationType>().HasData(NotificationTypeSeedFactory.CreateSeedData());
-        builder.Entity<Theme>().HasData(ThemeSeedFactory.CreateSeedData());
-        builder.Entity<Language>().HasData(LanguageSeedFactory.CreateSeedData());
-        builder.Entity<PlaybackQuality>().HasData(PlaybackQualitySeedFactory.CreateSeedData());
-        builder.Entity<AchievementCategory>().HasData(AchievementCategorySeedFactory.CreateSeedData());
-        builder.Entity<File.FileType>().HasData(FileTypeSeedFactory.CreateSeedData());
-        builder.Entity<VisibilityStatus>().HasData(VisibilityStatusSeedFactory.CreateSeedData());
-        builder.Entity<GiftStyle>().HasData(GiftStyleSeedFactory.CreateSeedData());
-        builder.Entity<ReportableEntityType>().HasData(ReportableEntityTypeSeedFactory.CreateSeedData());
-        builder.Entity<ReportReasonType>().HasData(ReportReasonTypeSeedFactory.CreateSeedData());
+        builder.Entity<NotificationType>()
+            .HasData(NotificationTypeSeedFactory.CreateSeedData());
+        builder.Entity<Theme>()
+            .HasData(ThemeSeedFactory.CreateSeedData());
+        builder.Entity<Language>()
+            .HasData(LanguageSeedFactory.CreateSeedData());
+        builder.Entity<PlaybackQuality>()
+            .HasData(PlaybackQualitySeedFactory.CreateSeedData());
+        builder.Entity<AchievementCategory>()
+            .HasData(AchievementCategorySeedFactory.CreateSeedData());
+        builder.Entity<File.FileType>()
+            .HasData(FileTypeSeedFactory.CreateSeedData());
+        builder.Entity<File.File>()
+            .HasData(FileSeedFactory.CreateSeedData());
+        builder.Entity<VisibilityStatus>()
+            .HasData(VisibilityStatusSeedFactory.CreateSeedData());
+        builder.Entity<GiftStyle>()
+            .HasData(GiftStyleSeedFactory.CreateSeedData());
+        builder.Entity<ReportableEntityType>()
+            .HasData(ReportableEntityTypeSeedFactory.CreateSeedData());
+        builder.Entity<ReportReasonType>()
+            .HasData(ReportReasonTypeSeedFactory.CreateSeedData());
+        builder.Entity<AccessFeature>()
+            .HasData(AccessFeatureSeedFactory.CreateSeedData());
+        builder.Entity<UserPrivacyGroup>()
+            .HasData(UserPrivacyGroupSeedFactory.CreateSeedData());
+        builder.Entity<UserStatus>()
+            .HasData(UserStatusSeedFactory.CreateSeedData());
         base.OnModelCreating(builder);
     }
 }

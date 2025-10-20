@@ -3,7 +3,6 @@ using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.File;
 using Application.Exception;
 using Entities.Models.File;
-using Entities.Models.Music;
 using FileSignatures;
 using FileSignatures.Formats;
 using Microsoft.AspNetCore.Http;
@@ -25,11 +24,60 @@ public class FileService(
         { "Gif", [typeof(Gif)] }
     };
 
-    public async Task<FileStream> GetMusicStreamAsync(int fileId, long? startByte, long? length) {
-
-        FileModel file = await GetByIdValidatedAsync(fileId);
-        throw new NotImplementedException();
+    public async Task<FileStream?> GetMusicStreamAsync(int fileId, long? startByte, long? length)
+    {
+        return new FileStream("C:\\Users\\timpf\\Music\\Нова папка\\Infected Mushroom - Guitarmass.aac", FileMode.Open, FileAccess.Read);
     }
+    //public async Task<FileStream?> GetMusicStreamAsync(int fileId, long? startByte, long? length)
+    //{
+    //    FileModel file = await GetByIdValidatedAsync(fileId);
+
+    //    try
+    //    {
+    //        if (!System.IO.File.Exists(file.Url))
+    //        {
+    //            throw AppExceptionFactory.Create<Exception.FileNotFoundException>();
+    //        }
+
+    //        FileStream fileStream = new FileStream(
+    //            file.Url,
+    //            FileMode.Open,
+    //            FileAccess.Read,
+    //            FileShare.Read, // Позволяет другим процессам читать файл
+    //            bufferSize: 4096, // Стандартный размер буфера
+    //            useAsync: true // Асинхронный режим
+    //        );
+
+
+    //        if (startByte.HasValue && length.HasValue)
+    //        {
+
+    //            if (startByte.Value < 0 || startByte.Value >= fileStream.Length)
+    //            {
+    //                fileStream.Dispose();
+    //                throw new ArgumentException();
+    //            }
+
+    //            if (length.Value <= 0 || startByte.Value + length.Value > fileStream.Length)
+    //            {
+    //                fileStream.Dispose();
+    //                throw new ArgumentException();
+    //            }
+
+    //            // Установка позиции в потоке
+    //            fileStream.Seek(startByte.Value, SeekOrigin.Begin);
+    //        }
+    //        return fileStream;
+    //    }
+    //    catch (IOException ex)
+    //    {
+    //        throw new IOException($"IO error while accessing file: {ex.Message}");
+    //    }
+    //    catch (System.Exception ex)
+    //    {
+    //        throw new System.Exception($"Unexpected error in file service: {ex.Message}");
+    //    }
+    //}
 
     public async Task<FileModel> GetDefaultAsync()
     {

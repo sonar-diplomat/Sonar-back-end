@@ -4,4 +4,5 @@ namespace Application.Abstractions.Interfaces.Services;
 
 public interface IInventoryService : IGenericService<Inventory>
 {
+    Task<Inventory> CreateDefaultAsync();
 }

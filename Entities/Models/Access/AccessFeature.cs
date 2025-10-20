@@ -13,5 +13,6 @@ public class AccessFeature : BaseModel
 
     /// <summary>
     /// </summary>
+    [System.Text.Json.Serialization.JsonIgnore]
     public virtual ICollection<User> Users { get; set; }
 }

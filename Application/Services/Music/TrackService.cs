@@ -29,32 +29,35 @@ public class TrackService(ITrackRepository repository,IFileService fileService) 
     public async Task<MusicStreamResultDTO?> GetMusicStreamAsync(int trackId, string? rangeHeader) {
 
 
-        Track track = await GetByIdValidatedAsync(trackId);
+        //Track track = await GetByIdValidatedAsync(trackId);
         Range range = new Range(0,0);
 
         Regex LocalizationLanguage = new Regex(@"(?<=bytes=)(\d+)-(\d+)", RegexOptions.Compiled | RegexOptions.CultureInvariant, TimeSpan.FromSeconds(2));
 
-        var match = LocalizationLanguage.Match(rangeHeader);
+        if(rangeHeader!=null)
+        { 
+            var match = LocalizationLanguage.Match(rangeHeader);
 
-        if (match.Success)
-        {
-            long startBytes = long.Parse(match.Groups[1].Value);
-            long? endBytes = null;
-
-            if (match.Groups[2].Success && !string.IsNullOrEmpty(match.Groups[2].Value))
-                endBytes = long.Parse(match.Groups[2].Value);
-
-            if (endBytes.HasValue)
+            if (match.Success)
             {
-                long length = endBytes.Value - startBytes + 1;
-                if (length > 0)
-                    range = new Range(startBytes, length);
+                long startBytes = long.Parse(match.Groups[1].Value);
+                long? endBytes = null;
+
+                if (match.Groups[2].Success && !string.IsNullOrEmpty(match.Groups[2].Value))
+                    endBytes = long.Parse(match.Groups[2].Value);
+
+                if (endBytes.HasValue)
+                {
+                    long length = endBytes.Value - startBytes + 1;
+                    if (length > 0)
+                        range = new Range(startBytes, length);
+                }
+                else
+                    range = new Range(startBytes);
             }
-            else
-                range = new Range(startBytes);
         }
 
-        FileStream finalStream = await fileService.GetMusicStreamAsync(track.AudioFileId, range.startBytes, range.length);
+        FileStream finalStream = await fileService.GetMusicStreamAsync(0/*track.AudioFileId*/, range.startBytes, range.length);
         return new MusicStreamResultDTO(finalStream, "audio/mpeg", true);
     }
 }

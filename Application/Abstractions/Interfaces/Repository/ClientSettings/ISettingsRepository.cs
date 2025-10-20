@@ -4,4 +4,5 @@ namespace Application.Abstractions.Interfaces.Repository.Client;
 
 public interface ISettingsRepository : IGenericRepository<Settings>
 {
+    Task<Settings> CreateDefaultAsync();
 }
