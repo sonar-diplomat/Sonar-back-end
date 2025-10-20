@@ -10,7 +10,7 @@ public interface IUserService
     Task<User> CreateUserShellAsync(UserRegisterDTO userRegisterDTO);
     Task<User> UpdateUserAsync(int userId, UserUpdateDTO userUpdateUpdateDto);
     Task<User> UpdateUserAsync(User user);
-    Task ChangeUsernameAsync(int userId, string newUsername);
+    Task ChangeUserNameAsync(int userId, string newUserName);
     Task<User> GetByIdAsync(int id);
     Task<IEnumerable<User>> GetAllAsync();
     Task<User> GetByIdValidatedAsync(int id);

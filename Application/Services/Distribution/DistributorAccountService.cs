@@ -34,7 +34,7 @@ public class DistributorAccountService(IDistributorAccountRepository repository,
         DistributorAccount distributor = new()
         {
             Email = dto.Email,
-            Username = dto.Username,
+            UserName = dto.UserName,
             PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(dto.Password)),
             PasswordSalt = hmac.Key,
             Distributor = await distributorService.GetByIdValidatedAsync(dto.DistributorId)

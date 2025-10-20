@@ -43,8 +43,8 @@ public class UserRepository(SonarContext context) : IUserRepository
         await context.SaveChangesAsync();
     }
 
-    public Task<bool> IsUsernameTakenAsync(string username)
+    public Task<bool> IsUserNameTakenAsync(string UserName)
     {
-        return Task.FromResult(context.Set<User>().Any(u => u.UserName == username));
+        return Task.FromResult(context.Set<User>().Any(u => u.UserName == UserName));
     }
 }

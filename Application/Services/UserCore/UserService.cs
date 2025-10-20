@@ -62,14 +62,14 @@ public class UserService(
         return await repository.UpdateAsync(user);
     }
 
-    public async Task ChangeUsernameAsync(int userId, string newUsername)
+    public async Task ChangeUserNameAsync(int userId, string newUserName)
     {
         User user = await GetByIdAsync(userId);
-        if (user.Username == newUsername)
-            throw ResponseFactory.Create<BadRequestResponse>(["Username is already set to this value."]);
-        if (await repository.IsUsernameTakenAsync(newUsername))
-            throw ResponseFactory.Create<BadRequestResponse>(["Username is already taken."]);
-        user.Username = newUsername;
+        if (user.UserName == newUserName)
+            throw ResponseFactory.Create<BadRequestResponse>(["UserName is already set to this value."]);
+        if (await repository.IsUserNameTakenAsync(newUserName))
+            throw ResponseFactory.Create<BadRequestResponse>(["UserName is already taken."]);
+        user.UserName = newUserName;
         await repository.UpdateAsync(user);
     }
 
@@ -80,7 +80,7 @@ public class UserService(
             FirstName = model.FirstName,
             LastName = model.LastName,
             DateOfBirth = model.DateOfBirth,
-            Username = model.Username,
+            UserName = model.UserName,
             Login = model.Login,
             Email = model.Email
         };
@@ -90,10 +90,8 @@ public class UserService(
             StatusId = 1
         };
         await visibilityStateService.CreateAsync(tempVs);
-        user.VisibilityState = tempVs;
-        Inventory tempI = new() { User = user };
-        await inventoryService.CreateAsync(tempI);
-        user.Inventory = tempI;
+        user.VisibilityState = tempVs;        
+        user.Inventory = await inventoryService.CreateDefaultAsync();
         user.AccessFeatures = await accessFeatureService.GetDefaultAsync();
         user.Settings = await settingsService.CreateDefaultAsync(model.Locale);
         user.UserState = await stateService.CreateDefaultAsync();

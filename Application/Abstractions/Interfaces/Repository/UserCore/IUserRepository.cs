@@ -10,5 +10,5 @@ public interface IUserRepository
     Task<User> UpdateAsync(User user);
     Task RemoveAsync(User user);
     Task RemoveRangeAsync(List<User> users);
-    Task<bool> IsUsernameTakenAsync(string username);
+    Task<bool> IsUserNameTakenAsync(string UserName);
 }

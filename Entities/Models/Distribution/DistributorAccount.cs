@@ -7,7 +7,7 @@ public class DistributorAccount : BaseModel
     [Required]
     [MinLength(4)]
     [MaxLength(50)]
-    public string Username { get; set; }
+    public string UserName { get; set; }
 
     [Required]
     [EmailAddress]
