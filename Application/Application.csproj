@@ -7,13 +7,13 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Entities\Entities.csproj"/>
+        <ProjectReference Include="..\Entities\Entities.csproj" />
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="FileSignatures" Version="6.1.1"/>
-        <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.0"/>
-        <PackageReference Include="QRCoder" Version="1.7.0"/>
+        <PackageReference Include="FileSignatures" Version="6.1.1" />
+        <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.0" />
+        <PackageReference Include="QRCoder" Version="1.7.0" />
     </ItemGroup>
 
 </Project>

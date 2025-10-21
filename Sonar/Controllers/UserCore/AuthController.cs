@@ -5,6 +5,7 @@ using System.Text;
 using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.Utilities;
 using Application.DTOs;
+using Application.DTOs.Auth;
 using Application.Exception;
 using Entities.Enums;
 using Entities.Models.UserCore;
@@ -14,6 +15,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages;
 using SignInResult = Microsoft.AspNetCore.Identity.SignInResult;
 
 namespace Sonar.Controllers.UserCore;
@@ -90,7 +92,7 @@ public class AuthController(
 
         // Save refresh token to user
         await userSessionService.CreateAsync(session);
-        return Ok(new BaseResponse<LoginResponceDTO>(new LoginResponceDTO(accessToken, refreshToken, session.Id), "Login successful"));
+        return Ok(new BaseResponse<LoginResponseDTO>(new LoginResponseDTO(accessToken, refreshToken, session.Id), "Login successful"));
     }
 
     private static string ComputeSha256(string input)
@@ -143,7 +145,8 @@ public class AuthController(
         });
     }
 
-    [HttpGet]
+    [Authorize]
+    [HttpPost("request-email-change")]
     public async Task<IActionResult> GetMailChangeToken([FromBody] string newEmail)
     {
         User user = await GetUserByJwtAsync();
@@ -169,24 +172,24 @@ public class AuthController(
 
 
     [HttpPost("confirm-email-change")]
-    public async Task<IActionResult> ConfirmEmailChange(string userId, string email, string token)
+    public async Task<IActionResult> ConfirmEmailChange([FromBody]ConfigmEmailChangeDTO changeDTO)
     {
-        User? user = await userManager.FindByIdAsync(userId);
+        User? user = await userManager.FindByIdAsync(changeDTO.userId);
         if (user == null)
             throw AppExceptionFactory.Create<UserNotFoundException>();
 
-        IdentityResult result = await userManager.ChangeEmailAsync(user, email, token);
+        IdentityResult result = await userManager.ChangeEmailAsync(user, changeDTO.email, changeDTO.token);
 
         if (!result.Succeeded)
             throw AppExceptionFactory.Create<BadRequestException>(result.Errors.Select(e => e.ToString()).ToArray()!);
 
-        await userManager.SetUserNameAsync(user, email);
+        await userManager.SetUserNameAsync(user, changeDTO.email);
 
         return Ok(new BaseResponse<string>("Email successfully changed"));
     }
 
     [Authorize]
-    [HttpPost("change-password")]
+    [HttpPost("confirm-password-change")]
     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDTO dto)
     {
         User? user = await userManager.GetUserAsync(User);
@@ -220,20 +223,20 @@ public class AuthController(
     }
 
     [Authorize]
-    [HttpPost]
+    [HttpPost("request-password-change")]
     public async Task<IActionResult> RequestPasswordChange()
     {
         User? user = await userManager.GetUserAsync(User);
         if (user == null) throw AppExceptionFactory.Create<UserNotFoundException>();
 
-        // ??????? TODO
-        if (user.Email != null && await userManager.GetTwoFactorEnabledAsync(user))
-        {
-            string resetToken = await userManager.GeneratePasswordResetTokenAsync(user);
-            string resetLink = $"{frontEndUrl}/approve-change/{resetToken}";
+        //// ??????? TODO
+        //if (user.Email != null && await userManager.GetTwoFactorEnabledAsync(user))
+        //{
+        string resetToken = await userManager.GeneratePasswordResetTokenAsync(user);
+        string resetLink = $"{frontEndUrl}/approve-change/{resetToken}";
 
 
-            await emailSenderService.SendEmailAsync(
+        await emailSenderService.SendEmailAsync(
                 user.Email,
                 MailGunTemplates.passwordRecovery,
                 new Dictionary<string, string>
@@ -242,9 +245,9 @@ public class AuthController(
                 }
             );
 
-            return Ok(new BaseResponse<string>("2FA is enabled. Please verify the token before changing password."));
-        }
-        //
+        //    return Ok(new BaseResponse<string>("2FA is enabled. Please verify the token before changing password."));
+        //}
+        ////
 
         return Ok(new BaseResponse<string>( "Password reset link sent to your email." ));
     }
@@ -259,20 +262,23 @@ public class AuthController(
 
         string newAccessToken = GenerateJwtToken(session.User);
 
-        return Ok(new BaseResponse<(string, string)>((newAccessToken, refreshToken), "Token refreshed successfully"));
+        return Ok(new BaseResponse<RefreshTokenResponse>(new RefreshTokenResponse(newAccessToken, refreshToken), "Token refreshed successfully"));
     }
 
     [Authorize]
-    [HttpPost("{sessionId:int}/revoke")]
+    [HttpPost("sessions/{sessionId:int}/revoke")]
     public async Task<IActionResult> RevokeSessionAsync(int sessionId)
     {
         User user = await CheckAccessFeatures([]);
 
         UserSession session = await userSessionService.GetByIdValidatedAsync(sessionId);
 
-        await userSessionService.RevokeSessionAsync(session);
+        if (session.UserId == user.Id)
+            await userSessionService.RevokeSessionAsync(session);
+        else
+            return Forbid("Session is not your!");
 
-        return Ok(new BaseResponse<string>("Session revoked successfully"));
+       return Ok(new BaseResponse<string>("Session revoked successfully"));
     }
 
 
