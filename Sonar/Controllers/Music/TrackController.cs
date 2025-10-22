@@ -1,9 +1,9 @@
-using Application.Abstractions.Interfaces.Repository.Music;
 using Application.Abstractions.Interfaces.Services;
 using Application.DTOs;
 using Application.Exception;
-using Application.Services.Music;
+using Entities.Enums;
 using Entities.Models.ClientSettings;
+using Entities.Models.Music;
 using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -32,5 +32,30 @@ public class TrackController(UserManager<User> userManager, ITrackService trackS
         result.GetStreamDetails(out Stream stream, out string contentType, out bool enableRangeProcessing);
 
         return File(stream, contentType, enableRangeProcessing: enableRangeProcessing);
+    }
+
+    [HttpDelete("{trackId}")]
+    public async Task<IActionResult> DeleteTrack(int trackId)
+    {
+        await CheckAccessFeatures([AccessFeatureStruct.ManageContent]);
+    }
+    
+    [HttpPut("{trackId}")]
+    public async Task<IActionResult> UpdateTrack(int trackId)
+    {
+        throw new NotImplementedException();
+    }
+    
+    [HttpGet("{trackId}")]
+    public async Task<IActionResult> GetTrackById(int trackId)
+    {
+        Track track = await trackService.GetByIdValidatedAsync(trackId);
+        throw ResponseFactory.Create<OkResponse<Track>>(track, [$"Track successfully retrieved"]);
+    }
+
+    [HttpGet("{trackId}/download")]
+    public async Task<IActionResult> DownloadTrack(int trackId)
+    {
+        throw new NotImplementedException();
     }
 }

@@ -24,7 +24,8 @@ public class DistributorAccountService(IDistributorAccountRepository repository,
 
     public async Task<DistributorAccount> GetByEmailValidatedAsync(string email)
     {
-        return await GetByEmailAsync(email) ?? throw ResponseFactory.Create<NotFoundResponse>(["Distributor account not found"]);
+        return await GetByEmailAsync(email) ??
+               throw ResponseFactory.Create<NotFoundResponse>(["Distributor account not found"]);
     }
 
     public async Task<DistributorAccount> RegisterAsync(DistributorAccountRegisterDTO dto)
@@ -40,5 +41,41 @@ public class DistributorAccountService(IDistributorAccountRepository repository,
             Distributor = await distributorService.GetByIdValidatedAsync(dto.DistributorId)
         };
         return await CreateAsync(distributor);
+    }
+
+    public async Task<DistributorAccount> ChangeUserNameAsync(int id, string newUserName)
+    {
+        DistributorAccount account = await GetByIdValidatedAsync(id);
+
+        account.UserName = newUserName;
+        return await UpdateAsync(account);
+    }
+
+    public async Task<DistributorAccount> ChangeEmailAsync(int id, string newEmail)
+    {
+        DistributorAccount account = await GetByIdValidatedAsync(id);
+        await CheckEmailAsync(newEmail);
+        account.Email = newEmail;
+        return await UpdateAsync(account);
+    }
+
+    public async Task<DistributorAccount> ChangePasswordAsync(int id, DistributorAccountChangePasswordDTO dto)
+    {
+        DistributorAccount account = await GetByIdValidatedAsync(id);
+
+        using (HMACSHA512 hmac = new(account.PasswordSalt))
+        {
+            byte[] computedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(dto.OldPassword));
+            if (computedHash.Where((t, i) => t != account.PasswordHash[i]).Any())
+                throw ResponseFactory.Create<UnauthorizedResponse>(["Old password is incorrect"]);
+        }
+
+        using (HMACSHA512 hmac = new())
+        {
+            account.PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(dto.NewPassword));
+            account.PasswordSalt = hmac.Key;
+        }
+
+        return await UpdateAsync(account);
     }
 }
