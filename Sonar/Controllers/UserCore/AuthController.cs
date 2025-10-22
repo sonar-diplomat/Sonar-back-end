@@ -208,26 +208,20 @@ public class AuthController(
     {
         User user = await CheckAccessFeatures([]);
 
-        // ??????? TODO
-        if (user.Email != null && await userManager.GetTwoFactorEnabledAsync(user))
-        {
-            string resetToken = await userManager.GeneratePasswordResetTokenAsync(user);
-            string resetLink = $"{frontEndUrl}/approve-change/{resetToken}";
-
-
-            await emailSenderService.SendEmailAsync(
-                user.Email,
-                MailGunTemplates.passwordRecovery,
-                new Dictionary<string, string>
-                {
-                    { "link", resetLink }
-                }
-            );
-
-            throw ResponseFactory.Create<OkResponse>(["2FA is enabled. Please verify the token before changing password."]);
-        }
-
-        throw ResponseFactory.Create<OkResponse>(["Password reset link sent to your email."]);
+        if (user.Email == null || !await userManager.GetTwoFactorEnabledAsync(user))
+            throw ResponseFactory.Create<OkResponse>(["Password reset link sent to your email."]);
+        
+        string resetToken = await userManager.GeneratePasswordResetTokenAsync(user);
+        string resetLink = $"{frontEndUrl}/approve-change/{resetToken}";
+        await emailSenderService.SendEmailAsync(
+            user.Email,
+            MailGunTemplates.passwordRecovery,
+            new Dictionary<string, string>
+            {
+                { "link", resetLink }
+            }
+        );
+        throw ResponseFactory.Create<OkResponse>(["2FA is enabled. Please verify the token before changing password."]);
     }
 
     [Authorize]
