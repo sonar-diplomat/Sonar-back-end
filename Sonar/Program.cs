@@ -120,7 +120,6 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddOpenApi();
 
 
-
 #region RegisterRepositories
 
 // Access Repositories
@@ -151,8 +150,9 @@ builder.Services.AddScoped<ILicenseRepository, LicenseRepository>();
 builder.Services.AddScoped<IDistributorAccountRepository, DistributorAccountRepository>();
 
 // File Repositories
-builder.Services.AddScoped<IFileRepository, FileRepository>();
-builder.Services.AddScoped<IFileTypeRepository, FileTypeRepository>();
+builder.Services.AddScoped<IAudioFileRepository, AudioFileRepository>();
+builder.Services.AddScoped<IImageFileRepository, ImageFileRepository>();
+builder.Services.AddScoped<IVideoFileRepository, VideoFileRepository>();
 
 // Library Repositories
 builder.Services.AddScoped<IFolderRepository, FolderRepository>();
@@ -194,19 +194,19 @@ builder.Services.AddScoped<ISubscriptionPaymentRepository, SubscriptionPaymentRe
 
 #region RegisterServices
 
-// Access Repositories
+// Access Services
 builder.Services.AddScoped<IAccessFeatureService, AccessFeatureService>();
 builder.Services.AddScoped<ISuspensionService, SuspensionService>();
 builder.Services.AddScoped<IVisibilityStateService, VisibilityStateService>();
 builder.Services.AddScoped<IVisibilityStatusService, VisibilityStatusService>();
 
-// Chat Repositories
+// Chat Services
 builder.Services.AddScoped<IChatService, ChatService>();
 builder.Services.AddScoped<IMessageReadService, MessageReadService>();
 builder.Services.AddScoped<IMessageService, MessageService>();
 builder.Services.AddScoped<IPostService, PostService>();
 
-// Client Settings Repositories
+// Client Settings Services
 builder.Services.AddScoped<ILanguageService, LanguageService>();
 builder.Services.AddScoped<INotificationTypeService, NotificationTypeService>();
 builder.Services.AddScoped<IPlaybackQualityService, PlaybackQualityService>();
@@ -214,7 +214,7 @@ builder.Services.AddScoped<ISettingsService, SettingsService>();
 builder.Services.AddScoped<IThemeService, ThemeService>();
 builder.Services.AddScoped<IUserPrivacySettingsService, UserPrivacySettingsService>();
 
-// Distribution Repositories
+// Distribution Services
 builder.Services.AddScoped<IArtistService, ArtistService>();
 builder.Services.AddScoped<IDistributorService, DistributorService>();
 builder.Services.AddScoped<IDistributorSessionService, DistributorSessionService>();
@@ -222,33 +222,34 @@ builder.Services.AddScoped<ILicenseService, LicenseService>();
 builder.Services.AddScoped<IApiKeyGeneratorService, ApiKeyGeneratorService>();
 builder.Services.AddScoped<IDistributorAccountService, DistributorAccountService>();
 
-// File Repositories
-builder.Services.AddScoped<IFileService, FileService>();
-builder.Services.AddScoped<IFileTypeService, FileTypeService>();
+// File Services
+builder.Services.AddScoped<IAudioFileService, AudioFileService>();
+builder.Services.AddScoped<IImageFileService, ImageFileService>();
+builder.Services.AddScoped<IVideoFileService, VideoFileService>();
 
-// Library Repositories
+// Library Services
 builder.Services.AddScoped<IFolderService, FolderService>();
 builder.Services.AddScoped<ILibraryService, LibraryService>();
 
-// Music Repositories
+// Music Services
 builder.Services.AddScoped<IAlbumService, AlbumService>();
 builder.Services.AddScoped<IBlendService, BlendService>();
 builder.Services.AddScoped<IPlaylistService, PlaylistService>();
 builder.Services.AddScoped<ITrackService, TrackService>();
 
-// Report Repositories
+// Report Services
 builder.Services.AddScoped<IReportableEntityTypeService, ReportableEntityTypeService>();
 builder.Services.AddScoped<IReportReasonTypeService, ReportReasonTypeService>();
 builder.Services.AddScoped<IReportService, ReportService>();
 
-// User Repositories
+// User Services
 builder.Services.AddScoped<IUserPrivacyGroupService, UserPrivacyGroupService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IUserSessionService, UserSessionService>();
 builder.Services.AddScoped<IUserStateService, UserStateService>();
 builder.Services.AddScoped<IUserStatusService, UserStatusService>();
 
-// UserExperience Repositories
+// UserExperience Services
 builder.Services.AddScoped<IAchievementCategoryService, AchievementCategoryService>();
 builder.Services.AddScoped<IAchievementProgressService, AchievementProgressService>();
 builder.Services.AddScoped<IAchievementService, AchievementService>();
@@ -262,7 +263,7 @@ builder.Services.AddScoped<ISubscriptionFeatureService, SubscriptionFeatureServi
 builder.Services.AddScoped<ISubscriptionPackService, SubscriptionPackService>();
 builder.Services.AddScoped<ISubscriptionPaymentService, SubscriptionPaymentService>();
 
-builder.Services.AddScoped<MailgunSettings>(sp =>
+builder.Services.AddScoped<MailgunSettings>(_ =>
     new MailgunSettings
     {
         ApiKey = builder.Configuration["Mailgun:ApiKey"] ??

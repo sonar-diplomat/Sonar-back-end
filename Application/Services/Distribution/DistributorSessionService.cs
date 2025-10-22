@@ -2,12 +2,14 @@
 using Application.Abstractions.Interfaces.Repository.Distribution;
 using Application.Abstractions.Interfaces.Services;
 using Application.DTOs;
-using Application.Exception;
+using Application.Response;
 using Entities.Models.Distribution;
 
 namespace Application.Services.Distribution;
 
-public class DistributorSessionService(IDistributorSessionRepository repository, IDistributorAccountService distributorAccountService)
+public class DistributorSessionService(
+    IDistributorSessionRepository repository,
+    IDistributorAccountService distributorAccountService)
     : GenericService<DistributorSession>(repository), IDistributorSessionService
 {
     public async Task<IEnumerable<DistributorSession>?> GetByDistributorAccountIdAsync(int id)

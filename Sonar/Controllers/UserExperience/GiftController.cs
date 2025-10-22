@@ -1,6 +1,6 @@
 using Application.Abstractions.Interfaces.Services;
 using Application.DTOs;
-using Application.Exception;
+using Application.Response;
 using Entities.Models.UserCore;
 using Entities.Models.UserExperience;
 using Microsoft.AspNetCore.Authorization;
@@ -35,7 +35,8 @@ public class GiftController(
     {
         User user = await CheckAccessFeatures([]);
         SubscriptionPayment payment = await giftService.AcceptGiftAsync(id, user.Id);
-        throw ResponseFactory.Create<OkResponse<SubscriptionPayment>>(payment, ["Gift accepted and subscription activated."]);
+        throw ResponseFactory.Create<OkResponse<SubscriptionPayment>>(payment,
+            ["Gift accepted and subscription activated."]);
     }
 
     [HttpGet("received")]
@@ -80,7 +81,8 @@ public class GiftController(
     public async Task<ActionResult<IEnumerable<GiftStyle>>> GetAllStyles()
     {
         IEnumerable<GiftStyle> styles = await giftStyleService.GetAllAsync();
-        throw ResponseFactory.Create<OkResponse<IEnumerable<GiftStyle>>>(styles, ["Gift styles retrieved successfully"]);
+        throw ResponseFactory.Create<OkResponse<IEnumerable<GiftStyle>>>(styles,
+            ["Gift styles retrieved successfully"]);
     }
 
     [HttpGet("styles/{id}")]

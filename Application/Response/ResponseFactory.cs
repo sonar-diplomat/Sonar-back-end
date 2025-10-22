@@ -1,6 +1,6 @@
 ﻿using System.Reflection;
 
-namespace Application.Exception;
+namespace Application.Response;
 
 public static class ResponseFactory
 {
@@ -14,7 +14,7 @@ public static class ResponseFactory
             null
         )!;
     }
-    
+
     public static T Create<T>(object data, string[]? args = null) where T : Response
     {
         return (T)Activator.CreateInstance(

@@ -1,6 +1,6 @@
 ﻿using Application.Abstractions.Interfaces.Repository;
 using Application.Abstractions.Interfaces.Services;
-using Application.Exception;
+using Application.Response;
 using Entities.Models;
 
 namespace Application.Services;

@@ -1,19 +1,22 @@
 ﻿using Application.Abstractions.Interfaces.Repository.Distribution;
 using Application.Abstractions.Interfaces.Services;
-using Application.Exception;
+using Application.Response;
 using Entities.Models.Distribution;
 using Entities.Models.UserCore;
 
 namespace Application.Services.Distribution;
 
-public class LicenseService(ILicenseRepository repository, IUserService userService, IApiKeyGeneratorService keyGeneratorService) : GenericService<License>(repository), ILicenseService
+public class LicenseService(
+    ILicenseRepository repository,
+    IUserService userService,
+    IApiKeyGeneratorService keyGeneratorService) : GenericService<License>(repository), ILicenseService
 {
     public async Task<License> CreateLicenseAsync(DateTime expirationDate, int issuerId)
     {
         User issuer = await userService.GetByIdValidatedAsync(issuerId);
         if (expirationDate <= DateTime.UtcNow)
             throw ResponseFactory.Create<BadRequestResponse>(["Expiration date must be in the future."]);
-        
+
         License license = new()
         {
             IssuingDate = DateTime.UtcNow,

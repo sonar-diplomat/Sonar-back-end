@@ -1,9 +1,8 @@
 ﻿using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.Utilities;
-using Application.Exception;
+using Application.Response;
 using Entities.Models.Chat;
 using Entities.Models.UserCore;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using SysFile = System.IO.File;
@@ -21,7 +20,8 @@ public class TestController(
     [HttpGet("apikey")]
     public async Task<ActionResult> Ping()
     {
-        throw ResponseFactory.Create<OkResponse<string>>(await apiKeyGeneratorService.GenerateApiKey(), ["API Key generated successfully"]);
+        throw ResponseFactory.Create<OkResponse<string>>(await apiKeyGeneratorService.GenerateApiKey(),
+            ["API Key generated successfully"]);
     }
 
     [HttpGet("qr")]
@@ -50,23 +50,24 @@ public class TestController(
     {
         throw ResponseFactory.Create<BadRequestResponse>(["Test exception"]);
     }
-    
+
     [HttpGet("ok")]
     public async Task<ActionResult> GenerateOk()
     {
         throw ResponseFactory.Create<OkResponse>(["Test exception"]);
     }
-    
+
     [HttpGet("okdata")]
     public async Task<ActionResult> GenerateOkWithData()
     {
-        IEnumerable<Message> messages = [
-            new Message
+        IEnumerable<Message> messages =
+        [
+            new()
             {
                 Id = 1,
                 ChatId = 1
             },
-            new Message
+            new()
             {
                 Id = 2,
                 ChatId = 2

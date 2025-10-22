@@ -2,7 +2,7 @@
 using System.Text;
 using Application.Abstractions.Interfaces.Services;
 using Application.DTOs;
-using Application.Exception;
+using Application.Response;
 using Entities.Enums;
 using Entities.Models.Distribution;
 using Entities.Models.UserCore;

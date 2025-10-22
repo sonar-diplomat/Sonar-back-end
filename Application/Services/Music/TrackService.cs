@@ -1,42 +1,32 @@
-﻿using Application.Abstractions.Interfaces.Repository.Music;
+﻿using System.Text.RegularExpressions;
+using Application.Abstractions.Interfaces.Repository.Music;
 using Application.Abstractions.Interfaces.Services;
+using Application.Abstractions.Interfaces.Services.File;
 using Application.DTOs;
+using Application.Response;
 using Entities.Models.Music;
-using System.Text.RegularExpressions;
 
 namespace Application.Services.Music;
 
-public class TrackService(ITrackRepository repository,IFileService fileService) : GenericService<Track>(repository), ITrackService
+public class TrackService(ITrackRepository repository, IAudioFileService fileService)
+    : GenericService<Track>(repository), ITrackService
 {
-    public record Range
-    {
-        public long startBytes;
-        public long length;
-        public Range(long _startBytes, long _length) {
-            startBytes = _startBytes;
-            length = _length;
-        }
-        public Range(long _startBytes) {
-            startBytes = _startBytes;    
-        }
-
-    }
     public Task<MusicStreamResultDTO?> GetDemoMusicStreamAsync(int songId)
     {
         throw new NotImplementedException();
     }
-    
-    public async Task<MusicStreamResultDTO?> GetMusicStreamAsync(int trackId, string? rangeHeader) {
 
+    public async Task<MusicStreamResultDTO?> GetMusicStreamAsync(int trackId, string? rangeHeader)
+    {
+        await GetByIdValidatedAsync(trackId);
+        Range range = new(0);
 
-        //Track track = await GetByIdValidatedAsync(trackId);
-        Range range = new Range(0,0);
+        Regex localizationLanguage = new(@"(?<=bytes=)(\d+)-(\d+)",
+            RegexOptions.Compiled | RegexOptions.CultureInvariant, TimeSpan.FromSeconds(2));
 
-        Regex LocalizationLanguage = new Regex(@"(?<=bytes=)(\d+)-(\d+)", RegexOptions.Compiled | RegexOptions.CultureInvariant, TimeSpan.FromSeconds(2));
-
-        if(rangeHeader!=null)
-        { 
-            var match = LocalizationLanguage.Match(rangeHeader);
+        if (rangeHeader != null)
+        {
+            Match match = localizationLanguage.Match(rangeHeader);
 
             if (match.Success)
             {
@@ -53,11 +43,22 @@ public class TrackService(ITrackRepository repository,IFileService fileService) 
                         range = new Range(startBytes, length);
                 }
                 else
+                {
                     range = new Range(startBytes);
+                }
             }
         }
 
-        FileStream finalStream = await fileService.GetMusicStreamAsync(0/*track.AudioFileId*/, range.startBytes, range.length);
-        return new MusicStreamResultDTO(finalStream, "audio/mpeg", true);
+        FileStream? finalStream =
+            await fileService.GetMusicStreamAsync(0 /*track.AudioFileId*/, range.StartBytes, range.Length);
+        return finalStream != null
+            ? new MusicStreamResultDTO(finalStream, "audio/mpeg", true)
+            : throw ResponseFactory.Create<UnprocessableContentResponse>(["Unable to process audio stream"]);
+    }
+
+    private record Range(long StartBytes, long Length = 0)
+    {
+        public long Length { get; } = Length;
+        public long StartBytes { get; } = StartBytes;
     }
 }

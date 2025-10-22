@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Entities.Models.File;
 using Entities.Models.UserCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -22,7 +23,7 @@ public class Chat : BaseModel
     /// </summary>
     [ForeignKey("CoverId")]
     [DeleteBehavior(DeleteBehavior.NoAction)]
-    public virtual File.File Cover { get; set; } // type: Image
+    public virtual ImageFile Cover { get; set; } // type: Image
 
     public virtual ICollection<User> Users { get; set; }
 }

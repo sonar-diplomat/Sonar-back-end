@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Entities.Models.Access;
+using Entities.Models.File;
 using Entities.Models.UserCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -26,7 +27,7 @@ public abstract class Collection : BaseModel
 
     [ForeignKey("CoverId")]
     [DeleteBehavior(DeleteBehavior.Cascade)]
-    public virtual File.File Cover { get; set; }
+    public virtual ImageFile Cover { get; set; }
 
     public virtual ICollection<User> Users { get; set; }
     public virtual ICollection<Track> Tracks { get; set; }

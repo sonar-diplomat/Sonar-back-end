@@ -2,7 +2,7 @@
 using System.Text;
 using System.Text.Json;
 using Application.Abstractions.Interfaces.Services.Utilities;
-using Application.Exception;
+using Application.Response;
 using Entities.Enums;
 
 namespace Application.Services.Utilities;

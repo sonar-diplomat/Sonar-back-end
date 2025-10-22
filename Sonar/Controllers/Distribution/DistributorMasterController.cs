@@ -1,6 +1,6 @@
 ﻿using Application.Abstractions.Interfaces.Services;
 using Application.DTOs;
-using Application.Exception;
+using Application.Response;
 using Entities.Models.Distribution;
 using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Authorization;
@@ -16,7 +16,7 @@ public class DistributorMasterController(
     AuthService authService)
     : AuthDistributorController(userManager, sessionService, accountService, authService)
 {
-    IDistributorAccountService accountService = accountService;
+    private readonly IDistributorAccountService accountService = accountService;
 
     [Authorize]
     public async Task CheckAccessDistributorAccount()

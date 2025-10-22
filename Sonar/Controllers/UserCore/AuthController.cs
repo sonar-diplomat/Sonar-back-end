@@ -1,7 +1,7 @@
 ﻿using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.Utilities;
 using Application.DTOs;
-using Application.Exception;
+using Application.Response;
 using Entities.Enums;
 using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Authorization;
@@ -61,7 +61,7 @@ public class AuthController(
                 {
                     { "code", code }
                 });
-            
+
             // TODO: What does the frontend need to proceed with data?
             throw ResponseFactory.Create<OkResponse>(["2FA code sent to email"]);
         }
@@ -86,14 +86,15 @@ public class AuthController(
         // Save refresh token to user
         user.UserSessions.Add(session);
         await userManager.UpdateAsync(user);
-        throw ResponseFactory.Create<OkResponse<(string, string, int)>>((accessToken, refreshToken, session.Id), ["Login successful"]);
+        throw ResponseFactory.Create<OkResponse<(string, string, int)>>((accessToken, refreshToken, session.Id),
+            ["Login successful"]);
     }
 
     [HttpPost("verify-2fa")]
     public async Task<IActionResult> Verify2Fa([FromBody] Verify2FaDTO dto)
     {
         User user = await CheckAccessFeatures([]);
-        
+
         bool isValid = await userManager.VerifyTwoFactorTokenAsync(
             user,
             TokenOptions.DefaultEmailProvider,
@@ -132,7 +133,8 @@ public class AuthController(
         UserSession session = await userSessionService.GetValidatedByRefreshTokenAsync(refreshHash);
         await userSessionService.UpdateLastActiveAsync(session);
         string newAccessToken = authService.GenerateJwtToken(session.User.Email, session.User.Login);
-        throw ResponseFactory.Create<OkResponse<(string, string)>>((newAccessToken, refreshToken), ["Token refreshed successfully"]);
+        throw ResponseFactory.Create<OkResponse<(string, string)>>((newAccessToken, refreshToken),
+            ["Token refreshed successfully"]);
     }
 
     [HttpGet]
@@ -195,7 +197,8 @@ public class AuthController(
         IdentityResult result = await userManager.ChangePasswordAsync(user, dto.OldPassword, dto.NewPassword);
 
         if (!result.Succeeded)
-            throw ResponseFactory.Create<BadRequestResponse>(result.Errors.Select(e => e.ToString()).ToArray()!, ["Password change failed"]);
+            throw ResponseFactory.Create<BadRequestResponse>(result.Errors.Select(e => e.ToString()).ToArray()!,
+                ["Password change failed"]);
 
         await signInManager.RefreshSignInAsync(user);
         throw ResponseFactory.Create<OkResponse>(["Password successfully changed"]);
@@ -223,7 +226,9 @@ public class AuthController(
                 }
             );
 
-            throw ResponseFactory.Create<OkResponse>(["2FA is enabled. Please verify the token before changing password."]);
+            throw ResponseFactory.Create<OkResponse>([
+                "2FA is enabled. Please verify the token before changing password."
+            ]);
         }
 
         throw ResponseFactory.Create<OkResponse>(["Password reset link sent to your email."]);
@@ -254,6 +259,7 @@ public class AuthController(
     public async Task<IActionResult> GetSessions()
     {
         User user = await CheckAccessFeatures([]);
-        throw ResponseFactory.Create<OkResponse<IEnumerable<ActiveSessionDTO>>>( await userSessionService.GetAllByUserIdAsync(user.Id), ["Sessions retrieved successfully"]);
+        throw ResponseFactory.Create<OkResponse<IEnumerable<ActiveSessionDTO>>>(
+            await userSessionService.GetAllByUserIdAsync(user.Id), ["Sessions retrieved successfully"]);
     }
 }
