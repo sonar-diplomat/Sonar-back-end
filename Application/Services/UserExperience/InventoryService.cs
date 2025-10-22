@@ -7,4 +7,7 @@ namespace Application.Services.UserExperience;
 public class InventoryService(IInventoryRepository repository)
     : GenericService<Inventory>(repository), IInventoryService
 {
+    public async Task<Inventory> CreateDefaultAsync() {
+        return new Inventory();
+    }
 }

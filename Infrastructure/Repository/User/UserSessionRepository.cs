@@ -6,12 +6,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Sonar.Infrastructure.Repository.UserCore;
 
-public class UserSessionRepository : GenericRepository<UserSession>, IUserSessionRepository
+public class UserSessionRepository(SonarContext dbContext) : GenericRepository<UserSession>(dbContext), IUserSessionRepository
 {
-    public UserSessionRepository(SonarContext dbContext) : base(dbContext)
-    {
-    }
-
     public async Task<UserSession?> GetByRefreshToken(string refreshHash)
     {
         return await context.UserSessions
@@ -29,12 +25,12 @@ public class UserSessionRepository : GenericRepository<UserSession>, IUserSessio
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<ActiveUserSessionDTO>> GetAllActiveSessionsByUserIdAsync(int userId)
+    public async Task<IEnumerable<ActiveSessionDTO>> GetAllActiveSessionsByUserIdAsync(int userId)
     {
         return await Task.FromResult(
             context.UserSessions
                 .Where(s => s.UserId == userId && !s.Revoked && s.ExpiresAt > DateTime.UtcNow)
-                .Select(s => new ActiveUserSessionDTO
+                .Select(s => new ActiveSessionDTO
                 {
                     Id = s.Id,
                     DeviceName = s.DeviceName,

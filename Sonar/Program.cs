@@ -42,6 +42,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using QRCoder;
+using Sonar.Controllers;
 using Sonar.Infrastructure.Repository.Access;
 using Sonar.Infrastructure.Repository.Chat;
 using Sonar.Infrastructure.Repository.Client;
@@ -59,6 +60,12 @@ builder.Services.AddDbContext<SonarContext>(options =>
 
 // Add services to the container.
 builder.Services.AddControllers();
+//builder.Services.AddControllers()
+//    .AddJsonOptions(options =>
+//    {
+//        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve;
+//        options.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
+//    });
 
 // CORS policy configuration
 builder.Services.AddCors(options =>
@@ -112,6 +119,8 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddOpenApi();
 
+
+
 #region RegisterRepositories
 
 // Access Repositories
@@ -139,6 +148,7 @@ builder.Services.AddScoped<IArtistRepository, ArtistRepository>();
 builder.Services.AddScoped<IDistributorRepository, DistributorRepository>();
 builder.Services.AddScoped<IDistributorSessionRepository, DistributorSessionRepository>();
 builder.Services.AddScoped<ILicenseRepository, LicenseRepository>();
+builder.Services.AddScoped<IDistributorAccountRepository, DistributorAccountRepository>();
 
 // File Repositories
 builder.Services.AddScoped<IFileRepository, FileRepository>();
@@ -210,6 +220,7 @@ builder.Services.AddScoped<IDistributorService, DistributorService>();
 builder.Services.AddScoped<IDistributorSessionService, DistributorSessionService>();
 builder.Services.AddScoped<ILicenseService, LicenseService>();
 builder.Services.AddScoped<IApiKeyGeneratorService, ApiKeyGeneratorService>();
+builder.Services.AddScoped<IDistributorAccountService, DistributorAccountService>();
 
 // File Repositories
 builder.Services.AddScoped<IFileService, FileService>();
@@ -268,6 +279,7 @@ builder.Services.AddSingleton<QRCodeGenerator>();
 builder.Services.AddSingleton<IQrCodeService, QrCodeService>();
 builder.Services.AddSingleton<IFileFormatInspector, FileFormatInspector>();
 builder.Services.AddSingleton<IFileStorageService, FileStorageService>();
+builder.Services.AddSingleton<AuthService>();
 builder.Services.AddHttpClient();
 
 #endregion

@@ -13,7 +13,7 @@ public abstract class BaseController(UserManager<User> userManager) : Controller
     protected async Task<User> GetUserByJwt()
     {
         User? user = await userManager.GetUserAsync(User);
-        return user ?? throw AppExceptionFactory.Create<UnauthorizedException>();
+        return user ?? throw ResponseFactory.Create<UnauthorizedResponse>();
     }
 
     [Authorize] 
@@ -25,6 +25,6 @@ public abstract class BaseController(UserManager<User> userManager) : Controller
         
         string[] baseRoles = [AccessFeatureStruct.UserLogin];
         IEnumerable<string> features = baseRoles.Concat(feature);
-        return user.AccessFeatures.All(af => !features.Contains(af.Name)) ? throw AppExceptionFactory.Create<ForbiddenException>(["You do not have permission to perform this action"]) : user;
+        return user.AccessFeatures.All(af => !features.Contains(af.Name)) ? throw ResponseFactory.Create<ForbiddenResponse>(["You do not have permission to perform this action"]) : user;
     }
 }

@@ -27,6 +27,18 @@ public class DistributorSession : BaseModel
     [Required]
     public int DistributorAccountId { get; set; }
 
+    [Required]
+    [MaxLength(64)]
+    public string RefreshTokenHash { get; set; }
+
+    [Required]
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    [Required]
+    public DateTime ExpiresAt { get; set; } = DateTime.UtcNow.AddDays(30);
+
+    public bool Revoked { get; set; }
+
     /// <summary>
     /// </summary>
     [ForeignKey("DistributorAccountId")]

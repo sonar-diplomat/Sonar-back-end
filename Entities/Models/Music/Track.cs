@@ -14,7 +14,7 @@ public class Track : BaseModel
     [MaxLength(100)]
     public string Title { get; set; }
 
-    public TimeSpan Duration { get; set; }
+    public TimeSpan? Duration { get; set; }
 
     [Required]
     public bool IsExplicit { get; set; }
@@ -26,25 +26,37 @@ public class Track : BaseModel
     public int VisibilityStateId { get; set; }
 
     [Required]
-    public int AudioFileId { get; set; }
-
-    [Required]
     public int CoverId { get; set; }
-
+    
+    [Required]
+    public virtual File.File LowQualityAudioFileId { get; set; }
+    
+    public virtual File.File? MediumQualityAudioFileId { get; set; }
+    
+    public virtual File.File? HighQualityAudioFileId { get; set; }
+    
     /// <summary>
     /// </summary>
+    [ForeignKey("LowQualityAudioFileId")]
+    [DeleteBehavior(DeleteBehavior.Cascade)]
+    public virtual File.File LowQualityAudioFile { get; set; }
+    
+    [ForeignKey("MediumQualityAudioFileId")]
+    [DeleteBehavior(DeleteBehavior.Cascade)]
+    public virtual File.File? MediumQualityAudioFile { get; set; }
+    
+    [ForeignKey("HighQualityAudioFileId")]
+    [DeleteBehavior(DeleteBehavior.Cascade)]
+    public virtual File.File? HighQualityAudioFile { get; set; }
+    
     [ForeignKey("VisibilityStateId")]
     [DeleteBehavior(DeleteBehavior.Cascade)]
     public virtual VisibilityState VisibilityState { get; set; }
-
-    [ForeignKey("AudioFileId")]
-    [DeleteBehavior(DeleteBehavior.Cascade)]
-    public virtual File.File AudioFile { get; set; }
-
+    
     [ForeignKey("CoverId")]
     [DeleteBehavior(DeleteBehavior.Cascade)]
     public virtual File.File Cover { get; set; }
-
+    
     public virtual ICollection<Artist> Artists { get; set; }
     public virtual ICollection<Collection> Collections { get; set; }
     public virtual ICollection<Queue> Queues { get; set; }

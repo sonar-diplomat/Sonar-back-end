@@ -27,4 +27,9 @@ public class AccessFeatureRepository(SonarContext dbContext)
 
         return features;
     }
+
+    public async Task<ICollection<AccessFeature>> GetUserFeaturesByIdAsync(int userId)
+    {
+        return context.Users.Include(u=>u.AccessFeatures).FirstOrDefault(u=>u.Id == userId)!.AccessFeatures;
+    }
 }

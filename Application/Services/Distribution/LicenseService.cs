@@ -12,7 +12,7 @@ public class LicenseService(ILicenseRepository repository, IUserService userServ
     {
         User issuer = await userService.GetByIdValidatedAsync(issuerId);
         if (expirationDate <= DateTime.UtcNow)
-            throw AppExceptionFactory.Create<BadRequestException>(["Expiration date must be in the future."]);
+            throw ResponseFactory.Create<BadRequestResponse>(["Expiration date must be in the future."]);
         
         License license = new()
         {
