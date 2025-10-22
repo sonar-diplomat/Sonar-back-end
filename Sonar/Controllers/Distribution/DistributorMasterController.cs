@@ -13,8 +13,9 @@ public class DistributorMasterController(
     UserManager<User> userManager,
     IDistributorSessionService sessionService,
     IDistributorAccountService accountService,
+    IDistributorService distributorService,
     AuthService authService)
-    : AuthDistributorController(userManager, sessionService, accountService, authService)
+    : AuthDistributorController(userManager, sessionService, accountService, distributorService, authService)
 {
     private readonly IDistributorAccountService accountService = accountService;
 

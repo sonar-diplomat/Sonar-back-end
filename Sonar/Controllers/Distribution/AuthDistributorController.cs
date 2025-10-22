@@ -18,9 +18,10 @@ public class AuthDistributorController(
     UserManager<User> userManager,
     IDistributorSessionService sessionService,
     IDistributorAccountService accountService,
+    IDistributorService distributorService,
     AuthService authService
 )
-    : BaseDistributorController(accountService, userManager)
+    : BaseControllerExtended(userManager, accountService, distributorService)
 {
     private readonly IDistributorAccountService accountService = accountService;
 

@@ -78,4 +78,12 @@ public class DistributorAccountService(IDistributorAccountRepository repository,
 
         return await UpdateAsync(account);
     }
+
+    public async Task<IEnumerable<DistributorAccount>> GetAllByDistributor(Distributor? distributor)
+    {
+        if (distributor == null)
+            throw ResponseFactory.Create<NotFoundResponse>(["Distributor not found"]);
+
+        return await GetAllByDistributor(distributor);
+    }
 }

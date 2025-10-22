@@ -7,7 +7,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Sonar.Controllers;
 
-public abstract class BaseController(UserManager<User> userManager) : ControllerBase
+public abstract class BaseController(
+    UserManager<User> userManager
+) : ControllerBase
 {
     [Authorize]
     protected async Task<User> GetUserByJwt()

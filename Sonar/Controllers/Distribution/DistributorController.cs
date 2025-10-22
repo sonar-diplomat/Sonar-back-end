@@ -63,4 +63,12 @@ public class DistributorController(
         await distributorService.DeleteAsync(distributor);
         throw ResponseFactory.Create<OkResponse>(["Distributor deleted successfully"]);
     }
+
+    [HttpGet("update-key/{id:int}")]
+    public async Task<IActionResult> UpdateLicenseKey(int licenseId)
+    {
+        await CheckAccessFeatures([AccessFeatureStruct.ManageDistributors]);
+        string key = await licenseService.UpdateLicenseKeyAsync(licenseId);
+        throw ResponseFactory.Create<OkResponse<string>>(key, ["Api key updated successfully"]);
+    }
 }
