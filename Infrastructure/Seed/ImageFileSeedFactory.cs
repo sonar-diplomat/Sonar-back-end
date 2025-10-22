@@ -1,20 +1,19 @@
-﻿using File = Entities.Models.File.File;
+﻿using Entities.Models.File;
 
 namespace Infrastructure.Seed;
 
-public class FileSeedFactory
+public class ImageFileSeedFactory
 {
-    public static File[] CreateSeedData()
+    public static ImageFile[] CreateSeedData()
     {
         return new[]
         {
-            new File
+            new ImageFile
             {
                 Id = 1,
                 ItemName = "Default avatar",
                 // TODO: Add url to default user image
-                Url = "",
-                TypeId = 1
+                Url = ""
             }
         };
     }

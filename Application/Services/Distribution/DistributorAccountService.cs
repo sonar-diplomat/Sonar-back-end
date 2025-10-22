@@ -3,7 +3,7 @@ using System.Text;
 using Application.Abstractions.Interfaces.Repository.Distribution;
 using Application.Abstractions.Interfaces.Services;
 using Application.DTOs;
-using Application.Exception;
+using Application.Response;
 using Entities.Models.Distribution;
 
 namespace Application.Services.Distribution;

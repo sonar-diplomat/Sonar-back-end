@@ -1,6 +1,6 @@
 ﻿using Application.Abstractions.Interfaces.Repository.UserExperience;
 using Application.Abstractions.Interfaces.Services;
-using Application.Exception;
+using Application.Response;
 using Entities.Models.UserExperience;
 using Microsoft.EntityFrameworkCore;
 

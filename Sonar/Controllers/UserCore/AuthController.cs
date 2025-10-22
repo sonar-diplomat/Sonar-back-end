@@ -1,8 +1,8 @@
 ﻿using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.Utilities;
 using Application.DTOs;
+using Application.Response;
 using Application.DTOs.Auth;
-using Application.Exception;
 using Entities.Enums;
 using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Authorization;
@@ -62,7 +62,7 @@ public class AuthController(
                 {
                     { "code", code }
                 });
-            
+
             // TODO: What does the frontend need to proceed with data?
             throw ResponseFactory.Create<OkResponse>(["2FA code sent to email"]);
         }
@@ -93,7 +93,7 @@ public class AuthController(
     public async Task<IActionResult> Verify2Fa([FromBody] Verify2FaDTO dto)
     {
         User user = await CheckAccessFeatures([]);
-        
+
         bool isValid = await userManager.VerifyTwoFactorTokenAsync(
             user,
             TokenOptions.DefaultEmailProvider,
@@ -208,14 +208,14 @@ public class AuthController(
     {
         User user = await CheckAccessFeatures([]);
 
-        //// ??????? TODO
-        //if (user.Email != null && await userManager.GetTwoFactorEnabledAsync(user))
-        //{
-        string resetToken = await userManager.GeneratePasswordResetTokenAsync(user);
-        string resetLink = $"{frontEndUrl}/approve-change/{resetToken}";
+        // ??????? TODO
+        if (user.Email != null && await userManager.GetTwoFactorEnabledAsync(user))
+        {
+            string resetToken = await userManager.GeneratePasswordResetTokenAsync(user);
+            string resetLink = $"{frontEndUrl}/approve-change/{resetToken}";
 
 
-        await emailSenderService.SendEmailAsync(
+            await emailSenderService.SendEmailAsync(
                 user.Email,
                 MailGunTemplates.passwordRecovery,
                 new Dictionary<string, string>
@@ -234,7 +234,7 @@ public class AuthController(
     [HttpPost("sessions/{sessionId:int}/revoke")]
     public async Task<IActionResult> RevokeSessionAsync(int sessionId)
     {
-        await CheckAccessFeatures([]);
+        User user = await CheckAccessFeatures([]);
         UserSession session = await userSessionService.GetByIdValidatedAsync(sessionId);
         if (session.UserId == user.Id)
             await userSessionService.RevokeSessionAsync(session);
@@ -258,6 +258,7 @@ public class AuthController(
     public async Task<IActionResult> GetSessions()
     {
         User user = await CheckAccessFeatures([]);
-        throw ResponseFactory.Create<OkResponse<IEnumerable<ActiveSessionDTO>>>( await userSessionService.GetAllByUserIdAsync(user.Id), ["Sessions retrieved successfully"]);
+        throw ResponseFactory.Create<OkResponse<IEnumerable<ActiveSessionDTO>>>(
+            await userSessionService.GetAllByUserIdAsync(user.Id), ["Sessions retrieved successfully"]);
     }
 }

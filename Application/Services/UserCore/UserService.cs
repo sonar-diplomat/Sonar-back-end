@@ -1,11 +1,11 @@
 ﻿using Application.Abstractions.Interfaces.Repository.UserCore;
 using Application.Abstractions.Interfaces.Services;
+using Application.Abstractions.Interfaces.Services.File;
 using Application.DTOs;
+using Application.Response;
 using Application.DTOs.Auth;
-using Application.Exception;
 using Entities.Models.Access;
 using Entities.Models.UserCore;
-using Entities.Models.UserExperience;
 using Microsoft.AspNetCore.Http;
 
 namespace Application.Services.UserCore;
@@ -17,8 +17,7 @@ public class UserService(
     IAccessFeatureService accessFeatureService,
     ISettingsService settingsService,
     IUserStateService stateService,
-    IFileService fileService,
-    IFileTypeService fileTypeService
+    IImageFileService imageFileService
 )
     : IUserService
 {
@@ -91,12 +90,12 @@ public class UserService(
             StatusId = 1
         };
         await visibilityStateService.CreateAsync(tempVs);
-        user.VisibilityState = tempVs;        
+        user.VisibilityState = tempVs;
         user.Inventory = await inventoryService.CreateDefaultAsync();
         user.AccessFeatures = await accessFeatureService.GetDefaultAsync();
         user.Settings = await settingsService.CreateDefaultAsync(model.Locale);
         user.UserState = await stateService.CreateDefaultAsync();
-        user.AvatarImage = await fileService.GetDefaultAsync();
+        user.AvatarImage = await imageFileService.GetDefaultAsync();
         return user;
     }
 
@@ -111,9 +110,9 @@ public class UserService(
         User user = await GetByIdValidatedAsync(userId);
         int oldAvatarId = user.AvatarImageId;
         if (oldAvatarId != 1)
-            await fileService.DeleteAsync(oldAvatarId);
+            await imageFileService.DeleteAsync(oldAvatarId);
 
-        user.AvatarImage = await fileService.UploadFileAsync(await fileTypeService.GetByNameAsync("Image"), file);
+        user.AvatarImage = await imageFileService.UploadFileAsync(file);
         await repository.UpdateAsync(user);
     }
 

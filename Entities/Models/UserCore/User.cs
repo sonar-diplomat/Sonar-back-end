@@ -4,6 +4,7 @@ using Entities.Models.Access;
 using Entities.Models.Chat;
 using Entities.Models.ClientSettings;
 using Entities.Models.Distribution;
+using Entities.Models.File;
 using Entities.Models.Music;
 using Entities.Models.UserExperience;
 using Microsoft.AspNetCore.Identity;
@@ -76,7 +77,7 @@ public class User : IdentityUser<int>
     public virtual VisibilityState VisibilityState { get; set; }
 
     [ForeignKey("AvatarImageId")]
-    public virtual File.File AvatarImage { get; set; }
+    public virtual ImageFile AvatarImage { get; set; }
 
     [ForeignKey("SubscriptionPackId")]
     public virtual SubscriptionPack? SubscriptionPack { get; set; }
@@ -90,7 +91,6 @@ public class User : IdentityUser<int>
     public virtual Settings Settings { get; set; }
 
     [ForeignKey("InventoryId")]
-
     [DeleteBehavior(DeleteBehavior.Cascade)]
     public virtual Inventory Inventory { get; set; }
 

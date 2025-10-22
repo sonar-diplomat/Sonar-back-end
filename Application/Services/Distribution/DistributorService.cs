@@ -1,7 +1,6 @@
 ﻿using Application.Abstractions.Interfaces.Repository.Distribution;
 using Application.Abstractions.Interfaces.Services;
 using Application.DTOs;
-using Application.Exception;
 using Entities.Models.Distribution;
 
 namespace Application.Services.Distribution;
@@ -25,7 +24,7 @@ public class DistributorService(IDistributorRepository repository)
             CoverId = coverId,
             LicenseId = licenseId
         };
-        
+
         return await repository.AddAsync(distributor);
     }
 

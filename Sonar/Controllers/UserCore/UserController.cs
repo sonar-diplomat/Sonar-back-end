@@ -1,6 +1,7 @@
 using Application.Abstractions.Interfaces.Services;
+using Application.Abstractions.Interfaces.Services.File;
 using Application.DTOs;
-using Application.Exception;
+using Application.Response;
 using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -13,8 +14,7 @@ namespace Sonar.Controllers.UserCore;
 public class UserController(
     IUserService userService,
     UserManager<User> userManager,
-    IFileService fileService,
-    IFileTypeService fileTypeService
+    IImageFileService imageFileService
 )
     : BaseController(userManager)
 {
@@ -47,7 +47,7 @@ public class UserController(
     [Consumes("multipart/form-data")]
     public async Task<IActionResult> Index([FromForm] IFormFile file)
     {
-        FileModel fileModel = await fileService.UploadFileAsync(await fileTypeService.GetByNameAsync("image"), file);
+        FileModel fileModel = await imageFileService.UploadFileAsync(file);
         throw ResponseFactory.Create<CreatedResponse<FileModel>>(fileModel, ["File uploaded successfully"]);
     }
 }

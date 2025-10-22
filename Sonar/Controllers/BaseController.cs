@@ -1,4 +1,4 @@
-﻿using Application.Exception;
+﻿using Application.Response;
 using Entities.Enums;
 using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Authorization;
@@ -16,15 +16,17 @@ public abstract class BaseController(UserManager<User> userManager) : Controller
         return user ?? throw ResponseFactory.Create<UnauthorizedResponse>();
     }
 
-    [Authorize] 
+    [Authorize]
     protected async Task<User> CheckAccessFeatures(string[] feature)
     {
         User user = await GetUserByJwt();
         if (user.AccessFeatures.FirstOrDefault(af => af.Name == AccessFeatureStruct.IamAGod) != null)
             return user;
-        
+
         string[] baseRoles = [AccessFeatureStruct.UserLogin];
         IEnumerable<string> features = baseRoles.Concat(feature);
-        return user.AccessFeatures.All(af => !features.Contains(af.Name)) ? throw ResponseFactory.Create<ForbiddenResponse>(["You do not have permission to perform this action"]) : user;
+        return user.AccessFeatures.All(af => !features.Contains(af.Name))
+            ? throw ResponseFactory.Create<ForbiddenResponse>(["You do not have permission to perform this action"])
+            : user;
     }
 }

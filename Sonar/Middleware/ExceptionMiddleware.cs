@@ -1,5 +1,5 @@
 ﻿using System.Text.Json;
-using Application.Exception;
+using Application.Response;
 
 namespace Sonar.Middleware;
 
@@ -10,7 +10,7 @@ public class ExceptionMiddleware(RequestDelegate next)
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         Converters = { new ResponseJsonConverter() }
     };
-    
+
     public async Task InvokeAsync(HttpContext context)
     {
         try
@@ -26,7 +26,7 @@ public class ExceptionMiddleware(RequestDelegate next)
     private static async Task HandleExceptionAsync(HttpContext context, Exception ex)
     {
         if (ex is not Response appResponse) throw ex;
-        
+
         context.Response.ContentType = "application/json";
         context.Response.StatusCode = appResponse.StatusCode;
         string json = JsonSerializer.Serialize(appResponse, SerializerOptions);

@@ -1,12 +1,11 @@
-﻿using Entities.Models.File;
+﻿using FileSignatures;
 using Microsoft.AspNetCore.Http;
 using FileModel = Entities.Models.File.File;
 
 namespace Application.Abstractions.Interfaces.Services;
 
-public interface IFileService : IGenericService<FileModel>
+public interface IFileService<T> where T : FileModel
 {
-    Task<FileStream?> GetMusicStreamAsync(int trackId, long? startByte, long? length);
-    Task<FileModel> GetDefaultAsync();
-    Task<FileModel> UploadFileAsync(FileType fileType, IFormFile file);
+    Task DeleteAsync(int id);
+    Task<FileFormat> ValidateFileType(IFormFile file, Type[] permittedFormats);
 }

@@ -46,8 +46,10 @@ public class SonarContext(DbContextOptions<SonarContext> options)
     public DbSet<License> Licenses { get; set; } = null!;
 
     // File
-    public DbSet<File.File> Files { get; set; } = null!;
-    public DbSet<File.FileType> FileTypes { get; set; } = null!;
+    public DbSet<File.AudioFile> AudioFiles { get; set; } = null!;
+    public DbSet<File.ImageFile> ImageFiles { get; set; } = null!;
+    public DbSet<File.VideoFile> VideoFiles { get; set; } = null!;
+
 
     // Library
     public DbSet<Folder> Folders { get; set; } = null!;
@@ -100,10 +102,8 @@ public class SonarContext(DbContextOptions<SonarContext> options)
             .HasData(PlaybackQualitySeedFactory.CreateSeedData());
         builder.Entity<AchievementCategory>()
             .HasData(AchievementCategorySeedFactory.CreateSeedData());
-        builder.Entity<File.FileType>()
-            .HasData(FileTypeSeedFactory.CreateSeedData());
-        builder.Entity<File.File>()
-            .HasData(FileSeedFactory.CreateSeedData());
+        builder.Entity<File.ImageFile>()
+            .HasData(ImageFileSeedFactory.CreateSeedData());
         builder.Entity<VisibilityStatus>()
             .HasData(VisibilityStatusSeedFactory.CreateSeedData());
         builder.Entity<GiftStyle>()

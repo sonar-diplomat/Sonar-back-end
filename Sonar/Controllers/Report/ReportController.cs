@@ -1,6 +1,6 @@
 using Application.Abstractions.Interfaces.Services;
 using Application.DTOs;
-using Application.Exception;
+using Application.Response;
 using Entities.Enums;
 using Entities.Models.Report;
 using Entities.Models.UserCore;
@@ -99,7 +99,8 @@ public class ReportController(
     {
         IEnumerable<ReportReasonType> reasonTypes =
             await reportReasonTypeService.GetAllAsync();
-        throw ResponseFactory.Create<OkResponse<IEnumerable<ReportReasonType>>>(reasonTypes, ["Reason types retrieved successfully"]);
+        throw ResponseFactory.Create<OkResponse<IEnumerable<ReportReasonType>>>(reasonTypes,
+            ["Reason types retrieved successfully"]);
     }
 
     [HttpGet("reason-types/{id}")]
@@ -118,7 +119,8 @@ public class ReportController(
     {
         IEnumerable<ReportableEntityType> entityTypes =
             await reportableEntityTypeService.GetAllAsync();
-        throw ResponseFactory.Create<OkResponse<IEnumerable<ReportableEntityType>>>(entityTypes, ["Entity types retrieved successfully"]);
+        throw ResponseFactory.Create<OkResponse<IEnumerable<ReportableEntityType>>>(entityTypes,
+            ["Entity types retrieved successfully"]);
     }
 
     [HttpGet("entity-types/{id}")]
@@ -127,7 +129,8 @@ public class ReportController(
         ReportableEntityType entityType =
             await reportableEntityTypeService.GetByIdValidatedAsync(id);
 
-        throw ResponseFactory.Create<OkResponse<ReportableEntityType>>(entityType, ["Entity type retrieved successfully"]);
+        throw ResponseFactory.Create<OkResponse<ReportableEntityType>>(entityType,
+            ["Entity type retrieved successfully"]);
     }
 
     #endregion
