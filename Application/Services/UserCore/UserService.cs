@@ -1,6 +1,7 @@
 ﻿using Application.Abstractions.Interfaces.Repository.UserCore;
 using Application.Abstractions.Interfaces.Services;
 using Application.DTOs;
+using Application.DTOs.Auth;
 using Application.Exception;
 using Entities.Models.Access;
 using Entities.Models.UserCore;

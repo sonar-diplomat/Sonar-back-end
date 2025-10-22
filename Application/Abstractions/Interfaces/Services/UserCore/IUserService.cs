@@ -1,4 +1,5 @@
 ﻿using Application.DTOs;
+using Application.DTOs.Auth;
 using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Http;
 

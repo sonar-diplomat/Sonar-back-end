@@ -1,6 +1,7 @@
 ﻿using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.Utilities;
 using Application.DTOs;
+using Application.DTOs.Auth;
 using Application.Exception;
 using Entities.Enums;
 using Entities.Models.UserCore;
@@ -84,9 +85,8 @@ public class AuthController(
         };
 
         // Save refresh token to user
-        user.UserSessions.Add(session);
-        await userManager.UpdateAsync(user);
-        throw ResponseFactory.Create<OkResponse<(string, string, int)>>((accessToken, refreshToken, session.Id), ["Login successful"]);
+        await userSessionService.CreateAsync(session);
+        throw ResponseFactory.Create<OkResponse<LoginResponseDTO>>(new LoginResponseDTO(accessToken, refreshToken, session.Id), ["Login successful"]);
     }
 
     [HttpPost("verify-2fa")]
@@ -135,7 +135,8 @@ public class AuthController(
         throw ResponseFactory.Create<OkResponse<(string, string)>>((newAccessToken, refreshToken), ["Token refreshed successfully"]);
     }
 
-    [HttpGet]
+    [Authorize]
+    [HttpPost("request-email-change")]
     public async Task<IActionResult> GetMailChangeToken([FromBody] string newEmail)
     {
         User user = await CheckAccessFeatures([]);
@@ -159,22 +160,22 @@ public class AuthController(
     }
 
     [HttpPost("confirm-email-change")]
-    public async Task<IActionResult> ConfirmEmailChange(string email, string token)
+    public async Task<IActionResult> ConfirmEmailChange([FromBody]ConfigmEmailChangeDTO changeDTO)
     {
         User user = await CheckAccessFeatures([]);
 
-        IdentityResult result = await userManager.ChangeEmailAsync(user, email, token);
+        IdentityResult result = await userManager.ChangeEmailAsync(user, changeDTO.email, changeDTO.token);
 
         if (!result.Succeeded)
             throw ResponseFactory.Create<BadRequestResponse>(result.Errors.Select(e => e.ToString()).ToArray()!);
 
-        await userManager.SetUserNameAsync(user, email);
+        await userManager.SetUserNameAsync(user, changeDTO.email);
 
         throw ResponseFactory.Create<OkResponse>(["Email successfully changed"]);
     }
 
     [Authorize]
-    [HttpPost("change-password")]
+    [HttpPost("confirm-password-change")]
     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDTO dto)
     {
         User user = await CheckAccessFeatures([]);
@@ -202,19 +203,19 @@ public class AuthController(
     }
 
     [Authorize]
-    [HttpPost]
+    [HttpPost("request-password-change")]
     public async Task<IActionResult> RequestPasswordChange()
     {
         User user = await CheckAccessFeatures([]);
 
-        // ??????? TODO
-        if (user.Email != null && await userManager.GetTwoFactorEnabledAsync(user))
-        {
-            string resetToken = await userManager.GeneratePasswordResetTokenAsync(user);
-            string resetLink = $"{frontEndUrl}/approve-change/{resetToken}";
+        //// ??????? TODO
+        //if (user.Email != null && await userManager.GetTwoFactorEnabledAsync(user))
+        //{
+        string resetToken = await userManager.GeneratePasswordResetTokenAsync(user);
+        string resetLink = $"{frontEndUrl}/approve-change/{resetToken}";
 
 
-            await emailSenderService.SendEmailAsync(
+        await emailSenderService.SendEmailAsync(
                 user.Email,
                 MailGunTemplates.passwordRecovery,
                 new Dictionary<string, string>
@@ -230,12 +231,15 @@ public class AuthController(
     }
 
     [Authorize]
-    [HttpPost("{sessionId:int}/revoke")]
+    [HttpPost("sessions/{sessionId:int}/revoke")]
     public async Task<IActionResult> RevokeSessionAsync(int sessionId)
     {
         await CheckAccessFeatures([]);
         UserSession session = await userSessionService.GetByIdValidatedAsync(sessionId);
-        await userSessionService.RevokeSessionAsync(session);
+        if (session.UserId == user.Id)
+            await userSessionService.RevokeSessionAsync(session);
+        else
+            throw ResponseFactory.Create<ForbiddenResponse>(["Invalid session"]);
         throw ResponseFactory.Create<OkResponse>(["Session revoked successfully"]);
     }
 
