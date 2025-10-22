@@ -2,7 +2,7 @@
 using System.Text;
 using System.Text.Json;
 using Application.Abstractions.Interfaces.Services.Utilities;
-using Application.Exception;
+using Application.Response;
 using Entities.Enums;
 
 namespace Application.Services.Utilities;
@@ -21,7 +21,7 @@ public class MailgunEmailService(MailgunSettings options, HttpClient httpClient)
         Dictionary<string, string>? variables = null)
     {
         if (!MailGunTemplates.IsValidTemplate(template))
-            throw AppExceptionFactory.Create<ExpectationFailedException>(["Invalid email template"]);
+            throw ResponseFactory.Create<ExpectationFailedResponse>(["Invalid email template"]);
 
         string base64String = Convert.ToBase64String(Encoding.ASCII.GetBytes($"api:{options.ApiKey}"));
         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(@"Basic", base64String);
@@ -37,6 +37,6 @@ public class MailgunEmailService(MailgunSettings options, HttpClient httpClient)
             await httpClient.PostAsync("https://api.mailgun.net/v3/" + options.Domain + "/messages", postData);
         string response = await request.Content.ReadAsStringAsync();
         if (!request.IsSuccessStatusCode)
-            throw AppExceptionFactory.Create<ExpectationFailedException>([$"Failed to send email: {response}"]);
+            throw ResponseFactory.Create<ExpectationFailedResponse>([$"Failed to send email: {response}"]);
     }
 }

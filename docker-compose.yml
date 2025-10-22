@@ -9,7 +9,7 @@ services:
       - "8080:8080"
       - "8081:8081"
     environment:
-      ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=sonardb;Username=sonaruser;Password=sonarpass"
+      ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=sonardb;UserName=sonaruser;Password=sonarpass"
     depends_on:
       - db
 

@@ -1,14 +1,21 @@
 using Application.Abstractions.Interfaces.Services;
+using Application.Abstractions.Interfaces.Services.File;
 using Application.DTOs;
+using Application.Response;
 using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using FileModel = Entities.Models.File.File;
 
 namespace Sonar.Controllers.UserCore;
 
 [Route("api/[controller]")]
 [ApiController]
-public class UserController(IUserService userService, UserManager<User> userManager)
+public class UserController(
+    IUserService userService,
+    UserManager<User> userManager,
+    IImageFileService imageFileService
+)
     : BaseController(userManager)
 {
     // GET: api/User
@@ -16,22 +23,31 @@ public class UserController(IUserService userService, UserManager<User> userMana
     public async Task<ActionResult<IEnumerable<User>>> GetUsers()
     {
         IEnumerable<User> users = await userService.GetAllAsync();
-        return Ok(users);
+        throw ResponseFactory.Create<OkResponse<IEnumerable<User>>>(users, ["Users retrieved successfully"]);
     }
 
     // GET: api/User/5
     [HttpGet("{id}")]
     public async Task<ActionResult<User>> GetUser(int id)
     {
+        //TODO set to UserPublicDTO
         User user = await userService.GetByIdAsync(id);
-        return Ok(user);
+        throw ResponseFactory.Create<OkResponse<User>>(user, ["User retrieved successfully"]);
     }
 
     [HttpPut("update")]
     public async Task<IActionResult> PatchUser(UserUpdateDTO request)
     {
-        User user = await GetUserByJwt();
+        User user = await CheckAccessFeatures([]);
         user = await userService.UpdateUserAsync(user.Id, request);
-        return Ok(user);
+        throw ResponseFactory.Create<OkResponse<User>>(user, ["User updated successfully"]);
+    }
+
+    [HttpPost("update-avatar")]
+    [Consumes("multipart/form-data")]
+    public async Task<IActionResult> Index([FromForm] IFormFile file)
+    {
+        FileModel fileModel = await imageFileService.UploadFileAsync(file);
+        throw ResponseFactory.Create<CreatedResponse<FileModel>>(fileModel, ["File uploaded successfully"]);
     }
 }

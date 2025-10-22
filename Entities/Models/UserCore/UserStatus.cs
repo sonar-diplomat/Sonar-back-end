@@ -8,5 +8,5 @@ public class UserStatus : BaseModel
 {
     [Required]
     [MaxLength(50)]
-    public string Name { get; set; } //online   offline  dontDisturb  inactive/idle
+    public string Name { get; set; }
 }

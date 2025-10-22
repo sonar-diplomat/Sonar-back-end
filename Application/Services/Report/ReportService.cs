@@ -1,7 +1,7 @@
 ﻿using Application.Abstractions.Interfaces.Repository.Report;
 using Application.Abstractions.Interfaces.Services;
 using Application.DTOs;
-using Application.Exception;
+using Application.Response;
 using Entities.Models.Report;
 using Microsoft.EntityFrameworkCore;
 using ReportModel = Entities.Models.Report.Report;
@@ -26,7 +26,7 @@ public class ReportService(
         }
 
         if (reasonTypes.Any(rt => rt == null))
-            throw AppExceptionFactory.Create<BadRequestException>();
+            throw ResponseFactory.Create<BadRequestResponse>();
 
         ReportModel report = new()
         {

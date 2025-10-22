@@ -1,10 +1,12 @@
 ﻿using Application.Abstractions.Interfaces.Repository.UserCore;
 using Application.Abstractions.Interfaces.Services;
+using Application.Abstractions.Interfaces.Services.File;
 using Application.DTOs;
-using Application.Exception;
+using Application.Response;
+using Application.DTOs.Auth;
 using Entities.Models.Access;
 using Entities.Models.UserCore;
-using Entities.Models.UserExperience;
+using Microsoft.AspNetCore.Http;
 
 namespace Application.Services.UserCore;
 
@@ -15,15 +17,15 @@ public class UserService(
     IAccessFeatureService accessFeatureService,
     ISettingsService settingsService,
     IUserStateService stateService,
-    IFileService fileService
+    IImageFileService imageFileService
 )
     : IUserService
 {
     public async Task<int> ChangeCurrencyAsync(int userId, int modifier)
     {
         User user = await GetByIdAsync(userId);
-        if (user == null) // TODO: create a custom exception for user without creating the dictionary object
-            throw AppExceptionFactory.Create<NotFoundException>(["User not found."]);
+        if (user == null)
+            throw ResponseFactory.Create<NotFoundResponse>(["User not found."]);
         user.AvailableCurrency += modifier;
         return user.AvailableCurrency;
     }
@@ -60,14 +62,14 @@ public class UserService(
         return await repository.UpdateAsync(user);
     }
 
-    public async Task ChangeUsernameAsync(int userId, string newUsername)
+    public async Task ChangeUserNameAsync(int userId, string newUserName)
     {
         User user = await GetByIdAsync(userId);
-        if (user.Username == newUsername)
-            throw AppExceptionFactory.Create<BadRequestException>(["Username is already set to this value."]);
-        if (await repository.IsUsernameTakenAsync(newUsername))
-            throw AppExceptionFactory.Create<BadRequestException>(["Username is already taken."]);
-        user.Username = newUsername;
+        if (user.UserName == newUserName)
+            throw ResponseFactory.Create<BadRequestResponse>(["UserName is already set to this value."]);
+        if (await repository.IsUserNameTakenAsync(newUserName))
+            throw ResponseFactory.Create<BadRequestResponse>(["UserName is already taken."]);
+        user.UserName = newUserName;
         await repository.UpdateAsync(user);
     }
 
@@ -78,7 +80,7 @@ public class UserService(
             FirstName = model.FirstName,
             LastName = model.LastName,
             DateOfBirth = model.DateOfBirth,
-            Username = model.Username,
+            UserName = model.UserName,
             Login = model.Login,
             Email = model.Email
         };
@@ -89,27 +91,36 @@ public class UserService(
         };
         await visibilityStateService.CreateAsync(tempVs);
         user.VisibilityState = tempVs;
-        Inventory tempI = new() { User = user };
-        await inventoryService.CreateAsync(tempI);
-        user.Inventory = tempI;
+        user.Inventory = await inventoryService.CreateDefaultAsync();
         user.AccessFeatures = await accessFeatureService.GetDefaultAsync();
         user.Settings = await settingsService.CreateDefaultAsync(model.Locale);
         user.UserState = await stateService.CreateDefaultAsync();
-        user.AvatarImage = await fileService.GetDefaultAsync();
+        user.AvatarImage = await imageFileService.GetDefaultAsync();
         return user;
     }
 
     public async Task<User> GetByIdValidatedAsync(int id)
     {
         User? user = await repository.GetByIdAsync(id);
-        return user ?? throw AppExceptionFactory.Create<NotFoundException>(["User not found."]);
+        return user ?? throw ResponseFactory.Create<NotFoundResponse>(["User not found."]);
+    }
+
+    public async Task UpdateAvatar(int userId, IFormFile file)
+    {
+        User user = await GetByIdValidatedAsync(userId);
+        int oldAvatarId = user.AvatarImageId;
+        if (oldAvatarId != 1)
+            await imageFileService.DeleteAsync(oldAvatarId);
+
+        user.AvatarImage = await imageFileService.UploadFileAsync(file);
+        await repository.UpdateAsync(user);
     }
 
     public async Task<bool> DeleteUserAsync(int userId)
     {
         User? user = await GetByIdAsync(userId);
         if (user == null)
-            throw AppExceptionFactory.Create<NotFoundException>();
+            throw ResponseFactory.Create<NotFoundResponse>();
 
         await repository.RemoveAsync(user);
         return true;

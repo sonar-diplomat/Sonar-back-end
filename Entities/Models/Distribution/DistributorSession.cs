@@ -25,13 +25,25 @@ public class DistributorSession : BaseModel
     public DateTime LastActive { get; set; }
 
     [Required]
-    public int DistributorId { get; set; }
+    public int DistributorAccountId { get; set; }
+
+    [Required]
+    [MaxLength(64)]
+    public string RefreshTokenHash { get; set; }
+
+    [Required]
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    [Required]
+    public DateTime ExpiresAt { get; set; } = DateTime.UtcNow.AddDays(30);
+
+    public bool Revoked { get; set; }
 
     /// <summary>
-    ///     <summary>
-    [ForeignKey("DistributorId")]
+    /// </summary>
+    [ForeignKey("DistributorAccountId")]
     [DeleteBehavior(DeleteBehavior.NoAction)]
-    public virtual Distributor Distributor { get; set; }
+    public virtual DistributorAccount DistributorAccount { get; set; }
 
     [NotMapped]
     public IPAddress IPAddress

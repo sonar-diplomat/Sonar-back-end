@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Entities.Models.File;
 using Entities.Models.Music;
 using Microsoft.EntityFrameworkCore;
 
@@ -20,6 +21,11 @@ public class Distributor : BaseModel
     public string Description { get; set; }
 
     [Required]
+    [EmailAddress]
+    [MaxLength(200)]
+    public string ContactEmail { get; set; }
+
+    [Required]
     public int LicenseId { get; set; }
 
     [Required]
@@ -33,8 +39,8 @@ public class Distributor : BaseModel
 
     [ForeignKey("CoverId")]
     [DeleteBehavior(DeleteBehavior.Cascade)]
-    public virtual File.File Cover { get; set; }
+    public virtual ImageFile Cover { get; set; }
 
-    public virtual ICollection<DistributorSession> Sessions { get; set; }
+    public virtual ICollection<DistributorAccount> Accounts { get; set; }
     public virtual ICollection<Album> Albums { get; set; }
 }

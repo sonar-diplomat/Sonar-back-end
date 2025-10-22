@@ -1,18 +1,14 @@
-﻿using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Security.Cryptography;
-using System.Text;
-using Application.Abstractions.Interfaces.Services;
+﻿using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.Utilities;
 using Application.DTOs;
-using Application.Exception;
+using Application.Response;
+using Application.DTOs.Auth;
 using Entities.Enums;
 using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 using SignInResult = Microsoft.AspNetCore.Identity.SignInResult;
 
 namespace Sonar.Controllers.UserCore;
@@ -24,7 +20,9 @@ public class AuthController(
     SignInManager<User> signInManager,
     IConfiguration configuration,
     IUserService userService,
-    IEmailSenderService emailSenderService
+    IEmailSenderService emailSenderService,
+    IUserSessionService userSessionService,
+    AuthService authService
 )
     : BaseController(userManager)
 {
@@ -34,16 +32,11 @@ public class AuthController(
     [HttpPost("register")]
     public async Task<IActionResult> Register(UserRegisterDTO model)
     {
-        try
-        {
-            User user = await userService.CreateUserShellAsync(model);
-            IdentityResult result = await userManager.CreateAsync(user, model.Password);
-            return Ok(result.Succeeded ? new { message = "Registration successful" } : new { message = "Registration failed" });
-        }
-        catch (Exception)
-        {
-            throw AppExceptionFactory.Create<BadRequestException>(["Request contents were not sufficient to complete registration"]);
-        }
+        User user = await userService.CreateUserShellAsync(model);
+        IdentityResult result = await userManager.CreateAsync(user, model.Password);
+        if (result.Succeeded)
+            throw ResponseFactory.Create<OkResponse>("Registration successfull");
+        throw ResponseFactory.Create<OkResponse>("Registration failed");
     }
 
     [HttpPost("login")]
@@ -52,15 +45,14 @@ public class AuthController(
         User? user = await userManager.Users
             .FirstOrDefaultAsync(u => u.UserName == userIdentifier || u.Email == userIdentifier);
 
-        // TODO: Тимоша вызовет исключение
-        if (user == null) return BadRequest("Invalid credentials");
+        if (user == null) ResponseFactory.Create<BadRequestResponse>([$"User {userIdentifier} not found"]);
 
         SignInResult result = await signInManager.CheckPasswordSignInAsync(
-            user, password, false);
+            user!, password, false);
 
-        if (!result.Succeeded) throw new NotImplementedException();
+        if (!result.Succeeded) ResponseFactory.Create<ExpectationFailedResponse>();
 
-        if (user.Enabled2FA)
+        if (user!.Enabled2FA)
         {
             string code = await userManager.GenerateTwoFactorTokenAsync(user, TokenOptions.DefaultEmailProvider);
             await emailSenderService.SendEmailAsync(
@@ -71,36 +63,36 @@ public class AuthController(
                     { "code", code }
                 });
 
-            return Ok(new
-            {
-                require2FA = true,
-                message = "Verification code sent to your email."
-            });
+            // TODO: What does the frontend need to proceed with data?
+            throw ResponseFactory.Create<OkResponse>(["2FA code sent to email"]);
         }
 
         // Generate both tokens
-        string accessToken = GenerateJwtToken(user);
-        RefreshToken refreshToken = GenerateRefreshToken();
-        // Save refresh token to user
-        user.RefreshTokens.Add(refreshToken);
-        await userManager.UpdateAsync(user);
-        return Ok(new
-        {
-            accessToken,
-            refreshToken = refreshToken.Token
-        });
+        string accessToken = authService.GenerateJwtToken(user.Email, user.Login);
+        string refreshToken = authService.GenerateRefreshToken();
 
-        // TODO: Тимоша вызовет исключение
+        UserSession session = new()
+        {
+            UserId = user.Id,
+            DeviceName = Request.Headers["X-Device-Name"].ToString() ?? "Unknown device",
+            UserAgent = Request.Headers["User-Agent"].ToString() ?? "Unknown",
+            IPAddress = HttpContext.Connection.RemoteIpAddress!,
+            RefreshTokenHash = authService.ComputeSha256(refreshToken),
+            ExpiresAt = DateTime.UtcNow.AddDays(30),
+            CreatedAt = DateTime.UtcNow,
+            LastActive = DateTime.UtcNow,
+            Revoked = false
+        };
+
+        // Save refresh token to user
+        await userSessionService.CreateAsync(session);
+        throw ResponseFactory.Create<OkResponse<LoginResponseDTO>>(new LoginResponseDTO(accessToken, refreshToken, session.Id), ["Login successful"]);
     }
 
     [HttpPost("verify-2fa")]
     public async Task<IActionResult> Verify2Fa([FromBody] Verify2FaDTO dto)
     {
-        User? user = await userManager.Users
-            .FirstOrDefaultAsync(u => u.Email == dto.Email);
-
-        if (user == null)
-            return BadRequest("Invalid credentials");
+        User user = await CheckAccessFeatures([]);
 
         bool isValid = await userManager.VerifyTwoFactorTokenAsync(
             user,
@@ -108,81 +100,85 @@ public class AuthController(
             dto.Code);
 
         if (!isValid)
-            return BadRequest("Invalid or expired code");
-
+            throw ResponseFactory.Create<BadRequestResponse>(["Invalid or expired code"]);
 
         // Generate both tokens
-        string accessToken = GenerateJwtToken(user);
-        RefreshToken refreshToken = GenerateRefreshToken();
-        // Save refresh token to user
-        user.RefreshTokens.Add(refreshToken);
-        await userManager.UpdateAsync(user);
-        return Ok(new
+        string accessToken = authService.GenerateJwtToken(user.Email, user.Login);
+        string refreshToken = authService.GenerateRefreshToken();
+
+        UserSession session = new()
         {
-            accessToken,
-            refreshToken = refreshToken.Token
-        });
+            UserId = user.Id,
+            DeviceName = Request.Headers["X-Device-Name"].ToString() ?? "Unknown device",
+            UserAgent = Request.Headers["User-Agent"].ToString() ?? "Unknown",
+            IPAddress = HttpContext.Connection.RemoteIpAddress!,
+            RefreshTokenHash = authService.ComputeSha256(refreshToken),
+            ExpiresAt = DateTime.UtcNow.AddDays(30),
+            CreatedAt = DateTime.UtcNow,
+            LastActive = DateTime.UtcNow,
+            Revoked = false
+        };
+
+        // Save refresh token to user
+        user.UserSessions.Add(session);
+        await userManager.UpdateAsync(user);
+        throw ResponseFactory.Create<OkResponse<(string, string)>>((accessToken, refreshToken), ["Login successful"]);
     }
 
-    [HttpGet]
+    [HttpPost("refresh-token")]
+    public async Task<IActionResult> RefreshToken([FromBody] string refreshToken)
+    {
+        string refreshHash = authService.ComputeSha256(refreshToken);
+        UserSession session = await userSessionService.GetValidatedByRefreshTokenAsync(refreshHash);
+        await userSessionService.UpdateLastActiveAsync(session);
+        string newAccessToken = authService.GenerateJwtToken(session.User.Email, session.User.Login);
+        throw ResponseFactory.Create<OkResponse<(string, string)>>((newAccessToken, refreshToken), ["Token refreshed successfully"]);
+    }
+
+    [Authorize]
+    [HttpPost("request-email-change")]
     public async Task<IActionResult> GetMailChangeToken([FromBody] string newEmail)
     {
-        // TODO: Add login
-        User? user = new(); // await userService.GetUserByLogin("login");  // userLogin
-        if (user == null)
-            // TODO: Тимоша вызывает исключение
-            throw new Exception("User not found");
+        User user = await CheckAccessFeatures([]);
 
-        try
-        {
-            string token = await userManager.GenerateChangeEmailTokenAsync(user, newEmail);
+        string token = await userManager.GenerateChangeEmailTokenAsync(user, newEmail);
 
-            string confirmationLink =
-                $"{frontEndUrl}/confirm-email-change?userId={user.Id}&email={newEmail}&token={Uri.EscapeDataString(token)}";
+        string confirmationLink =
+            $"{frontEndUrl}/confirm-email-change?userId={user.Id}&email={newEmail}&token={Uri.EscapeDataString(token)}";
 
-            await emailSenderService.SendEmailAsync(
-                newEmail,
-                MailGunTemplates.confirmEmail,
-                new Dictionary<string, string>
-                {
-                    { "link", confirmationLink }
-                }
-            );
-        }
-        catch (Exception)
-        {
-            throw new NotImplementedException();
-        }
+        await emailSenderService.SendEmailAsync(
+            newEmail,
+            MailGunTemplates.confirmEmail,
+            new Dictionary<string, string>
+            {
+                { "link", confirmationLink }
+            }
+        );
 
-        return Ok(new { message = "Confirm your email change" });
+        // TODO: <string> 
+        throw ResponseFactory.Create<OkResponse>(["Email change token sent to new email address"]);
     }
-
 
     [HttpPost("confirm-email-change")]
-    public async Task<IActionResult> ConfirmEmailChange(string userId, string email, string token)
+    public async Task<IActionResult> ConfirmEmailChange([FromBody]ConfigmEmailChangeDTO changeDTO)
     {
-        User? user = await userManager.FindByIdAsync(userId);
-        if (user == null)
-            return BadRequest("User not found");
+        User user = await CheckAccessFeatures([]);
 
-        IdentityResult result = await userManager.ChangeEmailAsync(user, email, token);
+        IdentityResult result = await userManager.ChangeEmailAsync(user, changeDTO.email, changeDTO.token);
 
         if (!result.Succeeded)
-            return BadRequest(result.Errors);
+            throw ResponseFactory.Create<BadRequestResponse>(result.Errors.Select(e => e.ToString()).ToArray()!);
 
-        await userManager.SetUserNameAsync(user, email);
+        await userManager.SetUserNameAsync(user, changeDTO.email);
 
-        return Ok(new { message = "Email successfully changed" });
+        throw ResponseFactory.Create<OkResponse>(["Email successfully changed"]);
     }
 
-    // TODO: Consider the logic of how we can change the password with two-factor authentication.
     [Authorize]
-    [HttpPost("change-password")]
+    [HttpPost("confirm-password-change")]
     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDTO dto)
     {
-        User? user = await userManager.GetUserAsync(User);
-        if (user == null)
-            throw AppExceptionFactory.Create<UnauthorizedException>();
+        User user = await CheckAccessFeatures([]);
 
         if (user is { Enabled2FA: true, Email: not null })
         {
@@ -194,102 +190,69 @@ public class AuthController(
             );
 
             if (!isValid)
-                throw AppExceptionFactory.Create<BadRequestException>();
+                throw ResponseFactory.Create<BadRequestResponse>();
         }
-
 
         IdentityResult result = await userManager.ChangePasswordAsync(user, dto.OldPassword, dto.NewPassword);
 
         if (!result.Succeeded)
-            // TODO: Send erros to frontend
-            // IEnumerable<string> errors = result.Errors.Select(e => e.Description);
-            throw AppExceptionFactory.Create<BadRequestException>();
+            throw ResponseFactory.Create<BadRequestResponse>(result.Errors.Select(e => e.ToString()).ToArray()!, ["Password change failed"]);
 
         await signInManager.RefreshSignInAsync(user);
-
-        return Ok(new { message = "Password successfully changed" });
+        throw ResponseFactory.Create<OkResponse>(["Password successfully changed"]);
     }
 
     [Authorize]
-    [HttpPost]
+    [HttpPost("request-password-change")]
     public async Task<IActionResult> RequestPasswordChange()
     {
-        User? user = await userManager.GetUserAsync(User);
-        if (user == null)
-            return Unauthorized("User not found");
+        User user = await CheckAccessFeatures([]);
 
-        if (user.Email != null && await userManager.GetTwoFactorEnabledAsync(user))
-        {
-            string resetToken = await userManager.GeneratePasswordResetTokenAsync(user);
-            string resetLink = $"{frontEndUrl}/approve-change/{resetToken}";
-
-
-            await emailSenderService.SendEmailAsync(
-                user.Email,
-                MailGunTemplates.passwordRecovery,
-                new Dictionary<string, string>
-                {
-                    { "link", resetLink }
-                }
-            );
-
-            return Ok(new
+        if (user.Email == null || !await userManager.GetTwoFactorEnabledAsync(user))
+            throw ResponseFactory.Create<OkResponse>(["Password reset link sent to your email."]);
+        
+        string resetToken = await userManager.GeneratePasswordResetTokenAsync(user);
+        string resetLink = $"{frontEndUrl}/approve-change/{resetToken}";
+        await emailSenderService.SendEmailAsync(
+            user.Email,
+            MailGunTemplates.passwordRecovery,
+            new Dictionary<string, string>
             {
-                message = "2FA is enabled. Please verify the token before changing password."
-            });
-        }
+                { "link", resetLink }
+            }
+        );
+        throw ResponseFactory.Create<OkResponse>(["2FA is enabled. Please verify the token before changing password."]);
+    }
 
-        return Ok(new { message = "Password reset link sent to your email." });
+    [Authorize]
+    [HttpPost("sessions/{sessionId:int}/revoke")]
+    public async Task<IActionResult> RevokeSessionAsync(int sessionId)
+    {
+        User user = await CheckAccessFeatures([]);
+        UserSession session = await userSessionService.GetByIdValidatedAsync(sessionId);
+        if (session.UserId == user.Id)
+            await userSessionService.RevokeSessionAsync(session);
+        else
+            throw ResponseFactory.Create<ForbiddenResponse>(["Invalid session"]);
+        throw ResponseFactory.Create<OkResponse>(["Session revoked successfully"]);
     }
 
 
-    [HttpPost("refresh-token")]
-    public async Task<IActionResult> RefreshToken([FromBody] TokenDTO refreshTokenDto)
+    [Authorize]
+    [HttpPost("sessions/revoke-all")]
+    public async Task<IActionResult> RevokeAllSessions()
     {
-        User? user = await userManager.Users
-            .SingleOrDefaultAsync(u => u.RefreshTokens
-                .Any(t => t.Token == refreshTokenDto.Token &&
-                          t.ExpiryDate > DateTime.UtcNow));
-        if (user == null)
-            return BadRequest("Invalid token");
-        string newAccessToken = GenerateJwtToken(user);
-        RefreshToken newRefreshToken = GenerateRefreshToken();
-
-        user.RefreshTokens.RemoveAll(t => t.Token == refreshTokenDto.Token);
-        user.RefreshTokens.Add(newRefreshToken);
-        await userManager.UpdateAsync(user);
-        return Ok(new
-        {
-            accessToken = newAccessToken,
-            refreshToken = newRefreshToken.Token
-        });
+        User user = await CheckAccessFeatures([]);
+        await userSessionService.RevokeAllUserSessionsAsync(user.Id);
+        throw ResponseFactory.Create<OkResponse>(["All sessions revoked successfully"]);
     }
 
-    private RefreshToken GenerateRefreshToken()
+    [Authorize]
+    [HttpGet("sessions")]
+    public async Task<IActionResult> GetSessions()
     {
-        return new RefreshToken
-        {
-            Token = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64)),
-            ExpiryDate = DateTime.UtcNow.AddDays(7)
-        };
-    }
-
-    private string GenerateJwtToken(User user)
-    {
-        Claim[] claims =
-        [
-            new(JwtRegisteredClaimNames.Sub, user.Email!),
-            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            new(ClaimTypes.NameIdentifier, user.Login)
-        ];
-        SymmetricSecurityKey key = new(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!));
-        SigningCredentials creds = new(key, SecurityAlgorithms.HmacSha256);
-        JwtSecurityToken token = new(
-            configuration["Jwt:Issuer"],
-            configuration["Jwt:Audience"],
-            claims,
-            expires: DateTime.Now.AddHours(3),
-            signingCredentials: creds);
-        return new JwtSecurityTokenHandler().WriteToken(token);
+        User user = await CheckAccessFeatures([]);
+        throw ResponseFactory.Create<OkResponse<IEnumerable<ActiveSessionDTO>>>(
+            await userSessionService.GetAllByUserIdAsync(user.Id), ["Sessions retrieved successfully"]);
     }
 }

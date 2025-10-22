@@ -1,50 +1,60 @@
 ﻿using System.Collections.Concurrent;
 using Application.Abstractions.Interfaces.Services.File;
+using Application.Response;
 using Microsoft.AspNetCore.Http;
 
 namespace Infrastructure.Services;
 
 public class FileStorageService : IFileStorageService
 {
-    private static readonly ConcurrentDictionary<string, byte[]> _blobStorage = new();
+    private static readonly ConcurrentDictionary<string, byte[]> blobStorage = new();
+    private readonly string baseFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
 
-    private readonly string _baseFolder;
-
-    public FileStorageService()
+    public async Task<byte[]> GetFile(string blobKey)
     {
-        _baseFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+        return blobStorage.TryGetValue(blobKey, out byte[]? data)
+            ? data
+            : throw ResponseFactory.Create<NotFoundResponse>([$"File not found in blob storage with key '{blobKey}'"]);
     }
 
-    public async Task<string> SaveFileAsync(IFormFile file, string subFolder)
+    public async Task<bool> DeleteFile(string blobKey)
+    {
+        return blobStorage.TryRemove(blobKey, out _);
+    }
+
+    public async Task<string> SaveAudioFileAsync(IFormFile file)
+    {
+        string path = Path.Combine(baseFolder, "audio");
+        return await SaveFileAsync(file, path);
+    }
+
+    public async Task<string> SaveImageFileAsync(IFormFile file)
+    {
+        string path = Path.Combine(baseFolder, "image");
+        return await SaveFileAsync(file, path);
+    }
+
+    public async Task<string> SaveVideoFileAsync(IFormFile file)
+    {
+        string path = Path.Combine(baseFolder, "video");
+        return await SaveFileAsync(file, path);
+    }
+
+    private async Task<string> SaveFileAsync(IFormFile file, string baseUrl)
     {
         if (file == null)
-            throw new ArgumentNullException(nameof(file));
+            throw ResponseFactory.Create<BadRequestResponse>(["File not found"]);
 
         DateTime now = DateTime.UtcNow;
-        string folderPath = Path.Combine(subFolder, now.Year.ToString(), now.Month.ToString());
+        string folderPath = Path.Combine(baseUrl, now.Year.ToString(), now.Month.ToString());
 
         string fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
         string blobKey = Path.Combine(folderPath, fileName).Replace("\\", "/");
 
-        using (MemoryStream memoryStream = new())
-        {
-            await file.CopyToAsync(memoryStream);
-            _blobStorage[blobKey] = memoryStream.ToArray();
-        }
+        using MemoryStream memoryStream = new();
+        await file.CopyToAsync(memoryStream);
+        blobStorage[blobKey] = memoryStream.ToArray();
 
         return blobKey;
-    }
-
-    public byte[] GetFile(string blobKey)
-    {
-        if (_blobStorage.TryGetValue(blobKey, out byte[]? data))
-            return data;
-
-        throw new FileNotFoundException("File not found in blob storage", blobKey);
-    }
-
-    public bool DeleteFile(string blobKey)
-    {
-        return _blobStorage.TryRemove(blobKey, out _);
     }
 }

@@ -2,6 +2,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Entities.Models.Access;
 using Entities.Models.Distribution;
+using Entities.Models.File;
 using Entities.Models.UserCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,7 +15,7 @@ public class Track : BaseModel
     [MaxLength(100)]
     public string Title { get; set; }
 
-    public TimeSpan Duration { get; set; }
+    public TimeSpan? Duration { get; set; }
 
     [Required]
     public bool IsExplicit { get; set; }
@@ -26,24 +27,36 @@ public class Track : BaseModel
     public int VisibilityStateId { get; set; }
 
     [Required]
-    public int AudioFileId { get; set; }
+    public int CoverId { get; set; }
 
     [Required]
-    public int CoverId { get; set; }
+    public virtual AudioFile LowQualityAudioFileId { get; set; }
+
+    public virtual AudioFile? MediumQualityAudioFileId { get; set; }
+
+    public virtual AudioFile? HighQualityAudioFileId { get; set; }
 
     /// <summary>
     /// </summary>
+    [ForeignKey("LowQualityAudioFileId")]
+    [DeleteBehavior(DeleteBehavior.Cascade)]
+    public virtual AudioFile LowQualityAudioFile { get; set; }
+
+    [ForeignKey("MediumQualityAudioFileId")]
+    [DeleteBehavior(DeleteBehavior.Cascade)]
+    public virtual AudioFile? MediumQualityAudioFile { get; set; }
+
+    [ForeignKey("HighQualityAudioFileId")]
+    [DeleteBehavior(DeleteBehavior.Cascade)]
+    public virtual AudioFile? HighQualityAudioFile { get; set; }
+
     [ForeignKey("VisibilityStateId")]
     [DeleteBehavior(DeleteBehavior.Cascade)]
     public virtual VisibilityState VisibilityState { get; set; }
 
-    [ForeignKey("AudioFileId")]
-    [DeleteBehavior(DeleteBehavior.Cascade)]
-    public virtual File.File AudioFile { get; set; }
-
     [ForeignKey("CoverId")]
     [DeleteBehavior(DeleteBehavior.Cascade)]
-    public virtual File.File Cover { get; set; }
+    public virtual AudioFile Cover { get; set; }
 
     public virtual ICollection<Artist> Artists { get; set; }
     public virtual ICollection<Collection> Collections { get; set; }

@@ -1,6 +1,6 @@
 ﻿using Application.Abstractions.Interfaces.Repository;
 using Application.Abstractions.Interfaces.Services;
-using Application.Exception;
+using Application.Response;
 using Entities.Models;
 
 namespace Application.Services;
@@ -12,7 +12,7 @@ public abstract class GenericService<T>(IGenericRepository<T> repository) : IGen
         return await repository.AddAsync(entity);
     }
 
-    public async Task DeleteAsync(int id)
+    public virtual async Task DeleteAsync(int id)
     {
         T entity = await GetByIdValidatedAsync(id);
         await repository.RemoveAsync(entity);
@@ -36,7 +36,7 @@ public abstract class GenericService<T>(IGenericRepository<T> repository) : IGen
     public async Task<T> GetByIdValidatedAsync(int id)
     {
         T? entity = await repository.GetByIdAsync(id);
-        return entity ?? throw AppExceptionFactory.Create<NotFoundException>([$"{nameof(T)} not found"]);
+        return entity ?? throw ResponseFactory.Create<NotFoundResponse>([$"{nameof(T)} not found"]);
     }
 
     public async Task<T> UpdateAsync(T entity)

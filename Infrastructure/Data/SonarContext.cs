@@ -38,15 +38,18 @@ public class SonarContext(DbContextOptions<SonarContext> options)
     public DbSet<Theme> Themes { get; set; } = null!;
     public DbSet<UserPrivacySettings> UserPrivacySettings { get; set; } = null!;
 
-    // ClientSettings
+    // Distribution
     public DbSet<Artist> Artists { get; set; } = null!;
     public DbSet<Distributor> Distributors { get; set; } = null!;
+    public DbSet<DistributorAccount> DistributorAccounts { get; set; } = null!;
     public DbSet<DistributorSession> DistributorSessions { get; set; } = null!;
     public DbSet<License> Licenses { get; set; } = null!;
 
     // File
-    public DbSet<File.File> Files { get; set; } = null!;
-    public DbSet<File.FileType> FileTypes { get; set; } = null!;
+    public DbSet<File.AudioFile> AudioFiles { get; set; } = null!;
+    public DbSet<File.ImageFile> ImageFiles { get; set; } = null!;
+    public DbSet<File.VideoFile> VideoFiles { get; set; } = null!;
+
 
     // Library
     public DbSet<Folder> Folders { get; set; } = null!;
@@ -89,16 +92,32 @@ public class SonarContext(DbContextOptions<SonarContext> options)
         builder.Entity<User>().HasOne(u => u.Settings).WithOne(s => s.User).HasForeignKey<User>(s => s.SettingsId);
         builder.Entity<Settings>().HasMany(s => s.BlockedUsers).WithMany(s => s.SettingsBlockedUsers);
 
-        builder.Entity<NotificationType>().HasData(NotificationTypeSeedFactory.CreateSeedData());
-        builder.Entity<Theme>().HasData(ThemeSeedFactory.CreateSeedData());
-        builder.Entity<Language>().HasData(LanguageSeedFactory.CreateSeedData());
-        builder.Entity<PlaybackQuality>().HasData(PlaybackQualitySeedFactory.CreateSeedData());
-        builder.Entity<AchievementCategory>().HasData(AchievementCategorySeedFactory.CreateSeedData());
-        builder.Entity<File.FileType>().HasData(FileTypeSeedFactory.CreateSeedData());
-        builder.Entity<VisibilityStatus>().HasData(VisibilityStatusSeedFactory.CreateSeedData());
-        builder.Entity<GiftStyle>().HasData(GiftStyleSeedFactory.CreateSeedData());
-        builder.Entity<ReportableEntityType>().HasData(ReportableEntityTypeSeedFactory.CreateSeedData());
-        builder.Entity<ReportReasonType>().HasData(ReportReasonTypeSeedFactory.CreateSeedData());
+        builder.Entity<NotificationType>()
+            .HasData(NotificationTypeSeedFactory.CreateSeedData());
+        builder.Entity<Theme>()
+            .HasData(ThemeSeedFactory.CreateSeedData());
+        builder.Entity<Language>()
+            .HasData(LanguageSeedFactory.CreateSeedData());
+        builder.Entity<PlaybackQuality>()
+            .HasData(PlaybackQualitySeedFactory.CreateSeedData());
+        builder.Entity<AchievementCategory>()
+            .HasData(AchievementCategorySeedFactory.CreateSeedData());
+        builder.Entity<File.ImageFile>()
+            .HasData(ImageFileSeedFactory.CreateSeedData());
+        builder.Entity<VisibilityStatus>()
+            .HasData(VisibilityStatusSeedFactory.CreateSeedData());
+        builder.Entity<GiftStyle>()
+            .HasData(GiftStyleSeedFactory.CreateSeedData());
+        builder.Entity<ReportableEntityType>()
+            .HasData(ReportableEntityTypeSeedFactory.CreateSeedData());
+        builder.Entity<ReportReasonType>()
+            .HasData(ReportReasonTypeSeedFactory.CreateSeedData());
+        builder.Entity<AccessFeature>()
+            .HasData(AccessFeatureSeedFactory.CreateSeedData());
+        builder.Entity<UserPrivacyGroup>()
+            .HasData(UserPrivacyGroupSeedFactory.CreateSeedData());
+        builder.Entity<UserStatus>()
+            .HasData(UserStatusSeedFactory.CreateSeedData());
         base.OnModelCreating(builder);
     }
 }

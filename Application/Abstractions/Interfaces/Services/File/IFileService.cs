@@ -1,8 +1,11 @@
-﻿using FileModel = Entities.Models.File.File;
+﻿using FileSignatures;
+using Microsoft.AspNetCore.Http;
+using FileModel = Entities.Models.File.File;
 
 namespace Application.Abstractions.Interfaces.Services;
 
-public interface IFileService : IGenericService<FileModel>
+public interface IFileService<T> where T : FileModel
 {
-    Task<FileModel> GetDefaultAsync();
+    Task DeleteAsync(int id);
+    Task<FileFormat> ValidateFileType(IFormFile file, Type[] permittedFormats);
 }

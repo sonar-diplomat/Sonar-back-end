@@ -4,6 +4,7 @@ using Entities.Models.Access;
 using Entities.Models.Chat;
 using Entities.Models.ClientSettings;
 using Entities.Models.Distribution;
+using Entities.Models.File;
 using Entities.Models.Music;
 using Entities.Models.UserExperience;
 using Microsoft.AspNetCore.Identity;
@@ -26,17 +27,12 @@ public class User : IdentityUser<int>
     public DateOnly DateOfBirth { get; set; }
 
     [Required]
-    [MaxLength(24)]
-    [MinLength(1)]
-    public string Username { get; set; }
-
-    [Required]
     [MaxLength(16)]
     [MinLength(4)]
     public string Login { get; set; }
 
     [MaxLength(4000)]
-    public string Biography { get; set; } // md 
+    public string? Biography { get; set; } // md 
 
     [Required]
     public string PublicIdentifier { get; set; }
@@ -52,7 +48,7 @@ public class User : IdentityUser<int>
 
     // Authenticator apps
     [MaxLength(500)]
-    public string GoogleAuthorizationKey { get; set; }
+    public string? GoogleAuthorizationKey { get; set; }
     // facebook .... and ect...
 
 
@@ -70,6 +66,9 @@ public class User : IdentityUser<int>
     [Required]
     public int SettingsId { get; set; }
 
+    [Required]
+    public int InventoryId { get; set; }
+
 
     /// <summary>
     /// </summary>
@@ -78,7 +77,7 @@ public class User : IdentityUser<int>
     public virtual VisibilityState VisibilityState { get; set; }
 
     [ForeignKey("AvatarImageId")]
-    public virtual File.File AvatarImage { get; set; }
+    public virtual ImageFile AvatarImage { get; set; }
 
     [ForeignKey("SubscriptionPackId")]
     public virtual SubscriptionPack? SubscriptionPack { get; set; }
@@ -91,8 +90,11 @@ public class User : IdentityUser<int>
     [DeleteBehavior(DeleteBehavior.Cascade)]
     public virtual Settings Settings { get; set; }
 
-    public virtual Artist Artist { get; set; }
+    [ForeignKey("InventoryId")]
+    [DeleteBehavior(DeleteBehavior.Cascade)]
     public virtual Inventory Inventory { get; set; }
+
+    public virtual Artist Artist { get; set; }
 
     public virtual ICollection<UserSession> UserSessions { get; set; }
     public virtual ICollection<Achievement> AchievementProgresses { get; set; }
@@ -104,5 +106,4 @@ public class User : IdentityUser<int>
     public virtual ICollection<License> Licenses { get; set; }
     public virtual ICollection<Track> Tracks { get; set; }
     public virtual ICollection<Settings> SettingsBlockedUsers { get; set; }
-    public virtual List<RefreshToken> RefreshTokens { get; set; }
 }

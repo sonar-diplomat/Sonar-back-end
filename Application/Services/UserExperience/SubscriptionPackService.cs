@@ -1,6 +1,6 @@
 ﻿using Application.Abstractions.Interfaces.Repository.UserExperience;
 using Application.Abstractions.Interfaces.Services;
-using Application.Exception;
+using Application.Response;
 using Entities.Models.UserExperience;
 using Microsoft.EntityFrameworkCore;
 
@@ -23,7 +23,7 @@ public class SubscriptionPackService(
             .ToListAsync();
 
         if (features.Count != featureIds.Count)
-            throw AppExceptionFactory.Create<BadRequestException>(["One or more features not found."]);
+            throw ResponseFactory.Create<BadRequestResponse>(["One or more features not found."]);
 
         SubscriptionPack? existingPack = await repository.FindByExactFeatureSetAsync(featureIds);
 

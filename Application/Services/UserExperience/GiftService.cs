@@ -1,7 +1,7 @@
 ﻿using Application.Abstractions.Interfaces.Repository.UserExperience;
 using Application.Abstractions.Interfaces.Services;
 using Application.DTOs;
-using Application.Exception;
+using Application.Response;
 using Entities.Models.UserCore;
 using Entities.Models.UserExperience;
 
@@ -57,9 +57,10 @@ public class GiftService(
         Gift gift = await GetByIdValidatedAsync(giftId);
         User receiver = await userService.GetByIdValidatedAsync(gift.ReceiverId);
         if (receiver.SubscriptionPackId != null || gift.ReceiverId != receiverId)
-            throw AppExceptionFactory.Create<ForbiddenException>(["You are not allowed to accept this gift."]);
+            throw ResponseFactory.Create<ForbiddenResponse>(["You are not allowed to accept this gift."]);
 
-        SubscriptionPayment payment = await subscriptionPaymentService.GetByIdValidatedAsync(gift.SubscriptionPaymentId);
+        SubscriptionPayment payment =
+            await subscriptionPaymentService.GetByIdValidatedAsync(gift.SubscriptionPaymentId);
         receiver.SubscriptionPackId = payment.SubscriptionPackId;
         await userService.UpdateUserAsync(receiver);
         gift.AcceptanceDate = DateTime.UtcNow;
@@ -70,9 +71,10 @@ public class GiftService(
     {
         Gift gift = await GetByIdValidatedAsync(giftId);
         if (gift.ReceiverId != receiverId)
-            throw AppExceptionFactory.Create<ForbiddenException>(["You are not allowed to cancel this gift."]);
+            throw ResponseFactory.Create<ForbiddenResponse>(["You are not allowed to cancel this gift."]);
 
-        SubscriptionPayment payment = await subscriptionPaymentService.GetByIdValidatedAsync(gift.SubscriptionPaymentId);
+        SubscriptionPayment payment =
+            await subscriptionPaymentService.GetByIdValidatedAsync(gift.SubscriptionPaymentId);
         await repository.RemoveAsync(gift);
         // TODO: Refund payment
         await subscriptionPaymentService.DeleteAsync(payment);
