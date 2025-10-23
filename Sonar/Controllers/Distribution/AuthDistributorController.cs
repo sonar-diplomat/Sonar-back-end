@@ -32,7 +32,7 @@ public class AuthDistributorController(
         throw ResponseFactory.Create<OkResponse>(["Session terminated successfully"]);
     }
 
-    [HttpPost("register")] // TODO: Admin only
+    [HttpPost("register")]
     public async Task<IActionResult> Register(DistributorAccountRegisterDTO dto)
     {
         await CheckAccessFeatures([AccessFeatureStruct.ManageDistributors]);

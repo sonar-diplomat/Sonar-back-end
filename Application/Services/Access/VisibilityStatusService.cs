@@ -7,4 +7,8 @@ namespace Application.Services.Access;
 public class VisibilityStatusService(IVisibilityStatusRepository repository)
     : GenericService<VisibilityStatus>(repository), IVisibilityStatusService
 {
+    public async Task<VisibilityStatus> GetDefaultAsync()
+    {
+        return await repository.GetDefaultAsync();
+    }
 }

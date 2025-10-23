@@ -1,10 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Entities.Models.Music;
 using Entities.Models.UserCore;
 using Microsoft.EntityFrameworkCore;
 
-namespace Entities.Models.Distribution;
+namespace Entities.Models.Music;
 
 [Table("Artist")]
 public class Artist : BaseModel
@@ -19,5 +18,5 @@ public class Artist : BaseModel
     public virtual User User { get; set; }
 
     public virtual ICollection<Track> Tracks { get; set; }
-    public virtual ICollection<Album> Albums { get; set; }
+    public virtual ICollection<AlbumArtist> AlbumArtists { get; set; }
 }

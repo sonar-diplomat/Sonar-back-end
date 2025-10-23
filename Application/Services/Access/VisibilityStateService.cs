@@ -4,7 +4,21 @@ using Entities.Models.Access;
 
 namespace Application.Services.Access;
 
-public class VisibilityStateService(IVisibilityStateRepository repository)
+public class VisibilityStateService(
+    IVisibilityStateRepository repository,
+    IVisibilityStatusService visibilityStatusService
+    
+    )
     : GenericService<VisibilityState>(repository), IVisibilityStateService
 {
+    public async Task<VisibilityState> CreateDefaultAsync()
+    {
+        VisibilityState defaultState = new()
+        {
+            SetPublicOn = DateTime.MinValue,
+            StatusId = (await visibilityStatusService.GetDefaultAsync()).Id
+        };
+
+        return await CreateAsync(defaultState);
+    }
 }

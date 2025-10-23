@@ -1,5 +1,6 @@
 using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.File;
+using Application.DTOs;
 using Application.Response;
 using Entities.Models.Distribution;
 using Entities.Models.Music;
@@ -20,17 +21,13 @@ public class AlbumController(
     IImageFileService imageFileService
 ) : BaseControllerExtended(userManager, accountService, distributorService)
 {
-    /*
-     Upload
-     Delete
-     Update
-     UploadTrack
-     */
-
     [HttpPost]
-    public async Task<IActionResult> UploadAlbum()
+    public async Task<IActionResult> UploadAlbum(UploadAlbumDTO dto)
     {
-        throw new NotImplementedException();
+        int distributorId = (await CheckDistributor()).Id;
+
+        Album album = await albumService.UploadAsync(dto, distributorId);
+        throw ResponseFactory.Create<OkResponse<Album>>(album, ["Album was created successfully"]);
     }
 
     [HttpDelete("{albumId:int}")]

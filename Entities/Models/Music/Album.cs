@@ -17,5 +17,5 @@ public class Album : Collection
     [DeleteBehavior(DeleteBehavior.NoAction)]
     public virtual Distributor Distributor { get; set; }
 
-    public virtual ICollection<Artist> Artists { get; set; }
+    public virtual ICollection<AlbumArtist> AlbumArtists { get; set; }
 }

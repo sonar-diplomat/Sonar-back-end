@@ -1,9 +1,10 @@
-﻿using Application.Abstractions.Interfaces.Repository.Distribution;
+﻿using Application.Abstractions.Interfaces.Repository.Music;
 using Application.Abstractions.Interfaces.Services;
-using Entities.Models.Distribution;
+using Entities.Models.Music;
 
 namespace Application.Services.Distribution;
 
-public class ArtistService(IArtistRepository repository) : GenericService<Artist>(repository), IArtistService
+public class ArtistService(IArtistRepository repository)
+    : GenericService<Artist>(repository), IArtistService
 {
 }

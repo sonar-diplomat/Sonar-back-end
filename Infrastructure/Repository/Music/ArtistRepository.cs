@@ -1,9 +1,9 @@
-using Application.Abstractions.Interfaces.Repository.Distribution;
-using Entities.Models.Distribution;
+using Application.Abstractions.Interfaces.Repository.Music;
+using Entities.Models.Music;
 using Infrastructure.Data;
 using Sonar.Infrastructure.Repository;
 
-namespace Infrastructure.Repository.Distribution;
+namespace Infrastructure.Repository.Music;
 
 public class ArtistRepository : GenericRepository<Artist>, IArtistRepository
 {

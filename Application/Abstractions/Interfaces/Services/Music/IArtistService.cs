@@ -1,4 +1,4 @@
-﻿using Entities.Models.Distribution;
+﻿using Entities.Models.Music;
 
 namespace Application.Abstractions.Interfaces.Services;
 

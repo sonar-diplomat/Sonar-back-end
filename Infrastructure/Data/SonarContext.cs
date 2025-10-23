@@ -60,6 +60,7 @@ public class SonarContext(DbContextOptions<SonarContext> options)
     public DbSet<Blend> Blends { get; set; } = null!;
     public DbSet<Playlist> Playlists { get; set; } = null!;
     public DbSet<Track> Tracks { get; set; } = null!;
+    public DbSet<AlbumArtist> AlbumArtists { get; set; }
 
     // Report
     public DbSet<Report> Reports { get; set; } = null!;
@@ -89,6 +90,19 @@ public class SonarContext(DbContextOptions<SonarContext> options)
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
+        builder.Entity<AlbumArtist>()
+            .HasKey(aa => new { aa.AlbumId, aa.ArtistId });
+
+        builder.Entity<AlbumArtist>()
+            .HasOne(aa => aa.Album)
+            .WithMany(a => a.AlbumArtists)
+            .HasForeignKey(aa => aa.AlbumId);
+
+        builder.Entity<AlbumArtist>()
+            .HasOne(aa => aa.Artist)
+            .WithMany(a => a.AlbumArtists)
+            .HasForeignKey(aa => aa.ArtistId);
+
         builder.Entity<User>().HasOne(u => u.Settings).WithOne(s => s.User).HasForeignKey<User>(s => s.SettingsId);
         builder.Entity<Settings>().HasMany(s => s.BlockedUsers).WithMany(s => s.SettingsBlockedUsers);
 

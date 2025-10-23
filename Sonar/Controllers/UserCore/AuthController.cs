@@ -62,8 +62,7 @@ public class AuthController(
                 {
                     { "code", code }
                 });
-
-            // TODO: What does the frontend need to proceed with data?
+            
             throw ResponseFactory.Create<OkResponse>(["2FA code sent to email"]);
         }
 
@@ -154,8 +153,7 @@ public class AuthController(
                 { "link", confirmationLink }
             }
         );
-
-        // TODO: <string> 
+        
         throw ResponseFactory.Create<OkResponse>(["Email change token sent to new email address"]);
     }
 

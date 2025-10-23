@@ -25,8 +25,7 @@ public class UserController(
         IEnumerable<User> users = await userService.GetAllAsync();
         throw ResponseFactory.Create<OkResponse<IEnumerable<User>>>(users, ["Users retrieved successfully"]);
     }
-
-    // GET: api/User/5
+    
     [HttpGet("{id}")]
     public async Task<ActionResult<User>> GetUser(int id)
     {
