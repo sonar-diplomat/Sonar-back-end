@@ -1,4 +1,3 @@
-using System.Text;
 using Application.Abstractions.Interfaces.Repository.Access;
 using Application.Abstractions.Interfaces.Repository.Chat;
 using Application.Abstractions.Interfaces.Repository.Client;
@@ -38,6 +37,7 @@ using Infrastructure.Repository.User;
 using Infrastructure.Repository.UserExperience;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -52,6 +52,7 @@ using Sonar.Infrastructure.Repository.Report;
 using Sonar.Infrastructure.Repository.UserCore;
 using Sonar.Infrastructure.Repository.UserExperience;
 using Sonar.Middleware;
+using System.Text;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<SonarContext>(options =>
@@ -118,6 +119,11 @@ builder.Services.AddAuthentication(options =>
     });
 
 builder.Services.AddOpenApi();
+
+builder.Services.Configure<FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = 104857600; // 100 MB
+});
 
 
 #region RegisterRepositories

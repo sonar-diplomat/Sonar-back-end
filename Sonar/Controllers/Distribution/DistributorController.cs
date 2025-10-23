@@ -32,7 +32,7 @@ public class DistributorController(
     [HttpGet]
     public async Task<IActionResult> GetDistributors()
     {
-        IEnumerable<Distributor> distributors = await distributorService.GetAllAsync();
+        IEnumerable<Distributor> distributors = (await distributorService.GetAllAsync()).ToList();
         throw ResponseFactory.Create<OkResponse<IEnumerable<Distributor>>>(distributors,
             ["Distributors retrieved successfully"]);
     }

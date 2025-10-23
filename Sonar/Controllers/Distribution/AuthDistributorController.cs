@@ -1,6 +1,4 @@
-﻿using System.Security.Cryptography;
-using System.Text;
-using Application.Abstractions.Interfaces.Services;
+﻿using Application.Abstractions.Interfaces.Services;
 using Application.DTOs;
 using Application.Response;
 using Entities.Enums;
@@ -9,6 +7,8 @@ using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace Sonar.Controllers.Distribution;
 

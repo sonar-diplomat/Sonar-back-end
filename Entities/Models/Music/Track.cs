@@ -1,10 +1,10 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using Entities.Models.Access;
+﻿using Entities.Models.Access;
 using Entities.Models.Distribution;
 using Entities.Models.File;
 using Entities.Models.UserCore;
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Entities.Models.Music;
 
@@ -30,11 +30,11 @@ public class Track : BaseModel
     public int CoverId { get; set; }
 
     [Required]
-    public virtual AudioFile LowQualityAudioFileId { get; set; }
+    public virtual int LowQualityAudioFileId { get; set; }
 
-    public virtual AudioFile? MediumQualityAudioFileId { get; set; }
+    public virtual int? MediumQualityAudioFileId { get; set; }
 
-    public virtual AudioFile? HighQualityAudioFileId { get; set; }
+    public virtual int? HighQualityAudioFileId { get; set; }
 
     /// <summary>
     /// </summary>
