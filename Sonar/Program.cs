@@ -282,11 +282,11 @@ builder.Services.AddScoped<MailgunSettings>(_ =>
 
 // Utility Services
 builder.Services.AddScoped<IEmailSenderService, MailgunEmailService>();
+builder.Services.AddScoped<AuthService>();
 builder.Services.AddSingleton<QRCodeGenerator>();
 builder.Services.AddSingleton<IQrCodeService, QrCodeService>();
 builder.Services.AddSingleton<IFileFormatInspector, FileFormatInspector>();
 builder.Services.AddSingleton<IFileStorageService, FileStorageService>();
-builder.Services.AddSingleton<AuthService>();
 builder.Services.AddHttpClient();
 
 #endregion

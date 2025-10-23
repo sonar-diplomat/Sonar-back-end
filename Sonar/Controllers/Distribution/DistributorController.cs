@@ -20,10 +20,10 @@ public class DistributorController(
 ) : BaseController(userManager)
 {
     [HttpPost]
-    public async Task<IActionResult> CreateDistributor(CreateDistributorDTO dto, IFormFile cover)
+    public async Task<IActionResult> CreateDistributor([FromForm] CreateDistributorDTO dto)
     {
         User user = await CheckAccessFeatures([AccessFeatureStruct.ManageDistributors]);
-        int coverId = (await imageFileService.UploadFileAsync(cover)).Id;
+        int coverId = (await imageFileService.UploadFileAsync(dto.Cover)).Id;
         int licenceId = (await licenseService.CreateLicenseAsync(dto.ExpirationDate, user.Id)).Id;
         Distributor distributor = await distributorService.CreateDistributorAsync(dto, licenceId, coverId);
         throw ResponseFactory.Create<OkResponse<Distributor>>(distributor, ["Distributors created successfully"]);

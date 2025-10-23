@@ -49,7 +49,7 @@ public class AuthDistributorController(
         if (!computedHash.SequenceEqual(account.PasswordHash))
             throw ResponseFactory.Create<UnauthorizedResponse>(["Invalid credentials"]);
 
-        string jwtToken = authService.GenerateJwtToken(account.Email, account.UserName);
+        string jwtToken = authService.GenerateJwtToken(account);
         string refreshToken = authService.GenerateRefreshToken();
         throw ResponseFactory.Create<OkResponse<(string, string)>>((jwtToken, refreshToken),
             ["Distributor account logged in successfully"]);
@@ -62,7 +62,7 @@ public class AuthDistributorController(
         DistributorSession session = await sessionService.GetValidatedByRefreshTokenAsync(refreshHash);
         await sessionService.UpdateLastActiveAsync(session);
         string newAccessToken =
-            authService.GenerateJwtToken(session.DistributorAccount.Email, session.DistributorAccount.UserName);
+            authService.GenerateJwtToken(session.DistributorAccount);
         throw ResponseFactory.Create<OkResponse<(string, string)>>((newAccessToken, refreshToken),
             ["Token refreshed successfully"]);
     }

@@ -4,6 +4,7 @@ using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Sonar.Controllers;
 
@@ -13,6 +14,7 @@ public abstract class BaseController(UserManager<User> userManager) : Controller
     protected async Task<User> GetUserByJwt()
     {
         User? user = await userManager.GetUserAsync(User);
+        user = userManager.Users.Include(u => u.AccessFeatures).FirstOrDefault(u => u.Id == user.Id);
         return user ?? throw ResponseFactory.Create<UnauthorizedResponse>();
     }
 

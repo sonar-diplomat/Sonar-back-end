@@ -1,8 +1,8 @@
 ﻿using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.Utilities;
 using Application.DTOs;
-using Application.Response;
 using Application.DTOs.Auth;
+using Application.Response;
 using Entities.Enums;
 using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Authorization;
@@ -35,8 +35,8 @@ public class AuthController(
         User user = await userService.CreateUserShellAsync(model);
         IdentityResult result = await userManager.CreateAsync(user, model.Password);
         if (result.Succeeded)
-            throw ResponseFactory.Create<OkResponse>("Registration successfull");
-        throw ResponseFactory.Create<OkResponse>("Registration failed");
+            throw ResponseFactory.Create<OkResponse>(["Registration successfull"]);
+        throw ResponseFactory.Create<BadRequestResponse>(["Registration failed"]);
     }
 
     [HttpPost("login")]
@@ -68,7 +68,7 @@ public class AuthController(
         }
 
         // Generate both tokens
-        string accessToken = authService.GenerateJwtToken(user.Email, user.Login);
+        string accessToken = authService.GenerateJwtToken(user);
         string refreshToken = authService.GenerateRefreshToken();
 
         UserSession session = new()
@@ -103,7 +103,7 @@ public class AuthController(
             throw ResponseFactory.Create<BadRequestResponse>(["Invalid or expired code"]);
 
         // Generate both tokens
-        string accessToken = authService.GenerateJwtToken(user.Email, user.Login);
+        string accessToken = authService.GenerateJwtToken(user);
         string refreshToken = authService.GenerateRefreshToken();
 
         UserSession session = new()
@@ -131,7 +131,7 @@ public class AuthController(
         string refreshHash = authService.ComputeSha256(refreshToken);
         UserSession session = await userSessionService.GetValidatedByRefreshTokenAsync(refreshHash);
         await userSessionService.UpdateLastActiveAsync(session);
-        string newAccessToken = authService.GenerateJwtToken(session.User.Email, session.User.Login);
+        string newAccessToken = authService.GenerateJwtToken(session.User);
         throw ResponseFactory.Create<OkResponse<(string, string)>>((newAccessToken, refreshToken), ["Token refreshed successfully"]);
     }
 
@@ -160,7 +160,7 @@ public class AuthController(
     }
 
     [HttpPost("confirm-email-change")]
-    public async Task<IActionResult> ConfirmEmailChange([FromBody]ConfigmEmailChangeDTO changeDTO)
+    public async Task<IActionResult> ConfirmEmailChange([FromBody] ConfigmEmailChangeDTO changeDTO)
     {
         User user = await CheckAccessFeatures([]);
 
@@ -210,7 +210,7 @@ public class AuthController(
 
         if (user.Email == null || !await userManager.GetTwoFactorEnabledAsync(user))
             throw ResponseFactory.Create<OkResponse>(["Password reset link sent to your email."]);
-        
+
         string resetToken = await userManager.GeneratePasswordResetTokenAsync(user);
         string resetLink = $"{frontEndUrl}/approve-change/{resetToken}";
         await emailSenderService.SendEmailAsync(
