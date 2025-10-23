@@ -4,7 +4,6 @@ using System.Security.Cryptography;
 using System.Text;
 using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.Utilities;
-using Application.DTOs;
 using Application.DTOs.Auth;
 using Application.Exception;
 using Entities.Enums;
@@ -147,7 +146,7 @@ public class AuthController(
 
     [Authorize]
     [HttpPost("request-email-change")]
-    public async Task<IActionResult> GetMailChangeToken([FromBody] string newEmail)
+    public async Task<IActionResult> RequestEmailChange([FromBody] string newEmail)
     {
         User user = await GetUserByJwtAsync();
 
@@ -190,7 +189,7 @@ public class AuthController(
 
     [Authorize]
     [HttpPost("confirm-password-change")]
-    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDTO dto)
+    public async Task<IActionResult> ConfirmPasswordChange([FromBody] ConfirmPasswordChangeDTO dto)
     {
         User? user = await userManager.GetUserAsync(User);
         if (user == null)
