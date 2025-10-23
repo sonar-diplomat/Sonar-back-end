@@ -1,5 +1,5 @@
 using Application.Abstractions.Interfaces.Repository.UserCore;
-using Application.DTOs;
+using Application.DTOs.Auth;
 using Entities.Models.UserCore;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
