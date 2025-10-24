@@ -2,7 +2,6 @@
 using Application.Abstractions.Interfaces.Services.File;
 using Entities.Models.File;
 using FileSignatures;
-using FileSignatures.Formats;
 using Microsoft.AspNetCore.Http;
 
 namespace Application.Services.File;
@@ -16,7 +15,8 @@ public class ImageFileService(
 {
     public async Task<ImageFile> UploadFileAsync(IFormFile file)
     {
-        await ValidateFileType(file, [typeof(Png), typeof(Jpeg)]);
+        //await ValidateFileType(file, [typeof(Png), typeof(Jpeg)]);
+        //TODO:
         string url = await fileStorageService.SaveImageFileAsync(file);
         ImageFile fileModel = new()
         {

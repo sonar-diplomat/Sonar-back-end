@@ -1,10 +1,10 @@
-using System.Security.Cryptography;
-using System.Text;
 using Application.Abstractions.Interfaces.Repository.Distribution;
 using Application.Abstractions.Interfaces.Services;
 using Application.DTOs;
 using Application.Response;
 using Entities.Models.Distribution;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace Application.Services.Distribution;
 
@@ -13,7 +13,7 @@ public class DistributorAccountService(IDistributorAccountRepository repository,
 {
     public async Task CheckEmailAsync(string email)
     {
-        if (!await repository.ExistsByEmailAsync(email))
+        if (await repository.ExistsByEmailAsync(email))
             throw ResponseFactory.Create<ConflictResponse>(["Email is already in use"]);
     }
 

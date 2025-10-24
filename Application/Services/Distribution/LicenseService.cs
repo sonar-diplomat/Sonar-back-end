@@ -21,7 +21,7 @@ public class LicenseService(
         {
             IssuingDate = DateTime.UtcNow,
             LastUpdatedDate = DateTime.UtcNow,
-            ExpirationDate = expirationDate,
+            ExpirationDate = DateTime.SpecifyKind(expirationDate, DateTimeKind.Utc),
             LicenseKey = await keyGeneratorService.GenerateApiKey(),
             Issuer = issuer
         };

@@ -83,7 +83,8 @@ public class UserService(
             UserName = model.UserName,
             Login = model.Login,
             Email = model.Email,
-            PublicIdentifier = new Random().Next().ToString() //TODO:
+            PublicIdentifier = new Random().Next().ToString(), //TODO:
+            RegistrationDate = DateTime.UtcNow
         };
         VisibilityState tempVs = new()
         {
