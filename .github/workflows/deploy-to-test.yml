@@ -1,0 +1,47 @@
+name: Deploy to Test Server
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Docker
+        run: |
+          docker --version
+          docker ps
+
+      - name: Build Docker image
+        run: |
+          docker build -t myapp:latest .
+          docker save myapp:latest > myapp.tar
+
+      - name: Copy image to Test Server
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.TEST_SERVER_IP }}
+          username: ${{ secrets.TEST_SERVER_USER }}
+          key: ${{ secrets.TEST_SERVER_SSH_KEY }}
+          source: "myapp.tar"
+          target: "${{ secrets.TEST_SERVER_PATH }}"
+
+      - name: Deploy on Test Server via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.TEST_SERVER_IP }}
+          username: ${{ secrets.TEST_SERVER_USER }}
+          key: ${{ secrets.TEST_SERVER_SSH_KEY }}
+          script: |
+            cd ${{ secrets.TEST_SERVER_PATH }}
+            docker stop myapp || true
+            docker rm myapp || true
+            docker rmi myapp:latest || true
+            docker load < myapp.tar
+            docker run -d --name myapp -p 80:80 myapp:latest
