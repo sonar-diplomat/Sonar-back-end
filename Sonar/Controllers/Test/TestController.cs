@@ -1,4 +1,5 @@
 ﻿using Application.Abstractions.Interfaces.Services;
+using Application.Abstractions.Interfaces.Services.File;
 using Application.Abstractions.Interfaces.Services.Utilities;
 using Application.Response;
 using Entities.Models.Chat;
@@ -14,7 +15,8 @@ namespace Sonar.Controllers.Test;
 public class TestController(
     UserManager<User> userManager,
     IQrCodeService qrCodeService,
-    IApiKeyGeneratorService apiKeyGeneratorService
+    IApiKeyGeneratorService apiKeyGeneratorService,
+    IImageFileService fileService
 ) : BaseController(userManager)
 {
     [HttpGet("apikey")]
@@ -43,6 +45,13 @@ public class TestController(
         string testFilePath = Path.Combine(dataPath, "test.txt");
         await SysFile.WriteAllTextAsync(testFilePath, $"Created at {DateTime.Now}\n");
         throw ResponseFactory.Create<OkResponse>(["File read successfully"]);
+    }
+
+    [HttpPost("fileuploadtest")]
+    public async Task<ActionResult> FileUploadTest(IFormFile file)
+    {
+        await fileService.UploadFileAsync(file);
+        return Ok();
     }
 
     [HttpGet("error")]
