@@ -39,7 +39,7 @@ public class TestController(
     [HttpGet("test_include")]
     public async Task<ActionResult> TestInclude()
     {
-        var d = await distributorRepository.Include(d => d.Cover).Include_(d => d.License).ThenInclude_(l => l.Issuer).GetByIdAsync(4);
+        var d = await distributorRepository.Include(d => d.Cover).Include(d => d.License).ThenInclude(l => l.Issuer).GetByIdAsync(4);
 
         throw ResponseFactory.Create<OkResponse<Distributor>>(d);
     }
