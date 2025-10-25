@@ -34,7 +34,7 @@ public class AudioFileService(
         return await CreateAsync(fileModel);
     }
 
-    private async Task<TimeSpan> GetDurationAsync(IFormFile file)
+    public async Task<TimeSpan> GetDurationAsync(IFormFile file)
     {
         string tempFilePath = Path.GetTempFileName();
         try
