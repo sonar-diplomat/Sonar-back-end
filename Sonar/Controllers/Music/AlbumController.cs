@@ -2,6 +2,7 @@ using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.File;
 using Application.DTOs;
 using Application.Response;
+using Entities.Enums;
 using Entities.Models.Distribution;
 using Entities.Models.Music;
 using Entities.Models.UserCore;
@@ -18,14 +19,14 @@ public class AlbumController(
     IDistributorAccountService accountService,
     IDistributorService distributorService,
     IAlbumService albumService,
-    IImageFileService imageFileService
+    IImageFileService imageFileService,
+    ITrackService trackService
 ) : BaseControllerExtended(userManager, accountService, distributorService)
 {
     [HttpPost]
     public async Task<IActionResult> UploadAlbum(UploadAlbumDTO dto)
     {
         int distributorId = (await CheckDistributor()).Id;
-
         Album album = await albumService.UploadAsync(dto, distributorId);
         throw ResponseFactory.Create<OkResponse<Album>>(album, ["Album was created successfully"]);
     }
@@ -48,6 +49,25 @@ public class AlbumController(
         throw ResponseFactory.Create<OkResponse<Album>>(album, ["Album name was updated successfully"]);
     }
 
+    [HttpPost("{albumId:int}/add")]
+    [Authorize]
+    public async Task<IActionResult> UploadTrack(int albumId, UploadTrackDTO dto)
+    {
+        await MatchAlbumAndDistributor(albumId);
+        Track track = await trackService.CreateTrackAsync(albumId, dto);
+        throw ResponseFactory.Create<OkResponse<Track>>(track, ["Track was added successfully"]);
+    }
+
+    [HttpPut("{albumId:int}/visibility")]
+    [Authorize]
+    public async Task<IActionResult> ChangeVisibilityState(int albumId, int visibilytyStateId)
+    {
+        await CheckAccessFeatures([AccessFeatureStruct.ManageContent]);
+        await albumService.ChangeVisibilityStateAsync(albumId, visibilytyStateId);
+
+        throw ResponseFactory.Create<OkResponse>(["Album visibility state was changed successfully"]);
+    }
+
     [HttpPut("{albumId:int}/cover")]
     [Authorize]
     public async Task<IActionResult> UpdateAlbumCover(int albumId, IFormFile file)
@@ -55,13 +75,6 @@ public class AlbumController(
         await MatchAlbumAndDistributor(albumId);
         await imageFileService.UploadFileAsync(file);
         throw ResponseFactory.Create<OkResponse>(["Album cover was updated successfully"]);
-    }
-
-    [HttpPost("{albumId:int}/add")]
-    [Authorize]
-    public async Task<IActionResult> UploadTrack()
-    {
-        throw new NotImplementedException();
     }
 
     private async Task MatchAlbumAndDistributor(int albumId)

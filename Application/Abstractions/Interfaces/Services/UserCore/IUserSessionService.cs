@@ -1,4 +1,4 @@
-﻿using Application.DTOs.Auth;
+﻿using Application.DTOs;
 using Entities.Models.UserCore;
 
 namespace Application.Abstractions.Interfaces.Services;

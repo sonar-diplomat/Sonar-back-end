@@ -1,6 +1,7 @@
-﻿namespace Application.Abstractions.Interfaces.Repository.Music;
+﻿using Entities.Models.Music;
 
-public class IAlbumArtistRepository
+namespace Application.Abstractions.Interfaces.Repository.Music;
+
+public interface IAlbumArtistRepository : IGenericRepository<AlbumArtist>
 {
-    
 }

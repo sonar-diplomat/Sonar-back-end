@@ -33,7 +33,7 @@ public abstract class GenericService<T>(IGenericRepository<T> repository) : IGen
         return await repository.GetByIdAsync(id);
     }
 
-    public async Task<T> GetByIdValidatedAsync(int id)
+    public virtual async Task<T> GetByIdValidatedAsync(int id)
     {
         T? entity = await repository.GetByIdAsync(id);
         return entity ?? throw ResponseFactory.Create<NotFoundResponse>([$"{nameof(T)} not found"]);

@@ -48,7 +48,7 @@ public class TrackController(
     }
 
     [HttpPut("{trackId:int}")]
-    public async Task<Track> UpdateTrack(int trackId, UpdateTrackDTO dto)
+    public async Task<Track> UpdateTrackInfo(int trackId, UpdateTrackDTO dto)
     {
         await CheckDistributor();
         Track track = await trackService.GetByIdValidatedAsync(trackId);
@@ -57,6 +57,14 @@ public class TrackController(
         track.DrivingDisturbingNoises = dto.DrivingDisturbingNoises ?? track.DrivingDisturbingNoises;
         track = await trackService.UpdateAsync(track);
         throw ResponseFactory.Create<OkResponse<Track>>(track, ["Track updated successfully"]);
+    }
+
+    [HttpPut("{trackId:int}/audio-file")]
+    public async Task UpdateTrackFile(int trackId, UpdateTrackFileDTO dto)
+    {
+        await CheckDistributor();
+        await trackService.UpdateTrackFileAsync(trackId, dto.PlaybackQualityId, dto.File);
+        throw ResponseFactory.Create<OkResponse>(["Track audio file updated successfully"]);
     }
 
     [HttpGet("{trackId:int}")]

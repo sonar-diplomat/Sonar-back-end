@@ -28,7 +28,6 @@ public class AudioFileService(
         AudioFile fileModel = new()
         {
             ItemName = file.FileName,
-            Duration = await GetDurationAsync(file),
             Url = url
         };
 

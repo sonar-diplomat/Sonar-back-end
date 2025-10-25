@@ -11,6 +11,10 @@ public class Artist : BaseModel
     [Required]
     public int UserId { get; set; }
 
+    [Required]
+    [MaxLength(100)]
+    public required string ArtistName { get; set; }
+
     /// <summary>
     /// </summary>
     [ForeignKey("UserId")]

@@ -6,8 +6,6 @@ namespace Application.Services.Music;
 
 public class AlbumArtistService(
     IAlbumArtistRepository repository
-    
-    ) : GenericService<AlbumArtist>(repository), IAlbumArtistService
+) : GenericService<AlbumArtist>(repository), IAlbumArtistService
 {
-    
 }

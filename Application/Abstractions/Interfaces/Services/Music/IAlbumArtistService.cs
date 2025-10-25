@@ -1,6 +1,7 @@
-﻿namespace Application.Abstractions.Interfaces.Services;
+﻿using Entities.Models.Music;
 
-public class IAlbumArtistService
+namespace Application.Abstractions.Interfaces.Services;
+
+public interface IAlbumArtistService : IGenericService<AlbumArtist>
 {
-    
 }

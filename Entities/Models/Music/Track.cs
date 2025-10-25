@@ -1,7 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Entities.Models.Access;
-using Entities.Models.Distribution;
 using Entities.Models.File;
 using Entities.Models.UserCore;
 using Microsoft.EntityFrameworkCore;
@@ -30,11 +29,11 @@ public class Track : BaseModel
     public int CoverId { get; set; }
 
     [Required]
-    public virtual AudioFile LowQualityAudioFileId { get; set; }
+    public virtual int LowQualityAudioFileId { get; set; }
 
-    public virtual AudioFile? MediumQualityAudioFileId { get; set; }
+    public virtual int? MediumQualityAudioFileId { get; set; }
 
-    public virtual AudioFile? HighQualityAudioFileId { get; set; }
+    public virtual int? HighQualityAudioFileId { get; set; }
 
     /// <summary>
     /// </summary>
@@ -56,7 +55,7 @@ public class Track : BaseModel
 
     [ForeignKey("CoverId")]
     [DeleteBehavior(DeleteBehavior.Cascade)]
-    public virtual AudioFile Cover { get; set; }
+    public virtual ImageFile Cover { get; set; }
 
     public virtual ICollection<Artist> Artists { get; set; }
     public virtual ICollection<Collection> Collections { get; set; }

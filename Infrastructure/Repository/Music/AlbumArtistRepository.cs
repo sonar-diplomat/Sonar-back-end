@@ -1,6 +1,11 @@
-﻿namespace Infrastructure.Repository.Music;
+﻿using Application.Abstractions.Interfaces.Repository.Music;
+using Entities.Models.Music;
+using Infrastructure.Data;
+using Sonar.Infrastructure.Repository;
 
-public class AlbumArtistRepository
+namespace Infrastructure.Repository.Music;
+
+public class AlbumArtistRepository(SonarContext dbContext)
+    : GenericRepository<AlbumArtist>(dbContext), IAlbumArtistRepository
 {
-    
 }

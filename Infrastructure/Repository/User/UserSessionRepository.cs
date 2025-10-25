@@ -1,12 +1,13 @@
 using Application.Abstractions.Interfaces.Repository.UserCore;
-using Application.DTOs.Auth;
+using Application.DTOs;
 using Entities.Models.UserCore;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace Sonar.Infrastructure.Repository.UserCore;
 
-public class UserSessionRepository(SonarContext dbContext) : GenericRepository<UserSession>(dbContext), IUserSessionRepository
+public class UserSessionRepository(SonarContext dbContext)
+    : GenericRepository<UserSession>(dbContext), IUserSessionRepository
 {
     public async Task<UserSession?> GetByRefreshToken(string refreshHash)
     {

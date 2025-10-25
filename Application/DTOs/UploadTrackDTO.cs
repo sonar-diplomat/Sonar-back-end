@@ -7,6 +7,7 @@ public class UploadTrackDTO
     public required string Title { get; set; }
     public required bool IsExplicit { get; set; }
     public required bool DrivingDisturbingNoises { get; set; }
-    public required IFormFile AudioFile { get; set; }
-    public required IFormFile CoverFile { get; set; }
+    public required IFormFile LowQualityAudioFile { get; set; }
+    public required IFormFile? MediumQualityAudioFile { get; set; }
+    public required IFormFile? HighQualityAudioFile { get; set; }
 }
