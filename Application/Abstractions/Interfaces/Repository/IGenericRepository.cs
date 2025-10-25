@@ -11,4 +11,5 @@ public interface IGenericRepository<T> where T : BaseModel
     Task RemoveAsync(T entity);
     Task RemoveRangeAsync(List<T> entities);
     Task SaveChangesAsync();
+    IQueryable<T> Query();
 }

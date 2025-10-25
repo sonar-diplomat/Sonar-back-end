@@ -1,8 +1,10 @@
-﻿using Application.Abstractions.Interfaces.Services;
+﻿using Application.Abstractions.Interfaces.Repository.Distribution;
+using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.File;
 using Application.Abstractions.Interfaces.Services.Utilities;
 using Application.Response;
 using Entities.Models.Chat;
+using Entities.Models.Distribution;
 using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -16,7 +18,8 @@ public class TestController(
     UserManager<User> userManager,
     IQrCodeService qrCodeService,
     IApiKeyGeneratorService apiKeyGeneratorService,
-    IImageFileService fileService
+    IImageFileService fileService,
+    IDistributorRepository distributorRepository
 ) : BaseController(userManager)
 {
     [HttpGet("apikey")]
@@ -31,6 +34,14 @@ public class TestController(
     {
         string svg = await qrCodeService.GenerateQrCode(link);
         throw ResponseFactory.Create<OkResponse<string>>(svg, ["image/svg+xml"]);
+    }
+
+    [HttpGet("test_include")]
+    public async Task<ActionResult> TestInclude()
+    {
+        var d = await distributorRepository.Include(d => d.Cover).Include_(d => d.License).ThenInclude_(l => l.Issuer).GetByIdAsync(4);
+
+        throw ResponseFactory.Create<OkResponse<Distributor>>(d);
     }
 
     [HttpGet("appdata")]

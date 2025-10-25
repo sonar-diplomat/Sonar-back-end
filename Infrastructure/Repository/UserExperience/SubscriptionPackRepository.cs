@@ -5,11 +5,16 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Sonar.Infrastructure.Repository.UserExperience;
 
-public class SubscriptionPackRepository : GenericRepository<SubscriptionPack>, ISubscriptionPackRepository
+public class SubscriptionPackRepository(SonarContext dbContext) : GenericRepository<SubscriptionPack>(dbContext), ISubscriptionPackRepository
 {
-    public SubscriptionPackRepository(SonarContext dbContext) : base(dbContext)
+    public override async Task<SubscriptionPack?> GetByIdAsync(int? id)
     {
-        
+        return await context.Set<SubscriptionPack>().Include(s => s.SubscriptionFeatures).FirstOrDefaultAsync(sp => sp.Id == id);
+    }
+
+    public override async Task<IQueryable<SubscriptionPack>> GetAllAsync()
+    {
+        return await Task.FromResult(context.Set<SubscriptionPack>().Include(s => s.SubscriptionFeatures).AsQueryable());
     }
     public async Task<SubscriptionPack?> FindByExactFeatureSetAsync(List<int> featureIds)
     {

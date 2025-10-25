@@ -1,6 +1,7 @@
 ﻿using Application.Abstractions.Interfaces.Repository;
 using Entities.Models;
 using Infrastructure.Data;
+using System.Linq.Expressions;
 
 namespace Sonar.Infrastructure.Repository;
 
@@ -8,6 +9,15 @@ public class GenericRepository<T>(SonarContext context) : IGenericRepository<T>
     where T : BaseModel
 {
     protected readonly SonarContext context = context;
+
+    public IQueryable<T> Query()
+    {
+        return context.Set<T>().AsQueryable();
+    }
+    public virtual async Task<IQueryable<T>> Include(Expression<Func<T, object>> prop)
+    {
+        throw new NotImplementedException();
+    }
 
     public virtual async Task<T?> GetByIdAsync(int? id)
     {
