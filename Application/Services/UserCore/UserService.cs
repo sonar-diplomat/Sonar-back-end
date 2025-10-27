@@ -1,8 +1,8 @@
 ﻿using Application.Abstractions.Interfaces.Repository.UserCore;
 using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.File;
-using Application.DTOs;
 using Application.DTOs.Auth;
+using Application.DTOs.User;
 using Application.Response;
 using Entities.Models.Access;
 using Entities.Models.UserCore;

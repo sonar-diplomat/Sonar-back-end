@@ -18,7 +18,10 @@ public class ImageFileService(
     public async Task<ImageFile> UploadFileAsync(IFormFile file)
     {
         await ValidateFileType(file, [typeof(Png), typeof(Jpeg)]);
-        string url = await fileStorageService.SaveImageFileAsync(file);
+        string? url = await fileStorageService.SaveImageFileAsync(file);
+
+        if (url == null) throw ResponseFactory.Create<InternalServerErrorResponse>(["Can`t save image"]);
+
         ImageFile fileModel = new()
         {
             ItemName = file.FileName,

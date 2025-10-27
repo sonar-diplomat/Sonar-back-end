@@ -1,6 +1,6 @@
 ﻿using Application.Abstractions.Interfaces.Repository.UserCore;
 using Application.Abstractions.Interfaces.Services;
-using Application.DTOs;
+using Application.DTOs.Auth;
 using Application.Response;
 using Entities.Models.UserCore;
 
@@ -18,7 +18,7 @@ public class UserSessionService(IUserSessionRepository repository)
     {
         UserSession? userSession = await repository.GetByRefreshToken(refreshHash);
         if (userSession == null)
-            ResponseFactory.Create<NotFoundResponse>();
+            throw ResponseFactory.Create<NotFoundResponse>();
         return userSession!;
     }
 

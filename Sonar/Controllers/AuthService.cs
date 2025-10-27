@@ -22,15 +22,15 @@ public class AuthService(IConfiguration configuration, IUserService userService)
         return Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
     }
 
-    public string GenerateJwtToken(User user)
+    public string GenerateJwtToken(User user, string deviceId)
     {
         Claim[] claims =
         [
             new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             new(ClaimTypes.NameIdentifier, user.Login),
             new(ClaimTypes.Name, user.UserName!),
-            new(ClaimTypes.Email, user.Email!)
+            new(ClaimTypes.Email, user.Email!),
+            new(ClaimTypes.Sid, deviceId)
         ];
         SymmetricSecurityKey key = new(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!));
         SigningCredentials creds = new(key, SecurityAlgorithms.HmacSha256);

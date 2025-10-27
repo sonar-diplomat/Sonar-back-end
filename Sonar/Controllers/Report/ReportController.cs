@@ -1,5 +1,5 @@
 using Application.Abstractions.Interfaces.Services;
-using Application.DTOs;
+using Application.DTOs.Report;
 using Application.Response;
 using Entities.Enums;
 using Entities.Models.Report;
@@ -50,8 +50,8 @@ public class ReportController(
     [HttpPost]
     public async Task<ActionResult<ReportModel>> CreateReport([FromBody] CreateReportDTO dto)
     {
-        await CheckAccessFeatures([AccessFeatureStruct.ManageReports]);
-        ReportModel report = await reportService.CreateReportAsync(dto);
+        User user = await CheckAccessFeatures([AccessFeatureStruct.ReportContent]);
+        ReportModel report = await reportService.CreateReportAsync(user.Id, dto);
         throw ResponseFactory.Create<OkResponse<ReportModel>>(report, ["Report created successfully"]);
     }
 
@@ -63,13 +63,12 @@ public class ReportController(
         throw ResponseFactory.Create<OkResponse>(["Report closed successfully"]);
     }
 
-    [HttpGet("entity/{entityId}/type/{typeId}")]
-    public async Task<ActionResult<IEnumerable<ReportModel>>> GetReportsByEntity(int entityId,
-        int typeId)
+    [HttpGet("filter")]
+    public async Task<ActionResult<IEnumerable<ReportModel>>> GetFiltered([FromBody] ReportFilterDTO dto)
     {
         await CheckAccessFeatures([AccessFeatureStruct.ManageReports]);
         IEnumerable<ReportModel> reports =
-            await reportService.GetReportsByEntityAsync(entityId, typeId);
+            await reportService.GetReportsFilteredAsync(dto);
         throw ResponseFactory.Create<OkResponse<IEnumerable<ReportModel>>>(reports, ["Reports retrieved successfully"]);
     }
 
@@ -98,7 +97,7 @@ public class ReportController(
     public async Task<ActionResult<IEnumerable<ReportReasonType>>> GetReasonTypes()
     {
         IEnumerable<ReportReasonType> reasonTypes =
-            await reportReasonTypeService.GetAllAsync();
+            (await reportReasonTypeService.GetAllAsync()).ToList();
         throw ResponseFactory.Create<OkResponse<IEnumerable<ReportReasonType>>>(reasonTypes,
             ["Reason types retrieved successfully"]);
     }
@@ -118,7 +117,7 @@ public class ReportController(
     public async Task<ActionResult<IEnumerable<ReportableEntityType>>> GetEntityTypes()
     {
         IEnumerable<ReportableEntityType> entityTypes =
-            await reportableEntityTypeService.GetAllAsync();
+            (await reportableEntityTypeService.GetAllAsync()).ToList();
         throw ResponseFactory.Create<OkResponse<IEnumerable<ReportableEntityType>>>(entityTypes,
             ["Entity types retrieved successfully"]);
     }
