@@ -10,13 +10,13 @@ namespace Sonar.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-public class AccessFeatureController(UserManager<User> userManager, IAccessFeatureService accessFeatureService) : BaseController(userManager)
+public class AccessFeatureController(UserManager<User> userManager, IAccessFeatureService accessFeatureService, IUserService userService) : BaseController(userManager)
 {
     [HttpPost("assign/{userId:int}")]
     public async Task<IActionResult> AssignAccessFeatures(int userId, [FromBody] int[] accessFeatureIds)
     {
         await CheckAccessFeatures([AccessFeatureStruct.ManageUsers]);
-        await accessFeatureService.AssignAccessFeaturesAsync(userId, accessFeatureIds);
+        await userService.AssignAccessFeaturesAsync(userId, accessFeatureIds);
         throw ResponseFactory.Create<OkResponse>(["Access feature was assigned to user successfully"]);
     }
 
@@ -24,14 +24,14 @@ public class AccessFeatureController(UserManager<User> userManager, IAccessFeatu
     public async Task<IActionResult> RevokeAccessFeatures(int userId, [FromBody] int[] accessFeatureIds)
     {
         await CheckAccessFeatures([AccessFeatureStruct.ManageUsers]);
-        await accessFeatureService.RevokeAccessFeaturesAsync(userId, accessFeatureIds);
+        await userService.RevokeAccessFeaturesAsync(userId, accessFeatureIds);
         throw ResponseFactory.Create<OkResponse>(["Access feature was revoked from user successfully"]);
     }
 
     [HttpGet]
     public async Task<IActionResult> GetAccessFeatures()
     {
-        IEnumerable<AccessFeature> accessFeatures = await accessFeatureService.GetAllAsync();
+        IEnumerable<AccessFeature> accessFeatures = (await accessFeatureService.GetAllAsync()).ToList();
         throw ResponseFactory.Create<OkResponse<IEnumerable<AccessFeature>>>(accessFeatures, ["Access features retrieved successfully"]);
     }
 

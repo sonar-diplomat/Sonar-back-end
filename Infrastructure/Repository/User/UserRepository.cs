@@ -52,4 +52,9 @@ public class UserRepository(SonarContext context) : IUserRepository
     {
         return Task.FromResult(context.Set<User>().Any(u => u.UserName == UserName));
     }
+
+    public async Task SaveChangesAsync()
+    {
+        await context.SaveChangesAsync();
+    }
 }

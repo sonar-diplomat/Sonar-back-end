@@ -24,6 +24,7 @@ using Application.Services.UserExperience;
 using Application.Services.Utilities;
 using Entities.Models.UserCore;
 using FileSignatures;
+using FileSignatures.Formats;
 using Infrastructure.Data;
 using Infrastructure.Repository.Access;
 using Infrastructure.Repository.Chat;
@@ -53,7 +54,6 @@ using Sonar.Infrastructure.Repository.UserCore;
 using Sonar.Infrastructure.Repository.UserExperience;
 using Sonar.Middleware;
 using System.Text;
-using FileSignatures.Formats;
 using Flac = Application.Services.File.Flac;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -245,6 +245,8 @@ builder.Services.AddScoped<IAlbumService, AlbumService>();
 builder.Services.AddScoped<IBlendService, BlendService>();
 builder.Services.AddScoped<IPlaylistService, PlaylistService>();
 builder.Services.AddScoped<ITrackService, TrackService>();
+builder.Services.AddScoped<IAlbumArtistService, AlbumArtistService>();
+
 
 // Report Services
 builder.Services.AddScoped<IReportableEntityTypeService, ReportableEntityTypeService>();
