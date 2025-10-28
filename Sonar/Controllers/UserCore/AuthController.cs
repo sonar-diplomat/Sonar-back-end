@@ -1,8 +1,7 @@
 ﻿using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.Utilities;
-using Application.DTOs;
-using Application.Response;
 using Application.DTOs.Auth;
+using Application.Response;
 using Entities.Enums;
 using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Authorization;
@@ -35,8 +34,8 @@ public class AuthController(
         User user = await userService.CreateUserShellAsync(model);
         IdentityResult result = await userManager.CreateAsync(user, model.Password);
         if (result.Succeeded)
-            throw ResponseFactory.Create<OkResponse>("Registration successfull");
-        throw ResponseFactory.Create<OkResponse>("Registration failed");
+            throw ResponseFactory.Create<OkResponse>(["Registration successfull"]);
+        throw ResponseFactory.Create<BadRequestResponse>(result.Errors.Select(e => e.ToString()).ToArray()!);
     }
 
     [HttpPost("login")]
@@ -67,7 +66,7 @@ public class AuthController(
         }
 
         // Generate both tokens
-        string accessToken = authService.GenerateJwtToken(user.Email, user.Login);
+        string accessToken = authService.GenerateJwtToken(user, Request.Headers["X-Device-Name"].ToString() ?? "Unknown device");
         string refreshToken = authService.GenerateRefreshToken();
 
         UserSession session = new()
@@ -77,7 +76,8 @@ public class AuthController(
             UserAgent = Request.Headers["User-Agent"].ToString() ?? "Unknown",
             IPAddress = HttpContext.Connection.RemoteIpAddress!,
             RefreshTokenHash = authService.ComputeSha256(refreshToken),
-            ExpiresAt = DateTime.UtcNow.AddDays(30),
+            //ExpiresAt = DateTime.UtcNow.AddDays(30),
+            ExpiresAt = DateTime.UtcNow.AddMinutes(1),
             CreatedAt = DateTime.UtcNow,
             LastActive = DateTime.UtcNow,
             Revoked = false
@@ -102,7 +102,7 @@ public class AuthController(
             throw ResponseFactory.Create<BadRequestResponse>(["Invalid or expired code"]);
 
         // Generate both tokens
-        string accessToken = authService.GenerateJwtToken(user.Email, user.Login);
+        string accessToken = authService.GenerateJwtToken(user, Request.Headers["X-Device-Name"].ToString() ?? "Unknown device");
         string refreshToken = authService.GenerateRefreshToken();
 
         UserSession session = new()
@@ -119,8 +119,7 @@ public class AuthController(
         };
 
         // Save refresh token to user
-        user.UserSessions.Add(session);
-        await userManager.UpdateAsync(user);
+        await userSessionService.CreateAsync(session);
         throw ResponseFactory.Create<OkResponse<(string, string)>>((accessToken, refreshToken), ["Login successful"]);
     }
 
@@ -130,8 +129,8 @@ public class AuthController(
         string refreshHash = authService.ComputeSha256(refreshToken);
         UserSession session = await userSessionService.GetValidatedByRefreshTokenAsync(refreshHash);
         await userSessionService.UpdateLastActiveAsync(session);
-        string newAccessToken = authService.GenerateJwtToken(session.User.Email, session.User.Login);
-        throw ResponseFactory.Create<OkResponse<(string, string)>>((newAccessToken, refreshToken), ["Token refreshed successfully"]);
+        string newAccessToken = authService.GenerateJwtToken(session.User, session.DeviceName);
+        throw ResponseFactory.Create<OkResponse<RefreshTokenResponse>>(new RefreshTokenResponse(newAccessToken, refreshToken), ["Token refreshed successfully"]);
     }
 
     [Authorize]
@@ -158,7 +157,7 @@ public class AuthController(
     }
 
     [HttpPost("confirm-email-change")]
-    public async Task<IActionResult> ConfirmEmailChange([FromBody]ConfigmEmailChangeDTO changeDTO)
+    public async Task<IActionResult> ConfirmEmailChange([FromBody] ConfigmEmailChangeDTO changeDTO)
     {
         User user = await CheckAccessFeatures([]);
 
@@ -208,7 +207,7 @@ public class AuthController(
 
         if (user.Email == null || !await userManager.GetTwoFactorEnabledAsync(user))
             throw ResponseFactory.Create<OkResponse>(["Password reset link sent to your email."]);
-        
+
         string resetToken = await userManager.GeneratePasswordResetTokenAsync(user);
         string resetLink = $"{frontEndUrl}/approve-change/{resetToken}";
         await emailSenderService.SendEmailAsync(

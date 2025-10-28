@@ -1,8 +1,9 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using Entities.Models.File;
+﻿using Entities.Models.File;
 using Entities.Models.Music;
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace Entities.Models.Distribution;
 
@@ -41,6 +42,7 @@ public class Distributor : BaseModel
     [DeleteBehavior(DeleteBehavior.Cascade)]
     public virtual ImageFile Cover { get; set; }
 
+    [JsonIgnore]
     public virtual ICollection<DistributorAccount> Accounts { get; set; }
     public virtual ICollection<Album> Albums { get; set; }
 }

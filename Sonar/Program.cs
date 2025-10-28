@@ -1,4 +1,3 @@
-using System.Text;
 using Application.Abstractions.Interfaces.Repository.Access;
 using Application.Abstractions.Interfaces.Repository.Chat;
 using Application.Abstractions.Interfaces.Repository.Client;
@@ -38,6 +37,7 @@ using Infrastructure.Repository.User;
 using Infrastructure.Repository.UserExperience;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -52,6 +52,9 @@ using Sonar.Infrastructure.Repository.Report;
 using Sonar.Infrastructure.Repository.UserCore;
 using Sonar.Infrastructure.Repository.UserExperience;
 using Sonar.Middleware;
+using System.Text;
+using FileSignatures.Formats;
+using Flac = Application.Services.File.Flac;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<SonarContext>(options =>
@@ -118,6 +121,11 @@ builder.Services.AddAuthentication(options =>
     });
 
 builder.Services.AddOpenApi();
+
+builder.Services.Configure<FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = 104857600; // 100 MB
+});
 
 
 #region RegisterRepositories
@@ -277,11 +285,12 @@ builder.Services.AddScoped<MailgunSettings>(_ =>
 
 // Utility Services
 builder.Services.AddScoped<IEmailSenderService, MailgunEmailService>();
+builder.Services.AddScoped<AuthService>();
 builder.Services.AddSingleton<QRCodeGenerator>();
 builder.Services.AddSingleton<IQrCodeService, QrCodeService>();
-builder.Services.AddSingleton<IFileFormatInspector, FileFormatInspector>();
+builder.Services.AddSingleton<IFileFormatInspector>(new FileFormatInspector(
+    [new Png(), new Jpeg(), new Mp3(), new Flac(), new Gif()]));
 builder.Services.AddSingleton<IFileStorageService, FileStorageService>();
-builder.Services.AddSingleton<AuthService>();
 builder.Services.AddHttpClient();
 
 #endregion

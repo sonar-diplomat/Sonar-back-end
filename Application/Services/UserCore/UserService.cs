@@ -1,9 +1,9 @@
 ﻿using Application.Abstractions.Interfaces.Repository.UserCore;
 using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.File;
-using Application.DTOs;
-using Application.Response;
 using Application.DTOs.Auth;
+using Application.DTOs.User;
+using Application.Response;
 using Entities.Models.Access;
 using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Http;
@@ -30,9 +30,9 @@ public class UserService(
         return user.AvailableCurrency;
     }
 
-    public async Task<User> GetByIdAsync(int id)
+    public async Task<User?> GetByIdAsync(int id)
     {
-        return (await repository.GetByIdAsync(id))!;
+        return await repository.GetByIdAsync(id);
     }
 
     public async Task<IEnumerable<User>> GetAllAsync()
@@ -82,7 +82,9 @@ public class UserService(
             DateOfBirth = model.DateOfBirth,
             UserName = model.UserName,
             Login = model.Login,
-            Email = model.Email
+            Email = model.Email,
+            PublicIdentifier = new Random().Next().ToString(), //TODO:
+            RegistrationDate = DateTime.UtcNow
         };
         VisibilityState tempVs = new()
         {

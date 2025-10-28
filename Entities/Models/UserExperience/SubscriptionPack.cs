@@ -17,6 +17,10 @@ public class SubscriptionPack : BaseModel
     [MaxLength(500)]
     public string Description { get; set; }
 
+
+    [NotMapped]
+    public decimal Price { get { return SubscriptionFeatures == null ? 0 : SubscriptionFeatures.Select(s => s.Price).Sum(); } }
+
     /// <summary>
     /// </summary>
     public virtual ICollection<SubscriptionFeature> SubscriptionFeatures { get; set; }

@@ -1,5 +1,5 @@
 using Application.Abstractions.Interfaces.Repository.Distribution;
-using Application.DTOs;
+using Application.DTOs.Auth;
 using Entities.Models.Distribution;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;

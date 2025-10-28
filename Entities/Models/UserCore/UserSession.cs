@@ -1,7 +1,7 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Net;
-using Microsoft.EntityFrameworkCore;
 
 namespace Entities.Models.UserCore;
 
@@ -18,7 +18,7 @@ public class UserSession : BaseModel
     public string UserAgent { get; set; }
 
     [Required]
-    [MaxLength(30)]
+    [MaxLength(130)]
     public string DeviceName { get; set; }
 
     [Required]

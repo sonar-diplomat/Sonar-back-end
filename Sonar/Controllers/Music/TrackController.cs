@@ -19,12 +19,12 @@ public class TrackController(
     ITrackService trackService,
     ISettingsService settingsService) : BaseControllerExtended(userManager, accountService, distributorService)
 {
-    [HttpGet("stream/{trackId:int}")]
+    [HttpGet("{trackId}/stream")]
     [Authorize]
     public async Task<IActionResult> StreamMusic(int trackId, [FromQuery] bool download = false)
     {
-        int settingsId = (await CheckAccessFeatures([])).SettingsId;
-        Settings settings = await settingsService.GetByIdValidatedAsync(settingsId);
+        int settingsId = (await CheckAccessFeatures([AccessFeatureStruct.ListenContent])).SettingsId;
+        Settings setttings = await settingsService.GetByIdValidatedAsync(settingsId);
         string? rangeHeader = Request.Headers.Range.FirstOrDefault();
         MusicStreamResultDTO? result = await trackService.GetMusicStreamAsync(trackId, rangeHeader);
 

@@ -7,9 +7,14 @@ namespace Sonar.Infrastructure.Repository.UserCore;
 
 public class UserRepository(SonarContext context) : IUserRepository
 {
+    public IQueryable<User> Query()
+    {
+        return context.Set<User>().AsQueryable();
+    }
+
     public async Task<User?> GetByIdAsync(int? id)
     {
-        return await context.Set<User>().Include(u => u.AccessFeatures).FirstOrDefaultAsync(u=>u.Id==id);
+        return await context.Set<User>().Include(u => u.AccessFeatures).FirstOrDefaultAsync(u => u.Id == id);
     }
 
     public async Task<IQueryable<User>> GetAllAsync()
