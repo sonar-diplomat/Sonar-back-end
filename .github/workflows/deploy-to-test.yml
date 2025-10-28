@@ -21,7 +21,7 @@ jobs:
       - name: Build Docker image with docker-compose
         run: |
           docker compose build
-          docker save sonar-app > sonar-app.tar
+          docker save sonar:latest > sonar-app.tar
 
       - name: Copy image to Test Server
         uses: appleboy/scp-action@master
