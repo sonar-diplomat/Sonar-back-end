@@ -1,5 +1,6 @@
 using Application.Abstractions.Interfaces.Repository.Distribution;
 using Application.DTOs.Auth;
+using Application.Extensions;
 using Entities.Models.Distribution;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -10,8 +11,7 @@ public class DistributorSessionRepository(SonarContext dbContext) : GenericRepos
 {
     public async Task<DistributorSession?> GetByRefreshTokenAsync(string refreshHash)
     {
-        return await context.DistributorSessions
-            .Include(s => s.DistributorAccount)
+        return await RepositoryIncludeExtensions.Include(context.DistributorSessions, s => s.DistributorAccount)
             .FirstOrDefaultAsync(s =>
                 s.RefreshTokenHash == refreshHash &&
                 !s.Revoked &&

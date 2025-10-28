@@ -60,10 +60,10 @@ public class AlbumController(
 
     [HttpPut("{albumId:int}/visibility")]
     [Authorize]
-    public async Task<IActionResult> ChangeVisibilityState(int albumId, int visibilytyStateId)
+    public async Task<IActionResult> UpdateVisibilityState(int albumId, int visibilityStateId)
     {
         await CheckAccessFeatures([AccessFeatureStruct.ManageContent]);
-        await albumService.ChangeVisibilityStateAsync(albumId, visibilytyStateId);
+        await albumService.UpdateVisibilityStateAsync(albumId, visibilityStateId);
 
         throw ResponseFactory.Create<OkResponse>(["Album visibility state was changed successfully"]);
     }

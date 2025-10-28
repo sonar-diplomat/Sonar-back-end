@@ -2,6 +2,7 @@
 using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.File;
 using Application.DTOs;
+using Application.Extensions;
 using Entities.Models.Music;
 
 namespace Application.Services.Music;
@@ -10,7 +11,8 @@ public class AlbumService(
     IAlbumRepository repository,
     IVisibilityStateService visibilityStateService,
     IImageFileService imageFileService,
-    IAlbumArtistService albumArtistService
+    IAlbumArtistService albumArtistService,
+    IArtistService artistService
 ) : GenericService<Album>(repository), IAlbumService
 {
     public async Task<Album> UploadAsync(UploadAlbumDTO dto, int distributorId)
@@ -28,7 +30,7 @@ public class AlbumService(
             {
                 Pseudonym = authorPseudonym,
                 AlbumId = album.Id,
-                ArtistId = null // TODO: add artistService method to check if artist exists by name. if one does, add id here
+                ArtistId = (await artistService.GetByNameAsync(authorPseudonym))?.Id
             };
             await albumArtistService.CreateAsync(albumArtist);
         }
@@ -42,17 +44,21 @@ public class AlbumService(
         album.Name = newName;
         return await repository.UpdateAsync(album);
     }
-
-
-    // TODO: Implement this method (Include)
-    public async Task ChangeVisibilityStateAsync(int albumId, int newVisibilityState)
+    
+    public async Task UpdateVisibilityStateAsync(int albumId, int newVisibilityState)
     {
-        Album? album;
-        //album.VisibilityStateId = newVisibilityState;
-
-
-        //await repository.UpdateAsync(album);
-
-        throw new NotImplementedException();
+        Album album = await repository.Include(a => a.VisibilityState).GetByIdValidatedAsync(albumId);
+        album.VisibilityStateId = newVisibilityState;
+        await repository.UpdateAsync(album);
+    }
+    
+    public async Task<Album> GetValidatedIncludeTracksAsync(int id)
+    {
+        return await repository.Include(a => a.Tracks).GetByIdValidatedAsync(id);
+    }
+    
+    public async Task<Album> GetValidatedIncludeVisibilityStateAsync(int id)
+    {
+        return await repository.Include(a => a.VisibilityState).GetByIdValidatedAsync(id);
     }
 }

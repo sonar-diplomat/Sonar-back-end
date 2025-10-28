@@ -1,4 +1,5 @@
 using Application.Abstractions.Interfaces.Repository.UserExperience;
+using Application.Extensions;
 using Entities.Models.UserExperience;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -9,17 +10,16 @@ public class SubscriptionPackRepository(SonarContext dbContext) : GenericReposit
 {
     public override async Task<SubscriptionPack?> GetByIdAsync(int? id)
     {
-        return await context.Set<SubscriptionPack>().Include(s => s.SubscriptionFeatures).FirstOrDefaultAsync(sp => sp.Id == id);
+        return await RepositoryIncludeExtensions.Include(context.Set<SubscriptionPack>(), s => s.SubscriptionFeatures).FirstOrDefaultAsync(sp => sp.Id == id);
     }
 
     public override async Task<IQueryable<SubscriptionPack>> GetAllAsync()
     {
-        return await Task.FromResult(context.Set<SubscriptionPack>().Include(s => s.SubscriptionFeatures).AsQueryable());
+        return await Task.FromResult(RepositoryIncludeExtensions.Include(context.Set<SubscriptionPack>(), s => s.SubscriptionFeatures).AsQueryable());
     }
     public async Task<SubscriptionPack?> FindByExactFeatureSetAsync(List<int> featureIds)
     {
-        return await context.Set<SubscriptionPack>()
-            .Include(p => p.SubscriptionFeatures)
+        return await RepositoryIncludeExtensions.Include(context.Set<SubscriptionPack>(), p => p.SubscriptionFeatures)
             .Where(p =>
                 p.SubscriptionFeatures.Count == featureIds.Count &&
                 p.SubscriptionFeatures.All(f => featureIds.Contains(f.Id)) &&

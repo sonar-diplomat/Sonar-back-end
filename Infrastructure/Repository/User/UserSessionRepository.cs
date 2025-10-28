@@ -1,5 +1,6 @@
 using Application.Abstractions.Interfaces.Repository.UserCore;
 using Application.DTOs.Auth;
+using Application.Extensions;
 using Entities.Models.UserCore;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -17,8 +18,7 @@ public class UserSessionRepository(SonarContext dbContext)
     }
     public async Task<UserSession?> GetByRefreshToken(string refreshHash)
     {
-        return await context.UserSessions
-            .Include(s => s.User)
+        return await RepositoryIncludeExtensions.Include(context.UserSessions, s => s.User)
             .FirstOrDefaultAsync(s =>
                 s.RefreshTokenHash == refreshHash &&
                 !s.Revoked &&

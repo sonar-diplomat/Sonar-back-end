@@ -14,10 +14,6 @@ public class GenericRepository<T>(SonarContext context) : IGenericRepository<T>
     {
         return context.Set<T>().AsQueryable();
     }
-    public virtual async Task<IQueryable<T>> Include(Expression<Func<T, object>> prop)
-    {
-        throw new NotImplementedException();
-    }
 
     public virtual async Task<T?> GetByIdAsync(int? id)
     {

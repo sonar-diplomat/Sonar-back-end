@@ -2,6 +2,7 @@
 using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.File;
 using Application.Abstractions.Interfaces.Services.Utilities;
+using Application.Extensions;
 using Application.Response;
 using Entities.Models.Chat;
 using Entities.Models.Distribution;
@@ -40,7 +41,6 @@ public class TestController(
     public async Task<ActionResult> TestInclude()
     {
         var d = await distributorRepository.Include(d => d.Cover).Include(d => d.License).ThenInclude(l => l.Issuer).GetByIdAsync(4);
-
         throw ResponseFactory.Create<OkResponse<Distributor>>(d);
     }
 

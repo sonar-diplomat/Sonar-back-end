@@ -7,4 +7,8 @@ namespace Application.Services.Distribution;
 public class ArtistService(IArtistRepository repository)
     : GenericService<Artist>(repository), IArtistService
 {
+    public Task<Artist?> GetByNameAsync(string name)
+    {
+        return repository.GetByNameAsync(name);
+    }
 }

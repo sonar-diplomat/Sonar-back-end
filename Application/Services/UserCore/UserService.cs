@@ -1,4 +1,5 @@
-﻿using Application.Abstractions.Interfaces.Repository.UserCore;
+﻿using System.Security.Cryptography;
+using Application.Abstractions.Interfaces.Repository.UserCore;
 using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.File;
 using Application.DTOs.Auth;
@@ -83,7 +84,7 @@ public class UserService(
             UserName = model.UserName,
             Login = model.Login,
             Email = model.Email,
-            PublicIdentifier = new Random().Next().ToString(), //TODO:
+            PublicIdentifier = RandomNumberGenerator.GetInt32(100000, 1000000).ToString(), // TODO: Potentially change, needs discussion
             RegistrationDate = DateTime.UtcNow
         };
         VisibilityState tempVs = new()

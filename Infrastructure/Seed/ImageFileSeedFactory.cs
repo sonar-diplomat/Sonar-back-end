@@ -6,8 +6,8 @@ public class ImageFileSeedFactory
 {
     public static ImageFile[] CreateSeedData()
     {
-        return new[]
-        {
+        return
+        [
             new ImageFile
             {
                 Id = 1,
@@ -15,6 +15,6 @@ public class ImageFileSeedFactory
                 // TODO: Add url to default user image
                 Url = ""
             }
-        };
+        ];
     }
 }

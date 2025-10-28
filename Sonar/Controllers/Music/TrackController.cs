@@ -1,6 +1,7 @@
 using Application.Abstractions.Interfaces.Services;
 using Application.DTOs;
 using Application.Response;
+using Entities.Enums;
 using Entities.Models.ClientSettings;
 using Entities.Models.Music;
 using Entities.Models.UserCore;

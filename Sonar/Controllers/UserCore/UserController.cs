@@ -29,9 +29,17 @@ public class UserController(
     [HttpGet("{id}")]
     public async Task<ActionResult<User>> GetUser(int id)
     {
-        //TODO set to UserPublicDTO
         User user = await userService.GetByIdAsync(id);
-        throw ResponseFactory.Create<OkResponse<User>>(user, ["User retrieved successfully"]);
+        NonSensetiveUserDTO userDto = new NonSensetiveUserDTO
+        {
+            Biography = user.Biography,
+            PublicIdentifier = user.PublicIdentifier,
+            RegistrationDate = user.RegistrationDate,
+            AvatarImage = user.AvatarImage,
+            Posts = user.Posts,
+            AccessFeatures = user.AccessFeatures
+        };
+        throw ResponseFactory.Create<OkResponse<NonSensetiveUserDTO>>(userDto, ["User retrieved successfully"]);
     }
 
     [HttpPut("update")]

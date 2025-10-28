@@ -4,4 +4,5 @@ namespace Application.Abstractions.Interfaces.Repository.Music;
 
 public interface IArtistRepository : IGenericRepository<Artist>
 {
+    Task<Artist?> GetByNameAsync(string name);
 }

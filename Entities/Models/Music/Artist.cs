@@ -13,7 +13,7 @@ public class Artist : BaseModel
 
     [Required]
     [MaxLength(100)]
-    public required string ArtistName { get; set; }
+    public string ArtistName { get; set; }
 
     /// <summary>
     /// </summary>
