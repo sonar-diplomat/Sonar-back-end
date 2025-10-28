@@ -18,7 +18,7 @@ public class UserSession : BaseModel
     public string UserAgent { get; set; }
 
     [Required]
-    [MaxLength(130)]
+    [MaxLength(128)]
     public string DeviceName { get; set; }
 
     [Required]

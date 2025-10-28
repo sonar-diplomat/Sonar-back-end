@@ -1,6 +1,5 @@
 ﻿using Application.Abstractions.Interfaces.Repository.Access;
 using Application.Abstractions.Interfaces.Services;
-using Entities.Enums;
 using Entities.Models.Access;
 using Entities.Models.UserCore;
 
@@ -16,7 +15,7 @@ public class AccessFeatureService(IAccessFeatureRepository repository, IUserServ
 
     public async Task<ICollection<AccessFeature>> GetUserFeaturesByIdAsync(int userId)
     {
-       return await repository.GetUserFeaturesByIdAsync(userId);
+        return await repository.GetUserFeaturesByIdAsync(userId);
     }
 
     public async Task AssignAccessFeaturesAsync(int userId, int[] accessFeatureIds)
@@ -27,8 +26,9 @@ public class AccessFeatureService(IAccessFeatureRepository repository, IUserServ
             if (user.AccessFeatures.All(af => af.Id != accessFeatureId))
                 user.AccessFeatures.Add(await GetByIdValidatedAsync(accessFeatureId));
         }
+        await repository.SaveChangesAsync();
     }
-    
+
     public async Task AssignAccessFeaturesByNameAsync(int userId, string[] accessFeatures)
     {
         User user = await userService.GetValidatedIncludeAccessFeaturesAsync(userId);
@@ -37,21 +37,24 @@ public class AccessFeatureService(IAccessFeatureRepository repository, IUserServ
             if (user.AccessFeatures.All(af => af.Name != name))
                 user.AccessFeatures.Add(await repository.GetByNameValidatedAsync(name));
         }
+        await repository.SaveChangesAsync();
     }
-    
+
     public async Task RevokeAccessFeaturesAsync(int userId, int[] accessFeatureIds)
     {
         var user = await userService.GetValidatedIncludeAccessFeaturesAsync(userId);
         IEnumerable<AccessFeature> toRemove = user.AccessFeatures.Where(af => accessFeatureIds.Contains(af.Id));
         foreach (AccessFeature af in toRemove)
             user.AccessFeatures.Remove(af);
+        await repository.SaveChangesAsync();
     }
-    
+
     public async Task RevokeAccessFeaturesByNameAsync(int userId, string[] accessFeatures)
     {
         var user = await userService.GetValidatedIncludeAccessFeaturesAsync(userId);
         IEnumerable<AccessFeature> toRemove = user.AccessFeatures.Where(af => accessFeatures.Contains(af.Name));
         foreach (AccessFeature af in toRemove)
             user.AccessFeatures.Remove(af);
+        await repository.SaveChangesAsync();
     }
 }

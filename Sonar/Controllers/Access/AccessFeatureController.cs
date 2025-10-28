@@ -19,7 +19,7 @@ public class AccessFeatureController(UserManager<User> userManager, IAccessFeatu
         await accessFeatureService.AssignAccessFeaturesAsync(userId, accessFeatureIds);
         throw ResponseFactory.Create<OkResponse>(["Access feature was assigned to user successfully"]);
     }
-    
+
     [HttpPost("revoke/{userId:int}")]
     public async Task<IActionResult> RevokeAccessFeatures(int userId, [FromBody] int[] accessFeatureIds)
     {
