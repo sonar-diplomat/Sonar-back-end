@@ -15,7 +15,6 @@ public abstract class BaseController(
     [Authorize]
     protected async Task<User> GetUserByJwt()
     {
-
         User? user = await userManager.GetUserAsync(User);
         user = user == null ?
             throw ResponseFactory.Create<UnauthorizedResponse>()

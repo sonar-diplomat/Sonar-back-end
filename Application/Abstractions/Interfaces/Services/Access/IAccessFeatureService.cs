@@ -6,4 +6,6 @@ public interface IAccessFeatureService : IGenericService<AccessFeature>
 {
     Task<ICollection<AccessFeature>> GetDefaultAsync();
     Task<ICollection<AccessFeature>> GetUserFeaturesByIdAsync(int userId);
+    Task AssignAccessFeaturesAsync(int userId, int[] accessFeatureIds);
+    Task RevokeAccessFeaturesAsync(int userId, int[] accessFeatureIds);
 }

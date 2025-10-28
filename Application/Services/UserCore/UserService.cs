@@ -4,6 +4,7 @@ using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.File;
 using Application.DTOs.Auth;
 using Application.DTOs.User;
+using Application.Extensions;
 using Application.Response;
 using Entities.Models.Access;
 using Entities.Models.UserCore;
@@ -106,6 +107,11 @@ public class UserService(
     {
         User? user = await repository.GetByIdAsync(id);
         return user ?? throw ResponseFactory.Create<NotFoundResponse>(["User not found."]);
+    }
+    
+    public async Task<User> GetValidatedIncludeAccessFeaturesAsync(int id)
+    {
+        return await repository.Include(u => u.AccessFeatures).GetByIdValidatedAsync(id);
     }
 
     public async Task UpdateAvatar(int userId, IFormFile file)

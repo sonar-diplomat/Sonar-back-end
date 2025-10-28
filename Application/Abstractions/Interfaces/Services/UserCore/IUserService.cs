@@ -16,4 +16,5 @@ public interface IUserService
     Task<IEnumerable<User>> GetAllAsync();
     Task<User> GetByIdValidatedAsync(int id);
     Task UpdateAvatar(int userId, IFormFile file);
+    Task<User> GetValidatedIncludeAccessFeaturesAsync(int id);
 }
