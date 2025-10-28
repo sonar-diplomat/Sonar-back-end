@@ -20,7 +20,7 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t myapp:latest .
+          docker build -t myapp:latest -f Sonar/Dockerfile Sonar
           docker save myapp:latest > myapp.tar
 
       - name: Copy image to Test Server
