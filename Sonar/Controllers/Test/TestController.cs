@@ -1,7 +1,11 @@
-﻿using Application.Abstractions.Interfaces.Services;
+﻿using Application.Abstractions.Interfaces.Repository.Distribution;
+using Application.Abstractions.Interfaces.Services;
+using Application.Abstractions.Interfaces.Services.File;
 using Application.Abstractions.Interfaces.Services.Utilities;
+using Application.Extensions;
 using Application.Response;
 using Entities.Models.Chat;
+using Entities.Models.Distribution;
 using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -14,7 +18,9 @@ namespace Sonar.Controllers.Test;
 public class TestController(
     UserManager<User> userManager,
     IQrCodeService qrCodeService,
-    IApiKeyGeneratorService apiKeyGeneratorService
+    IApiKeyGeneratorService apiKeyGeneratorService,
+    IImageFileService fileService,
+    IDistributorRepository distributorRepository
 ) : BaseController(userManager)
 {
     [HttpGet("apikey")]
@@ -31,6 +37,13 @@ public class TestController(
         throw ResponseFactory.Create<OkResponse<string>>(svg, ["image/svg+xml"]);
     }
 
+    [HttpGet("test_include")]
+    public async Task<ActionResult> TestInclude()
+    {
+        var d = await distributorRepository.Include(d => d.Cover).Include(d => d.License).ThenInclude(l => l.Issuer).GetByIdAsync(4);
+        throw ResponseFactory.Create<OkResponse<Distributor>>(d);
+    }
+
     [HttpGet("appdata")]
     public async Task<ActionResult> CheckAppData()
     {
@@ -43,6 +56,13 @@ public class TestController(
         string testFilePath = Path.Combine(dataPath, "test.txt");
         await SysFile.WriteAllTextAsync(testFilePath, $"Created at {DateTime.Now}\n");
         throw ResponseFactory.Create<OkResponse>(["File read successfully"]);
+    }
+
+    [HttpPost("fileuploadtest")]
+    public async Task<ActionResult> FileUploadTest(IFormFile file)
+    {
+        await fileService.UploadFileAsync(file);
+        return Ok();
     }
 
     [HttpGet("error")]

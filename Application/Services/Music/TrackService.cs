@@ -4,11 +4,17 @@ using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.File;
 using Application.DTOs;
 using Application.Response;
+using Entities.Models.File;
 using Entities.Models.Music;
+using Microsoft.AspNetCore.Http;
 
 namespace Application.Services.Music;
 
-public class TrackService(ITrackRepository repository, IAudioFileService fileService)
+public class TrackService(
+    ITrackRepository repository,
+    IAudioFileService audioFileService,
+    IAlbumService albumService,
+    IVisibilityStateService visibilityStateService)
     : GenericService<Track>(repository), ITrackService
 {
     public Task<MusicStreamResultDTO?> GetDemoMusicStreamAsync(int songId)
@@ -50,11 +56,49 @@ public class TrackService(ITrackRepository repository, IAudioFileService fileSer
         }
 
         FileStream? finalStream =
-            await fileService.GetMusicStreamAsync(0 /*track.AudioFileId*/, range.StartBytes, range.Length);
+            await audioFileService.GetMusicStreamAsync(0 /*track.AudioFileId*/, range.StartBytes, range.Length);
         return finalStream != null
             ? new MusicStreamResultDTO(finalStream, "audio/mpeg", true)
             : throw ResponseFactory.Create<UnprocessableContentResponse>(["Unable to process audio stream"]);
     }
+
+    public async Task<Track> CreateTrackAsync(int albumId, UploadTrackDTO dto)
+    {
+        Track track = new()
+        {
+            Title = dto.Title,
+            IsExplicit = dto.IsExplicit,
+            DrivingDisturbingNoises = dto.DrivingDisturbingNoises,
+            VisibilityStateId = (await visibilityStateService.CreateDefaultAsync()).Id,
+            LowQualityAudioFileId = (await audioFileService.UploadFileAsync(dto.LowQualityAudioFile)).Id,
+            MediumQualityAudioFileId = dto.MediumQualityAudioFile != null
+                ? (await audioFileService.UploadFileAsync(dto.MediumQualityAudioFile)).Id
+                : null,
+            HighQualityAudioFileId = dto.HighQualityAudioFile != null
+                ? (await audioFileService.UploadFileAsync(dto.HighQualityAudioFile)).Id
+                : null,
+            CoverId = (await albumService.GetByIdValidatedAsync(albumId)).CoverId,
+            Duration = await audioFileService.GetDurationAsync(dto.LowQualityAudioFile)
+        };
+        (await albumService.GetValidatedIncludeTracksAsync(albumId)).Tracks.Add(track);
+        return await repository.AddAsync(track);
+    }
+
+    public async Task<AudioFile> UpdateTrackFileAsync(int trackId, int playbackQualityId, IFormFile file)
+    {
+        Track track = await GetByIdValidatedAsync(trackId);
+        AudioFile audioFile = await audioFileService.UploadFileAsync(file);
+        Action<int> setAudioFileId = playbackQualityId switch
+        {
+            1 => id => track.LowQualityAudioFileId = id,
+            2 => id => track.MediumQualityAudioFileId = id,
+            3 => id => track.HighQualityAudioFileId = id,
+            _ => _ => throw ResponseFactory.Create<NotAcceptableResponse>(["Invalid playback quality ID"])
+        };
+        setAudioFileId(audioFile.Id);
+        return audioFile;
+    }
+
 
     private record Range(long StartBytes, long Length = 0)
     {

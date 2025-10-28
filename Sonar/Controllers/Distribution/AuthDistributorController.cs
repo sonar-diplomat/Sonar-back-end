@@ -1,7 +1,6 @@
-﻿using System.Security.Cryptography;
-using System.Text;
-using Application.Abstractions.Interfaces.Services;
+﻿using Application.Abstractions.Interfaces.Services;
 using Application.DTOs;
+using Application.DTOs.Auth;
 using Application.Response;
 using Entities.Enums;
 using Entities.Models.Distribution;
@@ -9,6 +8,8 @@ using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace Sonar.Controllers.Distribution;
 
@@ -18,9 +19,10 @@ public class AuthDistributorController(
     UserManager<User> userManager,
     IDistributorSessionService sessionService,
     IDistributorAccountService accountService,
+    IDistributorService distributorService,
     AuthService authService
 )
-    : BaseDistributorController(accountService, userManager)
+    : BaseControllerExtended(userManager, accountService, distributorService)
 {
     private readonly IDistributorAccountService accountService = accountService;
 
@@ -31,7 +33,7 @@ public class AuthDistributorController(
         throw ResponseFactory.Create<OkResponse>(["Session terminated successfully"]);
     }
 
-    [HttpPost("register")] // TODO: Admin only
+    [HttpPost("register")]
     public async Task<IActionResult> Register(DistributorAccountRegisterDTO dto)
     {
         await CheckAccessFeatures([AccessFeatureStruct.ManageDistributors]);
@@ -49,9 +51,26 @@ public class AuthDistributorController(
         if (!computedHash.SequenceEqual(account.PasswordHash))
             throw ResponseFactory.Create<UnauthorizedResponse>(["Invalid credentials"]);
 
-        string jwtToken = authService.GenerateJwtToken(account.Email, account.UserName);
+        string jwtToken = authService.GenerateJwtToken(account);
         string refreshToken = authService.GenerateRefreshToken();
-        throw ResponseFactory.Create<OkResponse<(string, string)>>((jwtToken, refreshToken),
+
+        DistributorSession session = new()
+        {
+            DistributorAccountId = account.Id,
+            DeviceName = Request.Headers["X-Device-Name"].ToString() ?? "Unknown device",
+            UserAgent = Request.Headers["User-Agent"].ToString() ?? "Unknown",
+            IPAddress = HttpContext.Connection.RemoteIpAddress!,
+            RefreshTokenHash = authService.ComputeSha256(refreshToken),
+            ExpiresAt = DateTime.UtcNow.AddDays(30),
+            CreatedAt = DateTime.UtcNow,
+            LastActive = DateTime.UtcNow,
+            Revoked = false
+        };
+
+        // Save refresh token to user
+        await sessionService.CreateAsync(session);
+
+        throw ResponseFactory.Create<OkResponse<LoginResponseDTO>>(new LoginResponseDTO(jwtToken, refreshToken, session.Id),
             ["Distributor account logged in successfully"]);
     }
 
@@ -62,8 +81,8 @@ public class AuthDistributorController(
         DistributorSession session = await sessionService.GetValidatedByRefreshTokenAsync(refreshHash);
         await sessionService.UpdateLastActiveAsync(session);
         string newAccessToken =
-            authService.GenerateJwtToken(session.DistributorAccount.Email, session.DistributorAccount.UserName);
-        throw ResponseFactory.Create<OkResponse<(string, string)>>((newAccessToken, refreshToken),
+            authService.GenerateJwtToken(session.DistributorAccount);
+        throw ResponseFactory.Create<OkResponse<RefreshTokenResponse>>(new RefreshTokenResponse(newAccessToken, refreshToken),
             ["Token refreshed successfully"]);
     }
 

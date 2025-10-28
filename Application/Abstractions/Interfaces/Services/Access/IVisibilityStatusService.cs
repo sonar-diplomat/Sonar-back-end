@@ -4,4 +4,5 @@ namespace Application.Abstractions.Interfaces.Services;
 
 public interface IVisibilityStatusService : IGenericService<VisibilityStatus>
 {
+    Task<VisibilityStatus> GetDefaultAsync();
 }

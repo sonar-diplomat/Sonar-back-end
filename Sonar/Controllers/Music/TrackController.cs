@@ -15,14 +15,16 @@ namespace Sonar.Controllers.Music;
 [ApiController]
 public class TrackController(
     UserManager<User> userManager,
+    IDistributorAccountService accountService,
+    IDistributorService distributorService,
     ITrackService trackService,
-    ISettingsService settingsService) : BaseController(userManager)
+    ISettingsService settingsService) : BaseControllerExtended(userManager, accountService, distributorService)
 {
-    [HttpGet("stream")]
+    [HttpGet("{trackId}/stream")]
     [Authorize]
-    public async Task<IActionResult> StreamMusic(int trackId)
+    public async Task<IActionResult> StreamMusic(int trackId, [FromQuery] bool download = false)
     {
-        int settingsId = (await CheckAccessFeatures([])).SettingsId;
+        int settingsId = (await CheckAccessFeatures([AccessFeatureStruct.ListenContent])).SettingsId;
         Settings setttings = await settingsService.GetByIdValidatedAsync(settingsId);
         string? rangeHeader = Request.Headers.Range.FirstOrDefault();
         MusicStreamResultDTO? result = await trackService.GetMusicStreamAsync(trackId, rangeHeader);
@@ -31,33 +33,45 @@ public class TrackController(
 
         result.GetStreamDetails(out Stream stream, out string contentType, out bool enableRangeProcessing);
 
+        if (download)
+            // TODO: Validate User pack
+            Response.Headers.Append("Content-Disposition", "attachment; filename=random-track.mp3");
+
         return File(stream, contentType, enableRangeProcessing);
     }
 
-    [HttpDelete("{trackId}")]
+    [HttpDelete("{trackId:int}")]
     public async Task<IActionResult> DeleteTrack(int trackId)
     {
-        await CheckAccessFeatures([AccessFeatureStruct.ManageContent]);
-
-        throw new NotImplementedException();
+        await CheckDistributor();
+        await trackService.DeleteAsync(trackId);
+        throw ResponseFactory.Create<OkResponse>([$"Track with ID {trackId} successfully deleted"]);
     }
 
-    [HttpPut("{trackId}")]
-    public async Task<IActionResult> UpdateTrack(int trackId)
+    [HttpPut("{trackId:int}")]
+    public async Task<Track> UpdateTrackInfo(int trackId, UpdateTrackDTO dto)
     {
-        throw new NotImplementedException();
+        await CheckDistributor();
+        Track track = await trackService.GetByIdValidatedAsync(trackId);
+        track.Title = dto.Title ?? track.Title;
+        track.IsExplicit = dto.IsExplicit ?? track.IsExplicit;
+        track.DrivingDisturbingNoises = dto.DrivingDisturbingNoises ?? track.DrivingDisturbingNoises;
+        track = await trackService.UpdateAsync(track);
+        throw ResponseFactory.Create<OkResponse<Track>>(track, ["Track updated successfully"]);
     }
 
-    [HttpGet("{trackId}")]
+    [HttpPut("{trackId:int}/audio-file")]
+    public async Task UpdateTrackFile(int trackId, UpdateTrackFileDTO dto)
+    {
+        await CheckDistributor();
+        await trackService.UpdateTrackFileAsync(trackId, dto.PlaybackQualityId, dto.File);
+        throw ResponseFactory.Create<OkResponse>(["Track audio file updated successfully"]);
+    }
+
+    [HttpGet("{trackId:int}")]
     public async Task<IActionResult> GetTrackById(int trackId)
     {
         Track track = await trackService.GetByIdValidatedAsync(trackId);
         throw ResponseFactory.Create<OkResponse<Track>>(track, ["Track successfully retrieved"]);
-    }
-
-    [HttpGet("{trackId}/download")]
-    public async Task<IActionResult> DownloadTrack(int trackId)
-    {
-        throw new NotImplementedException();
     }
 }

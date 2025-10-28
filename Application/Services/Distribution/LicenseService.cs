@@ -21,7 +21,7 @@ public class LicenseService(
         {
             IssuingDate = DateTime.UtcNow,
             LastUpdatedDate = DateTime.UtcNow,
-            ExpirationDate = expirationDate,
+            ExpirationDate = DateTime.SpecifyKind(expirationDate, DateTimeKind.Utc),
             LicenseKey = await keyGeneratorService.GenerateApiKey(),
             Issuer = issuer
         };
@@ -43,5 +43,12 @@ public class LicenseService(
     public async Task CloseLicenseAsync(int id)
     {
         await repository.RemoveAsync(await GetByIdValidatedAsync(id));
+    }
+
+    public async Task<string> UpdateLicenseKeyAsync(int licenseId)
+    {
+        License license = await GetByIdValidatedAsync(licenseId);
+        license.LicenseKey = await keyGeneratorService.GenerateApiKey();
+        return license.LicenseKey;
     }
 }

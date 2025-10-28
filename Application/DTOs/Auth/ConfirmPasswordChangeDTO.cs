@@ -1,6 +1,6 @@
 ﻿namespace Application.DTOs.Auth;
 
-public class ChangePasswordDTO
+public class ConfirmPasswordChangeDTO
 {
     public required string Token { get; set; }
     public required string NewPassword { get; set; }

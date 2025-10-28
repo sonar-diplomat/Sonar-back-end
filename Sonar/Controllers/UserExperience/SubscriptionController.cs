@@ -1,6 +1,7 @@
 using Application.Abstractions.Interfaces.Services;
 using Application.DTOs;
 using Application.Response;
+using Entities.Enums;
 using Entities.Models.UserCore;
 using Entities.Models.UserExperience;
 using Microsoft.AspNetCore.Identity;
@@ -22,7 +23,7 @@ public class SubscriptionController(
     [HttpGet("packs")]
     public async Task<ActionResult<IEnumerable<SubscriptionPack>>> GetAllPacks()
     {
-        IEnumerable<SubscriptionPack> packs = await subscriptionPackService.GetAllAsync();
+        IEnumerable<SubscriptionPack> packs = (await subscriptionPackService.GetAllAsync()).ToList();
         throw ResponseFactory.Create<OkResponse<IEnumerable<SubscriptionPack>>>(packs,
             ["Subscription packs retrieved successfully"]);
     }
@@ -41,8 +42,8 @@ public class SubscriptionController(
     [HttpPost("purchase")]
     public async Task<ActionResult<SubscriptionPayment>> PurchaseSubscription([FromBody] PurchaseSubscriptionDTO dto)
     {
-        await CheckAccessFeatures([]);
-        SubscriptionPayment payment = await subscriptionPaymentService.PurchaseSubscriptionAsync(dto);
+        User user = await CheckAccessFeatures([]);
+        SubscriptionPayment payment = await subscriptionPaymentService.PurchaseSubscriptionAsync(user.Id, dto);
         throw ResponseFactory.Create<CreatedResponse<SubscriptionPayment>>(payment,
             ["Subscription purchased successfully"]);
     }
@@ -51,7 +52,8 @@ public class SubscriptionController(
     [HttpGet("payments")]
     public async Task<ActionResult<IEnumerable<SubscriptionPayment>>> GetAllPayments()
     {
-        IEnumerable<SubscriptionPayment> payments = await subscriptionPaymentService.GetAllAsync();
+        await CheckAccessFeatures([AccessFeatureStruct.IamAGod]);
+        IEnumerable<SubscriptionPayment> payments = (await subscriptionPaymentService.GetAllAsync()).ToList();
         throw ResponseFactory.Create<OkResponse<IEnumerable<SubscriptionPayment>>>(payments,
             ["Subscription payments retrieved successfully"]);
     }
@@ -71,7 +73,7 @@ public class SubscriptionController(
     [HttpGet("features")]
     public async Task<ActionResult<IEnumerable<SubscriptionFeature>>> GetAllFeatures()
     {
-        IEnumerable<SubscriptionFeature> features = await subscriptionFeatureService.GetAllAsync();
+        IEnumerable<SubscriptionFeature> features = (await subscriptionFeatureService.GetAllAsync()).ToList();
         throw ResponseFactory.Create<OkResponse<IEnumerable<SubscriptionFeature>>>(features,
             ["Subscription features retrieved successfully"]);
     }

@@ -18,4 +18,12 @@ public class DistributorAccountRepository(SonarContext dbContext)
     {
         return await context.DistributorAccounts.AnyAsync(da => da.Email == email);
     }
+
+    public async IAsyncEnumerable<DistributorAccount> GetAllByDistributorAsync(Distributor distributor)
+    {
+        await foreach (DistributorAccount account in context.DistributorAccounts
+                           .Where(a => a.DistributorId == distributor.Id)
+                           .AsAsyncEnumerable())
+            yield return account;
+    }
 }

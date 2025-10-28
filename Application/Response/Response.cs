@@ -1,4 +1,6 @@
-﻿namespace Application.Response;
+﻿using System.Collections;
+
+namespace Application.Response;
 
 public abstract class Response(bool success, int statusCode, string message, string[]? args = null)
     : Exception(message)
@@ -24,7 +26,14 @@ public abstract class Response<T>(T data, bool success, int statusCode, string m
     public override Dictionary<string, object> GetSerializableProperties()
     {
         Dictionary<string, object> dict = base.GetSerializableProperties();
-        if (data != null) dict.Add("data", data);
+        if (data is IEnumerable)
+        {
+            var col = data as IEnumerable;
+            if (!col.GetEnumerator().MoveNext())
+                dict.Add("data", "empty list");
+            else dict.Add("data", data);
+        }
+        else if (data != null) dict.Add("data", data);
         return dict;
     }
 }

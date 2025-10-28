@@ -1,17 +1,24 @@
 using Application.Abstractions.Interfaces.Repository.UserCore;
-using Application.DTOs;
+using Application.DTOs.Auth;
+using Application.Extensions;
 using Entities.Models.UserCore;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace Sonar.Infrastructure.Repository.UserCore;
 
-public class UserSessionRepository(SonarContext dbContext) : GenericRepository<UserSession>(dbContext), IUserSessionRepository
+public class UserSessionRepository(SonarContext dbContext)
+    : GenericRepository<UserSession>(dbContext), IUserSessionRepository
 {
+    public override async Task<UserSession> AddAsync(UserSession entity)
+    {
+        UserSession? session = context.Set<UserSession>().FirstOrDefault(s => s.DeviceName == entity.DeviceName);
+        if (session != null) await RemoveAsync(session);
+        return await base.AddAsync(entity);
+    }
     public async Task<UserSession?> GetByRefreshToken(string refreshHash)
     {
-        return await context.UserSessions
-            .Include(s => s.User)
+        return await RepositoryIncludeExtensions.Include(context.UserSessions, s => s.User)
             .FirstOrDefaultAsync(s =>
                 s.RefreshTokenHash == refreshHash &&
                 !s.Revoked &&

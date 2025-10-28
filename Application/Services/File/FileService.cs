@@ -28,7 +28,7 @@ public abstract class FileService<T>(
 
     public async Task<FileFormat> ValidateFileType(IFormFile file, Type[]? formats = null)
     {
-        await using Stream? stream = file.OpenReadStream();
+        await using Stream stream = file.OpenReadStream();
         FileFormat? format = inspector.DetermineFileFormat(stream);
         Type[] permittedFormats = formats ?? allowedFormats;
         if (format != null && permittedFormats.Contains(format.GetType()))

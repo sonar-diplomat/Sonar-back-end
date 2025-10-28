@@ -1,9 +1,10 @@
-﻿using System.Net;
-using Application.Abstractions.Interfaces.Repository.Distribution;
+﻿using Application.Abstractions.Interfaces.Repository.Distribution;
 using Application.Abstractions.Interfaces.Services;
 using Application.DTOs;
+using Application.DTOs.Auth;
 using Application.Response;
 using Entities.Models.Distribution;
+using System.Net;
 
 namespace Application.Services.Distribution;
 
@@ -22,7 +23,7 @@ public class DistributorSessionService(
     {
         DistributorSession? userSession = await repository.GetByRefreshTokenAsync(refreshHash);
         if (userSession == null)
-            ResponseFactory.Create<NotFoundResponse>();
+            throw ResponseFactory.Create<NotFoundResponse>();
         return userSession!;
     }
 
