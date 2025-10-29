@@ -32,6 +32,18 @@ jobs:
           source: "sonar-app.tar"
           target: "${{ secrets.TEST_SERVER_PATH }}"
 
+      - name: Debug connection
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.TEST_SERVER_IP }}
+          username: ${{ secrets.TEST_SERVER_USER }}
+          key: ${{ secrets.TEST_SERVER_SSH_KEY }}
+          script: |
+            echo
+            hostname
+            whoami
+            ls -la ${{ secrets.TEST_SERVER_PATH }}
+
       - name: Deploy on Test Server via SSH
         uses: appleboy/ssh-action@master
         with:
@@ -42,6 +54,6 @@ jobs:
             cd ${{ secrets.TEST_SERVER_PATH }}
             docker stop sonar-app || true
             docker rm sonar-app || true
-            docker rmi sonar-app || true
+            docker rmi sonar:latest || true
             docker load < sonar-app.tar
-            docker run -d --name sonar-app -p 8080:8080 -p 8081:8081 sonar-app
+            docker run -d --name sonar-app -p 8080:8080 -p 8081:8081 sonar:latest
