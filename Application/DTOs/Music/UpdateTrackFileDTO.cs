@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 
-namespace Application.DTOs;
+namespace Application.DTOs.Music;
 
 public class UpdateTrackFileDTO
 {

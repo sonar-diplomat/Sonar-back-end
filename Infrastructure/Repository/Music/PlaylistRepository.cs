@@ -1,12 +1,28 @@
 using Application.Abstractions.Interfaces.Repository.Music;
 using Entities.Models.Music;
 using Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace Sonar.Infrastructure.Repository.Music;
 
-public class PlaylistRepository : GenericRepository<Playlist>, IPlaylistRepository
+public class PlaylistRepository(SonarContext dbContext) : GenericRepository<Playlist>(dbContext), IPlaylistRepository
 {
-    public PlaylistRepository(SonarContext dbContext) : base(dbContext)
+    public async Task<List<Track>> GetTracksFromPlaylistAfterAsync(int playlistId, int? afterId, int limit)
     {
+        var query = context.Playlists
+            .Where(p => p.Id == playlistId)
+            .SelectMany(p => p.Tracks)
+            .Include(t => t.Cover)
+            .Include(t => t.LowQualityAudioFile) // TODO: Get audio file based on user's ClientSettings
+            .Include(t => t.Artists)
+            .AsQueryable();
+
+        if (afterId.HasValue)
+            query = query.Where(t => t.Id > afterId.Value);
+
+        return await query
+            .OrderBy(t => t.Id)
+            .Take(limit)
+            .ToListAsync();
     }
 }

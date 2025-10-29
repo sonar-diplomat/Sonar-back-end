@@ -2,6 +2,7 @@ using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.File;
 using Application.DTOs.User;
 using Application.Response;
+using Entities.Models.File;
 using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -25,7 +26,7 @@ public class UserController(
         IEnumerable<User> users = (await userService.GetAllAsync()).ToList();
         throw ResponseFactory.Create<OkResponse<IEnumerable<User>>>(users, ["Users retrieved successfully"]);
     }
-    
+
     [HttpGet("{id}")]
     public async Task<ActionResult<User>> GetUser(int id)
     {
@@ -44,7 +45,7 @@ public class UserController(
 
     [HttpPut("update")]
     [Authorize]
-    public async Task<IActionResult> PatchUser(UserUpdateDTO request)
+    public async Task<IActionResult> UpdateUser(UserUpdateDTO request)
     {
         User user = await CheckAccessFeatures([]);
         user = await userService.UpdateUserAsync(user.Id, request);
@@ -57,7 +58,6 @@ public class UserController(
     public async Task<IActionResult> Index([FromForm] IFormFile file)
     {
         User user = await CheckAccessFeatures([]);
-        //FileModel fileModel = await imageFileService.UploadFileAsync(file);
         await userService.UpdateAvatar(user.Id, file);
         throw ResponseFactory.Create<OkResponse>(["File uploaded successfully"]);
     }
