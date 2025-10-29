@@ -6,5 +6,5 @@ using System.Threading.Tasks;
 
 namespace Application.DTOs.Auth
 {
-    public record ConfigmEmailChangeDTO(string userId, string email, string token) { }
+    public record ConfirmEmailChangeDTO(string userId, string email, string token) { }
 }

@@ -26,10 +26,10 @@ public abstract class Response<T>(T data, bool success, int statusCode, string m
     public override Dictionary<string, object> GetSerializableProperties()
     {
         Dictionary<string, object> dict = base.GetSerializableProperties();
-        if (data is IEnumerable)
+        if (data is ICollection)
         {
-            var col = data as IEnumerable;
-            if (!col.GetEnumerator().MoveNext())
+            ICollection? col = data as ICollection;
+            if (col == null || col.Count == 0)
                 dict.Add("data", "empty list");
             else dict.Add("data", data);
         }
