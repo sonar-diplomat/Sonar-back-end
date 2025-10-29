@@ -1,5 +1,4 @@
-﻿using Application.Abstractions.Interfaces.Repository;
-using Application.Abstractions.Interfaces.Repository.Music;
+﻿using Application.Abstractions.Interfaces.Repository.Music;
 using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.File;
 using Application.DTOs.Music;
@@ -11,11 +10,10 @@ namespace Application.Services.Music;
 
 public class AlbumService(
     IAlbumRepository repository,
-    IGenericRepository<Album> genericRepository,
     IVisibilityStateService visibilityStateService,
     IImageFileService imageFileService,
     IAlbumArtistService albumArtistService,
-    IArtistService artistService ) : CollectionService<Album>(genericRepository), IAlbumService
+    IArtistService artistService) : CollectionService<Album>(repository), IAlbumService
 {
     public async Task<Album> UploadAsync(UploadAlbumDTO dto, int distributorId)
     {

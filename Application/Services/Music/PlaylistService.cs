@@ -1,24 +1,21 @@
-﻿using System.Text;
-using Application.Abstractions.Interfaces.Repository;
-using Application.Abstractions.Interfaces.Repository.Music;
+﻿using Application.Abstractions.Interfaces.Repository.Music;
 using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.File;
 using Application.DTOs;
 using Application.DTOs.Music;
 using Application.Extensions;
 using Application.Response;
-using Entities.Enums;
 using Entities.Models.Music;
 using Microsoft.AspNetCore.Http;
+using System.Text;
 
 namespace Application.Services.Music;
 
 public class PlaylistService(
     IPlaylistRepository repository,
-    IGenericRepository<Playlist> genericRepository,
     IImageFileService imageFileService,
     IUserService userService,
-    ITrackService trackService) : CollectionService<Playlist>(genericRepository), IPlaylistService
+    ITrackService trackService) : CollectionService<Playlist>(repository), IPlaylistService
 {
     private async Task<Playlist> VerifyAccessAsync(int playlistId, int userId, bool allowContributor = false)
     {
@@ -33,10 +30,10 @@ public class PlaylistService(
 
         return playlist;
     }
-    
+
     public async Task<Playlist> CreatePlaylistAsync(int creatorId, CreatePlaylistDTO dto)
     {
-        Playlist playlist = new Playlist
+        Playlist playlist = new()
         {
             Name = dto.Name,
             CreatorId = creatorId,
@@ -109,7 +106,7 @@ public class PlaylistService(
     {
         int? afterId = null;
         await GetByIdValidatedAsync(playlistId);
-        
+
         if (!string.IsNullOrEmpty(afterCursor))
         {
             var bytes = Convert.FromBase64String(afterCursor);
