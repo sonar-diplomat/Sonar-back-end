@@ -1,5 +1,5 @@
 using Application.Abstractions.Interfaces.Services;
-using Application.DTOs;
+using Application.DTOs.Music;
 using Application.Response;
 using Entities.Enums;
 using Entities.Models.ClientSettings;

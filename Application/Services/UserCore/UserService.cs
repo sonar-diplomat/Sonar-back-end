@@ -85,7 +85,9 @@ public class UserService(
             UserName = model.UserName,
             Login = model.Login,
             Email = model.Email,
-            PublicIdentifier = RandomNumberGenerator.GetInt32(100000, 1000000).ToString(), // TODO: Potentially change, needs discussion
+            PublicIdentifier =
+                RandomNumberGenerator.GetInt32(100000, 1000000)
+                    .ToString(), // TODO: Potentially change, needs discussion
             RegistrationDate = DateTime.UtcNow
         };
         VisibilityState tempVs = new()
@@ -135,7 +137,6 @@ public class UserService(
         return true;
     }
 
-
     public async Task AssignAccessFeaturesAsync(int userId, int[] accessFeatureIds)
     {
         User user = await GetValidatedIncludeAccessFeaturesAsync(userId);
@@ -144,7 +145,8 @@ public class UserService(
             if (user.AccessFeatures.All(af => af.Id != accessFeatureId))
                 user.AccessFeatures.Add(await accessFeatureService.GetByIdValidatedAsync(accessFeatureId));
         }
-        await repository.SaveChangesAsync();
+
+        await repository.UpdateAsync(user);
     }
 
     public async Task AssignAccessFeaturesByNameAsync(int userId, string[] accessFeatures)
@@ -155,7 +157,8 @@ public class UserService(
             if (user.AccessFeatures.All(af => af.Name != name))
                 user.AccessFeatures.Add(await accessFeatureService.GetByNameValidatedAsync(name));
         }
-        await repository.SaveChangesAsync();
+
+        await repository.UpdateAsync(user);
     }
 
     public async Task RevokeAccessFeaturesAsync(int userId, int[] accessFeatureIds)
@@ -164,7 +167,7 @@ public class UserService(
         IEnumerable<AccessFeature> toRemove = user.AccessFeatures.Where(af => accessFeatureIds.Contains(af.Id));
         foreach (AccessFeature af in toRemove)
             user.AccessFeatures.Remove(af);
-        await repository.SaveChangesAsync();
+        await repository.UpdateAsync(user);
     }
 
     public async Task RevokeAccessFeaturesByNameAsync(int userId, string[] accessFeatures)
@@ -173,6 +176,6 @@ public class UserService(
         IEnumerable<AccessFeature> toRemove = user.AccessFeatures.Where(af => accessFeatures.Contains(af.Name));
         foreach (AccessFeature af in toRemove)
             user.AccessFeatures.Remove(af);
-        await repository.SaveChangesAsync();
+        await repository.UpdateAsync(user);
     }
 }

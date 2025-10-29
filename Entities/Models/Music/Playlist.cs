@@ -8,12 +8,13 @@ namespace Entities.Models.Music;
 [Table("Playlist")]
 public class Playlist : Collection
 {
-    [Required]
-    public int CreatorId { get; set; }
+    [Required] public int CreatorId { get; set; }
 
     /// <summary>
     /// </summary>
     [ForeignKey("CreatorId")]
     [DeleteBehavior(DeleteBehavior.NoAction)]
     public virtual User Creator { get; set; }
+
+    public virtual ICollection<User> Contributors { get; set; }
 }

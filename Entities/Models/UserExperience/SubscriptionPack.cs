@@ -19,7 +19,7 @@ public class SubscriptionPack : BaseModel
 
 
     [NotMapped]
-    public decimal Price { get { return SubscriptionFeatures == null ? 0 : SubscriptionFeatures.Select(s => s.Price).Sum(); } }
+    public decimal Price { get { return SubscriptionFeatures.Count == 0 ? 0 : SubscriptionFeatures.Select(s => s.Price).Sum(); } }
 
     /// <summary>
     /// </summary>

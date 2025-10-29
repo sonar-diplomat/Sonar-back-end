@@ -1,8 +1,10 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Text;
+using System.Text.RegularExpressions;
 using Application.Abstractions.Interfaces.Repository.Music;
 using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.File;
 using Application.DTOs;
+using Application.DTOs.Music;
 using Application.Response;
 using Entities.Models.File;
 using Entities.Models.Music;
@@ -98,7 +100,6 @@ public class TrackService(
         setAudioFileId(audioFile.Id);
         return audioFile;
     }
-
 
     private record Range(long StartBytes, long Length = 0)
     {
