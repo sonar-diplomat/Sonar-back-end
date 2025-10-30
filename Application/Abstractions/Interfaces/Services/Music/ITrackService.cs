@@ -12,4 +12,5 @@ public interface ITrackService : IGenericService<Track>
     Task<MusicStreamResultDTO?> GetDemoMusicStreamAsync(int songId);
     Task<Track> CreateTrackAsync(int albumId, UploadTrackDTO dto);
     Task<AudioFile> UpdateTrackFileAsync(int trackId, int playbackQualityId, IFormFile file);
+    Task UpdateVisibilityStatusAsync(int trackId, int newVisibilityStatusId);
 }

@@ -1,8 +1,10 @@
 using System.IdentityModel.Tokens.Jwt;
 using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.File;
+using Application.Abstractions.Interfaces.Services.Utilities;
 using Application.DTOs.Music;
 using Application.Response;
+using Application.Services.Utilities;
 using Entities.Enums;
 using Entities.Models.Distribution;
 using Entities.Models.Music;
@@ -21,16 +23,20 @@ public class AlbumController(
     IDistributorAccountService accountService,
     IDistributorService distributorService,
     IAlbumService albumService,
-    ITrackService trackService
-) : CollectionController<Album>(userManager, albumService)
+    IImageFileService imageFileService,
+    ITrackService trackService,
+    ICollectionService<Album> collectionService,
+    IShareService shareService
+)
+    : CollectionController<Album>(userManager, collectionService, shareService)
 {
     [Authorize]
     private async Task<DistributorAccount> GetDistributorAccountByJwt()
     {
-        string? email = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value ??
-                        User.FindFirst("email")?.Value;
-        DistributorAccount distributorAccount = await accountService.GetByEmailAsync(email);
-
+        string? email = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value ?? User.FindFirst("email")?.Value;
+        if (email == null)
+            throw ResponseFactory.Create<UnauthorizedResponse>(["Invalid JWT token"]);
+        DistributorAccount? distributorAccount = await accountService.GetByEmailAsync(email);
         return distributorAccount ?? throw ResponseFactory.Create<UnauthorizedResponse>();
     }
 
@@ -38,22 +44,19 @@ public class AlbumController(
     private async Task<Distributor> CheckDistributor()
     {
         DistributorAccount distributorAccount = await GetDistributorAccountByJwt();
-
         if (!Request.Headers.TryGetValue("X-Api-Key", out StringValues apiKey))
             throw ResponseFactory.Create<UnauthorizedResponse>();
-
         string key = apiKey.ToString();
         if (string.IsNullOrEmpty(key))
             throw ResponseFactory.Create<UnauthorizedResponse>();
-
         Distributor? distributor = await distributorService.GetByApiKeyAsync(key);
-
         return !(await accountService.GetAllByDistributor(distributor)).Contains(distributorAccount)
             ? throw ResponseFactory.Create<UnauthorizedResponse>()
             : distributor!;
     }
-    
+
     [HttpPost]
+    [Authorize]
     public async Task<IActionResult> UploadAlbum(UploadAlbumDTO dto)
     {
         int distributorId = (await CheckDistributor()).Id;
@@ -88,12 +91,22 @@ public class AlbumController(
         throw ResponseFactory.Create<OkResponse<Track>>(track, ["Track was added successfully"]);
     }
 
+    [HttpPut("{albumId:int}/visibility")]
+    [Authorize]
+    public async Task<IActionResult> UpdateVisibilityStatus(int albumId, int visibilityStateId)
+    {
+        await CheckAccessFeatures([AccessFeatureStruct.ManageContent]);
+        await albumService.UpdateVisibilityStateAsync(albumId, visibilityStateId);
+
+        throw ResponseFactory.Create<OkResponse>(["Album visibility state was changed successfully"]);
+    }
+
     [HttpPut("{albumId:int}/cover")]
     [Authorize]
     public async Task<IActionResult> UpdateAlbumCover(int albumId, IFormFile file)
     {
         await MatchAlbumAndDistributor(albumId);
-        await albumService.UpdateAlbumCoverAsync(albumId, file);
+        await imageFileService.UploadFileAsync(file);
         throw ResponseFactory.Create<OkResponse>(["Album cover was updated successfully"]);
     }
 

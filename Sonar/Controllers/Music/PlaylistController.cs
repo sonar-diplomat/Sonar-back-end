@@ -1,7 +1,9 @@
 using Application.Abstractions.Interfaces.Services;
+using Application.Abstractions.Interfaces.Services.Utilities;
 using Application.DTOs;
 using Application.DTOs.Music;
 using Application.Response;
+using Application.Services.Utilities;
 using Entities.Enums;
 using Entities.Models.Music;
 using Entities.Models.UserCore;
@@ -13,8 +15,8 @@ namespace Sonar.Controllers.Music;
 
 [Route("api/[controller]")]
 [ApiController]
-public class PlaylistController(UserManager<User> userManager, IPlaylistService playlistService, ICollectionService<Playlist> collectionService)
-    : CollectionController<Playlist>(userManager, collectionService)
+public class PlaylistController(UserManager<User> userManager, IPlaylistService playlistService, ICollectionService<Playlist> collectionService, IShareService shareService) 
+    : CollectionController<Playlist>(userManager, collectionService, shareService)
 {
     [HttpPost("create")]
     public async Task<IActionResult> CreatePlaylist([FromBody] CreatePlaylistDTO dto)

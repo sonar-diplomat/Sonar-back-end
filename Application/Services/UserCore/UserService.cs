@@ -178,4 +178,11 @@ public class UserService(
             user.AccessFeatures.Remove(af);
         await repository.UpdateAsync(user);
     }
+
+    public async Task UpdateVisibilityStatusAsync(int userId, int newVisibilityStatusId)
+    {
+        User user = await repository.Include(a => a.VisibilityState).GetByIdValidatedAsync(userId);
+        user.VisibilityState.StatusId = newVisibilityStatusId;
+        await repository.UpdateAsync(user);
+    }
 }

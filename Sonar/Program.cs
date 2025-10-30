@@ -1,3 +1,5 @@
+using System.Text;
+using Application.Abstractions.Interfaces.Repository;
 using Application.Abstractions.Interfaces.Repository.Access;
 using Application.Abstractions.Interfaces.Repository.Chat;
 using Application.Abstractions.Interfaces.Repository.Client;
@@ -22,6 +24,7 @@ using Application.Services.Report;
 using Application.Services.UserCore;
 using Application.Services.UserExperience;
 using Application.Services.Utilities;
+using Entities.Models.Music;
 using Entities.Models.UserCore;
 using FileSignatures;
 using FileSignatures.Formats;
@@ -44,6 +47,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using QRCoder;
 using Sonar.Controllers;
+using Sonar.Infrastructure.Repository;
 using Sonar.Infrastructure.Repository.Access;
 using Sonar.Infrastructure.Repository.Chat;
 using Sonar.Infrastructure.Repository.Client;
@@ -53,7 +57,6 @@ using Sonar.Infrastructure.Repository.Report;
 using Sonar.Infrastructure.Repository.UserCore;
 using Sonar.Infrastructure.Repository.UserExperience;
 using Sonar.Middleware;
-using System.Text;
 using Flac = Application.Services.File.Flac;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -246,7 +249,11 @@ builder.Services.AddScoped<IBlendService, BlendService>();
 builder.Services.AddScoped<IPlaylistService, PlaylistService>();
 builder.Services.AddScoped<ITrackService, TrackService>();
 builder.Services.AddScoped<IAlbumArtistService, AlbumArtistService>();
+builder.Services.AddScoped<ICollectionService<Album>, CollectionService<Album>>();
+builder.Services.AddScoped<ICollectionService<Blend>, CollectionService<Blend>>();
+builder.Services.AddScoped<ICollectionService<Playlist>, CollectionService<Playlist>>();
 
+builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 
 // Report Services
 builder.Services.AddScoped<IReportableEntityTypeService, ReportableEntityTypeService>();
@@ -289,7 +296,7 @@ builder.Services.AddScoped<MailgunSettings>(_ =>
 builder.Services.AddScoped<IEmailSenderService, MailgunEmailService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddSingleton<QRCodeGenerator>();
-builder.Services.AddSingleton<IQrCodeService, QrCodeService>();
+builder.Services.AddSingleton<IShareService, ShareService>();
 builder.Services.AddSingleton<IFileFormatInspector>(new FileFormatInspector(
     [new Png(), new Jpeg(), new Mp3(), new Flac(), new Gif()]));
 builder.Services.AddSingleton<IFileStorageService, FileStorageService>();
