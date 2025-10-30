@@ -16,4 +16,10 @@ public interface IUserService
     Task<IEnumerable<User>> GetAllAsync();
     Task<User> GetByIdValidatedAsync(int id);
     Task UpdateAvatar(int userId, IFormFile file);
+    Task<User> GetValidatedIncludeAccessFeaturesAsync(int id);
+    Task UpdateVisibilityStatusAsync(int collectionId, int newVisibilityStatusId);
+    Task AssignAccessFeaturesAsync(int userId, int[] accessFeatureIds);
+    Task AssignAccessFeaturesByNameAsync(int userId, string[] accessFeatures);
+    Task RevokeAccessFeaturesAsync(int userId, int[] accessFeatureIds);
+    Task RevokeAccessFeaturesByNameAsync(int userId, string[] accessFeatures);
 }

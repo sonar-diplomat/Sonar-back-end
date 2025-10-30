@@ -1,7 +1,8 @@
 using Application.Abstractions.Interfaces.Services;
-using Application.Abstractions.Interfaces.Services.File;
+using Application.Abstractions.Interfaces.Services.Utilities;
 using Application.DTOs.User;
 using Application.Response;
+using Entities.Enums;
 using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -14,23 +15,22 @@ namespace Sonar.Controllers.UserCore;
 public class UserController(
     IUserService userService,
     UserManager<User> userManager,
-    IImageFileService imageFileService
+    IShareService shareService
 )
-    : BaseController(userManager)
+    : ShareController<User>(userManager, shareService)
 {
-    // GET: api/User
     [HttpGet]
     public async Task<ActionResult<IEnumerable<User>>> GetUsers()
     {
         IEnumerable<User> users = (await userService.GetAllAsync()).ToList();
         throw ResponseFactory.Create<OkResponse<IEnumerable<User>>>(users, ["Users retrieved successfully"]);
     }
-    
+
     [HttpGet("{id}")]
     public async Task<ActionResult<User>> GetUser(int id)
     {
         User user = await userService.GetByIdAsync(id);
-        NonSensetiveUserDTO userDto = new NonSensetiveUserDTO
+        NonSensetiveUserDTO userDto = new()
         {
             Biography = user.Biography,
             PublicIdentifier = user.PublicIdentifier,
@@ -44,7 +44,7 @@ public class UserController(
 
     [HttpPut("update")]
     [Authorize]
-    public async Task<IActionResult> PatchUser(UserUpdateDTO request)
+    public async Task<IActionResult> UpdateUser(UserUpdateDTO request)
     {
         User user = await CheckAccessFeatures([]);
         user = await userService.UpdateUserAsync(user.Id, request);
@@ -57,8 +57,16 @@ public class UserController(
     public async Task<IActionResult> Index([FromForm] IFormFile file)
     {
         User user = await CheckAccessFeatures([]);
-        //FileModel fileModel = await imageFileService.UploadFileAsync(file);
         await userService.UpdateAvatar(user.Id, file);
         throw ResponseFactory.Create<OkResponse>(["File uploaded successfully"]);
+    }
+    
+    [HttpPut("{collectionId:int}/visibility")]
+    [Authorize]
+    public async Task<IActionResult> UpdateVisibilityStatus(int collectionId, int visibilityStatusId)
+    {
+        await CheckAccessFeatures([AccessFeatureStruct.ManageContent]);
+        await userService.UpdateVisibilityStatusAsync(collectionId, visibilityStatusId);
+        throw ResponseFactory.Create<OkResponse>([$"User visibility status was changed successfully"]);
     }
 }

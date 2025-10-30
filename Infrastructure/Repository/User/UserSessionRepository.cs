@@ -42,7 +42,7 @@ public class UserSessionRepository(SonarContext dbContext)
                     Id = s.Id,
                     DeviceName = s.DeviceName,
                     UserAgent = s.UserAgent,
-                    IpAddress = s.IPAddress.ToString(),
+                    IpAddress = s.IPAddress == null ? null : s.IPAddress.ToString(),
                     CreatedAt = s.CreatedAt,
                     LastActive = s.LastActive
                 }));

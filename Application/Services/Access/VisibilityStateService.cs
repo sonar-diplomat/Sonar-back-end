@@ -7,8 +7,7 @@ namespace Application.Services.Access;
 public class VisibilityStateService(
     IVisibilityStateRepository repository,
     IVisibilityStatusService visibilityStatusService
-    
-    )
+)
     : GenericService<VisibilityState>(repository), IVisibilityStateService
 {
     public async Task<VisibilityState> CreateDefaultAsync()

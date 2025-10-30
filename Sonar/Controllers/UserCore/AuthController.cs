@@ -61,7 +61,7 @@ public class AuthController(
                 {
                     { "code", code }
                 });
-            
+
             throw ResponseFactory.Create<OkResponse>(["2FA code sent to email"]);
         }
 
@@ -120,7 +120,7 @@ public class AuthController(
 
         // Save refresh token to user
         await userSessionService.CreateAsync(session);
-        throw ResponseFactory.Create<OkResponse<(string, string)>>((accessToken, refreshToken), ["Login successful"]);
+        throw ResponseFactory.Create<OkResponse<RefreshTokenResponse>>(new RefreshTokenResponse(accessToken, refreshToken), ["Login successful"]);
     }
 
     [HttpPost("refresh-token")]
@@ -152,12 +152,12 @@ public class AuthController(
                 { "link", confirmationLink }
             }
         );
-        
+
         throw ResponseFactory.Create<OkResponse>(["Email change token sent to new email address"]);
     }
 
     [HttpPost("confirm-email-change")]
-    public async Task<IActionResult> ConfirmEmailChange([FromBody] ConfigmEmailChangeDTO changeDTO)
+    public async Task<IActionResult> ConfirmEmailChange([FromBody] ConfirmEmailChangeDTO changeDTO)
     {
         User user = await CheckAccessFeatures([]);
 
@@ -249,7 +249,8 @@ public class AuthController(
     public async Task<IActionResult> GetSessions()
     {
         User user = await CheckAccessFeatures([]);
-        throw ResponseFactory.Create<OkResponse<IEnumerable<ActiveSessionDTO>>>(
-            await userSessionService.GetAllByUserIdAsync(user.Id), ["Sessions retrieved successfully"]);
+        IEnumerable<ActiveSessionDTO> sessions = (await userSessionService.GetAllByUserIdAsync(user.Id)).ToList();
+        throw ResponseFactory.Create<OkResponse<IEnumerable<ActiveSessionDTO>>>(sessions
+            , ["Sessions retrieved successfully"]);
     }
 }

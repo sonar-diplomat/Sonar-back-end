@@ -3,9 +3,9 @@ using Application.Abstractions.Interfaces.Repository;
 using Application.Abstractions.Interfaces.Repository.UserCore;
 using Application.Response;
 using Entities.Models;
+using Entities.Models.UserCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
-using UserModel = Entities.Models.UserCore.User;
 
 namespace Application.Extensions;
 
@@ -21,9 +21,9 @@ public static class RepositoryIncludeExtensions
     }
 
     // Include от репозитория
-    public static IIncludableQueryable<UserModel, TProperty> Include<TProperty>(
+    public static IIncludableQueryable<User, TProperty> Include<TProperty>(
         this IUserRepository repository,
-        Expression<Func<UserModel, TProperty>> navigationPropertyPath)
+        Expression<Func<User, TProperty>> navigationPropertyPath)
     {
         return EntityFrameworkQueryableExtensions.Include(repository.Query(), navigationPropertyPath);
     }
@@ -54,5 +54,16 @@ public static class RepositoryIncludeExtensions
     {
         T? entity = await query.FirstOrDefaultAsync(e => e.Id == id);
         return entity ?? throw ResponseFactory.Create<NotFoundResponse>([$"{typeof(T).Name} not found"]);
+    }
+    
+    public static async Task<User?> GetByIdAsync(this IQueryable<User> query, int id)
+    {
+        return await query.FirstOrDefaultAsync(e => e.Id == id);
+    }
+    
+    public static async Task<User> GetByIdValidatedAsync(this IQueryable<User> query, int id)
+    {
+        User? user = await query.FirstOrDefaultAsync(e => e.Id == id);
+        return user ?? throw ResponseFactory.Create<NotFoundResponse>([$"{nameof(User)} not found"]);
     }
 }

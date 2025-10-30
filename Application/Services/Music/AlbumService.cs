@@ -1,7 +1,7 @@
 ﻿using Application.Abstractions.Interfaces.Repository.Music;
 using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.File;
-using Application.DTOs;
+using Application.DTOs.Music;
 using Application.Extensions;
 using Entities.Models.Music;
 
@@ -44,19 +44,19 @@ public class AlbumService(
         album.Name = newName;
         return await repository.UpdateAsync(album);
     }
-    
+
     public async Task UpdateVisibilityStateAsync(int albumId, int newVisibilityState)
     {
         Album album = await repository.Include(a => a.VisibilityState).GetByIdValidatedAsync(albumId);
         album.VisibilityStateId = newVisibilityState;
         await repository.UpdateAsync(album);
     }
-    
+
     public async Task<Album> GetValidatedIncludeTracksAsync(int id)
     {
         return await repository.Include(a => a.Tracks).GetByIdValidatedAsync(id);
     }
-    
+
     public async Task<Album> GetValidatedIncludeVisibilityStateAsync(int id)
     {
         return await repository.Include(a => a.VisibilityState).GetByIdValidatedAsync(id);

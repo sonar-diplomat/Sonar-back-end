@@ -2,7 +2,8 @@
 using Application.Abstractions.Interfaces.Repository.Music;
 using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.File;
-using Application.DTOs;
+using Application.DTOs.Music;
+using Application.Extensions;
 using Application.Response;
 using Entities.Models.File;
 using Entities.Models.Music;
@@ -99,6 +100,12 @@ public class TrackService(
         return audioFile;
     }
 
+    public async Task UpdateVisibilityStatusAsync(int trackId, int newVisibilityStatusId)
+    {
+        Track track = await repository.Include(a => a.VisibilityState).GetByIdValidatedAsync(trackId);
+        track.VisibilityState.StatusId = newVisibilityStatusId;
+        await repository.UpdateAsync(track);
+    }
 
     private record Range(long StartBytes, long Length = 0)
     {

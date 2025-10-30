@@ -14,6 +14,11 @@ public class AccessFeatureService(IAccessFeatureRepository repository)
 
     public async Task<ICollection<AccessFeature>> GetUserFeaturesByIdAsync(int userId)
     {
-       return await repository.GetUserFeaturesByIdAsync(userId);
+        return await repository.GetUserFeaturesByIdAsync(userId);
+    }
+    
+    public async Task<AccessFeature> GetByNameValidatedAsync(string name)
+    {
+        return await repository.GetByNameValidatedAsync(name);
     }
 }

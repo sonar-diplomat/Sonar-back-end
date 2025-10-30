@@ -12,4 +12,5 @@ public interface IUserRepository
     Task RemoveRangeAsync(List<User> users);
     Task<bool> IsUserNameTakenAsync(string UserName);
     IQueryable<User> Query();
+    Task SaveChangesAsync();
 }

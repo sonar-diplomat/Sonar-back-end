@@ -1,13 +1,17 @@
+using System.IdentityModel.Tokens.Jwt;
 using Application.Abstractions.Interfaces.Services;
-using Application.DTOs;
+using Application.Abstractions.Interfaces.Services.Utilities;
+using Application.DTOs.Music;
 using Application.Response;
 using Entities.Enums;
 using Entities.Models.ClientSettings;
+using Entities.Models.Distribution;
 using Entities.Models.Music;
 using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Primitives;
 
 namespace Sonar.Controllers.Music;
 
@@ -18,13 +22,40 @@ public class TrackController(
     IDistributorAccountService accountService,
     IDistributorService distributorService,
     ITrackService trackService,
-    ISettingsService settingsService) : BaseControllerExtended(userManager, accountService, distributorService)
+    ISettingsService settingsService,
+    IShareService shareService) : ShareController<Track>(userManager, shareService)
 {
+    [Authorize]
+    private async Task<DistributorAccount> GetDistributorAccountByJwt()
+    {
+        string? email = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value ?? User.FindFirst("email")?.Value;
+        if (email == null)
+            throw ResponseFactory.Create<UnauthorizedResponse>(["Invalid JWT token"]);
+        DistributorAccount? distributorAccount = await accountService.GetByEmailAsync(email);
+        return distributorAccount ?? throw ResponseFactory.Create<UnauthorizedResponse>();
+    }
+
+    [Authorize]
+    private async Task<Distributor> CheckDistributor()
+    {
+        DistributorAccount distributorAccount = await GetDistributorAccountByJwt();
+        if (!Request.Headers.TryGetValue("X-Api-Key", out StringValues apiKey))
+            throw ResponseFactory.Create<UnauthorizedResponse>();
+        string key = apiKey.ToString();
+        if (string.IsNullOrEmpty(key))
+            throw ResponseFactory.Create<UnauthorizedResponse>();
+        Distributor? distributor = await distributorService.GetByApiKeyAsync(key);
+        return !(await accountService.GetAllByDistributor(distributor)).Contains(distributorAccount)
+            ? throw ResponseFactory.Create<UnauthorizedResponse>()
+            : distributor!;
+    }
+    
     [HttpGet("{trackId}/stream")]
     [Authorize]
     public async Task<IActionResult> StreamMusic(int trackId, [FromQuery] bool download = false)
     {
         int settingsId = (await CheckAccessFeatures([AccessFeatureStruct.ListenContent])).SettingsId;
+        // TODO: Use settings to determine track quality
         Settings setttings = await settingsService.GetByIdValidatedAsync(settingsId);
         string? rangeHeader = Request.Headers.Range.FirstOrDefault();
         MusicStreamResultDTO? result = await trackService.GetMusicStreamAsync(trackId, rangeHeader);
@@ -73,5 +104,13 @@ public class TrackController(
     {
         Track track = await trackService.GetByIdValidatedAsync(trackId);
         throw ResponseFactory.Create<OkResponse<Track>>(track, ["Track successfully retrieved"]);
+    }
+    
+    [HttpPut("{trackId:int}/visibility")]
+    public async Task<IActionResult> UpdateTrackVisibilityStatus(int trackId, int visibilityStatusId)
+    {
+        await CheckDistributor();
+        await trackService.UpdateVisibilityStatusAsync(trackId, visibilityStatusId);
+        throw ResponseFactory.Create<OkResponse>([$"Track visibility status was changed successfully"]);
     }
 }

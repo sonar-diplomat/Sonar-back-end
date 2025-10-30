@@ -40,11 +40,8 @@ public class DistributorController(
     [HttpGet("{id:int}")]
     public async Task<IActionResult> GetDistributorById(int id)
     {
-        Distributor? distributor = await distributorService.GetByIdAsync(id);
-        return distributor == null
-            ? throw ResponseFactory.Create<NotFoundResponse>(["Distributor not found"])
-            : throw ResponseFactory.Create<OkResponse<Distributor>>(distributor,
-                ["Distributor retrieved successfully"]);
+        Distributor distributor = await distributorService.GetByIdValidatedAsync(id);
+        throw ResponseFactory.Create<OkResponse<Distributor>>(distributor, ["Distributor retrieved successfully"]);
     }
 
     [HttpPut("{id:int}")]
@@ -65,10 +62,10 @@ public class DistributorController(
     }
 
     [HttpGet("update-key/{id:int}")]
-    public async Task<IActionResult> UpdateLicenseKey(int licenseId)
+    public async Task<IActionResult> UpdateLicenseKey(int id)
     {
         await CheckAccessFeatures([AccessFeatureStruct.ManageDistributors]);
-        string key = await licenseService.UpdateLicenseKeyAsync(licenseId);
+        string key = await licenseService.UpdateLicenseKeyAsync(id);
         throw ResponseFactory.Create<OkResponse<string>>(key, ["Api key updated successfully"]);
     }
 }

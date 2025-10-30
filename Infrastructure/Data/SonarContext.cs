@@ -132,6 +132,8 @@ public class SonarContext(DbContextOptions<SonarContext> options)
             .HasData(UserPrivacyGroupSeedFactory.CreateSeedData());
         builder.Entity<UserStatus>()
             .HasData(UserStatusSeedFactory.CreateSeedData());
+        builder.Entity<SubscriptionFeature>()
+            .HasData(SubscribtionFeatureSeedFactory.CreateSeedData());
         base.OnModelCreating(builder);
     }
 }

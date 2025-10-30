@@ -1,4 +1,4 @@
-﻿using Application.DTOs;
+﻿using Application.DTOs.Music;
 using Entities.Models.Music;
 
 namespace Application.Abstractions.Interfaces.Services;
