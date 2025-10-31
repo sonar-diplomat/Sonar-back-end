@@ -17,7 +17,7 @@ namespace Sonar.Controllers.Test;
 [ApiController]
 public class TestController(
     UserManager<User> userManager,
-    IQrCodeService qrCodeService,
+    IShareService shareService,
     IApiKeyGeneratorService apiKeyGeneratorService,
     IImageFileService fileService,
     IDistributorRepository distributorRepository
@@ -33,14 +33,15 @@ public class TestController(
     [HttpGet("qr")]
     public async Task<ActionResult> GetDistributors([FromQuery] string link = "https://www.youtube.com/")
     {
-        string svg = await qrCodeService.GenerateQrCode(link);
+        string svg = await shareService.GenerateQrCode(link);
         throw ResponseFactory.Create<OkResponse<string>>(svg, ["image/svg+xml"]);
     }
 
     [HttpGet("test_include")]
     public async Task<ActionResult> TestInclude()
     {
-        var d = await distributorRepository.Include(d => d.Cover).Include(d => d.License).ThenInclude(l => l.Issuer).GetByIdAsync(4);
+        Distributor? d = await distributorRepository.Include(d => d.Cover).Include(d => d.License)
+            .ThenInclude(l => l.Issuer).GetByIdAsync(4);
         throw ResponseFactory.Create<OkResponse<Distributor>>(d);
     }
 

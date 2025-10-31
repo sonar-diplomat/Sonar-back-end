@@ -1,4 +1,5 @@
-﻿using Application.Abstractions.Interfaces.Repository.Music;
+﻿using System.Text;
+using Application.Abstractions.Interfaces.Repository.Music;
 using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.File;
 using Application.DTOs;
@@ -7,7 +8,6 @@ using Application.Extensions;
 using Application.Response;
 using Entities.Models.Music;
 using Microsoft.AspNetCore.Http;
-using System.Text;
 
 namespace Application.Services.Music;
 
@@ -15,29 +15,20 @@ public class PlaylistService(
     IPlaylistRepository repository,
     IImageFileService imageFileService,
     IUserService userService,
+    ICollectionService<Album> albumCollectionService,
+    ICollectionService<Blend> blendCollectionService,
+    ICollectionService<Playlist> playlistCollectionService,
     ITrackService trackService) : CollectionService<Playlist>(repository), IPlaylistService
 {
-    private async Task<Playlist> VerifyAccessAsync(int playlistId, int userId, bool allowContributor = false)
-    {
-        Playlist playlist = allowContributor
-            ? await repository.Include(p => p.Contributors).Include(p => p.Tracks).GetByIdValidatedAsync(playlistId)
-            : await GetByIdValidatedAsync(playlistId);
-
-        bool isCreator = playlist.CreatorId == userId;
-        bool isContributor = allowContributor && playlist.Contributors.Any(c => c.Id == userId);
-        if (!isCreator && !isContributor)
-            throw ResponseFactory.Create<UnauthorizedResponse>(["You do not have permission to modify this playlist"]);
-
-        return playlist;
-    }
-
     public async Task<Playlist> CreatePlaylistAsync(int creatorId, CreatePlaylistDTO dto)
     {
         Playlist playlist = new()
         {
             Name = dto.Name,
             CreatorId = creatorId,
-            Cover = dto.Cover != null ? await imageFileService.UploadFileAsync(dto.Cover) : await imageFileService.GetDefaultAsync(),
+            Cover = dto.Cover != null
+                ? await imageFileService.UploadFileAsync(dto.Cover)
+                : await imageFileService.GetDefaultAsync()
         };
         return await repository.AddAsync(playlist);
     }
@@ -57,7 +48,7 @@ public class PlaylistService(
     public async Task UpdatePlaylistCoverAsync(int playlistId, int creatorId, IFormFile newCover)
     {
         await VerifyAccessAsync(playlistId, creatorId);
-        Playlist playlist = await VerifyAccessAsync(playlistId, creatorId, allowContributor: true);
+        Playlist playlist = await VerifyAccessAsync(playlistId, creatorId, true);
         playlist.Cover = await imageFileService.UploadFileAsync(newCover);
         await repository.UpdateAsync(playlist);
     }
@@ -66,6 +57,7 @@ public class PlaylistService(
     {
         await VerifyAccessAsync(playlistId, creatorId);
         Playlist playlist = await repository.Include(p => p.Contributors).GetByIdValidatedAsync(playlistId);
+        // TODO: Replace all All and Any calls across the project with HashSet for better performance
         if (playlist.Contributors.Any(c => c.Id == contributorId))
             throw ResponseFactory.Create<ConflictResponse>(["User is already a contributor to this playlist."]);
         playlist.Contributors.Add(await userService.GetByIdValidatedAsync(contributorId));
@@ -96,12 +88,6 @@ public class PlaylistService(
         await repository.UpdateAsync(playlist);
     }
 
-    public async Task UpdateVisibilityStatusAsync(int playlistId, int newVisibilityStatusId, int creatorId)
-    {
-        await VerifyAccessAsync(playlistId, creatorId);
-        await base.UpdateVisibilityStatusAsync(playlistId, newVisibilityStatusId);
-    }
-
     public async Task<CursorPageDTO<TrackDTO>> GetPlaylistTracksAsync(int playlistId, string? afterCursor, int limit)
     {
         int? afterId = null;
@@ -109,12 +95,12 @@ public class PlaylistService(
 
         if (!string.IsNullOrEmpty(afterCursor))
         {
-            var bytes = Convert.FromBase64String(afterCursor);
-            var idString = Encoding.UTF8.GetString(bytes);
+            byte[] bytes = Convert.FromBase64String(afterCursor);
+            string idString = Encoding.UTF8.GetString(bytes);
             afterId = int.Parse(idString);
         }
 
-        var tracks = await repository.GetTracksFromPlaylistAfterAsync(playlistId, afterId, limit);
+        List<Track> tracks = await repository.GetTracksFromPlaylistAfterAsync(playlistId, afterId, limit);
 
         List<TrackDTO> items = tracks.Select(t => new TrackDTO
         {
@@ -143,15 +129,43 @@ public class PlaylistService(
         };
     }
 
-    public async Task ImportCollectionToPlaylistAsync<T>(int playlistId, int collectionId, int userId) where T : Collection
+    public async Task ImportCollectionToPlaylistAsync<T>(int playlistId, int collectionId, int userId)
+        where T : Collection
     {
         Playlist playlist = await VerifyAccessAsync(playlistId, userId, true);
-        // TODO: Make this work for any collection type
-        IEnumerable<Track> tracks = await GetAllTracksAsync(collectionId);
-        foreach (Track track in tracks)
+
+        IEnumerable<Track> tracks = await (typeof(T) switch
         {
-            if (playlist.Tracks.All(t => t.Id != track.Id))
+            { } t when t == typeof(Album) => albumCollectionService.GetAllTracksAsync(collectionId),
+            { } t when t == typeof(Blend) => blendCollectionService.GetAllTracksAsync(collectionId),
+            { } t when t == typeof(Playlist) => playlistCollectionService.GetAllTracksAsync(collectionId),
+            _ => throw ResponseFactory.Create<BadRequestResponse>(["Collection failed to import"])
+        });
+
+        HashSet<int> existingIds = new(playlist.Tracks.Select(t => t.Id));
+        foreach (Track track in tracks)
+            if (existingIds.Add(track.Id))
                 playlist.Tracks.Add(track);
-        }
+        await repository.UpdateAsync(playlist);
+    }
+
+    private async Task<Playlist> VerifyAccessAsync(int playlistId, int userId, bool allowContributor = false)
+    {
+        Playlist playlist = allowContributor
+            ? await repository.Include(p => p.Contributors).Include(p => p.Tracks).GetByIdValidatedAsync(playlistId)
+            : await GetByIdValidatedAsync(playlistId);
+
+        bool isCreator = playlist.CreatorId == userId;
+        bool isContributor = allowContributor && playlist.Contributors.Any(c => c.Id == userId);
+        if (!isCreator && !isContributor)
+            throw ResponseFactory.Create<UnauthorizedResponse>(["You do not have permission to modify this playlist"]);
+
+        return playlist;
+    }
+
+    public async Task UpdateVisibilityStatusAsync(int playlistId, int newVisibilityStatusId, int creatorId)
+    {
+        await VerifyAccessAsync(playlistId, creatorId);
+        await base.UpdateVisibilityStatusAsync(playlistId, newVisibilityStatusId);
     }
 }

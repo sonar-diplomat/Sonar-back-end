@@ -4,7 +4,6 @@ using Application.Abstractions.Interfaces.Services.File;
 using Application.DTOs.Music;
 using Application.Extensions;
 using Entities.Models.Music;
-using Microsoft.AspNetCore.Http;
 
 namespace Application.Services.Music;
 
@@ -13,7 +12,8 @@ public class AlbumService(
     IVisibilityStateService visibilityStateService,
     IImageFileService imageFileService,
     IAlbumArtistService albumArtistService,
-    IArtistService artistService) : CollectionService<Album>(repository), IAlbumService
+    IArtistService artistService
+) : GenericService<Album>(repository), IAlbumService
 {
     public async Task<Album> UploadAsync(UploadAlbumDTO dto, int distributorId)
     {
@@ -45,6 +45,13 @@ public class AlbumService(
         return await repository.UpdateAsync(album);
     }
 
+    public async Task UpdateVisibilityStateAsync(int albumId, int newVisibilityState)
+    {
+        Album album = await repository.Include(a => a.VisibilityState).GetByIdValidatedAsync(albumId);
+        album.VisibilityStateId = newVisibilityState;
+        await repository.UpdateAsync(album);
+    }
+
     public async Task<Album> GetValidatedIncludeTracksAsync(int id)
     {
         return await repository.Include(a => a.Tracks).GetByIdValidatedAsync(id);
@@ -53,12 +60,5 @@ public class AlbumService(
     public async Task<Album> GetValidatedIncludeVisibilityStateAsync(int id)
     {
         return await repository.Include(a => a.VisibilityState).GetByIdValidatedAsync(id);
-    }
-
-    public async Task UpdateAlbumCoverAsync(int albumId, IFormFile newCover)
-    {
-        Album album = await GetByIdValidatedAsync(albumId);
-        album.Cover = await imageFileService.UploadFileAsync(newCover);
-        await repository.UpdateAsync(album);
     }
 }
