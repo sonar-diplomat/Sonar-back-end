@@ -16,16 +16,16 @@ public class CollectionController<T>(UserManager<User> userManager, ICollectionS
     {
         throw new NotImplementedException();
     }
-    
+
     [HttpGet("{collectionId:int}/share-qr")]
     public async Task<IActionResult> ShareQr(int collectionId)
     {
         throw new NotImplementedException();
     }
-    
+
     [HttpPut("{collectionId:int}/visibility")]
     [Authorize]
-    public async Task<IActionResult> UpdateVisibilityStatus(int collectionId, int visibilityStatusId)
+    public async Task<IActionResult> UpdateVisibilityStatus([FromRoute] int collectionId, [FromQuery] int visibilityStatusId)
     {
         await CheckAccessFeatures([AccessFeatureStruct.ManageContent]);
         await collectionService.UpdateVisibilityStatusAsync(collectionId, visibilityStatusId);

@@ -35,7 +35,7 @@ public class AuthController(
         IdentityResult result = await userManager.CreateAsync(user, model.Password);
         if (result.Succeeded)
             throw ResponseFactory.Create<OkResponse>(["Registration successfull"]);
-        throw ResponseFactory.Create<BadRequestResponse>(result.Errors.Select(e => e.ToString()).ToArray()!);
+        throw ResponseFactory.Create<BadRequestResponse>(result.Errors.Select(e => e.Description.ToString()).ToArray()!);
     }
 
     [HttpPost("login")]
