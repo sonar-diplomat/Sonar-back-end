@@ -1,4 +1,5 @@
-﻿using Application.Abstractions.Interfaces.Repository.UserCore;
+﻿using System.Security.Cryptography;
+using Application.Abstractions.Interfaces.Repository.UserCore;
 using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.File;
 using Application.DTOs.Auth;
@@ -8,7 +9,6 @@ using Application.Response;
 using Entities.Models.Access;
 using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Http;
-using System.Security.Cryptography;
 
 namespace Application.Services.UserCore;
 
@@ -127,24 +127,12 @@ public class UserService(
         await repository.UpdateAsync(user);
     }
 
-    public async Task<bool> DeleteUserAsync(int userId)
-    {
-        User? user = await GetByIdAsync(userId);
-        if (user == null)
-            throw ResponseFactory.Create<NotFoundResponse>();
-
-        await repository.RemoveAsync(user);
-        return true;
-    }
-
     public async Task AssignAccessFeaturesAsync(int userId, int[] accessFeatureIds)
     {
         User user = await GetValidatedIncludeAccessFeaturesAsync(userId);
         foreach (int accessFeatureId in accessFeatureIds)
-        {
             if (user.AccessFeatures.All(af => af.Id != accessFeatureId))
                 user.AccessFeatures.Add(await accessFeatureService.GetByIdValidatedAsync(accessFeatureId));
-        }
 
         await repository.UpdateAsync(user);
     }
@@ -153,17 +141,15 @@ public class UserService(
     {
         User user = await GetValidatedIncludeAccessFeaturesAsync(userId);
         foreach (string name in accessFeatures)
-        {
             if (user.AccessFeatures.All(af => af.Name != name))
                 user.AccessFeatures.Add(await accessFeatureService.GetByNameValidatedAsync(name));
-        }
 
         await repository.UpdateAsync(user);
     }
 
     public async Task RevokeAccessFeaturesAsync(int userId, int[] accessFeatureIds)
     {
-        var user = await GetValidatedIncludeAccessFeaturesAsync(userId);
+        User user = await GetValidatedIncludeAccessFeaturesAsync(userId);
         IEnumerable<AccessFeature> toRemove = user.AccessFeatures.Where(af => accessFeatureIds.Contains(af.Id));
         foreach (AccessFeature af in toRemove)
             user.AccessFeatures.Remove(af);
@@ -172,7 +158,7 @@ public class UserService(
 
     public async Task RevokeAccessFeaturesByNameAsync(int userId, string[] accessFeatures)
     {
-        var user = await GetValidatedIncludeAccessFeaturesAsync(userId);
+        User user = await GetValidatedIncludeAccessFeaturesAsync(userId);
         IEnumerable<AccessFeature> toRemove = user.AccessFeatures.Where(af => accessFeatures.Contains(af.Name));
         foreach (AccessFeature af in toRemove)
             user.AccessFeatures.Remove(af);
@@ -184,5 +170,15 @@ public class UserService(
         User user = await repository.Include(a => a.VisibilityState).GetByIdValidatedAsync(userId);
         user.VisibilityState.StatusId = newVisibilityStatusId;
         await repository.UpdateAsync(user);
+    }
+
+    public async Task<bool> DeleteUserAsync(int userId)
+    {
+        User? user = await GetByIdAsync(userId);
+        if (user == null)
+            throw ResponseFactory.Create<NotFoundResponse>();
+
+        await repository.RemoveAsync(user);
+        return true;
     }
 }

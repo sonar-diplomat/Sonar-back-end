@@ -159,6 +159,7 @@ builder.Services.AddScoped<IDistributorRepository, DistributorRepository>();
 builder.Services.AddScoped<IDistributorSessionRepository, DistributorSessionRepository>();
 builder.Services.AddScoped<ILicenseRepository, LicenseRepository>();
 builder.Services.AddScoped<IDistributorAccountRepository, DistributorAccountRepository>();
+builder.Services.AddScoped<IArtistRegistrationRequestRepository, ArtistRegistrationRequestRepository>();
 
 // File Repositories
 builder.Services.AddScoped<IAudioFileRepository, AudioFileRepository>();

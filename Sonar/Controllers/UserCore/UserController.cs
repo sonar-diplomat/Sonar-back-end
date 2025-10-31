@@ -36,7 +36,6 @@ public class UserController(
             PublicIdentifier = user.PublicIdentifier,
             RegistrationDate = user.RegistrationDate,
             AvatarImage = user.AvatarImage,
-            Posts = user.Posts,
             AccessFeatures = user.AccessFeatures
         };
         throw ResponseFactory.Create<OkResponse<NonSensetiveUserDTO>>(userDto, ["User retrieved successfully"]);
@@ -60,13 +59,13 @@ public class UserController(
         await userService.UpdateAvatar(user.Id, file);
         throw ResponseFactory.Create<OkResponse>(["File uploaded successfully"]);
     }
-    
+
     [HttpPut("{collectionId:int}/visibility")]
     [Authorize]
     public async Task<IActionResult> UpdateVisibilityStatus(int collectionId, int visibilityStatusId)
     {
         await CheckAccessFeatures([AccessFeatureStruct.ManageContent]);
         await userService.UpdateVisibilityStatusAsync(collectionId, visibilityStatusId);
-        throw ResponseFactory.Create<OkResponse>([$"User visibility status was changed successfully"]);
+        throw ResponseFactory.Create<OkResponse>(["User visibility status was changed successfully"]);
     }
 }

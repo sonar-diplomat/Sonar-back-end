@@ -1,9 +1,9 @@
-﻿using Entities.Models.File;
-using Entities.Models.Music;
-using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
+using Entities.Models.File;
+using Entities.Models.Music;
+using Microsoft.EntityFrameworkCore;
 
 namespace Entities.Models.Distribution;
 
@@ -44,5 +44,9 @@ public class Distributor : BaseModel
 
     [JsonIgnore]
     public virtual ICollection<DistributorAccount> Accounts { get; set; }
+
     public virtual ICollection<Album> Albums { get; set; }
+
+    [JsonIgnore]
+    public virtual ICollection<ArtistRegistrationRequest> ArtistRegistrationRequests { get; set; }
 }
