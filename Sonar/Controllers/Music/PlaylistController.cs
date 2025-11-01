@@ -3,7 +3,6 @@ using Application.Abstractions.Interfaces.Services.Utilities;
 using Application.DTOs;
 using Application.DTOs.Music;
 using Application.Response;
-using Application.Services.Utilities;
 using Entities.Enums;
 using Entities.Models.Music;
 using Entities.Models.UserCore;
@@ -20,7 +19,7 @@ public class PlaylistController(
     IPlaylistService playlistService,
     ICollectionService<Playlist> collectionService,
     IShareService shareService)
-    : CollectionController<Playlist>(userManager, collectionService, shareService)
+    : CollectionController<Playlist>(userManager, collectionService)
 {
     [HttpPost("create")]
     public async Task<IActionResult> CreatePlaylist([FromBody] CreatePlaylistDTO dto)
