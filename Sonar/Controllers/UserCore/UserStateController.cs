@@ -1,7 +1,9 @@
+using System.Security.Claims;
 using Application.Abstractions.Interfaces.Services;
 using Application.Response;
 using Entities.Enums;
 using Entities.Models.UserCore;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,19 +17,22 @@ public class UserStateController(
     IUserSessionService userSessionService
 ) : BaseController(userManager)
 {
+    // TODO: Consider replacing TimeSpan with bytes
     [HttpPut("current-position")]
-    public async Task<IActionResult>
-        UpdateCurrentPosition(TimeSpan position) // TODO: Consider replacing TimeSpan with bytes
+    public async Task<IActionResult> UpdateCurrentPosition(TimeSpan position)
     {
         User user = await CheckAccessFeatures([AccessFeatureStruct.ListenContent]);
         await userStateService.UpdateCurrentPositionAsync(user.UserStateId, position);
         throw ResponseFactory.Create<OkResponse>(["Current position updated successfully."]);
     }
 
-    [HttpPut("current-track")]
-    public async Task<IActionResult> UpdateListeningTarget() // Current collectionId and/or trackId
+    [HttpPut("listening/{trackId:int}/{collectionId:int?}")]
+    public async Task<IActionResult>
+        UpdateListeningTarget(int trackId, int? collectionId) // Current collectionId and/or trackId
     {
-        throw new NotImplementedException();
+        UserState userState = await userStateService.GetByUserIdValidatedAsync((await CheckAccessFeatures([])).Id);
+        await userStateService.UpdateListeningTargetAsync(userState.Id, trackId, collectionId);
+        throw ResponseFactory.Create<OkResponse>(["Listening target updated successfully."]);
     }
 
     [HttpPost("queue")]
@@ -50,9 +55,15 @@ public class UserStateController(
         throw ResponseFactory.Create<OkResponse>(["User status updated successfully."]);
     }
 
-    [HttpPatch("change-session")]
-    public async Task<IActionResult> ChangeUserPrimarySession()
+    [HttpPatch("session")]
+    [Authorize]
+    public async Task<IActionResult> UpdateUserPrimarySession()
     {
-        throw new NotImplementedException();
+        User user = await CheckAccessFeatures([]);
+        string deviceId = User.FindFirst(ClaimTypes.Sid)?.Value ?? string.Empty;
+        if (deviceId == string.Empty)
+            throw ResponseFactory.Create<BadRequestResponse>(["Device ID claim is missing."]);
+        await userStateService.UpdatePrimarySessionAsync(user.Id, deviceId);
+        throw ResponseFactory.Create<OkResponse>(["Primary session updated successfully."]);
     }
 }

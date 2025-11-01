@@ -19,15 +19,16 @@ public class UserService(
     IAccessFeatureService accessFeatureService,
     ISettingsService settingsService,
     IUserStateService stateService,
-    IImageFileService imageFileService
+    IImageFileService imageFileService,
+    ILibraryService libraryService
 )
     : IUserService
 {
+    private const string StartIdentifierValue = "3";
+
     public async Task<int> ChangeCurrencyAsync(int userId, int modifier)
     {
-        User user = await GetByIdAsync(userId);
-        if (user == null)
-            throw ResponseFactory.Create<NotFoundResponse>(["User not found."]);
+        User user = await GetByIdValidatedAsync(userId);
         user.AvailableCurrency += modifier;
         return user.AvailableCurrency;
     }
@@ -44,7 +45,7 @@ public class UserService(
 
     public async Task<User> UpdateUserAsync(int userId, UserUpdateDTO userUpdateUpdateDto)
     {
-        User user = await GetByIdAsync(userId);
+        User user = await GetByIdValidatedAsync(userId);
         if (userUpdateUpdateDto.PublicIdentifier is not null)
             user.PublicIdentifier = userUpdateUpdateDto.PublicIdentifier;
         if (userUpdateUpdateDto.Biography is not null)
@@ -66,7 +67,7 @@ public class UserService(
 
     public async Task ChangeUserNameAsync(int userId, string newUserName)
     {
-        User user = await GetByIdAsync(userId);
+        User user = await GetByIdValidatedAsync(userId);
         if (user.UserName == newUserName)
             throw ResponseFactory.Create<BadRequestResponse>(["UserName is already set to this value."]);
         if (await repository.IsUserNameTakenAsync(newUserName))
@@ -85,9 +86,7 @@ public class UserService(
             UserName = model.UserName,
             Login = model.Login,
             Email = model.Email,
-            PublicIdentifier =
-                RandomNumberGenerator.GetInt32(100000, 1000000)
-                    .ToString(), // TODO: Potentially change, needs discussion
+            PublicIdentifier = await GenerateUniqueUserPublicIdentifierAsync(),
             RegistrationDate = DateTime.UtcNow
         };
         VisibilityState tempVs = new()
@@ -95,6 +94,7 @@ public class UserService(
             SetPublicOn = DateTime.UtcNow,
             StatusId = 1
         };
+
         await visibilityStateService.CreateAsync(tempVs);
         user.VisibilityState = tempVs;
         user.Inventory = await inventoryService.CreateDefaultAsync();
@@ -102,6 +102,7 @@ public class UserService(
         user.Settings = await settingsService.CreateDefaultAsync(model.Locale);
         user.UserState = await stateService.CreateDefaultAsync();
         user.AvatarImage = await imageFileService.GetDefaultAsync();
+        user.Library = await libraryService.CreateDefaultAsync();
         return user;
     }
 
@@ -109,11 +110,6 @@ public class UserService(
     {
         User? user = await repository.GetByIdAsync(id);
         return user ?? throw ResponseFactory.Create<NotFoundResponse>(["User not found."]);
-    }
-
-    public async Task<User> GetValidatedIncludeAccessFeaturesAsync(int id)
-    {
-        return await repository.Include(u => u.AccessFeatures).GetByIdValidatedAsync(id);
     }
 
     public async Task UpdateAvatar(int userId, IFormFile file)
@@ -172,6 +168,11 @@ public class UserService(
         await repository.UpdateAsync(user);
     }
 
+    public async Task<User> GetValidatedIncludeAccessFeaturesAsync(int id)
+    {
+        return await repository.Include(u => u.AccessFeatures).GetByIdValidatedAsync(id);
+    }
+
     public async Task<bool> DeleteUserAsync(int userId)
     {
         User? user = await GetByIdAsync(userId);
@@ -180,5 +181,17 @@ public class UserService(
 
         await repository.RemoveAsync(user);
         return true;
+    }
+
+    private async Task<string> GenerateUniqueUserPublicIdentifierAsync()
+    {
+        while (true)
+        {
+            string publicIdentifier = string.Concat(StartIdentifierValue,
+                RandomNumberGenerator.GetInt32(100000, 1000000).ToString());
+
+
+            if (!await repository.CheckExists(publicIdentifier)) return publicIdentifier;
+        }
     }
 }

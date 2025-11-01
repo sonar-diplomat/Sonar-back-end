@@ -26,10 +26,10 @@ public class UserController(
         throw ResponseFactory.Create<OkResponse<IEnumerable<User>>>(users, ["Users retrieved successfully"]);
     }
 
-    [HttpGet("{id}")]
-    public async Task<ActionResult<User>> GetUser(int id)
+    [HttpGet("{userId:int}")]
+    public async Task<ActionResult<User>> GetUser(int userId)
     {
-        User user = await userService.GetByIdAsync(id);
+        User user = await userService.GetByIdValidatedAsync(userId);
         NonSensetiveUserDTO userDto = new()
         {
             Biography = user.Biography,

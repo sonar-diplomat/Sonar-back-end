@@ -7,4 +7,7 @@ public interface IUserStateService : IGenericService<UserState>
     Task<UserState> CreateDefaultAsync();
     Task UpdateUserStatusAsync(int stateId, int statusId);
     Task UpdateCurrentPositionAsync(int stateId, TimeSpan position);
+    Task UpdatePrimarySessionAsync(int userId, string deviceId);
+    Task UpdateListeningTargetAsync(int stateId, int trackId, int? collectionId);
+    Task<UserState> GetByUserIdValidatedAsync(int userId);
 }

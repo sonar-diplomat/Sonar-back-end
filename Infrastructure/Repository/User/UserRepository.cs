@@ -57,4 +57,9 @@ public class UserRepository(SonarContext context) : IUserRepository
     {
         await context.SaveChangesAsync();
     }
+
+    public Task<bool> CheckExists(string publicIdentifier)
+    {
+        return Task.FromResult(context.Set<User>().Any(u => u.PublicIdentifier == publicIdentifier));
+    }
 }

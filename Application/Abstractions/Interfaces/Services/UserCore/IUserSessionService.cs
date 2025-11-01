@@ -16,4 +16,5 @@ public interface IUserSessionService : IGenericService<UserSession>
     public Task RevokeAllUserSessionsAsync(int userId);
 
     public Task<IEnumerable<ActiveSessionDTO>> GetAllByUserIdAsync(int userId);
+    Task<UserSession> GetByUserIdAndDeviceIdValidatedAsync(int userId, string deviceId);
 }

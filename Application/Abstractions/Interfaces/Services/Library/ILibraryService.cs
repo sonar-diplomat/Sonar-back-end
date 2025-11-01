@@ -4,4 +4,5 @@ namespace Application.Abstractions.Interfaces.Services;
 
 public interface ILibraryService : IGenericService<Library>
 {
+    Task<Library> CreateDefaultAsync();
 }

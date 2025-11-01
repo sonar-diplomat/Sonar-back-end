@@ -1,4 +1,5 @@
-﻿using Application.Abstractions.Interfaces.Repository.Distribution;
+﻿using System.Text.Json;
+using Application.Abstractions.Interfaces.Repository.Distribution;
 using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.File;
 using Application.Abstractions.Interfaces.Services.Utilities;
@@ -6,9 +7,11 @@ using Application.Extensions;
 using Application.Response;
 using Entities.Models.Chat;
 using Entities.Models.Distribution;
+using Entities.Models.Library;
 using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Settings = Entities.Models.ClientSettings.Settings;
 using SysFile = System.IO.File;
 
 namespace Sonar.Controllers.Test;
@@ -20,9 +23,14 @@ public class TestController(
     IShareService shareService,
     IApiKeyGeneratorService apiKeyGeneratorService,
     IImageFileService fileService,
-    IDistributorRepository distributorRepository
+    IDistributorRepository distributorRepository,
+    ISettingsService settingsService,
+    IFolderService folderService,
+    ILibraryService libraryService
 ) : BaseController(userManager)
 {
+    # region dist
+
     [HttpGet("apikey")]
     public async Task<ActionResult> Ping()
     {
@@ -66,6 +74,10 @@ public class TestController(
         return Ok();
     }
 
+    # endregion
+
+    # region response tests
+
     [HttpGet("error")]
     public async Task<ActionResult> GenerateError()
     {
@@ -96,4 +108,63 @@ public class TestController(
         ];
         throw ResponseFactory.Create<OkResponse<IEnumerable<Message>>>(messages, ["Test exception"]);
     }
+
+    # endregion
+
+    # region settings and folder tests
+
+    [HttpGet("settings/{settingsId?}")]
+    public async Task<ActionResult> GetSettings(int settingsId = 1)
+    {
+        throw ResponseFactory.Create<OkResponse<Settings>>(await settingsService.GetByIdValidatedFullAsync(settingsId),
+            ["Settings retrieved successfully"]);
+    }
+
+
+    [HttpPatch("settings/{settingsId:int}")]
+    public async Task<IActionResult> PatchSettings(int settingsId, [FromBody] JsonElement updates)
+    {
+        await settingsService.PatchAsync(settingsId, updates);
+        throw ResponseFactory.Create<OkResponse>(["Settings patched successfully"]);
+    }
+
+    # endregion
+
+    # region folder tests
+
+    [HttpGet("folder/{folderId:int}")]
+    public async Task<IActionResult> GetFolder(int folderId)
+    {
+        Folder folder = await folderService.GetByIdValidatedAsync(folderId);
+        throw ResponseFactory.Create<OkResponse<Folder>>(folder, ["Successfully retrieved folder"]);
+    }
+
+    [HttpGet("folder")]
+    public async Task<IActionResult> GetAllFolders()
+    {
+        IEnumerable<Folder> folders = await folderService.GetAllAsync();
+        throw ResponseFactory.Create<OkResponse<IEnumerable<Folder>>>(folders, ["Successfully retrieved all folders"]);
+    }
+
+    [HttpPost("folder")]
+    public async Task<IActionResult> CreateFolder()
+    {
+        int libraryId = 1;
+        Folder folder = await folderService.CreateAsync(new Folder
+        {
+            Name = "Test Folder" + DateTime.Now.Ticks,
+            IsProtected = false,
+            ParentFolderId = null
+        });
+        throw ResponseFactory.Create<OkResponse<Folder>>(folder, ["Successfully created folder"]);
+    }
+
+    [HttpPost("library/default")]
+    public async Task<IActionResult> CreateDefaultFolder()
+    {
+        throw ResponseFactory.Create<OkResponse<Entities.Models.Library.Library>>(
+            await libraryService.CreateDefaultAsync(), ["Successfully created default folder"]);
+    }
+
+    # endregion
 }

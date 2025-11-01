@@ -10,7 +10,8 @@ public interface IUserRepository
     Task<User> UpdateAsync(User user);
     Task RemoveAsync(User user);
     Task RemoveRangeAsync(List<User> users);
-    Task<bool> IsUserNameTakenAsync(string UserName);
+    Task<bool> IsUserNameTakenAsync(string userName);
     IQueryable<User> Query();
     Task SaveChangesAsync();
+    Task<bool> CheckExists(string publicIdentifier);
 }

@@ -90,17 +90,13 @@ public class SonarContext(DbContextOptions<SonarContext> options)
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
-        builder.Entity<Queue>()
-            .HasMany(q => q.Tracks)
-            .WithMany(t => t.Queues);    
-            
-        builder.Entity<Track>()
-            .HasMany(t => t.QueuesWherePrimary)
+        builder.Entity<Queue>().HasMany(q => q.Tracks).WithMany(t => t.Queues);
+
+        builder.Entity<Track>().HasMany(t => t.QueuesWherePrimary)
             .WithOne(q => q.CurrentTrack)
             .HasForeignKey(q => q.CurrentTrackId);
-            
-        builder.Entity<AlbumArtist>()
-            .HasKey(aa => new { aa.AlbumId, aa.ArtistId });
+
+        builder.Entity<AlbumArtist>().HasKey(aa => new { aa.AlbumId, aa.ArtistId });
 
         builder.Entity<AlbumArtist>()
             .HasOne(aa => aa.Album)
@@ -114,6 +110,18 @@ public class SonarContext(DbContextOptions<SonarContext> options)
 
         builder.Entity<User>().HasOne(u => u.Settings).WithOne(s => s.User).HasForeignKey<User>(s => s.SettingsId);
         builder.Entity<Settings>().HasMany(s => s.BlockedUsers).WithMany(s => s.SettingsBlockedUsers);
+
+        builder.Entity<Library>()
+            .HasMany(l => l.Folders)
+            .WithOne(f => f.Library)
+            .HasForeignKey(f => f.LibraryId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        builder.Entity<Folder>()
+            .HasOne(f => f.ParentFolder)
+            .WithMany(f => f.SubFolders)
+            .HasForeignKey(f => f.ParentFolderId)
+            .OnDelete(DeleteBehavior.NoAction);
 
         builder.Entity<NotificationType>()
             .HasData(NotificationTypeSeedFactory.CreateSeedData());
