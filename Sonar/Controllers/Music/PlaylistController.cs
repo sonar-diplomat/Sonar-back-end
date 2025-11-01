@@ -3,20 +3,19 @@ using Application.Abstractions.Interfaces.Services.Utilities;
 using Application.DTOs;
 using Application.DTOs.Music;
 using Application.Response;
-using Application.Services.Utilities;
 using Entities.Enums;
 using Entities.Models.Music;
 using Entities.Models.UserCore;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
 
 namespace Sonar.Controllers.Music;
 
 [Route("api/[controller]")]
 [ApiController]
-public class PlaylistController(UserManager<User> userManager, IPlaylistService playlistService, ICollectionService<Playlist> collectionService, IShareService shareService) 
-    : CollectionController<Playlist>(userManager, collectionService, shareService)
+public class PlaylistController(UserManager<User> userManager, IPlaylistService playlistService, ICollectionService<Playlist> collectionService, IShareService shareService)
+    : CollectionController<Playlist>(userManager, collectionService)
 {
     [HttpPost("create")]
     public async Task<IActionResult> CreatePlaylist([FromBody] CreatePlaylistDTO dto)
@@ -91,7 +90,7 @@ public class PlaylistController(UserManager<User> userManager, IPlaylistService 
         [FromQuery] int limit = 20)
     {
         CursorPageDTO<TrackDTO> result = await playlistService.GetPlaylistTracksAsync(playlistId, after, limit);
-        throw ResponseFactory.Create<OkResponse<CursorPageDTO<TrackDTO>>>(data: result, ["Playlist tracks retrieved successfully"] );
+        throw ResponseFactory.Create<OkResponse<CursorPageDTO<TrackDTO>>>(data: result, ["Playlist tracks retrieved successfully"]);
     }
 
     [HttpGet("{playlistId:int}")]
@@ -100,7 +99,7 @@ public class PlaylistController(UserManager<User> userManager, IPlaylistService 
         Playlist playlist = await playlistService.GetByIdValidatedAsync(playlistId);
         throw ResponseFactory.Create<OkResponse<Playlist>>(playlist, ["Playlist retrieved successfully"]);
     }
-    
+
     [HttpPost("{playlistId:int}import-collection/{collection}/{collectionId:int}")]
     public async Task<IActionResult> ImportCollection(int playlistId, string collection, int collectionId)
     {

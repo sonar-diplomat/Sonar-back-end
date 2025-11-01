@@ -13,6 +13,6 @@ public class BlendController(
     UserManager<User> userManager,
     IShareService shareService,
     ICollectionService<Blend> collectionService
-) : CollectionController<Blend>(userManager, collectionService, shareService)
+) : CollectionController<Blend>(userManager, collectionService)
 {
 }
