@@ -66,14 +66,14 @@ public class AuthController(
         }
 
         // Generate both tokens
-        string accessToken = authService.GenerateJwtToken(user, Request.Headers["X-Device-Name"].ToString() ?? "Unknown device");
+        string accessToken = authService.GenerateJwtToken(user, Request.Headers["X-Device-Name"].ToString());
         string refreshToken = authService.GenerateRefreshToken();
 
         UserSession session = new()
         {
             UserId = user.Id,
-            DeviceName = Request.Headers["X-Device-Name"].ToString() ?? "Unknown device",
-            UserAgent = Request.Headers["User-Agent"].ToString() ?? "Unknown",
+            DeviceName = Request.Headers["X-Device-Name"].ToString(),
+            UserAgent = Request.Headers["User-Agent"].ToString(),
             IPAddress = HttpContext.Connection.RemoteIpAddress!,
             RefreshTokenHash = authService.ComputeSha256(refreshToken),
             //ExpiresAt = DateTime.UtcNow.AddDays(30),
@@ -85,7 +85,8 @@ public class AuthController(
 
         // Save refresh token to user
         await userSessionService.CreateAsync(session);
-        throw ResponseFactory.Create<OkResponse<LoginResponseDTO>>(new LoginResponseDTO(accessToken, refreshToken, session.Id), ["Login successful"]);
+        throw ResponseFactory.Create<OkResponse<LoginResponseDTO>>(
+            new LoginResponseDTO(accessToken, refreshToken, session.Id), ["Login successful"]);
     }
 
     [HttpPost("verify-2fa")]
@@ -102,7 +103,8 @@ public class AuthController(
             throw ResponseFactory.Create<BadRequestResponse>(["Invalid or expired code"]);
 
         // Generate both tokens
-        string accessToken = authService.GenerateJwtToken(user, Request.Headers["X-Device-Name"].ToString() ?? "Unknown device");
+        string accessToken =
+            authService.GenerateJwtToken(user, Request.Headers["X-Device-Name"].ToString() ?? "Unknown device");
         string refreshToken = authService.GenerateRefreshToken();
 
         UserSession session = new()
@@ -120,7 +122,8 @@ public class AuthController(
 
         // Save refresh token to user
         await userSessionService.CreateAsync(session);
-        throw ResponseFactory.Create<OkResponse<RefreshTokenResponse>>(new RefreshTokenResponse(accessToken, refreshToken), ["Login successful"]);
+        throw ResponseFactory.Create<OkResponse<RefreshTokenResponse>>(
+            new RefreshTokenResponse(accessToken, refreshToken), ["Login successful"]);
     }
 
     [HttpPost("refresh-token")]
@@ -130,7 +133,8 @@ public class AuthController(
         UserSession session = await userSessionService.GetValidatedByRefreshTokenAsync(refreshHash);
         await userSessionService.UpdateLastActiveAsync(session);
         string newAccessToken = authService.GenerateJwtToken(session.User, session.DeviceName);
-        throw ResponseFactory.Create<OkResponse<RefreshTokenResponse>>(new RefreshTokenResponse(newAccessToken, refreshToken), ["Token refreshed successfully"]);
+        throw ResponseFactory.Create<OkResponse<RefreshTokenResponse>>(
+            new RefreshTokenResponse(newAccessToken, refreshToken), ["Token refreshed successfully"]);
     }
 
     [Authorize]
@@ -193,7 +197,8 @@ public class AuthController(
         IdentityResult result = await userManager.ChangePasswordAsync(user, dto.OldPassword, dto.NewPassword);
 
         if (!result.Succeeded)
-            throw ResponseFactory.Create<BadRequestResponse>(result.Errors.Select(e => e.ToString()).ToArray()!, ["Password change failed"]);
+            throw ResponseFactory.Create<BadRequestResponse>(result.Errors.Select(e => e.ToString()).ToArray()!,
+                ["Password change failed"]);
 
         await signInManager.RefreshSignInAsync(user);
         throw ResponseFactory.Create<OkResponse>(["Password successfully changed"]);

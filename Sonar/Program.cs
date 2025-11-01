@@ -188,6 +188,7 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserSessionRepository, UserSessionRepository>();
 builder.Services.AddScoped<IUserStateRepository, UserStateRepository>();
 builder.Services.AddScoped<IUserStatusRepository, UserStatusRepository>();
+builder.Services.AddScoped<IQueueRepository, QueueRepository>();
 
 // UserExperience Repositories
 builder.Services.AddScoped<IAchievementCategoryRepository, AchievementCategoryRepository>();
@@ -267,6 +268,7 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IUserSessionService, UserSessionService>();
 builder.Services.AddScoped<IUserStateService, UserStateService>();
 builder.Services.AddScoped<IUserStatusService, UserStatusService>();
+builder.Services.AddScoped<IQueueService, QueueService>();
 
 // UserExperience Services
 builder.Services.AddScoped<IAchievementCategoryService, AchievementCategoryService>();

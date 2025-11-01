@@ -1,12 +1,15 @@
 using Application.Abstractions.Interfaces.Repository.UserCore;
 using Entities.Models.UserCore;
 using Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace Sonar.Infrastructure.Repository.UserCore;
 
-public class UserStateRepository : GenericRepository<UserState>, IUserStateRepository
+public class UserStateRepository(SonarContext dbContext) : GenericRepository<UserState>(dbContext), IUserStateRepository
 {
-    public UserStateRepository(SonarContext dbContext) : base(dbContext)
+    public async Task<UserState?> GetByUserIdAsync(int userId)
     {
+        return await context.UserStates.Include(u => u.User)
+            .FirstOrDefaultAsync(us => us.User.Id == userId);
     }
 }

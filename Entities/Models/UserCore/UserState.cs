@@ -12,13 +12,14 @@ public class UserState : BaseModel
     [Required]
     public int UserStatusId { get; set; }
 
-    public int? QueueId { get; set; }
+    [Required]
+    public int QueueId { get; set; }
 
     /// <summary>
     /// </summary>
     [ForeignKey("PrimarySessionId")]
     [DeleteBehavior(DeleteBehavior.Cascade)]
-    public virtual UserSession PrimarySession { get; set; }
+    public virtual UserSession? PrimarySession { get; set; }
 
     [ForeignKey("UserStatusId")]
     [DeleteBehavior(DeleteBehavior.NoAction)]
@@ -26,7 +27,7 @@ public class UserState : BaseModel
 
     [ForeignKey("QueueId")]
     [DeleteBehavior(DeleteBehavior.Cascade)]
-    public virtual Queue? Queue { get; set; }
+    public virtual Queue Queue { get; set; }
 
     public virtual User User { get; set; }
 }

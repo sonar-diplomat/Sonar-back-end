@@ -12,11 +12,10 @@ public interface IUserService
     Task<User> UpdateUserAsync(int userId, UserUpdateDTO userUpdateUpdateDto);
     Task<User> UpdateUserAsync(User user);
     Task ChangeUserNameAsync(int userId, string newUserName);
-    Task<User> GetByIdAsync(int id);
+    Task<User?> GetByIdAsync(int id);
     Task<IEnumerable<User>> GetAllAsync();
     Task<User> GetByIdValidatedAsync(int id);
     Task UpdateAvatar(int userId, IFormFile file);
-    Task<User> GetValidatedIncludeAccessFeaturesAsync(int id);
     Task UpdateVisibilityStatusAsync(int collectionId, int newVisibilityStatusId);
     Task AssignAccessFeaturesAsync(int userId, int[] accessFeatureIds);
     Task AssignAccessFeaturesByNameAsync(int userId, string[] accessFeatures);

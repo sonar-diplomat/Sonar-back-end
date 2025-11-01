@@ -10,6 +10,7 @@ using Entities.Models.Music;
 using Entities.Models.UserExperience;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using LibraryModel = Entities.Models.Library.Library;
 
 namespace Entities.Models.UserCore;
 
@@ -72,11 +73,18 @@ public class User : IdentityUser<int>
     [Required]
     public int InventoryId { get; set; }
 
+    [Required]
+    public int LibraryId { get; set; }
+
     /// <summary>
     /// </summary>
     [ForeignKey("VisibilityStateId")]
     [DeleteBehavior(DeleteBehavior.Cascade)]
     public virtual VisibilityState VisibilityState { get; set; }
+
+    [ForeignKey("LibraryId")]
+    [DeleteBehavior(DeleteBehavior.Cascade)]
+    public virtual LibraryModel Library { get; set; }
 
     [ForeignKey("AvatarImageId")]
     public virtual ImageFile AvatarImage { get; set; }

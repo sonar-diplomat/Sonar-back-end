@@ -16,6 +16,7 @@ public class UserSessionRepository(SonarContext dbContext)
         if (session != null) await RemoveAsync(session);
         return await base.AddAsync(entity);
     }
+
     public async Task<UserSession?> GetByRefreshToken(string refreshHash)
     {
         return await RepositoryIncludeExtensions.Include(context.UserSessions, s => s.User)
@@ -46,5 +47,11 @@ public class UserSessionRepository(SonarContext dbContext)
                     CreatedAt = s.CreatedAt,
                     LastActive = s.LastActive
                 }));
+    }
+
+    public Task<UserSession?> GetByUserIdAndDeviceIdAsync(int userId, string deviceId)
+    {
+        return context.UserSessions
+            .FirstOrDefaultAsync(s => s.UserId == userId && s.DeviceName == deviceId && !s.Revoked);
     }
 }
