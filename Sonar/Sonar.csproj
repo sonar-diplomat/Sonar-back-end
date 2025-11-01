@@ -29,7 +29,6 @@
     <ItemGroup>
         <Folder Include="Controllers\Chat\"/>
         <Folder Include="Controllers\Library\"/>
-        <Folder Include="Controllers\Music\"/>
         <Folder Include="Controllers\Report\"/>
         <Folder Include="Controllers\UserExperience\"/>
     </ItemGroup>

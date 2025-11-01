@@ -10,11 +10,11 @@ public class VisibilityStateService(
 )
     : GenericService<VisibilityState>(repository), IVisibilityStateService
 {
-    public async Task<VisibilityState> CreateDefaultAsync()
+    public async Task<VisibilityState> CreateDefaultAsync(DateTime? setPublicOn = null)
     {
         VisibilityState defaultState = new()
         {
-            SetPublicOn = DateTime.MinValue,
+            SetPublicOn = setPublicOn ?? DateTime.MaxValue,
             StatusId = (await visibilityStatusService.GetDefaultAsync()).Id
         };
 

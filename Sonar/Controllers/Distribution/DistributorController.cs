@@ -5,6 +5,7 @@ using Application.Response;
 using Entities.Enums;
 using Entities.Models.Distribution;
 using Entities.Models.UserCore;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,10 +17,14 @@ public class DistributorController(
     UserManager<User> userManager,
     IDistributorService distributorService,
     ILicenseService licenseService,
+    IDistributorAccountService distributorAccountService,
     IImageFileService imageFileService
-) : BaseController(userManager)
+) : BaseControllerExtended(userManager, distributorAccountService, distributorService)
 {
+    private readonly IDistributorService distributorService = distributorService;
+
     [HttpPost]
+    [Authorize]
     public async Task<IActionResult> CreateDistributor([FromForm] CreateDistributorDTO dto)
     {
         User user = await CheckAccessFeatures([AccessFeatureStruct.ManageDistributors]);
@@ -45,6 +50,7 @@ public class DistributorController(
     }
 
     [HttpPut("{id:int}")]
+    [Authorize]
     public async Task<IActionResult> UpdateDistributor(int id, UpdateDistributorDTO dto)
     {
         await CheckAccessFeatures([AccessFeatureStruct.ManageDistributors]);
@@ -53,6 +59,7 @@ public class DistributorController(
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize]
     public async Task<IActionResult> DeleteDistributor(int id)
     {
         await CheckAccessFeatures([AccessFeatureStruct.ManageDistributors]);
@@ -62,10 +69,43 @@ public class DistributorController(
     }
 
     [HttpGet("update-key/{id:int}")]
+    [Authorize]
     public async Task<IActionResult> UpdateLicenseKey(int id)
     {
         await CheckAccessFeatures([AccessFeatureStruct.ManageDistributors]);
         string key = await licenseService.UpdateLicenseKeyAsync(id);
         throw ResponseFactory.Create<OkResponse<string>>(key, ["Api key updated successfully"]);
+    }
+
+    [HttpGet("request")]
+    [Authorize]
+    public async Task<IActionResult> GetArtistRequest()
+    {
+        int distributorId = (await GetDistributorAccountByJwt()).DistributorId;
+
+        IEnumerable<ArtistRegistrationRequest> requests =
+            await distributorService.GetAllRegistrationRequestsAsync(distributorId);
+        throw ResponseFactory.Create<OkResponse<IEnumerable<ArtistRegistrationRequest>>>(requests,
+            ["Artist registration requests retrieved successfully"]);
+    }
+
+    [HttpGet("request/{requestId:int}")]
+    [Authorize]
+    public async Task<IActionResult> GetArtistRequestById(int requestId)
+    {
+        int distributorId = (await GetDistributorAccountByJwt()).DistributorId;
+
+        ArtistRegistrationRequest request =
+            await distributorService.GetRegistrationRequestByIdAsync(distributorId, requestId);
+        throw ResponseFactory.Create<OkResponse<ArtistRegistrationRequest>>(request, ["Artist registration request retrieved successfully"]);
+    }
+
+    [HttpPost("request/{requestId:int}")]
+    [Authorize]
+    public async Task<IActionResult> ResolveArtistRequest(int requestId, bool approve)
+    {
+        int distributorId = (await GetDistributorAccountByJwt()).DistributorId;
+        await distributorService.ResolveArtistRequestAsync(distributorId, requestId, approve);
+        throw ResponseFactory.Create<OkResponse>(["Artist registration request resolved successfully"]);
     }
 }

@@ -9,7 +9,7 @@ public class PlaylistRepository(SonarContext dbContext) : GenericRepository<Play
 {
     public async Task<List<Track>> GetTracksFromPlaylistAfterAsync(int playlistId, int? afterId, int limit)
     {
-        var query = context.Playlists
+        IQueryable<Track> query = context.Playlists
             .Where(p => p.Id == playlistId)
             .SelectMany(p => p.Tracks)
             .Include(t => t.Cover)

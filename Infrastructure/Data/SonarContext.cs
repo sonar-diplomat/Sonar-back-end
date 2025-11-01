@@ -90,6 +90,15 @@ public class SonarContext(DbContextOptions<SonarContext> options)
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
+        builder.Entity<Queue>()
+            .HasMany(q => q.Tracks)
+            .WithMany(t => t.Queues);    
+            
+        builder.Entity<Track>()
+            .HasMany(t => t.QueuesWherePrimary)
+            .WithOne(q => q.CurrentTrack)
+            .HasForeignKey(q => q.CurrentTrackId);
+            
         builder.Entity<AlbumArtist>()
             .HasKey(aa => new { aa.AlbumId, aa.ArtistId });
 

@@ -27,12 +27,14 @@ public class DistributorMasterController(
             throw ResponseFactory.Create<ForbiddenResponse>(["Access denied. Master distributor account required."]);
     }
 
+    [Authorize]
     public async Task<IActionResult> DeleteDistributorAccount(int id)
     {
         await CheckAccessDistributorAccount();
         throw ResponseFactory.Create<OkResponse>(["Distributor account deleted successfully"]);
     }
 
+    [Authorize]
     public async Task<IActionResult> ChangeUserName(int id, string newUserName)
     {
         await CheckAccessDistributorAccount();
@@ -40,6 +42,7 @@ public class DistributorMasterController(
         throw ResponseFactory.Create<OkResponse>(["Distributor account username changed successfully"]);
     }
 
+    [Authorize]
     public async Task<IActionResult> GetDistributorAccountById(int id)
     {
         await CheckAccessDistributorAccount();
@@ -50,6 +53,7 @@ public class DistributorMasterController(
             ["Distributor account retrieved successfully"]);
     }
 
+    [Authorize]
     public async Task<IActionResult> ChangeEmailDistributorAccount(int id, string newEmail)
     {
         await CheckAccessDistributorAccount();
@@ -57,6 +61,7 @@ public class DistributorMasterController(
         throw ResponseFactory.Create<OkResponse>(["Distributor account email changed successfully"]);
     }
 
+    [Authorize]
     public async Task<IActionResult> ChangePasswordDistributorAccount(int id, DistributorAccountChangePasswordDTO dto)
     {
         await CheckAccessDistributorAccount();

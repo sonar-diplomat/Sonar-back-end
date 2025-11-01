@@ -57,6 +57,7 @@ public class Track : BaseModel
     [DeleteBehavior(DeleteBehavior.Cascade)]
     public virtual ImageFile Cover { get; set; }
 
+    public virtual ICollection<Queue> QueuesWherePrimary { get; set; }
     public virtual ICollection<Artist> Artists { get; set; }
     public virtual ICollection<Collection> Collections { get; set; }
     public virtual ICollection<Queue> Queues { get; set; }

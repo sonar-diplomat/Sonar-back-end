@@ -10,12 +10,23 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Sonar.Controllers;
 
-public class CollectionController<T>(UserManager<User> userManager, ICollectionService<T> collectionService, IShareService shareService)
-    : ShareController<T>(userManager, shareService) where T : Collection
+public class CollectionController<T>(UserManager<User> userManager, ICollectionService<T> collectionService) : BaseController(userManager) where T : Collection
 {
+    [HttpGet("{collectionId:int}/share-link")]
+    public async Task<IActionResult> ShareLink(int collectionId)
+    {
+        throw new NotImplementedException();
+    }
+
+    [HttpGet("{collectionId:int}/share-qr")]
+    public async Task<IActionResult> ShareQr(int collectionId)
+    {
+        throw new NotImplementedException();
+    }
+
     [HttpPut("{collectionId:int}/visibility")]
     [Authorize]
-    public async Task<IActionResult> UpdateVisibilityStatus(int collectionId, int visibilityStatusId)
+    public async Task<IActionResult> UpdateVisibilityStatus([FromRoute] int collectionId, [FromQuery] int visibilityStatusId)
     {
         await CheckAccessFeatures([AccessFeatureStruct.ManageContent]);
         await collectionService.UpdateVisibilityStatusAsync(collectionId, visibilityStatusId);

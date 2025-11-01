@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Entities.Models.Chat;
 using Entities.Models.UserCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -21,6 +22,7 @@ public class Artist : BaseModel
     [DeleteBehavior(DeleteBehavior.Cascade)]
     public virtual User User { get; set; }
 
+    public virtual ICollection<Post> Posts { get; set; }
     public virtual ICollection<Track> Tracks { get; set; }
     public virtual ICollection<AlbumArtist> AlbumArtists { get; set; }
 }

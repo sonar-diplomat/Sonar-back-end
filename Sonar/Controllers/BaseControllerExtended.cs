@@ -26,6 +26,7 @@ public class BaseControllerExtended(
         return distributorAccount ?? throw ResponseFactory.Create<UnauthorizedResponse>();
     }
 
+
     [Authorize]
     protected async Task<Distributor> CheckDistributor()
     {

@@ -1,10 +1,8 @@
-using System.IdentityModel.Tokens.Jwt;
 using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.File;
 using Application.Abstractions.Interfaces.Services.Utilities;
 using Application.DTOs.Music;
 using Application.Response;
-using Application.Services.Utilities;
 using Entities.Enums;
 using Entities.Models.Distribution;
 using Entities.Models.Music;
@@ -13,6 +11,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace Sonar.Controllers.Music;
 
@@ -28,7 +27,7 @@ public class AlbumController(
     ICollectionService<Album> collectionService,
     IShareService shareService
 )
-    : CollectionController<Album>(userManager, collectionService, shareService)
+    : CollectionController<Album>(userManager, collectionService)
 {
     [Authorize]
     private async Task<DistributorAccount> GetDistributorAccountByJwt()
