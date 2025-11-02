@@ -12,8 +12,10 @@ public class AlbumService(
     IVisibilityStateService visibilityStateService,
     IImageFileService imageFileService,
     IAlbumArtistService albumArtistService,
-    IArtistService artistService
-) : GenericService<Album>(repository), IAlbumService
+    IArtistService artistService,
+    ILibraryService libraryService,
+    IFolderService folderService
+) : CollectionService<Album>(repository, libraryService, folderService), IAlbumService
 {
     public async Task<Album> UploadAsync(UploadAlbumDTO dto, int distributorId)
     {

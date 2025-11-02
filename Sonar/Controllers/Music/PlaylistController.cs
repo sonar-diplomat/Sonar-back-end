@@ -20,7 +20,7 @@ public class PlaylistController(
     IPlaylistService playlistService,
     ICollectionService<Playlist> collectionService,
     IShareService shareService)
-    : CollectionController<Playlist>(userManager, collectionService, shareService)
+    : CollectionController<Playlist>(userManager, collectionService)
 {
     [HttpPost("create")]
     public async Task<IActionResult> CreatePlaylist([FromBody] CreatePlaylistDTO dto)

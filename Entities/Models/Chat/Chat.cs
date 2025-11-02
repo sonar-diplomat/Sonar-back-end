@@ -23,7 +23,8 @@ public class Chat : BaseModel
     /// </summary>
     [ForeignKey("CoverId")]
     [DeleteBehavior(DeleteBehavior.NoAction)]
-    public virtual ImageFile Cover { get; set; } // type: Image
+    public virtual ImageFile Cover { get; set; }
 
+    public virtual ICollection<Message> Messages { get; set; }
     public virtual ICollection<User> Users { get; set; }
 }

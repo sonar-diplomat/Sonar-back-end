@@ -17,6 +17,12 @@ public class Message : BaseModel
     [Required]
     public int ChatId { get; set; }
 
+    [Required]
+    public int SenderId { get; set; }
+
+    [Required]
+    public DateTime CreatedAt { get; set; }
+
     /// <summary>
     /// </summary>
     [ForeignKey("ReplyMessageId")]
@@ -27,5 +33,7 @@ public class Message : BaseModel
     [DeleteBehavior(DeleteBehavior.NoAction)]
     public virtual Chat Chat { get; set; }
 
-    public virtual ICollection<User> users { get; set; }
+    [ForeignKey("SenderId")]
+    [DeleteBehavior(DeleteBehavior.NoAction)]
+    public virtual User Sender { get; set; }
 }

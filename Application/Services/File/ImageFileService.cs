@@ -34,4 +34,9 @@ public class ImageFileService(
     {
         return await repository.GetDefaultAsync();
     }
+
+    public Task<ImageFile> GetFavoriteDefaultAsync()
+    {
+        return repository.GetFavoriteDefaultAsync();
+    }
 }

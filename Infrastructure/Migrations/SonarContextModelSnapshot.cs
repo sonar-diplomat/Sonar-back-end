@@ -3,7 +3,6 @@ using System;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,11 +11,9 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(SonarContext))]
-    [Migration("20251101155943_Initial")]
-    partial class Initial
+    partial class SonarContextModelSnapshot : ModelSnapshot
     {
-        /// <inheritdoc />
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -68,6 +65,21 @@ namespace Infrastructure.Migrations
                     b.HasIndex("UsersId");
 
                     b.ToTable("ChatUser");
+                });
+
+            modelBuilder.Entity("CollectionFolder", b =>
+                {
+                    b.Property<int>("CollectionsId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("FoldersId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("CollectionsId", "FoldersId");
+
+                    b.HasIndex("FoldersId");
+
+                    b.ToTable("CollectionFolder");
                 });
 
             modelBuilder.Entity("CollectionTrack", b =>
@@ -432,7 +444,7 @@ namespace Infrastructure.Migrations
                         new
                         {
                             Id = 1,
-                            Locale = "eng",
+                            Locale = "en-US",
                             Name = "English",
                             NativeName = "English"
                         },
@@ -917,7 +929,12 @@ namespace Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("RootFolderId")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("RootFolderId");
 
                     b.ToTable("Library");
                 });
@@ -980,9 +997,6 @@ namespace Infrastructure.Migrations
                     b.Property<int>("CoverId")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("FolderId")
-                        .HasColumnType("integer");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -994,8 +1008,6 @@ namespace Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CoverId");
-
-                    b.HasIndex("FolderId");
 
                     b.HasIndex("VisibilityStateId");
 
@@ -2219,6 +2231,21 @@ namespace Infrastructure.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("CollectionFolder", b =>
+                {
+                    b.HasOne("Entities.Models.Music.Collection", null)
+                        .WithMany()
+                        .HasForeignKey("CollectionsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Entities.Models.Library.Folder", null)
+                        .WithMany()
+                        .HasForeignKey("FoldersId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("CollectionTrack", b =>
                 {
                     b.HasOne("Entities.Models.Music.Collection", null)
@@ -2511,6 +2538,16 @@ namespace Infrastructure.Migrations
                     b.Navigation("ParentFolder");
                 });
 
+            modelBuilder.Entity("Entities.Models.Library.Library", b =>
+                {
+                    b.HasOne("Entities.Models.Library.Folder", "RootFolder")
+                        .WithMany()
+                        .HasForeignKey("RootFolderId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.Navigation("RootFolder");
+                });
+
             modelBuilder.Entity("Entities.Models.Music.AlbumArtist", b =>
                 {
                     b.HasOne("Entities.Models.Music.Album", "Album")
@@ -2548,10 +2585,6 @@ namespace Infrastructure.Migrations
                         .HasForeignKey("CoverId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("Entities.Models.Library.Folder", null)
-                        .WithMany("Collections")
-                        .HasForeignKey("FolderId");
 
                     b.HasOne("Entities.Models.Access.VisibilityState", "VisibilityState")
                         .WithMany()
@@ -3069,8 +3102,6 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Entities.Models.Library.Folder", b =>
                 {
-                    b.Navigation("Collections");
-
                     b.Navigation("SubFolders");
                 });
 

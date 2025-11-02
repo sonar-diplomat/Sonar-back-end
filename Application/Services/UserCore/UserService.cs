@@ -7,6 +7,7 @@ using Application.DTOs.User;
 using Application.Extensions;
 using Application.Response;
 using Entities.Models.Access;
+using Entities.Models.Music;
 using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Http;
 
@@ -95,6 +96,14 @@ public class UserService(
             StatusId = 1
         };
 
+        Playlist playlist = new()
+        {
+            Name = "Favorites",
+            VisibilityState = await visibilityStateService.CreateDefaultAsync(),
+            Cover = await imageFileService.GetDefaultAsync(),
+            Creator = user
+        };
+
         await visibilityStateService.CreateAsync(tempVs);
         user.VisibilityState = tempVs;
         user.Inventory = await inventoryService.CreateDefaultAsync();
@@ -103,6 +112,7 @@ public class UserService(
         user.UserState = await stateService.CreateDefaultAsync();
         user.AvatarImage = await imageFileService.GetDefaultAsync();
         user.Library = await libraryService.CreateDefaultAsync();
+        user.Library.RootFolder!.Collections.Add(playlist);
         return user;
     }
 

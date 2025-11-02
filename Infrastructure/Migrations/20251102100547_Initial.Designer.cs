@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(SonarContext))]
-    [Migration("20251101161136_shitshit")]
-    partial class shitshit
+    [Migration("20251102100547_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -68,6 +68,21 @@ namespace Infrastructure.Migrations
                     b.HasIndex("UsersId");
 
                     b.ToTable("ChatUser");
+                });
+
+            modelBuilder.Entity("CollectionFolder", b =>
+                {
+                    b.Property<int>("CollectionsId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("FoldersId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("CollectionsId", "FoldersId");
+
+                    b.HasIndex("FoldersId");
+
+                    b.ToTable("CollectionFolder");
                 });
 
             modelBuilder.Entity("CollectionTrack", b =>
@@ -432,7 +447,7 @@ namespace Infrastructure.Migrations
                         new
                         {
                             Id = 1,
-                            Locale = "eng",
+                            Locale = "en-US",
                             Name = "English",
                             NativeName = "English"
                         },
@@ -985,9 +1000,6 @@ namespace Infrastructure.Migrations
                     b.Property<int>("CoverId")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("FolderId")
-                        .HasColumnType("integer");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -999,8 +1011,6 @@ namespace Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CoverId");
-
-                    b.HasIndex("FolderId");
 
                     b.HasIndex("VisibilityStateId");
 
@@ -2224,6 +2234,21 @@ namespace Infrastructure.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("CollectionFolder", b =>
+                {
+                    b.HasOne("Entities.Models.Music.Collection", null)
+                        .WithMany()
+                        .HasForeignKey("CollectionsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Entities.Models.Library.Folder", null)
+                        .WithMany()
+                        .HasForeignKey("FoldersId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("CollectionTrack", b =>
                 {
                     b.HasOne("Entities.Models.Music.Collection", null)
@@ -2563,10 +2588,6 @@ namespace Infrastructure.Migrations
                         .HasForeignKey("CoverId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("Entities.Models.Library.Folder", null)
-                        .WithMany("Collections")
-                        .HasForeignKey("FolderId");
 
                     b.HasOne("Entities.Models.Access.VisibilityState", "VisibilityState")
                         .WithMany()
@@ -3084,8 +3105,6 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Entities.Models.Library.Folder", b =>
                 {
-                    b.Navigation("Collections");
-
                     b.Navigation("SubFolders");
                 });
 

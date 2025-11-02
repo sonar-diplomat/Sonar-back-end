@@ -15,7 +15,9 @@ public class TrackService(
     ITrackRepository repository,
     IAudioFileService audioFileService,
     IAlbumService albumService,
-    IVisibilityStateService visibilityStateService)
+    IVisibilityStateService visibilityStateService,
+    ILibraryService libraryService
+)
     : GenericService<Track>(repository), ITrackService
 {
     public Task<MusicStreamResultDTO?> GetDemoMusicStreamAsync(int songId)
@@ -105,6 +107,23 @@ public class TrackService(
         Track track = await repository.Include(a => a.VisibilityState).GetByIdValidatedAsync(trackId);
         track.VisibilityState.StatusId = newVisibilityStatusId;
         await repository.UpdateAsync(track);
+    }
+
+    public async Task<bool> ToggleFavoriteAsync(int trackId, int libraryId)
+    {
+        Playlist playlist = await libraryService.GetFavoritesPlaylistByLibraryIdValidatedAsync(libraryId);
+        Track track = await repository.Include(t => t.Collections).GetByIdValidatedAsync(trackId);
+        HashSet<int> collectionIds = new(track.Collections.Select(c => c.Id));
+        if (collectionIds.Contains(playlist.Id))
+        {
+            track.Collections.Remove(playlist);
+            await repository.UpdateAsync(track);
+            return false;
+        }
+
+        track.Collections.Add(playlist);
+        await repository.UpdateAsync(track);
+        return true;
     }
 
     private record Range(long StartBytes, long Length = 0)

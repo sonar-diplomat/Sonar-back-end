@@ -49,7 +49,7 @@ public class TrackController(
             ? throw ResponseFactory.Create<UnauthorizedResponse>()
             : distributor!;
     }
-    
+
     [HttpGet("{trackId}/stream")]
     [Authorize]
     public async Task<IActionResult> StreamMusic(int trackId, [FromQuery] bool download = false)
@@ -105,12 +105,22 @@ public class TrackController(
         Track track = await trackService.GetByIdValidatedAsync(trackId);
         throw ResponseFactory.Create<OkResponse<Track>>(track, ["Track successfully retrieved"]);
     }
-    
+
     [HttpPut("{trackId:int}/visibility")]
     public async Task<IActionResult> UpdateTrackVisibilityStatus(int trackId, int visibilityStatusId)
     {
         await CheckDistributor();
         await trackService.UpdateVisibilityStatusAsync(trackId, visibilityStatusId);
-        throw ResponseFactory.Create<OkResponse>([$"Track visibility status was changed successfully"]);
+        throw ResponseFactory.Create<OkResponse>(["Track visibility status was changed successfully"]);
+    }
+
+    [HttpPost("{trackId:int}/toggle-favorite")]
+    [Authorize]
+    public async Task<IActionResult> ToggleFavoriteTrack(int trackId)
+    {
+        User user = await CheckAccessFeatures([]);
+        bool isFavorite = await trackService.ToggleFavoriteAsync(trackId, user.LibraryId);
+        string message = isFavorite ? "Track added to favorites" : "Track removed from favorites";
+        throw ResponseFactory.Create<OkResponse>([message]);
     }
 }
