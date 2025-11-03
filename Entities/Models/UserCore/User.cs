@@ -113,7 +113,13 @@ public class User : IdentityUser<int>
     public virtual ICollection<Message> Messages { get; set; }
 
     [JsonIgnore]
-    public virtual ICollection<Chat.Chat> Chats { get; set; }
+    public virtual ICollection<Chat.Chat> ChatsWhereMember { get; set; }
+
+    [JsonIgnore]
+    public virtual ICollection<Chat.Chat> ChatsWhereCreator { get; set; }
+
+    [JsonIgnore]
+    public virtual ICollection<Chat.Chat> ChatsWhereAdmin { get; set; }
 
     public virtual ICollection<Collection> Collections { get; set; }
 
@@ -122,6 +128,7 @@ public class User : IdentityUser<int>
 
     public virtual ICollection<Track> Tracks { get; set; }
     public virtual ICollection<Settings> SettingsBlockedUsers { get; set; }
+    public virtual ICollection<MessageRead> MessagesReads { get; set; }
 
     [JsonIgnore]
     public virtual ICollection<ArtistRegistrationRequest> ArtistRegistrationRequests { get; set; }

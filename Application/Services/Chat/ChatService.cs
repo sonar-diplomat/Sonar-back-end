@@ -1,11 +1,13 @@
 ﻿using Application.Abstractions.Interfaces.Repository.Chat;
 using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.File;
+using Application.DTOs;
 using Application.DTOs.Chat;
 using Application.Extensions;
 using Application.Response;
 using Entities.Models.Chat;
 using Entities.Models.File;
+using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Http;
 using ChatModel = Entities.Models.Chat.Chat;
 
@@ -15,7 +17,8 @@ public class ChatService(
     IChatRepository repository,
     IImageFileService imageFileService,
     IMessageService messageService,
-    IMessageReadService messageReadService
+    IMessageReadService messageReadService,
+    IUserService userService
 ) : GenericService<ChatModel>(repository), IChatService
 {
     public async Task UpdateChatCoverAsync(int userId, int chatId, IFormFile file)
@@ -51,17 +54,18 @@ public class ChatService(
     public async Task<ChatDTO> GetChatInfoAsync(int userId, int chatId)
     {
         await CheckUserIsMemberAsync(userId, chatId);
-        ChatModel chat = await repository.Include(c => c.Users)
+        ChatModel chat = await repository.Include(c => c.Members)
             .Include(c => c.Cover).GetByIdValidatedAsync(chatId);
         ChatDTO dto = new()
         {
             Name = chat.Name,
             Cover = chat.Cover,
-            UserIds = chat.Users.Select(u => u.Id).ToArray()
+            UserIds = chat.Members.Select(u => u.Id).ToArray()
         };
         return dto;
     }
 
+    // TODO: Create some service for cleaning up old reads
     public async Task ReadMessagesAsync(int userId, int chatId, IEnumerable<int> messageIds)
     {
         await CheckUserIsMemberAsync(userId, chatId);
@@ -115,17 +119,80 @@ public class ChatService(
         }
     }
 
+    public async Task AddUserToChat(int memberId, int chatId, int userId)
+    {
+        ChatModel chat = await CheckUserIsMemberAsync(memberId, chatId);
+        if (!chat.IsGroup)
+            throw ResponseFactory.Create<ForbiddenResponse>(["User is not the member of the chat"]);
+        User user = await userService.GetByIdValidatedAsync(userId);
+        if (chat.Members.Any(u => u.Id == userId))
+            throw ResponseFactory.Create<BadRequestResponse>(["User is the member of the chat"]);
+        chat.Members.Add(user);
+        await repository.UpdateAsync(chat);
+    }
+
+    public async Task RemoveUserFromChat(int initiatorId, int userId, int chatId)
+    {
+        ChatModel chat = await CheckUserCanManageChatAsync(initiatorId, chatId);
+        if (chat.Members.Any(u => u.Id == userId))
+        {
+            chat.Members.Remove(await userService.GetByIdValidatedAsync(userId));
+            return;
+        }
+
+        if (chat.CreatorId != initiatorId || chat.Admins.All(a => a.Id != userId))
+            throw ResponseFactory.Create<ForbiddenResponse>(["User is not a regular member of the chat"]);
+        chat.Admins.Remove(await userService.GetByIdValidatedAsync(userId));
+    }
+
+    public async Task LeaveChat(int userId, int chatId)
+    {
+        ChatModel chat = await CheckUserIsMemberAsync(userId, chatId);
+        if (chat.CreatorId == userId)
+        {
+            if (chat.Admins.Count != 0)
+                chat.CreatorId = chat.Admins.First(a => a.Id == userId).Id;
+            else if (chat.Members.Count != 0)
+                chat.CreatorId = chat.Members.First(a => a.Id == userId).Id;
+            else
+                await DeleteAsync(chat);
+        }
+
+        if (chat.Admins.Any(a => a.Id == userId))
+            chat.Admins.Remove(await userService.GetByIdValidatedAsync(chatId));
+        chat.Members.Remove(await userService.GetByIdValidatedAsync(userId));
+    }
+
     public async Task<Message> SendMessageAsync(int userId, int chatId, MessageDTO message)
     {
-        chatId = (await CheckUserIsMemberAsync(userId, chatId)).Id;
-
+        await CheckUserIsMemberAsync(userId, chatId);
         return await messageService.CreateAsync(userId, chatId, message);
+    }
+
+    public async Task<CursorPageDTO<MessageDTO>> GetMessagesWithCursorAsync(int userId, int chatId, int? cursor,
+        int take = 50)
+    {
+        await CheckUserIsMemberAsync(userId, chatId);
+        return await messageService.GetMessagesWithCursorAsync(chatId, cursor, take);
+    }
+
+    private async Task<ChatModel> CheckUserCanManageChatAsync(int userId, int chatId)
+    {
+        ChatModel chat = await CheckUserIsMemberAsync(userId, chatId);
+        if (chat.Admins.All(a => a.Id != userId) && chat.CreatorId != userId)
+            throw ResponseFactory.Create<ForbiddenResponse>(["The user does not have admin privileges"]);
+        return chat;
     }
 
     private async Task<ChatModel> CheckUserIsMemberAsync(int userId, int chatId)
     {
-        ChatModel chat = await repository.Include(c => c.Users).GetByIdValidatedAsync(chatId);
-        HashSet<int> userIds = chat.Users.Select(u => u.Id).ToHashSet();
+        ChatModel chat = await repository
+            .Include(c => c.Members)
+            .Include(c => c.Admins)
+            .Include(c => c.Creator)
+            .GetByIdValidatedAsync(chatId);
+
+        HashSet<int> userIds = chat.Members.Select(u => u.Id).ToHashSet();
         return userIds.Contains(userId)
             ? chat
             : throw ResponseFactory.Create<ForbiddenResponse>(["User is not a member of the chat"]);

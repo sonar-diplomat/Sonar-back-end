@@ -36,4 +36,6 @@ public class Message : BaseModel
     [ForeignKey("SenderId")]
     [DeleteBehavior(DeleteBehavior.NoAction)]
     public virtual User Sender { get; set; }
+
+    public virtual ICollection<MessageRead> MessagesReads { get; set; }
 }

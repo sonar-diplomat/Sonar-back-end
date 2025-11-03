@@ -1,4 +1,5 @@
-﻿using Application.DTOs.Chat;
+﻿using Application.DTOs;
+using Application.DTOs.Chat;
 using Entities.Models.Chat;
 using Microsoft.AspNetCore.Http;
 
@@ -14,4 +15,8 @@ public interface IChatService : IGenericService<Chat>
     Task<ChatDTO> GetChatInfoAsync(int userId, int chatId);
     Task ReadMessagesAsync(int chatId, int userId, IEnumerable<int> messageIds);
     Task ReadAllMessagesAsync(int userId, int chatId);
+    Task AddUserToChat(int memberId, int chatId, int userId);
+    Task RemoveUserFromChat(int initiatorId, int userId, int chatId);
+    Task<CursorPageDTO<MessageDTO>> GetMessagesWithCursorAsync(int userId, int chatId, int? cursor, int take = 50);
+    Task LeaveChat(int userId, int chatId);
 }
