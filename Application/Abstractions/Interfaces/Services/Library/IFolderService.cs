@@ -9,5 +9,5 @@ public interface IFolderService : IGenericService<Folder>
     Task<Folder> UpdateNameAsync(int libraryId, int folderId, string newName);
     Task DeleteFolderAsync(int libraryId, int folderId);
     Task MoveFolder(int libraryId, int folderId, int newParentFolderId);
-    Task<Folder> CreateRootFolderAsync(int libraryId);
+    Task<Folder> GetFolderByIdIncludeCollectionsValidatedAsync(int folderId);
 }

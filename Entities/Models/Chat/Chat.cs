@@ -20,11 +20,21 @@ public class Chat : BaseModel
     [Required]
     public int CoverId { get; set; }
 
+    [Required]
+    public int CreatorId { get; set; }
+
     /// <summary>
     /// </summary>
     [ForeignKey("CoverId")]
     [DeleteBehavior(DeleteBehavior.NoAction)]
-    public virtual ImageFile Cover { get; set; } // type: Image
+    public virtual ImageFile Cover { get; set; }
 
-    public virtual ICollection<User> Users { get; set; }
+    [ForeignKey("CreatorId")]
+    [DeleteBehavior(DeleteBehavior.NoAction)]
+    public virtual User Creator { get; set; }
+
+    public virtual ICollection<Message> Messages { get; set; }
+    public virtual ICollection<User> Members { get; set; }
+
+    public virtual ICollection<User> Admins { get; set; }
 }

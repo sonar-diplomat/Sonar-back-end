@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 using Entities.Models.Access;
 using Entities.Models.File;
+using Entities.Models.Library;
 using Entities.Models.UserCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -32,5 +33,5 @@ public abstract class Collection : BaseModel
 
     public virtual ICollection<User> Users { get; set; }
     public virtual ICollection<Track> Tracks { get; set; }
-
+    public virtual ICollection<Folder> Folders { get; set; }
 }

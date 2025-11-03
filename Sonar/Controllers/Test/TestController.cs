@@ -26,7 +26,9 @@ public class TestController(
     IDistributorRepository distributorRepository,
     ISettingsService settingsService,
     IFolderService folderService,
-    ILibraryService libraryService
+    ILibraryService libraryService,
+    IVisibilityStateService visibilityStateService,
+    IImageFileService imageFileService
 ) : BaseController(userManager)
 {
     # region dist

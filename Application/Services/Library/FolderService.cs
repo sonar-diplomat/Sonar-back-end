@@ -44,10 +44,11 @@ public class FolderService(IFolderRepository repository) : GenericService<Folder
         await repository.UpdateAsync(folder);
     }
 
-    public Task<Folder> CreateRootFolderAsync(int libraryId)
+    public async Task<Folder> GetFolderByIdIncludeCollectionsValidatedAsync(int folderId)
     {
-        throw new NotImplementedException();
+        return await repository.Include(f => f.Collections).GetByIdValidatedAsync(folderId);
     }
+
 
     private async Task<Folder> CheckFolderBelongsToLibrary(int libraryId, int folderId)
     {

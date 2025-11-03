@@ -17,6 +17,7 @@ public class FolderController(
     ILibraryService libraryService
 ) : BaseController(userManager)
 {
+    // TODO: Make it work only with a user from JWT
     [HttpGet("{folderId:int}")]
     public async Task<IActionResult> GetFolder(int folderId)
     {

@@ -1,5 +1,4 @@
-﻿using Application.DTOs;
-using Application.DTOs.Music;
+﻿using Application.DTOs.Music;
 using Entities.Models.File;
 using Entities.Models.Music;
 using Microsoft.AspNetCore.Http;
@@ -13,4 +12,5 @@ public interface ITrackService : IGenericService<Track>
     Task<Track> CreateTrackAsync(int albumId, UploadTrackDTO dto);
     Task<AudioFile> UpdateTrackFileAsync(int trackId, int playbackQualityId, IFormFile file);
     Task UpdateVisibilityStatusAsync(int trackId, int newVisibilityStatusId);
+    Task<bool> ToggleFavoriteAsync(int trackId, int libraryId);
 }

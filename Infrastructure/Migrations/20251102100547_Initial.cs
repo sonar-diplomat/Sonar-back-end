@@ -109,18 +109,6 @@ namespace Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Library",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Library", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "NotificationType",
                 columns: table => new
                 {
@@ -278,32 +266,6 @@ namespace Infrastructure.Migrations
                         principalTable: "AspNetRoles",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Folder",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Name = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    IsProtected = table.Column<bool>(type: "boolean", nullable: false),
-                    LibraryId = table.Column<int>(type: "integer", nullable: false),
-                    ParentFolderId = table.Column<int>(type: "integer", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Folder", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Folder_Folder_ParentFolderId",
-                        column: x => x.ParentFolderId,
-                        principalTable: "Folder",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_Folder_Library_LibraryId",
-                        column: x => x.LibraryId,
-                        principalTable: "Library",
-                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -622,8 +584,7 @@ namespace Infrastructure.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     VisibilityStateId = table.Column<int>(type: "integer", nullable: false),
-                    CoverId = table.Column<int>(type: "integer", nullable: false),
-                    FolderId = table.Column<int>(type: "integer", nullable: true)
+                    CoverId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -634,11 +595,6 @@ namespace Infrastructure.Migrations
                         principalTable: "File",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_Collection_Folder_FolderId",
-                        column: x => x.FolderId,
-                        principalTable: "Folder",
-                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Collection_VisibilityState_VisibilityStateId",
                         column: x => x.VisibilityStateId,
@@ -894,12 +850,6 @@ namespace Infrastructure.Migrations
                         name: "FK_AspNetUsers_Inventory_InventoryId",
                         column: x => x.InventoryId,
                         principalTable: "Inventory",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_AspNetUsers_Library_LibraryId",
-                        column: x => x.LibraryId,
-                        principalTable: "Library",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
@@ -1513,6 +1463,63 @@ namespace Infrastructure.Migrations
                         principalColumn: "Id");
                 });
 
+            migrationBuilder.CreateTable(
+                name: "CollectionFolder",
+                columns: table => new
+                {
+                    CollectionsId = table.Column<int>(type: "integer", nullable: false),
+                    FoldersId = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CollectionFolder", x => new { x.CollectionsId, x.FoldersId });
+                    table.ForeignKey(
+                        name: "FK_CollectionFolder_Collection_CollectionsId",
+                        column: x => x.CollectionsId,
+                        principalTable: "Collection",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Folder",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    IsProtected = table.Column<bool>(type: "boolean", nullable: false),
+                    LibraryId = table.Column<int>(type: "integer", nullable: false),
+                    ParentFolderId = table.Column<int>(type: "integer", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Folder", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Folder_Folder_ParentFolderId",
+                        column: x => x.ParentFolderId,
+                        principalTable: "Folder",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Library",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    RootFolderId = table.Column<int>(type: "integer", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Library", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Library_Folder_RootFolderId",
+                        column: x => x.RootFolderId,
+                        principalTable: "Folder",
+                        principalColumn: "Id");
+                });
+
             migrationBuilder.InsertData(
                 table: "AccessFeature",
                 columns: new[] { "Id", "Name" },
@@ -1564,7 +1571,7 @@ namespace Infrastructure.Migrations
                 columns: new[] { "Id", "Locale", "Name", "NativeName" },
                 values: new object[,]
                 {
-                    { 1, "eng", "English", "English" },
+                    { 1, "en-US", "English", "English" },
                     { 2, "ua", "Ukrainian", "Українська" },
                     { 3, "ro", "Romanian", "română" }
                 });
@@ -1816,14 +1823,14 @@ namespace Infrastructure.Migrations
                 column: "CoverId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Collection_FolderId",
-                table: "Collection",
-                column: "FolderId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Collection_VisibilityStateId",
                 table: "Collection",
                 column: "VisibilityStateId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CollectionFolder_FoldersId",
+                table: "CollectionFolder",
+                column: "FoldersId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_CollectionTrack_TracksId",
@@ -1904,6 +1911,11 @@ namespace Infrastructure.Migrations
                 name: "IX_Gift_SubscriptionPaymentId",
                 table: "Gift",
                 column: "SubscriptionPaymentId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Library_RootFolderId",
+                table: "Library",
+                column: "RootFolderId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_License_IssuerId",
@@ -2204,6 +2216,14 @@ namespace Infrastructure.Migrations
                 onDelete: ReferentialAction.Cascade);
 
             migrationBuilder.AddForeignKey(
+                name: "FK_AspNetUsers_Library_LibraryId",
+                table: "AspNetUsers",
+                column: "LibraryId",
+                principalTable: "Library",
+                principalColumn: "Id",
+                onDelete: ReferentialAction.Cascade);
+
+            migrationBuilder.AddForeignKey(
                 name: "FK_AspNetUsers_Playlist_PlaylistId",
                 table: "AspNetUsers",
                 column: "PlaylistId",
@@ -2217,6 +2237,21 @@ namespace Infrastructure.Migrations
                 principalTable: "UserState",
                 principalColumn: "Id",
                 onDelete: ReferentialAction.Cascade);
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_CollectionFolder_Folder_FoldersId",
+                table: "CollectionFolder",
+                column: "FoldersId",
+                principalTable: "Folder",
+                principalColumn: "Id",
+                onDelete: ReferentialAction.Cascade);
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_Folder_Library_LibraryId",
+                table: "Folder",
+                column: "LibraryId",
+                principalTable: "Library",
+                principalColumn: "Id");
         }
 
         /// <inheritdoc />
@@ -2237,6 +2272,10 @@ namespace Infrastructure.Migrations
             migrationBuilder.DropForeignKey(
                 name: "FK_UserSession_AspNetUsers_UserId",
                 table: "UserSession");
+
+            migrationBuilder.DropForeignKey(
+                name: "FK_Folder_Library_LibraryId",
+                table: "Folder");
 
             migrationBuilder.DropTable(
                 name: "AccessFeatureUser");
@@ -2273,6 +2312,9 @@ namespace Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "ChatUser");
+
+            migrationBuilder.DropTable(
+                name: "CollectionFolder");
 
             migrationBuilder.DropTable(
                 name: "CollectionTrack");
@@ -2422,13 +2464,7 @@ namespace Infrastructure.Migrations
                 name: "Track");
 
             migrationBuilder.DropTable(
-                name: "Folder");
-
-            migrationBuilder.DropTable(
                 name: "File");
-
-            migrationBuilder.DropTable(
-                name: "Library");
 
             migrationBuilder.DropTable(
                 name: "Post");
@@ -2441,6 +2477,12 @@ namespace Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "VisibilityStatus");
+
+            migrationBuilder.DropTable(
+                name: "Library");
+
+            migrationBuilder.DropTable(
+                name: "Folder");
         }
     }
 }

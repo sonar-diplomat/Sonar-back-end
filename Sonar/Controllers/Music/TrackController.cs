@@ -86,6 +86,16 @@ public class TrackController(
     {
         await this.CheckDistributorAsync();
         await trackService.UpdateVisibilityStatusAsync(trackId, visibilityStatusId);
-        throw ResponseFactory.Create<OkResponse>([$"Track visibility status was changed successfully"]);
+        throw ResponseFactory.Create<OkResponse>(["Track visibility status was changed successfully"]);
+    }
+
+    [HttpPost("{trackId:int}/toggle-favorite")]
+    [Authorize]
+    public async Task<IActionResult> ToggleFavoriteTrack(int trackId)
+    {
+        User user = await CheckAccessFeatures([]);
+        bool isFavorite = await trackService.ToggleFavoriteAsync(trackId, user.LibraryId);
+        string message = isFavorite ? "Track added to favorites" : "Track removed from favorites";
+        throw ResponseFactory.Create<OkResponse>([message]);
     }
 }

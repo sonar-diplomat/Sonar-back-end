@@ -1,16 +1,17 @@
+using System.IdentityModel.Tokens.Jwt;
 using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.File;
-using Application.Abstractions.Interfaces.Services.Utilities;
 using Application.DTOs.Music;
 using Application.Response;
-using Entities.Enums;
 using Entities.Models.Distribution;
+using Entities.Models.File;
 using Entities.Models.Music;
 using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Sonar.Extensions;
+using Microsoft.Extensions.Primitives;
 
 namespace Sonar.Controllers.Music;
 
@@ -23,8 +24,7 @@ public class AlbumController(
     IAlbumService albumService,
     IImageFileService imageFileService,
     ITrackService trackService,
-    ICollectionService<Album> collectionService,
-    IShareService shareService
+    ICollectionService<Album> collectionService
 )
     : CollectionController<Album>(userManager, collectionService)
 {
@@ -82,22 +82,15 @@ public class AlbumController(
         throw ResponseFactory.Create<OkResponse<Track>>(track, ["Track was added successfully"]);
     }
 
-    [HttpPut("{albumId:int}/visibility")]
-    [Authorize]
-    public async Task<IActionResult> UpdateVisibilityStatus(int albumId, int visibilityStateId)
-    {
-        await CheckAccessFeatures([AccessFeatureStruct.ManageContent]);
-        await albumService.UpdateVisibilityStateAsync(albumId, visibilityStateId);
-
-        throw ResponseFactory.Create<OkResponse>(["Album visibility state was changed successfully"]);
-    }
-
     [HttpPut("{albumId:int}/cover")]
     [Authorize]
     public async Task<IActionResult> UpdateAlbumCover(int albumId, IFormFile file)
     {
         await MatchAlbumAndDistributor(albumId);
-        await imageFileService.UploadFileAsync(file);
+        ImageFile image = await imageFileService.UploadFileAsync(file);
+        Album album = await albumService.GetByIdValidatedAsync(albumId);
+        album.CoverId = image.Id;
+        await albumService.UpdateAsync(album);
         throw ResponseFactory.Create<OkResponse>(["Album cover was updated successfully"]);
     }
 

@@ -18,9 +18,13 @@ public class PlaylistService(
     ICollectionService<Album> albumCollectionService,
     ICollectionService<Blend> blendCollectionService,
     ICollectionService<Playlist> playlistCollectionService,
-    IVisibilityStateService visibilityStateService,
-    ITrackService trackService) : CollectionService<Playlist>(repository), IPlaylistService
+    ILibraryService libraryService,
+    IFolderService folderService,
+    ITrackService trackService)
+    : CollectionService<Playlist>(repository, libraryService, folderService), IPlaylistService
 {
+    private const string FavoritePlaylistName = "Favorites";
+
     public async Task<Playlist> CreatePlaylistAsync(int creatorId, CreatePlaylistDTO dto)
     {
         Playlist playlist = new()
@@ -37,20 +41,23 @@ public class PlaylistService(
 
     public async Task DeleteAsync(int playlistId, int userId)
     {
-        await DeleteAsync(await VerifyAccessAsync(playlistId, userId));
+        Playlist playlist = await VerifyAccessAsync(playlistId, userId);
+        CheckForFavorites(playlist.Name);
+        await DeleteAsync(playlistId);
     }
 
     public async Task<Playlist> UpdateNameAsync(int playlistId, int userId, string newName)
     {
         Playlist playlist = await VerifyAccessAsync(playlistId, userId);
+        CheckForFavorites(newName);
         playlist.Name = newName;
         return await repository.UpdateAsync(playlist);
     }
 
     public async Task UpdatePlaylistCoverAsync(int playlistId, int creatorId, IFormFile newCover)
     {
-        await VerifyAccessAsync(playlistId, creatorId);
         Playlist playlist = await VerifyAccessAsync(playlistId, creatorId, true);
+        CheckForFavorites(playlist.Name);
         playlist.Cover = await imageFileService.UploadFileAsync(newCover);
         await repository.UpdateAsync(playlist);
     }
@@ -59,8 +66,10 @@ public class PlaylistService(
     {
         await VerifyAccessAsync(playlistId, creatorId);
         Playlist playlist = await repository.Include(p => p.Contributors).GetByIdValidatedAsync(playlistId);
-        // TODO: Replace all All and Any calls across the project with HashSet for better performance
-        if (playlist.Contributors.Any(c => c.Id == contributorId))
+        CheckForFavorites(playlist.Name);
+        HashSet<int> contributorIds = new(playlist.Contributors.Select(c => c.Id));
+
+        if (contributorIds.Contains(contributorId))
             throw ResponseFactory.Create<ConflictResponse>(["User is already a contributor to this playlist."]);
         else if (playlist.Contributors.Any(c => c.Id == creatorId))
             throw ResponseFactory.Create<ConflictResponse>(["User is owner of playlist."]);
@@ -72,6 +81,7 @@ public class PlaylistService(
     {
         await VerifyAccessAsync(playlistId, creatorId);
         Playlist playlist = await repository.Include(p => p.Contributors).GetByIdValidatedAsync(playlistId);
+        CheckForFavorites(playlist.Name);
         playlist.Contributors.Remove(await userService.GetByIdValidatedAsync(contributorId));
         await repository.UpdateAsync(playlist);
     }
@@ -79,6 +89,7 @@ public class PlaylistService(
     public async Task AddTrackToPlaylistAsync(int playlistId, int trackId, int userId)
     {
         Playlist playlist = await VerifyAccessAsync(playlistId, userId, true);
+        CheckForFavorites(playlist.Name);
         if (playlist.Tracks.Any(t => t.Id == trackId))
             throw ResponseFactory.Create<ConflictResponse>(["Track is already in the playlist."]);
         playlist.Tracks.Add(await trackService.GetByIdValidatedAsync(trackId));
@@ -88,6 +99,7 @@ public class PlaylistService(
     public async Task RemoveTrackFromPlaylistAsync(int playlistId, int trackId, int userId)
     {
         Playlist playlist = await VerifyAccessAsync(playlistId, userId, true);
+        CheckForFavorites(playlist.Name);
         playlist.Tracks.Remove(await trackService.GetByIdValidatedAsync(trackId));
         await repository.UpdateAsync(playlist);
     }
@@ -137,6 +149,7 @@ public class PlaylistService(
         where T : Collection
     {
         Playlist playlist = await VerifyAccessAsync(playlistId, userId, true);
+        CheckForFavorites(playlist.Name);
 
         IEnumerable<Track> tracks = await (typeof(T) switch
         {
@@ -151,6 +164,14 @@ public class PlaylistService(
             if (existingIds.Add(track.Id))
                 playlist.Tracks.Add(track);
         await repository.UpdateAsync(playlist);
+    }
+
+    private void CheckForFavorites(string name)
+    {
+        if (name == FavoritePlaylistName)
+            throw ResponseFactory.Create<BadRequestResponse>([
+                "The name 'Favorites' is reserved and cannot be used for playlists."
+            ]);
     }
 
     private async Task<Playlist> VerifyAccessAsync(int playlistId, int userId, bool allowContributor = false)
@@ -169,7 +190,8 @@ public class PlaylistService(
 
     public async Task UpdateVisibilityStatusAsync(int playlistId, int newVisibilityStatusId, int creatorId)
     {
-        await VerifyAccessAsync(playlistId, creatorId);
+        Playlist playlist = await VerifyAccessAsync(playlistId, creatorId);
+        CheckForFavorites(playlist.Name);
         await base.UpdateVisibilityStatusAsync(playlistId, newVisibilityStatusId);
     }
 }

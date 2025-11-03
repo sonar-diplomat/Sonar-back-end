@@ -3,7 +3,6 @@ using System;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,11 +11,9 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(SonarContext))]
-    [Migration("20251101161136_shitshit")]
-    partial class shitshit
+    partial class SonarContextModelSnapshot : ModelSnapshot
     {
-        /// <inheritdoc />
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -57,17 +54,47 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("ChatUser", b =>
                 {
-                    b.Property<int>("ChatsId")
+                    b.Property<int>("AdminsId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("UsersId")
+                    b.Property<int>("ChatsWhereAdminId")
                         .HasColumnType("integer");
 
-                    b.HasKey("ChatsId", "UsersId");
+                    b.HasKey("AdminsId", "ChatsWhereAdminId");
 
-                    b.HasIndex("UsersId");
+                    b.HasIndex("ChatsWhereAdminId");
 
-                    b.ToTable("ChatUser");
+                    b.ToTable("ChatAdmins", (string)null);
+                });
+
+            modelBuilder.Entity("ChatUser1", b =>
+                {
+                    b.Property<int>("ChatsWhereMemberId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("MembersId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("ChatsWhereMemberId", "MembersId");
+
+                    b.HasIndex("MembersId");
+
+                    b.ToTable("ChatMembers", (string)null);
+                });
+
+            modelBuilder.Entity("CollectionFolder", b =>
+                {
+                    b.Property<int>("CollectionsId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("FoldersId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("CollectionsId", "FoldersId");
+
+                    b.HasIndex("FoldersId");
+
+                    b.ToTable("CollectionFolder");
                 });
 
             modelBuilder.Entity("CollectionTrack", b =>
@@ -293,6 +320,9 @@ namespace Infrastructure.Migrations
                     b.Property<int>("CoverId")
                         .HasColumnType("integer");
 
+                    b.Property<int>("CreatorId")
+                        .HasColumnType("integer");
+
                     b.Property<bool>("IsGroup")
                         .HasColumnType("boolean");
 
@@ -304,6 +334,8 @@ namespace Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CoverId");
+
+                    b.HasIndex("CreatorId");
 
                     b.ToTable("Chat");
                 });
@@ -319,7 +351,13 @@ namespace Infrastructure.Migrations
                     b.Property<int>("ChatId")
                         .HasColumnType("integer");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<int?>("ReplyMessageId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("SenderId")
                         .HasColumnType("integer");
 
                     b.Property<string>("TextContent")
@@ -332,6 +370,8 @@ namespace Infrastructure.Migrations
                     b.HasIndex("ChatId");
 
                     b.HasIndex("ReplyMessageId");
+
+                    b.HasIndex("SenderId");
 
                     b.ToTable("Message");
                 });
@@ -432,7 +472,7 @@ namespace Infrastructure.Migrations
                         new
                         {
                             Id = 1,
-                            Locale = "eng",
+                            Locale = "en-US",
                             Name = "English",
                             NativeName = "English"
                         },
@@ -985,9 +1025,6 @@ namespace Infrastructure.Migrations
                     b.Property<int>("CoverId")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("FolderId")
-                        .HasColumnType("integer");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -999,8 +1036,6 @@ namespace Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CoverId");
-
-                    b.HasIndex("FolderId");
 
                     b.HasIndex("VisibilityStateId");
 
@@ -1897,21 +1932,6 @@ namespace Infrastructure.Migrations
                     b.ToTable("SubscriptionPayment");
                 });
 
-            modelBuilder.Entity("MessageUser", b =>
-                {
-                    b.Property<int>("MessagesId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("usersId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("MessagesId", "usersId");
-
-                    b.HasIndex("usersId");
-
-                    b.ToTable("MessageUser");
-                });
-
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<int>", b =>
                 {
                     b.Property<int>("Id")
@@ -2211,15 +2231,45 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("ChatUser", b =>
                 {
+                    b.HasOne("Entities.Models.UserCore.User", null)
+                        .WithMany()
+                        .HasForeignKey("AdminsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("Entities.Models.Chat.Chat", null)
                         .WithMany()
-                        .HasForeignKey("ChatsId")
+                        .HasForeignKey("ChatsWhereAdminId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("ChatUser1", b =>
+                {
+                    b.HasOne("Entities.Models.Chat.Chat", null)
+                        .WithMany()
+                        .HasForeignKey("ChatsWhereMemberId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Entities.Models.UserCore.User", null)
                         .WithMany()
-                        .HasForeignKey("UsersId")
+                        .HasForeignKey("MembersId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CollectionFolder", b =>
+                {
+                    b.HasOne("Entities.Models.Music.Collection", null)
+                        .WithMany()
+                        .HasForeignKey("CollectionsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Entities.Models.Library.Folder", null)
+                        .WithMany()
+                        .HasForeignKey("FoldersId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -2307,13 +2357,21 @@ namespace Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
+                    b.HasOne("Entities.Models.UserCore.User", "Creator")
+                        .WithMany("ChatsWhereCreator")
+                        .HasForeignKey("CreatorId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
                     b.Navigation("Cover");
+
+                    b.Navigation("Creator");
                 });
 
             modelBuilder.Entity("Entities.Models.Chat.Message", b =>
                 {
                     b.HasOne("Entities.Models.Chat.Chat", "Chat")
-                        .WithMany()
+                        .WithMany("Messages")
                         .HasForeignKey("ChatId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
@@ -2323,21 +2381,29 @@ namespace Infrastructure.Migrations
                         .HasForeignKey("ReplyMessageId")
                         .OnDelete(DeleteBehavior.NoAction);
 
+                    b.HasOne("Entities.Models.UserCore.User", "Sender")
+                        .WithMany("Messages")
+                        .HasForeignKey("SenderId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
                     b.Navigation("Chat");
 
                     b.Navigation("ReplyMessage");
+
+                    b.Navigation("Sender");
                 });
 
             modelBuilder.Entity("Entities.Models.Chat.MessageRead", b =>
                 {
                     b.HasOne("Entities.Models.Chat.Message", "Message")
-                        .WithMany()
+                        .WithMany("MessagesReads")
                         .HasForeignKey("MessageId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("Entities.Models.UserCore.User", "User")
-                        .WithMany()
+                        .WithMany("MessagesReads")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
@@ -2563,10 +2629,6 @@ namespace Infrastructure.Migrations
                         .HasForeignKey("CoverId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("Entities.Models.Library.Folder", null)
-                        .WithMany("Collections")
-                        .HasForeignKey("FolderId");
 
                     b.HasOne("Entities.Models.Access.VisibilityState", "VisibilityState")
                         .WithMany()
@@ -2868,21 +2930,6 @@ namespace Infrastructure.Migrations
                     b.Navigation("SubscriptionPack");
                 });
 
-            modelBuilder.Entity("MessageUser", b =>
-                {
-                    b.HasOne("Entities.Models.Chat.Message", null)
-                        .WithMany()
-                        .HasForeignKey("MessagesId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Entities.Models.UserCore.User", null)
-                        .WithMany()
-                        .HasForeignKey("usersId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole<int>", null)
@@ -3057,6 +3104,16 @@ namespace Infrastructure.Migrations
                     b.Navigation("VisibilityStates");
                 });
 
+            modelBuilder.Entity("Entities.Models.Chat.Chat", b =>
+                {
+                    b.Navigation("Messages");
+                });
+
+            modelBuilder.Entity("Entities.Models.Chat.Message", b =>
+                {
+                    b.Navigation("MessagesReads");
+                });
+
             modelBuilder.Entity("Entities.Models.Chat.Post", b =>
                 {
                     b.Navigation("Files");
@@ -3084,8 +3141,6 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Entities.Models.Library.Folder", b =>
                 {
-                    b.Navigation("Collections");
-
                     b.Navigation("SubFolders");
                 });
 
@@ -3134,7 +3189,13 @@ namespace Infrastructure.Migrations
 
                     b.Navigation("ArtistRegistrationRequests");
 
+                    b.Navigation("ChatsWhereCreator");
+
                     b.Navigation("Licenses");
+
+                    b.Navigation("Messages");
+
+                    b.Navigation("MessagesReads");
 
                     b.Navigation("Tracks");
 
