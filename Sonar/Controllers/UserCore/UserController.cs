@@ -20,10 +20,38 @@ public class UserController(
     : ShareController<User>(userManager, shareService)
 {
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<User>>> GetUsers()
+    [Authorize]
+    public async Task<ActionResult<IEnumerable<UserAdminDTO>>> GetUsers()
     {
+        await CheckAccessFeatures([AccessFeatureStruct.IamAGod]);
         IEnumerable<User> users = (await userService.GetAllAsync()).ToList();
-        throw ResponseFactory.Create<OkResponse<IEnumerable<User>>>(users, ["Users retrieved successfully"]);
+        IEnumerable<UserAdminDTO> dtos = users.Select(u => new UserAdminDTO
+        {
+            Id = u.Id,
+            UserName = u.UserName,
+            FirstName = u.FirstName,
+            LastName = u.LastName,
+            Login = u.Login,
+            Email = u.Email,
+            PublicIdentifier = u.PublicIdentifier,
+            RegistrationDate = u.RegistrationDate,
+            EmailConfirmed = u.EmailConfirmed,
+            Enabled2FA = u.TwoFactorEnabled,
+            AvailableCurrency = u.AvailableCurrency,
+            AvatarImageId = u.AvatarImageId,
+            VisibilityStateId = u.VisibilityStateId,
+            SubscriptionPackId = u.SubscriptionPackId,
+            UserStateId = u.UserStateId,
+            SettingsId = u.SettingsId,
+            InventoryId = u.InventoryId,
+            LibraryId = u.LibraryId,
+            AccessFeatures = u.AccessFeatures.Select(af => new Application.DTOs.Access.AccessFeatureDTO
+            {
+                Id = af.Id,
+                Name = af.Name
+            }).ToList()
+        });
+        throw ResponseFactory.Create<OkResponse<IEnumerable<UserAdminDTO>>>(dtos, ["Users retrieved successfully"]);
     }
 
     [HttpGet("{userId:int}")]
@@ -47,7 +75,16 @@ public class UserController(
     {
         User user = await CheckAccessFeatures([]);
         user = await userService.UpdateUserAsync(user.Id, request);
-        throw ResponseFactory.Create<OkResponse<User>>(user, ["User updated successfully"]);
+        UserResponseDTO dto = new UserResponseDTO
+        {
+            Id = user.Id,
+            UserName = user.UserName,
+            PublicIdentifier = user.PublicIdentifier,
+            Biography = user.Biography,
+            RegistrationDate = user.RegistrationDate,
+            AvatarUrl = user.AvatarImage?.Url ?? string.Empty
+        };
+        throw ResponseFactory.Create<OkResponse<UserResponseDTO>>(dto, ["User updated successfully"]);
     }
 
     [HttpPost("update-avatar")]

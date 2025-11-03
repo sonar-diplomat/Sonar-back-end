@@ -1,5 +1,4 @@
-﻿using System.Text;
-using Application.Abstractions.Interfaces.Repository.Music;
+﻿using Application.Abstractions.Interfaces.Repository.Music;
 using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.File;
 using Application.DTOs;
@@ -8,6 +7,7 @@ using Application.Extensions;
 using Application.Response;
 using Entities.Models.Music;
 using Microsoft.AspNetCore.Http;
+using System.Text;
 
 namespace Application.Services.Music;
 
@@ -33,7 +33,8 @@ public class PlaylistService(
             CreatorId = creatorId,
             Cover = dto.Cover != null
                 ? await imageFileService.UploadFileAsync(dto.Cover)
-                : await imageFileService.GetDefaultAsync()
+                : await imageFileService.GetDefaultAsync(),
+            VisibilityState = await visibilityStateService.CreateDefaultAsync()
         };
         return await repository.AddAsync(playlist);
     }
@@ -70,7 +71,8 @@ public class PlaylistService(
 
         if (contributorIds.Contains(contributorId))
             throw ResponseFactory.Create<ConflictResponse>(["User is already a contributor to this playlist."]);
-
+        else if (playlist.Contributors.Any(c => c.Id == creatorId))
+            throw ResponseFactory.Create<ConflictResponse>(["User is owner of playlist."]);
         playlist.Contributors.Add(await userService.GetByIdValidatedAsync(contributorId));
         await repository.UpdateAsync(playlist);
     }

@@ -1,5 +1,6 @@
 ﻿using Application.Abstractions.Interfaces.Repository.UserExperience;
 using Application.Abstractions.Interfaces.Services;
+using Application.Extensions;
 using Application.Response;
 using Entities.Models.UserExperience;
 using Microsoft.EntityFrameworkCore;
@@ -12,6 +13,12 @@ public class SubscriptionPackService(
 )
     : GenericService<SubscriptionPack>(repository), ISubscriptionPackService
 {
+    public override async Task<IEnumerable<SubscriptionPack>> GetAllAsync()
+    {
+        return repository.Include(sp => sp.SubscriptionFeatures);
+    }
+
+
     public async Task<SubscriptionPack> GetOrCreatePackByFeaturesAsync(List<int> featureIds,
         string packName,
         string description,

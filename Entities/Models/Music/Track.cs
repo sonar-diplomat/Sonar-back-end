@@ -4,6 +4,7 @@ using Entities.Models.UserCore;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace Entities.Models.Music;
 

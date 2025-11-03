@@ -1,4 +1,5 @@
 using Application.Abstractions.Interfaces.Services;
+using Application.DTOs.Access;
 using Application.Response;
 using Entities.Enums;
 using Entities.Models.Access;
@@ -32,14 +33,24 @@ public class AccessFeatureController(UserManager<User> userManager, IAccessFeatu
     public async Task<IActionResult> GetAccessFeatures()
     {
         IEnumerable<AccessFeature> accessFeatures = (await accessFeatureService.GetAllAsync()).ToList();
-        throw ResponseFactory.Create<OkResponse<IEnumerable<AccessFeature>>>(accessFeatures, ["Access features retrieved successfully"]);
+        IEnumerable<AccessFeatureDTO> dtos = accessFeatures.Select(af => new AccessFeatureDTO
+        {
+            Id = af.Id,
+            Name = af.Name
+        });
+        throw ResponseFactory.Create<OkResponse<IEnumerable<AccessFeatureDTO>>>(dtos, ["Access features retrieved successfully"]);
     }
 
     [HttpGet("{id:int}")]
     public async Task<IActionResult> GetAccessFeatureById(int id)
     {
         AccessFeature accessFeature = await accessFeatureService.GetByIdValidatedAsync(id);
-        throw ResponseFactory.Create<OkResponse<AccessFeature>>(accessFeature, ["Access feature retrieved successfully"]);
+        AccessFeatureDTO dto = new AccessFeatureDTO
+        {
+            Id = accessFeature.Id,
+            Name = accessFeature.Name
+        };
+        throw ResponseFactory.Create<OkResponse<AccessFeatureDTO>>(dto, ["Access feature retrieved successfully"]);
     }
 
     [HttpGet("user/{userId:int}")]
@@ -47,6 +58,11 @@ public class AccessFeatureController(UserManager<User> userManager, IAccessFeatu
     {
         await CheckAccessFeatures([AccessFeatureStruct.ManageUsers]);
         ICollection<AccessFeature> features = await accessFeatureService.GetUserFeaturesByIdAsync(userId);
-        throw ResponseFactory.Create<OkResponse<ICollection<AccessFeature>>>(features, ["User access features were retrieved successfully"]);
+        ICollection<AccessFeatureDTO> dtos = features.Select(af => new AccessFeatureDTO
+        {
+            Id = af.Id,
+            Name = af.Name
+        }).ToList();
+        throw ResponseFactory.Create<OkResponse<ICollection<AccessFeatureDTO>>>(dtos, ["User access features were retrieved successfully"]);
     }
 }

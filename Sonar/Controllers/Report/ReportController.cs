@@ -1,5 +1,6 @@
 using Application.Abstractions.Interfaces.Services;
 using Application.DTOs.Report;
+using Application.DTOs.User;
 using Application.Response;
 using Entities.Enums;
 using Entities.Models.Report;
@@ -22,17 +23,19 @@ public class ReportController(
     #region Report CRUD Endpoints
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<ReportModel>>> GetReports()
+    public async Task<ActionResult<IEnumerable<ReportDTO>>> GetReports()
     {
         IEnumerable<ReportModel> reports = await reportService.GetAllAsync();
-        throw ResponseFactory.Create<OkResponse<IEnumerable<ReportModel>>>(reports, ["Reports retrieved successfully"]);
+        IEnumerable<ReportDTO> dtos = reports.Select(MapToDTO);
+        throw ResponseFactory.Create<OkResponse<IEnumerable<ReportDTO>>>(dtos, ["Reports retrieved successfully"]);
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<ReportModel>> GetReport(int id)
+    public async Task<ActionResult<ReportDTO>> GetReport(int id)
     {
         ReportModel report = await reportService.GetByIdValidatedAsync(id);
-        throw ResponseFactory.Create<OkResponse<ReportModel>>(report, ["Report retrieved successfully"]);
+        ReportDTO dto = MapToDTO(report);
+        throw ResponseFactory.Create<OkResponse<ReportDTO>>(dto, ["Report retrieved successfully"]);
     }
 
     [HttpDelete("{id}")]
@@ -48,11 +51,12 @@ public class ReportController(
     #region Business-Specific Report Endpoints
 
     [HttpPost]
-    public async Task<ActionResult<ReportModel>> CreateReport([FromBody] CreateReportDTO dto)
+    public async Task<ActionResult<ReportDTO>> CreateReport([FromBody] CreateReportDTO dto)
     {
         User user = await CheckAccessFeatures([AccessFeatureStruct.ReportContent]);
         ReportModel report = await reportService.CreateReportAsync(user.Id, dto);
-        throw ResponseFactory.Create<OkResponse<ReportModel>>(report, ["Report created successfully"]);
+        ReportDTO responseDto = MapToDTO(report);
+        throw ResponseFactory.Create<OkResponse<ReportDTO>>(responseDto, ["Report created successfully"]);
     }
 
     [HttpPut("{id}/close")]
@@ -64,29 +68,30 @@ public class ReportController(
     }
 
     [HttpGet("filter")]
-    public async Task<ActionResult<IEnumerable<ReportModel>>> GetFiltered([FromBody] ReportFilterDTO dto)
+    public async Task<ActionResult<IEnumerable<ReportDTO>>> GetFiltered([FromBody] ReportFilterDTO dto)
     {
         await CheckAccessFeatures([AccessFeatureStruct.ManageReports]);
-        IEnumerable<ReportModel> reports =
-            await reportService.GetReportsFilteredAsync(dto);
-        throw ResponseFactory.Create<OkResponse<IEnumerable<ReportModel>>>(reports, ["Reports retrieved successfully"]);
+        IEnumerable<ReportModel> reports = await reportService.GetReportsFilteredAsync(dto);
+        IEnumerable<ReportDTO> dtos = reports.Select(MapToDTO);
+        throw ResponseFactory.Create<OkResponse<IEnumerable<ReportDTO>>>(dtos, ["Reports retrieved successfully"]);
     }
 
     [HttpGet("reporter/{reporterId}")]
-    public async Task<ActionResult<IEnumerable<ReportModel>>> GetReportsByReporter(int reporterId)
+    public async Task<ActionResult<IEnumerable<ReportDTO>>> GetReportsByReporter(int reporterId)
     {
         await CheckAccessFeatures([AccessFeatureStruct.ManageReports]);
-        IEnumerable<ReportModel> reports =
-            await reportService.GetReportsByReporterAsync(reporterId);
-        throw ResponseFactory.Create<OkResponse<IEnumerable<ReportModel>>>(reports, ["Reports retrieved successfully"]);
+        IEnumerable<ReportModel> reports = await reportService.GetReportsByReporterAsync(reporterId);
+        IEnumerable<ReportDTO> dtos = reports.Select(MapToDTO);
+        throw ResponseFactory.Create<OkResponse<IEnumerable<ReportDTO>>>(dtos, ["Reports retrieved successfully"]);
     }
 
     [HttpGet("open")]
-    public async Task<ActionResult<IEnumerable<ReportModel>>> GetOpenReports()
+    public async Task<ActionResult<IEnumerable<ReportDTO>>> GetOpenReports()
     {
         await CheckAccessFeatures([AccessFeatureStruct.ManageReports]);
         IEnumerable<ReportModel> reports = await reportService.GetOpenReportsAsync();
-        throw ResponseFactory.Create<OkResponse<IEnumerable<ReportModel>>>(reports, ["Reports retrieved successfully"]);
+        IEnumerable<ReportDTO> dtos = reports.Select(MapToDTO);
+        throw ResponseFactory.Create<OkResponse<IEnumerable<ReportDTO>>>(dtos, ["Reports retrieved successfully"]);
     }
 
     #endregion
@@ -94,19 +99,30 @@ public class ReportController(
     #region Report Reason Type Endpoints
 
     [HttpGet("reason-types")]
-    public async Task<ActionResult<IEnumerable<ReportReasonType>>> GetReasonTypes()
+    public async Task<ActionResult<IEnumerable<ReportReasonTypeDTO>>> GetReasonTypes()
     {
-        IEnumerable<ReportReasonType> reasonTypes =
-            (await reportReasonTypeService.GetAllAsync()).ToList();
-        throw ResponseFactory.Create<OkResponse<IEnumerable<ReportReasonType>>>(reasonTypes,
+        IEnumerable<ReportReasonType> reasonTypes = (await reportReasonTypeService.GetAllAsync()).ToList();
+        IEnumerable<ReportReasonTypeDTO> dtos = reasonTypes.Select(rt => new ReportReasonTypeDTO
+        {
+            Id = rt.Id,
+            Name = rt.Name,
+            RecommendedSuspensionDuration = rt.RecommendedSuspensionDuration
+        });
+        throw ResponseFactory.Create<OkResponse<IEnumerable<ReportReasonTypeDTO>>>(dtos,
             ["Reason types retrieved successfully"]);
     }
 
     [HttpGet("reason-types/{id}")]
-    public async Task<ActionResult<ReportReasonType>> GetReasonType(int id)
+    public async Task<ActionResult<ReportReasonTypeDTO>> GetReasonType(int id)
     {
         ReportReasonType reasonType = await reportReasonTypeService.GetByIdValidatedAsync(id);
-        throw ResponseFactory.Create<OkResponse<ReportReasonType>>(reasonType, ["Reason type retrieved successfully"]);
+        ReportReasonTypeDTO dto = new()
+        {
+            Id = reasonType.Id,
+            Name = reasonType.Name,
+            RecommendedSuspensionDuration = reasonType.RecommendedSuspensionDuration
+        };
+        throw ResponseFactory.Create<OkResponse<ReportReasonTypeDTO>>(dto, ["Reason type retrieved successfully"]);
     }
 
     #endregion
@@ -114,23 +130,61 @@ public class ReportController(
     #region Reportable Entity Type Endpoints
 
     [HttpGet("entity-types")]
-    public async Task<ActionResult<IEnumerable<ReportableEntityType>>> GetEntityTypes()
+    public async Task<ActionResult<IEnumerable<ReportableEntityTypeDTO>>> GetEntityTypes()
     {
-        IEnumerable<ReportableEntityType> entityTypes =
-            (await reportableEntityTypeService.GetAllAsync()).ToList();
-        throw ResponseFactory.Create<OkResponse<IEnumerable<ReportableEntityType>>>(entityTypes,
+        IEnumerable<ReportableEntityType> entityTypes = (await reportableEntityTypeService.GetAllAsync()).ToList();
+        IEnumerable<ReportableEntityTypeDTO> dtos = entityTypes.Select(et => new ReportableEntityTypeDTO
+        {
+            Id = et.Id,
+            Name = et.Name
+        });
+        throw ResponseFactory.Create<OkResponse<IEnumerable<ReportableEntityTypeDTO>>>(dtos,
             ["Entity types retrieved successfully"]);
     }
 
     [HttpGet("entity-types/{id}")]
-    public async Task<ActionResult<ReportableEntityType>> GetEntityType(int id)
+    public async Task<ActionResult<ReportableEntityTypeDTO>> GetEntityType(int id)
     {
-        ReportableEntityType entityType =
-            await reportableEntityTypeService.GetByIdValidatedAsync(id);
-
-        throw ResponseFactory.Create<OkResponse<ReportableEntityType>>(entityType,
+        ReportableEntityType entityType = await reportableEntityTypeService.GetByIdValidatedAsync(id);
+        ReportableEntityTypeDTO dto = new()
+        {
+            Id = entityType.Id,
+            Name = entityType.Name
+        };
+        throw ResponseFactory.Create<OkResponse<ReportableEntityTypeDTO>>(dto,
             ["Entity type retrieved successfully"]);
     }
 
     #endregion
+
+    private ReportDTO MapToDTO(ReportModel report)
+    {
+        return new ReportDTO
+        {
+            Id = report.Id,
+            IsClosed = report.IsClosed,
+            EntityIdentifier = report.EntityIdentifier,
+            CreatedAt = report.CreatedAt,
+            Reporter = new UserResponseDTO
+            {
+                Id = report.Reporter.Id,
+                UserName = report.Reporter.UserName ?? string.Empty,
+                PublicIdentifier = report.Reporter.PublicIdentifier,
+                Biography = report.Reporter.Biography,
+                RegistrationDate = report.Reporter.RegistrationDate,
+                AvatarUrl = report.Reporter.AvatarImage?.Url ?? string.Empty
+            },
+            EntityType = new ReportableEntityTypeDTO
+            {
+                Id = report.ReportableEntityType.Id,
+                Name = report.ReportableEntityType.Name
+            },
+            Reasons = report.ReportReasonType?.Select(r => new ReportReasonTypeDTO
+            {
+                Id = r.Id,
+                Name = r.Name,
+                RecommendedSuspensionDuration = r.RecommendedSuspensionDuration
+            }).ToList() ?? new List<ReportReasonTypeDTO>()
+        };
+    }
 }

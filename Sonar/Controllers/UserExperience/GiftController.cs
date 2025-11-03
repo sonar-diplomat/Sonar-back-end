@@ -1,5 +1,7 @@
 using Application.Abstractions.Interfaces.Services;
 using Application.DTOs;
+using Application.DTOs.User;
+using Application.DTOs.UserExperience;
 using Application.Response;
 using Entities.Models.UserCore;
 using Entities.Models.UserExperience;
@@ -31,38 +33,91 @@ public class GiftController(
 
     [HttpPost("{id}/accept")]
     [Authorize]
-    public async Task<ActionResult<SubscriptionPayment>> AcceptGift(int id)
+    public async Task<ActionResult<SubscriptionPaymentDTO>> AcceptGift(int id)
     {
         User user = await CheckAccessFeatures([]);
         SubscriptionPayment payment = await giftService.AcceptGiftAsync(id, user.Id);
-        throw ResponseFactory.Create<OkResponse<SubscriptionPayment>>(payment,
+        SubscriptionPaymentDTO dto = new()
+        {
+            Id = payment.Id,
+            Amount = payment.Amount,
+            CreatedAt = payment.CreatedAt,
+            Buyer = new UserResponseDTO
+            {
+                Id = payment.Buyer.Id,
+                UserName = payment.Buyer.UserName,
+                PublicIdentifier = payment.Buyer.PublicIdentifier,
+                Biography = payment.Buyer.Biography,
+                RegistrationDate = payment.Buyer.RegistrationDate,
+                AvatarUrl = payment.Buyer.AvatarImage?.Url ?? string.Empty
+            },
+            SubscriptionPackId = payment.SubscriptionPackId,
+            SubscriptionPackName = payment.SubscriptionPack?.Name ?? string.Empty
+        };
+        throw ResponseFactory.Create<OkResponse<SubscriptionPaymentDTO>>(dto,
             ["Gift accepted and subscription activated."]);
     }
 
     [HttpGet("received")]
     [Authorize]
-    public async Task<ActionResult<IEnumerable<Gift>>> GetReceivedGifts()
+    public async Task<ActionResult<IEnumerable<GiftResponseDTO>>> GetReceivedGifts()
     {
         User user = await CheckAccessFeatures([]);
         IEnumerable<Gift> gifts = await giftService.GetReceivedGiftsAsync(user.Id);
-        throw ResponseFactory.Create<OkResponse<IEnumerable<Gift>>>(gifts, ["Received gifts retrieved successfully."]);
+        IEnumerable<GiftResponseDTO> dtos = gifts.Select(g => new GiftResponseDTO
+        {
+            Id = g.Id,
+            Title = g.Title,
+            TextContent = g.TextContent,
+            GiftTime = g.GiftTime,
+            AcceptanceDate = g.AcceptanceDate,
+            ReceiverName = g.Receiver?.UserName ?? string.Empty,
+            GiftStyleName = g.GiftStyle?.Name ?? string.Empty,
+            SubscriptionAmount = g.SubscriptionPayment?.Amount ?? 0,
+            SubscriptionPackName = g.SubscriptionPayment?.SubscriptionPack?.Name ?? string.Empty
+        });
+        throw ResponseFactory.Create<OkResponse<IEnumerable<GiftResponseDTO>>>(dtos, ["Received gifts retrieved successfully."]);
     }
 
     [HttpGet("sent")]
     [Authorize]
-    public async Task<ActionResult<IEnumerable<Gift>>> GetSentGifts(int senderId)
+    public async Task<ActionResult<IEnumerable<GiftResponseDTO>>> GetSentGifts(int senderId)
     {
         User user = await CheckAccessFeatures([]);
         IEnumerable<Gift> gifts = await giftService.GetSentGiftsAsync(user.Id);
-        throw ResponseFactory.Create<OkResponse<IEnumerable<Gift>>>(gifts, ["Sent gifts retrieved successfully"]);
+        IEnumerable<GiftResponseDTO> dtos = gifts.Select(g => new GiftResponseDTO
+        {
+            Id = g.Id,
+            Title = g.Title,
+            TextContent = g.TextContent,
+            GiftTime = g.GiftTime,
+            AcceptanceDate = g.AcceptanceDate,
+            ReceiverName = g.Receiver?.UserName ?? string.Empty,
+            GiftStyleName = g.GiftStyle?.Name ?? string.Empty,
+            SubscriptionAmount = g.SubscriptionPayment?.Amount ?? 0,
+            SubscriptionPackName = g.SubscriptionPayment?.SubscriptionPack?.Name ?? string.Empty
+        });
+        throw ResponseFactory.Create<OkResponse<IEnumerable<GiftResponseDTO>>>(dtos, ["Sent gifts retrieved successfully"]);
     }
 
     [HttpGet("{id}")]
     [Authorize]
-    public async Task<ActionResult<Gift>> GetGift(int id)
+    public async Task<ActionResult<GiftResponseDTO>> GetGift(int id)
     {
         Gift gift = await giftService.GetByIdValidatedAsync(id);
-        throw ResponseFactory.Create<OkResponse<Gift>>(gift, ["Gift retrieved successfully"]);
+        GiftResponseDTO dto = new()
+        {
+            Id = gift.Id,
+            Title = gift.Title,
+            TextContent = gift.TextContent,
+            GiftTime = gift.GiftTime,
+            AcceptanceDate = gift.AcceptanceDate,
+            ReceiverName = gift.Receiver?.UserName ?? string.Empty,
+            GiftStyleName = gift.GiftStyle?.Name ?? string.Empty,
+            SubscriptionAmount = gift.SubscriptionPayment?.Amount ?? 0,
+            SubscriptionPackName = gift.SubscriptionPayment?.SubscriptionPack?.Name ?? string.Empty
+        };
+        throw ResponseFactory.Create<OkResponse<GiftResponseDTO>>(dto, ["Gift retrieved successfully"]);
     }
 
 
@@ -78,18 +133,28 @@ public class GiftController(
     #region Gift Style Endpoints
 
     [HttpGet("styles")]
-    public async Task<ActionResult<IEnumerable<GiftStyle>>> GetAllStyles()
+    public async Task<ActionResult<IEnumerable<GiftStyleDTO>>> GetAllStyles()
     {
         IEnumerable<GiftStyle> styles = await giftStyleService.GetAllAsync();
-        throw ResponseFactory.Create<OkResponse<IEnumerable<GiftStyle>>>(styles,
+        IEnumerable<GiftStyleDTO> dtos = styles.Select(s => new GiftStyleDTO
+        {
+            Id = s.Id,
+            Name = s.Name
+        });
+        throw ResponseFactory.Create<OkResponse<IEnumerable<GiftStyleDTO>>>(dtos,
             ["Gift styles retrieved successfully"]);
     }
 
     [HttpGet("styles/{id}")]
-    public async Task<ActionResult<GiftStyle>> GetStyle(int id)
+    public async Task<ActionResult<GiftStyleDTO>> GetStyle(int id)
     {
         GiftStyle style = await giftStyleService.GetByIdValidatedAsync(id);
-        throw ResponseFactory.Create<OkResponse<GiftStyle>>(style, ["Gift style retrieved successfully"]);
+        GiftStyleDTO dto = new()
+        {
+            Id = style.Id,
+            Name = style.Name
+        };
+        throw ResponseFactory.Create<OkResponse<GiftStyleDTO>>(dto, ["Gift style retrieved successfully"]);
     }
 
     #endregion

@@ -1,11 +1,13 @@
 ﻿using Application.Abstractions.Interfaces.Services;
 using Application.DTOs;
+using Application.DTOs.Distribution;
 using Application.Response;
 using Entities.Models.Distribution;
 using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Sonar.Extensions;
 
 namespace Sonar.Controllers.Distribution;
 
@@ -22,7 +24,7 @@ public class DistributorMasterController(
     [Authorize]
     public async Task CheckAccessDistributorAccount()
     {
-        DistributorAccount distributorAccount = await GetDistributorAccountByJwt();
+        DistributorAccount distributorAccount = await this.GetDistributorAccountByJwtAsync();
         if (!distributorAccount.IsMaster)
             throw ResponseFactory.Create<ForbiddenResponse>(["Access denied. Master distributor account required."]);
     }
@@ -49,7 +51,15 @@ public class DistributorMasterController(
         DistributorAccount? distributorAccount = await accountService.GetByIdAsync(id);
         if (distributorAccount == null)
             throw ResponseFactory.Create<NotFoundResponse>(["Distributor account not found"]);
-        throw ResponseFactory.Create<OkResponse<DistributorAccount>>(distributorAccount,
+        DistributorAccountDTO dto = new DistributorAccountDTO
+        {
+            Id = distributorAccount.Id,
+            UserName = distributorAccount.UserName,
+            Email = distributorAccount.Email,
+            IsMaster = distributorAccount.IsMaster,
+            DistributorId = distributorAccount.DistributorId
+        };
+        throw ResponseFactory.Create<OkResponse<DistributorAccountDTO>>(dto,
             ["Distributor account retrieved successfully"]);
     }
 

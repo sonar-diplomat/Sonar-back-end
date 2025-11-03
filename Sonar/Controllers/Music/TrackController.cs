@@ -1,17 +1,16 @@
-using System.IdentityModel.Tokens.Jwt;
 using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.Utilities;
 using Application.DTOs.Music;
 using Application.Response;
 using Entities.Enums;
 using Entities.Models.ClientSettings;
-using Entities.Models.Distribution;
 using Entities.Models.Music;
 using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
+using Sonar.Extensions;
 
 namespace Sonar.Controllers.Music;
 
@@ -19,36 +18,10 @@ namespace Sonar.Controllers.Music;
 [ApiController]
 public class TrackController(
     UserManager<User> userManager,
-    IDistributorAccountService accountService,
-    IDistributorService distributorService,
     ITrackService trackService,
     ISettingsService settingsService,
     IShareService shareService) : ShareController<Track>(userManager, shareService)
 {
-    [Authorize]
-    private async Task<DistributorAccount> GetDistributorAccountByJwt()
-    {
-        string? email = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value ?? User.FindFirst("email")?.Value;
-        if (email == null)
-            throw ResponseFactory.Create<UnauthorizedResponse>(["Invalid JWT token"]);
-        DistributorAccount? distributorAccount = await accountService.GetByEmailAsync(email);
-        return distributorAccount ?? throw ResponseFactory.Create<UnauthorizedResponse>();
-    }
-
-    [Authorize]
-    private async Task<Distributor> CheckDistributor()
-    {
-        DistributorAccount distributorAccount = await GetDistributorAccountByJwt();
-        if (!Request.Headers.TryGetValue("X-Api-Key", out StringValues apiKey))
-            throw ResponseFactory.Create<UnauthorizedResponse>();
-        string key = apiKey.ToString();
-        if (string.IsNullOrEmpty(key))
-            throw ResponseFactory.Create<UnauthorizedResponse>();
-        Distributor? distributor = await distributorService.GetByApiKeyAsync(key);
-        return !(await accountService.GetAllByDistributor(distributor)).Contains(distributorAccount)
-            ? throw ResponseFactory.Create<UnauthorizedResponse>()
-            : distributor!;
-    }
 
     [HttpGet("{trackId}/stream")]
     [Authorize]
@@ -74,27 +47,28 @@ public class TrackController(
     [HttpDelete("{trackId:int}")]
     public async Task<IActionResult> DeleteTrack(int trackId)
     {
-        await CheckDistributor();
+        await this.CheckDistributorAsync();
         await trackService.DeleteAsync(trackId);
         throw ResponseFactory.Create<OkResponse>([$"Track with ID {trackId} successfully deleted"]);
     }
 
     [HttpPut("{trackId:int}")]
-    public async Task<Track> UpdateTrackInfo(int trackId, UpdateTrackDTO dto)
+    public async Task<Track> UpdateTrackInfo(int trackId, [FromBody] UpdateTrackDTO dto)
     {
-        await CheckDistributor();
+        await this.CheckDistributorAsync();
         Track track = await trackService.GetByIdValidatedAsync(trackId);
         track.Title = dto.Title ?? track.Title;
         track.IsExplicit = dto.IsExplicit ?? track.IsExplicit;
         track.DrivingDisturbingNoises = dto.DrivingDisturbingNoises ?? track.DrivingDisturbingNoises;
+        // TODO: create DTO
         track = await trackService.UpdateAsync(track);
         throw ResponseFactory.Create<OkResponse<Track>>(track, ["Track updated successfully"]);
     }
 
     [HttpPut("{trackId:int}/audio-file")]
-    public async Task UpdateTrackFile(int trackId, UpdateTrackFileDTO dto)
+    public async Task UpdateTrackFile(int trackId, [FromForm] UpdateTrackFileDTO dto)
     {
-        await CheckDistributor();
+        await this.CheckDistributorAsync();
         await trackService.UpdateTrackFileAsync(trackId, dto.PlaybackQualityId, dto.File);
         throw ResponseFactory.Create<OkResponse>(["Track audio file updated successfully"]);
     }
@@ -102,14 +76,15 @@ public class TrackController(
     [HttpGet("{trackId:int}")]
     public async Task<IActionResult> GetTrackById(int trackId)
     {
+        // TODO: create DTO
         Track track = await trackService.GetByIdValidatedAsync(trackId);
         throw ResponseFactory.Create<OkResponse<Track>>(track, ["Track successfully retrieved"]);
     }
 
     [HttpPut("{trackId:int}/visibility")]
-    public async Task<IActionResult> UpdateTrackVisibilityStatus(int trackId, int visibilityStatusId)
+    public async Task<IActionResult> UpdateTrackVisibilityStatus(int trackId, [FromQuery] int visibilityStatusId)
     {
-        await CheckDistributor();
+        await this.CheckDistributorAsync();
         await trackService.UpdateVisibilityStatusAsync(trackId, visibilityStatusId);
         throw ResponseFactory.Create<OkResponse>(["Track visibility status was changed successfully"]);
     }

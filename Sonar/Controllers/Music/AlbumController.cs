@@ -10,6 +10,7 @@ using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Sonar.Extensions;
 using Microsoft.Extensions.Primitives;
 
 namespace Sonar.Controllers.Music;
@@ -27,38 +28,22 @@ public class AlbumController(
 )
     : CollectionController<Album>(userManager, collectionService)
 {
-    [Authorize]
-    private async Task<DistributorAccount> GetDistributorAccountByJwt()
-    {
-        string? email = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value ?? User.FindFirst("email")?.Value;
-        if (email == null)
-            throw ResponseFactory.Create<UnauthorizedResponse>(["Invalid JWT token"]);
-        DistributorAccount? distributorAccount = await accountService.GetByEmailAsync(email);
-        return distributorAccount ?? throw ResponseFactory.Create<UnauthorizedResponse>();
-    }
-
-    [Authorize]
-    private async Task<Distributor> CheckDistributor()
-    {
-        DistributorAccount distributorAccount = await GetDistributorAccountByJwt();
-        if (!Request.Headers.TryGetValue("X-Api-Key", out StringValues apiKey))
-            throw ResponseFactory.Create<UnauthorizedResponse>();
-        string key = apiKey.ToString();
-        if (string.IsNullOrEmpty(key))
-            throw ResponseFactory.Create<UnauthorizedResponse>();
-        Distributor? distributor = await distributorService.GetByApiKeyAsync(key);
-        return !(await accountService.GetAllByDistributor(distributor)).Contains(distributorAccount)
-            ? throw ResponseFactory.Create<UnauthorizedResponse>()
-            : distributor!;
-    }
 
     [HttpPost]
     [Authorize]
     public async Task<IActionResult> UploadAlbum(UploadAlbumDTO dto)
     {
-        int distributorId = (await CheckDistributor()).Id;
+        int distributorId = (await this.CheckDistributorAsync()).Id;
         Album album = await albumService.UploadAsync(dto, distributorId);
-        throw ResponseFactory.Create<OkResponse<Album>>(album, ["Album was created successfully"]);
+        AlbumResponseDTO responseDto = new AlbumResponseDTO
+        {
+            Id = album.Id,
+            Name = album.Name,
+            CoverUrl = album.Cover?.Url ?? string.Empty,
+            DistributorName = album.Distributor?.Name ?? string.Empty,
+            TrackCount = album.Tracks?.Count ?? 0
+        };
+        throw ResponseFactory.Create<OkResponse<AlbumResponseDTO>>(responseDto, ["Album was created successfully"]);
     }
 
     [HttpDelete("{albumId:int}")]
@@ -76,7 +61,15 @@ public class AlbumController(
     {
         await MatchAlbumAndDistributor(albumId);
         Album album = await albumService.UpdateNameAsync(albumId, name);
-        throw ResponseFactory.Create<OkResponse<Album>>(album, ["Album name was updated successfully"]);
+        AlbumResponseDTO responseDto = new AlbumResponseDTO
+        {
+            Id = album.Id,
+            Name = album.Name,
+            CoverUrl = album.Cover?.Url ?? string.Empty,
+            DistributorName = album.Distributor?.Name ?? string.Empty,
+            TrackCount = album.Tracks?.Count ?? 0
+        };
+        throw ResponseFactory.Create<OkResponse<AlbumResponseDTO>>(responseDto, ["Album name was updated successfully"]);
     }
 
     [HttpPost("{albumId:int}/add")]
@@ -84,6 +77,7 @@ public class AlbumController(
     public async Task<IActionResult> UploadTrack(int albumId, UploadTrackDTO dto)
     {
         await MatchAlbumAndDistributor(albumId);
+        // TODO: create DTO
         Track track = await trackService.CreateTrackAsync(albumId, dto);
         throw ResponseFactory.Create<OkResponse<Track>>(track, ["Track was added successfully"]);
     }
@@ -102,7 +96,7 @@ public class AlbumController(
 
     private async Task MatchAlbumAndDistributor(int albumId)
     {
-        Distributor distributor = await CheckDistributor();
+        Distributor distributor = await this.CheckDistributorAsync();
         Album album = await albumService.GetByIdValidatedAsync(albumId);
         if (album.DistributorId != distributor.Id)
             throw ResponseFactory.Create<UnauthorizedResponse>([""]);

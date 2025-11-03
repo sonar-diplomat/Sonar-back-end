@@ -1,7 +1,8 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Entities.Models.UserCore;
+using NSwag.Annotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
-using Entities.Models.UserCore;
 
 namespace Entities.Models.Access;
 
@@ -14,6 +15,6 @@ public class AccessFeature : BaseModel
 
     /// <summary>
     /// </summary>
-    [JsonIgnore]
+    [OpenApiIgnore]
     public virtual ICollection<User> Users { get; set; }
 }

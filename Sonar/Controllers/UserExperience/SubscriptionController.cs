@@ -1,5 +1,7 @@
 using Application.Abstractions.Interfaces.Services;
 using Application.DTOs;
+using Application.DTOs.User;
+using Application.DTOs.UserExperience;
 using Application.Response;
 using Entities.Enums;
 using Entities.Models.UserCore;
@@ -21,18 +23,48 @@ public class SubscriptionController(
     #region Subscription Pack Endpoints
 
     [HttpGet("packs")]
-    public async Task<ActionResult<IEnumerable<SubscriptionPack>>> GetAllPacks()
+    public async Task<ActionResult<IEnumerable<SubscriptionPackDTO>>> GetAllPacks()
     {
         IEnumerable<SubscriptionPack> packs = (await subscriptionPackService.GetAllAsync()).ToList();
-        throw ResponseFactory.Create<OkResponse<IEnumerable<SubscriptionPack>>>(packs,
+        IEnumerable<SubscriptionPackDTO> dtos = packs.Select(p => new SubscriptionPackDTO
+        {
+            Id = p.Id,
+            Name = p.Name,
+            DiscountMultiplier = p.DiscountMultiplier,
+            Description = p.Description,
+            Price = p.Price,
+            Features = p.SubscriptionFeatures?.Select(f => new SubscriptionFeatureDTO
+            {
+                Id = f.Id,
+                Name = f.Name,
+                Description = f.Description,
+                Price = f.Price
+            }).ToList() ?? new List<SubscriptionFeatureDTO>()
+        });
+        throw ResponseFactory.Create<OkResponse<IEnumerable<SubscriptionPackDTO>>>(dtos,
             ["Subscription packs retrieved successfully"]);
     }
 
     [HttpGet("packs/{id}")]
-    public async Task<ActionResult<SubscriptionPack>> GetPack(int id)
+    public async Task<ActionResult<SubscriptionPackDTO>> GetPack(int id)
     {
         SubscriptionPack pack = await subscriptionPackService.GetByIdValidatedAsync(id);
-        throw ResponseFactory.Create<OkResponse<SubscriptionPack>>(pack, ["Subscription pack retrieved successfully"]);
+        SubscriptionPackDTO dto = new()
+        {
+            Id = pack.Id,
+            Name = pack.Name,
+            DiscountMultiplier = pack.DiscountMultiplier,
+            Description = pack.Description,
+            Price = pack.Price,
+            Features = pack.SubscriptionFeatures?.Select(f => new SubscriptionFeatureDTO
+            {
+                Id = f.Id,
+                Name = f.Name,
+                Description = f.Description,
+                Price = f.Price
+            }).ToList() ?? new List<SubscriptionFeatureDTO>()
+        };
+        throw ResponseFactory.Create<OkResponse<SubscriptionPackDTO>>(dto, ["Subscription pack retrieved successfully"]);
     }
 
     #endregion
@@ -40,29 +72,80 @@ public class SubscriptionController(
     #region Subscription Payment Endpoints
 
     [HttpPost("purchase")]
-    public async Task<ActionResult<SubscriptionPayment>> PurchaseSubscription([FromBody] PurchaseSubscriptionDTO dto)
+    public async Task<ActionResult<SubscriptionPaymentDTO>> PurchaseSubscription([FromBody] PurchaseSubscriptionDTO dto)
     {
         User user = await CheckAccessFeatures([]);
         SubscriptionPayment payment = await subscriptionPaymentService.PurchaseSubscriptionAsync(user.Id, dto);
-        throw ResponseFactory.Create<CreatedResponse<SubscriptionPayment>>(payment,
+        SubscriptionPaymentDTO responseDto = new()
+        {
+            Id = payment.Id,
+            Amount = payment.Amount,
+            CreatedAt = payment.CreatedAt,
+            Buyer = new UserResponseDTO
+            {
+                Id = payment.Buyer.Id,
+                UserName = payment.Buyer.UserName ?? string.Empty,
+                PublicIdentifier = payment.Buyer.PublicIdentifier,
+                Biography = payment.Buyer.Biography,
+                RegistrationDate = payment.Buyer.RegistrationDate,
+                AvatarUrl = payment.Buyer.AvatarImage?.Url ?? string.Empty
+            },
+            SubscriptionPackId = payment.SubscriptionPackId,
+            SubscriptionPackName = payment.SubscriptionPack?.Name ?? string.Empty
+        };
+        throw ResponseFactory.Create<CreatedResponse<SubscriptionPaymentDTO>>(responseDto,
             ["Subscription purchased successfully"]);
     }
 
 
     [HttpGet("payments")]
-    public async Task<ActionResult<IEnumerable<SubscriptionPayment>>> GetAllPayments()
+    public async Task<ActionResult<IEnumerable<SubscriptionPaymentDTO>>> GetAllPayments()
     {
         await CheckAccessFeatures([AccessFeatureStruct.IamAGod]);
         IEnumerable<SubscriptionPayment> payments = (await subscriptionPaymentService.GetAllAsync()).ToList();
-        throw ResponseFactory.Create<OkResponse<IEnumerable<SubscriptionPayment>>>(payments,
+        IEnumerable<SubscriptionPaymentDTO> dtos = payments.Select(payment => new SubscriptionPaymentDTO
+        {
+            Id = payment.Id,
+            Amount = payment.Amount,
+            CreatedAt = payment.CreatedAt,
+            Buyer = new UserResponseDTO
+            {
+                Id = payment.Buyer.Id,
+                UserName = payment.Buyer.UserName,
+                PublicIdentifier = payment.Buyer.PublicIdentifier,
+                Biography = payment.Buyer.Biography,
+                RegistrationDate = payment.Buyer.RegistrationDate,
+                AvatarUrl = payment.Buyer.AvatarImage?.Url ?? string.Empty
+            },
+            SubscriptionPackId = payment.SubscriptionPackId,
+            SubscriptionPackName = payment.SubscriptionPack?.Name ?? string.Empty
+        });
+        throw ResponseFactory.Create<OkResponse<IEnumerable<SubscriptionPaymentDTO>>>(dtos,
             ["Subscription payments retrieved successfully"]);
     }
 
     [HttpGet("payments/{id}")]
-    public async Task<ActionResult<SubscriptionPayment>> GetPayment(int id)
+    public async Task<ActionResult<SubscriptionPaymentDTO>> GetPayment(int id)
     {
         SubscriptionPayment payment = await subscriptionPaymentService.GetByIdValidatedAsync(id);
-        throw ResponseFactory.Create<OkResponse<SubscriptionPayment>>(payment,
+        SubscriptionPaymentDTO dto = new()
+        {
+            Id = payment.Id,
+            Amount = payment.Amount,
+            CreatedAt = payment.CreatedAt,
+            Buyer = new UserResponseDTO
+            {
+                Id = payment.Buyer.Id,
+                UserName = payment.Buyer.UserName,
+                PublicIdentifier = payment.Buyer.PublicIdentifier,
+                Biography = payment.Buyer.Biography,
+                RegistrationDate = payment.Buyer.RegistrationDate,
+                AvatarUrl = payment.Buyer.AvatarImage?.Url ?? string.Empty
+            },
+            SubscriptionPackId = payment.SubscriptionPackId,
+            SubscriptionPackName = payment.SubscriptionPack?.Name ?? string.Empty
+        };
+        throw ResponseFactory.Create<OkResponse<SubscriptionPaymentDTO>>(dto,
             ["Subscription payment retrieved successfully"]);
     }
 
@@ -71,18 +154,32 @@ public class SubscriptionController(
     #region Subscription Feature Endpoints
 
     [HttpGet("features")]
-    public async Task<ActionResult<IEnumerable<SubscriptionFeature>>> GetAllFeatures()
+    public async Task<ActionResult<IEnumerable<SubscriptionFeatureDTO>>> GetAllFeatures()
     {
         IEnumerable<SubscriptionFeature> features = (await subscriptionFeatureService.GetAllAsync()).ToList();
-        throw ResponseFactory.Create<OkResponse<IEnumerable<SubscriptionFeature>>>(features,
+        IEnumerable<SubscriptionFeatureDTO> dtos = features.Select(f => new SubscriptionFeatureDTO
+        {
+            Id = f.Id,
+            Name = f.Name,
+            Description = f.Description,
+            Price = f.Price
+        });
+        throw ResponseFactory.Create<OkResponse<IEnumerable<SubscriptionFeatureDTO>>>(dtos,
             ["Subscription features retrieved successfully"]);
     }
 
     [HttpGet("features/{id}")]
-    public async Task<ActionResult<SubscriptionFeature>> GetFeature(int id)
+    public async Task<ActionResult<SubscriptionFeatureDTO>> GetFeature(int id)
     {
         SubscriptionFeature feature = await subscriptionFeatureService.GetByIdValidatedAsync(id);
-        throw ResponseFactory.Create<OkResponse<SubscriptionFeature>>(feature,
+        SubscriptionFeatureDTO dto = new()
+        {
+            Id = feature.Id,
+            Name = feature.Name,
+            Description = feature.Description,
+            Price = feature.Price
+        };
+        throw ResponseFactory.Create<OkResponse<SubscriptionFeatureDTO>>(dto,
             ["Subscription feature retrieved successfully"]);
     }
 

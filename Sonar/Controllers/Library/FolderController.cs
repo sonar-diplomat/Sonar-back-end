@@ -1,5 +1,6 @@
 using Application.Abstractions.Interfaces.Services;
 using Application.DTOs;
+using Application.DTOs.Library;
 using Application.Response;
 using Entities.Models.Library;
 using Entities.Models.UserCore;
@@ -21,14 +22,60 @@ public class FolderController(
     public async Task<IActionResult> GetFolder(int folderId)
     {
         Folder folder = await folderService.GetByIdValidatedAsync(folderId);
-        throw ResponseFactory.Create<OkResponse<Folder>>(folder, ["Successfully retrieved folder"]);
+        FolderDTO dto = new()
+        {
+            Id = folder.Id,
+            Name = folder.Name,
+            IsProtected = folder.IsProtected,
+            ParentFolderId = folder.ParentFolderId,
+            ParentFolderName = folder.ParentFolder?.Name,
+            SubFolders = folder.SubFolders?.Select(sf => new SubFolderDTO
+            {
+                Id = sf.Id,
+                Name = sf.Name,
+                IsProtected = sf.IsProtected,
+                SubFolderCount = sf.SubFolders?.Count ?? 0,
+                CollectionCount = sf.Collections?.Count ?? 0
+            }).ToList() ?? new List<SubFolderDTO>(),
+            Collections = folder.Collections?.Select(c => new CollectionSummaryDTO
+            {
+                Id = c.Id,
+                Name = c.Name,
+                Type = c.GetType().Name,
+                CoverUrl = c.Cover?.Url ?? string.Empty
+            }).ToList() ?? new List<CollectionSummaryDTO>()
+        };
+        throw ResponseFactory.Create<OkResponse<FolderDTO>>(dto, ["Successfully retrieved folder"]);
     }
 
     [HttpGet]
     public async Task<IActionResult> GetAllFolders()
     {
         IEnumerable<Folder> folders = await folderService.GetAllAsync();
-        throw ResponseFactory.Create<OkResponse<IEnumerable<Folder>>>(folders, ["Successfully retrieved all folders"]);
+        IEnumerable<FolderDTO> dtos = folders.Select(folder => new FolderDTO
+        {
+            Id = folder.Id,
+            Name = folder.Name,
+            IsProtected = folder.IsProtected,
+            ParentFolderId = folder.ParentFolderId,
+            ParentFolderName = folder.ParentFolder?.Name,
+            SubFolders = folder.SubFolders?.Select(sf => new SubFolderDTO
+            {
+                Id = sf.Id,
+                Name = sf.Name,
+                IsProtected = sf.IsProtected,
+                SubFolderCount = sf.SubFolders?.Count ?? 0,
+                CollectionCount = sf.Collections?.Count ?? 0
+            }).ToList() ?? new List<SubFolderDTO>(),
+            Collections = folder.Collections?.Select(c => new CollectionSummaryDTO
+            {
+                Id = c.Id,
+                Name = c.Name,
+                Type = c.GetType().Name,
+                CoverUrl = c.Cover?.Url ?? string.Empty
+            }).ToList() ?? new List<CollectionSummaryDTO>()
+        });
+        throw ResponseFactory.Create<OkResponse<IEnumerable<FolderDTO>>>(dtos, ["Successfully retrieved all folders"]);
     }
 
     [HttpPost]
@@ -36,7 +83,17 @@ public class FolderController(
     {
         int libraryId = (await CheckAccessFeatures([])).LibraryId;
         Folder folder = await folderService.CreateFolderAsync(libraryId, request);
-        throw ResponseFactory.Create<OkResponse<Folder>>(folder, ["Successfully created folder"]);
+        FolderDTO dto = new()
+        {
+            Id = folder.Id,
+            Name = folder.Name,
+            IsProtected = folder.IsProtected,
+            ParentFolderId = folder.ParentFolderId,
+            ParentFolderName = folder.ParentFolder?.Name,
+            SubFolders = new List<SubFolderDTO>(),
+            Collections = new List<CollectionSummaryDTO>()
+        };
+        throw ResponseFactory.Create<OkResponse<FolderDTO>>(dto, ["Successfully created folder"]);
     }
 
     [HttpPut("{folderId:int}/update-name")]
@@ -44,7 +101,30 @@ public class FolderController(
     {
         int libraryId = (await CheckAccessFeatures([])).LibraryId;
         Folder folder = await folderService.UpdateNameAsync(libraryId, folderId, newName);
-        throw ResponseFactory.Create<OkResponse<Folder>>(folder, ["Successfully updated folder name"]);
+        FolderDTO dto = new()
+        {
+            Id = folder.Id,
+            Name = folder.Name,
+            IsProtected = folder.IsProtected,
+            ParentFolderId = folder.ParentFolderId,
+            ParentFolderName = folder.ParentFolder?.Name,
+            SubFolders = folder.SubFolders?.Select(sf => new SubFolderDTO
+            {
+                Id = sf.Id,
+                Name = sf.Name,
+                IsProtected = sf.IsProtected,
+                SubFolderCount = sf.SubFolders?.Count ?? 0,
+                CollectionCount = sf.Collections?.Count ?? 0
+            }).ToList() ?? new List<SubFolderDTO>(),
+            Collections = folder.Collections?.Select(c => new CollectionSummaryDTO
+            {
+                Id = c.Id,
+                Name = c.Name,
+                Type = c.GetType().Name,
+                CoverUrl = c.Cover?.Url ?? string.Empty
+            }).ToList() ?? new List<CollectionSummaryDTO>()
+        };
+        throw ResponseFactory.Create<OkResponse<FolderDTO>>(dto, ["Successfully updated folder name"]);
     }
 
     [HttpDelete("{folderId:int}")]

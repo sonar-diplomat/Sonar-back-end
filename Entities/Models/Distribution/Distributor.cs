@@ -42,11 +42,9 @@ public class Distributor : BaseModel
     [DeleteBehavior(DeleteBehavior.Cascade)]
     public virtual ImageFile Cover { get; set; }
 
-    [JsonIgnore]
     public virtual ICollection<DistributorAccount> Accounts { get; set; }
 
     public virtual ICollection<Album> Albums { get; set; }
 
-    [JsonIgnore]
     public virtual ICollection<ArtistRegistrationRequest> ArtistRegistrationRequests { get; set; }
 }

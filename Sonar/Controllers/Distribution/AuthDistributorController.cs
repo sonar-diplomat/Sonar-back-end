@@ -8,6 +8,7 @@ using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Sonar.Extensions;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -101,7 +102,7 @@ public class AuthDistributorController(
     [HttpPost("sessions/revoke-all")]
     public async Task<IActionResult> RevokeAllSessions()
     {
-        DistributorAccount account = await GetDistributorAccountByJwt();
+        DistributorAccount account = await this.GetDistributorAccountByJwtAsync();
         await sessionService.RevokeAllDistributorSessionsAsync(account.Id);
         throw ResponseFactory.Create<OkResponse>(["All sessions revoked successfully"]);
     }
@@ -110,8 +111,8 @@ public class AuthDistributorController(
     [HttpGet("sessions")]
     public async Task<IActionResult> GetSessions()
     {
-        User user = await CheckAccessFeatures([]);
+        DistributorAccount account = await this.GetDistributorAccountByJwtAsync();
         throw ResponseFactory.Create<OkResponse<IEnumerable<ActiveSessionDTO>>>(
-            await sessionService.GetAllByUserIdAsync(user.Id), ["Sessions retrieved successfully"]);
+            (await sessionService.GetAllByUserIdAsync(account.Id)).ToList(), ["Sessions retrieved successfully"]);
     }
 }

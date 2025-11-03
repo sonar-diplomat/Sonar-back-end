@@ -7,4 +7,5 @@ public interface IDistributorAccountRepository : IGenericRepository<DistributorA
     public Task<DistributorAccount?> GetByEmailAsync(string email);
 
     public Task<bool> ExistsByEmailAsync(string email);
+    Task<IEnumerable<DistributorAccount>> GetAllByDistributorId(int id);
 }
