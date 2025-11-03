@@ -16,6 +16,5 @@ public class ReportReasonType : BaseModel
 
     /// <summary>
     /// </summary>
-    [JsonIgnore]
     public virtual ICollection<Report> Reports { get; set; }
 }

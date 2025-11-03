@@ -13,6 +13,5 @@ public class ReportableEntityType : BaseModel
 
     /// <summary>
     /// </summary>
-    [JsonIgnore]
     public virtual ICollection<Report> Reports { get; set; }
 }

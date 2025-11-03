@@ -1,4 +1,3 @@
-using System.Text;
 using Application.Abstractions.Interfaces.Repository;
 using Application.Abstractions.Interfaces.Repository.Access;
 using Application.Abstractions.Interfaces.Repository.Chat;
@@ -57,6 +56,7 @@ using Sonar.Infrastructure.Repository.Report;
 using Sonar.Infrastructure.Repository.UserCore;
 using Sonar.Infrastructure.Repository.UserExperience;
 using Sonar.Middleware;
+using System.Text;
 using Flac = Application.Services.File.Flac;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -123,7 +123,13 @@ builder.Services.AddAuthentication(options =>
         };
     });
 
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(o =>
+{
+    o.AddOperationTransformer<OperationTraceTransformer>();               // какой экшен
+    o.AddSchemaTransformer<SchemaBreadcrumbsTransformer>();               // стек типов "на лету"
+    o.AddSchemaTransformer<CollapseSchemaByNameTransformer>();
+    o.AddDocumentTransformer<RefGraphCycleDetectorDocumentTransformer>(); // циклы по $ref в готовом документе
+});
 
 builder.Services.Configure<FormOptions>(options =>
 {

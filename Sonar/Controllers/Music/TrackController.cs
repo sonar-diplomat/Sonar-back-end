@@ -60,6 +60,7 @@ public class TrackController(
         track.Title = dto.Title ?? track.Title;
         track.IsExplicit = dto.IsExplicit ?? track.IsExplicit;
         track.DrivingDisturbingNoises = dto.DrivingDisturbingNoises ?? track.DrivingDisturbingNoises;
+        // TODO: create DTO
         track = await trackService.UpdateAsync(track);
         throw ResponseFactory.Create<OkResponse<Track>>(track, ["Track updated successfully"]);
     }
@@ -75,6 +76,7 @@ public class TrackController(
     [HttpGet("{trackId:int}")]
     public async Task<IActionResult> GetTrackById(int trackId)
     {
+        // TODO: create DTO
         Track track = await trackService.GetByIdValidatedAsync(trackId);
         throw ResponseFactory.Create<OkResponse<Track>>(track, ["Track successfully retrieved"]);
     }

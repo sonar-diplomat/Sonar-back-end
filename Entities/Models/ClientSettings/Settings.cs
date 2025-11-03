@@ -1,7 +1,8 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using Entities.Models.UserCore;
+﻿using Entities.Models.UserCore;
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace Entities.Models.ClientSettings;
 
@@ -44,7 +45,6 @@ public class Settings : BaseModel
     [ForeignKey("UserPrivacySettingsId")]
     [DeleteBehavior(DeleteBehavior.Cascade)]
     public UserPrivacySettings UserPrivacy { get; set; }
-
     public virtual User User { get; set; }
     public virtual ICollection<NotificationType> NotificationTypes { get; set; }
     public virtual ICollection<User> BlockedUsers { get; set; }

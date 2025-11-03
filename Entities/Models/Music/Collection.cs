@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 using Entities.Models.Access;
 using Entities.Models.File;
 using Entities.Models.UserCore;

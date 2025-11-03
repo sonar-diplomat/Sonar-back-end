@@ -1,7 +1,8 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using Entities.Models.UserCore;
+﻿using Entities.Models.UserCore;
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace Entities.Models.UserExperience;
 
@@ -17,6 +18,9 @@ public class SubscriptionPayment : BaseModel
 
     [Required]
     public int SubscriptionPackId { get; set; }
+
+    [Required]
+    public DateTime CreatedAt { get; set; }
 
     /// <summary>
     /// </summary>

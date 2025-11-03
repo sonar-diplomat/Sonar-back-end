@@ -26,7 +26,16 @@ public class PlaylistController(
     {
         User user = await CheckAccessFeatures([]);
         Playlist playlist = await playlistService.CreatePlaylistAsync(user.Id, dto);
-        throw ResponseFactory.Create<OkResponse<Playlist>>(playlist, ["Playlist was created successfully"]);
+        PlaylistResponseDTO responseDto = new()
+        {
+            Id = playlist.Id,
+            Name = playlist.Name,
+            CoverUrl = playlist.Cover?.Url ?? string.Empty,
+            CreatorName = playlist.Creator?.UserName ?? string.Empty,
+            TrackCount = playlist.Tracks?.Count ?? 0,
+            ContributorNames = playlist.Contributors?.Select(c => c.UserName).ToList() ?? new List<string>()
+        };
+        throw ResponseFactory.Create<OkResponse<PlaylistResponseDTO>>(responseDto, ["Playlist was created successfully"]);
     }
 
     [HttpDelete("{playlistId:int}")]
@@ -43,7 +52,16 @@ public class PlaylistController(
     {
         User user = await CheckAccessFeatures([]);
         Playlist playlist = await playlistService.UpdateNameAsync(playlistId, user.Id, newName);
-        throw ResponseFactory.Create<OkResponse<Playlist>>(playlist, ["Playlist name was updated successfully"]);
+        PlaylistResponseDTO responseDto = new()
+        {
+            Id = playlist.Id,
+            Name = playlist.Name,
+            CoverUrl = playlist.Cover?.Url ?? string.Empty,
+            CreatorName = playlist.Creator?.UserName ?? string.Empty,
+            TrackCount = playlist.Tracks?.Count ?? 0,
+            ContributorNames = playlist.Contributors?.Select(c => c.UserName).ToList() ?? new List<string>()
+        };
+        throw ResponseFactory.Create<OkResponse<PlaylistResponseDTO>>(responseDto, ["Playlist name was updated successfully"]);
     }
 
     [HttpPut("{playlistId:int}/update-cover")]
@@ -102,7 +120,16 @@ public class PlaylistController(
     public async Task<IActionResult> GetPlaylistById(int playlistId)
     {
         Playlist playlist = await playlistService.GetByIdValidatedAsync(playlistId);
-        throw ResponseFactory.Create<OkResponse<Playlist>>(playlist, ["Playlist retrieved successfully"]);
+        PlaylistResponseDTO responseDto = new()
+        {
+            Id = playlist.Id,
+            Name = playlist.Name,
+            CoverUrl = playlist.Cover?.Url ?? string.Empty,
+            CreatorName = playlist.Creator?.UserName ?? string.Empty,
+            TrackCount = playlist.Tracks?.Count ?? 0,
+            ContributorNames = playlist.Contributors?.Select(c => c.UserName).ToList() ?? new List<string>()
+        };
+        throw ResponseFactory.Create<OkResponse<PlaylistResponseDTO>>(responseDto, ["Playlist retrieved successfully"]);
     }
 
     // TODO: 😭😭😿😭😭  

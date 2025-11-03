@@ -1,6 +1,7 @@
 using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.File;
 using Application.DTOs;
+using Application.DTOs.Distribution;
 using Application.Response;
 using Entities.Enums;
 using Entities.Models.Distribution;
@@ -30,24 +31,65 @@ public class DistributorController(
     {
         User user = await CheckAccessFeatures([AccessFeatureStruct.ManageDistributors]);
         int coverId = (await imageFileService.UploadFileAsync(dto.Cover)).Id;
-        int licenceId = (await licenseService.CreateLicenseAsync(dto.ExpirationDate, user.Id)).Id;
+        License licence = await licenseService.CreateLicenseAsync(dto.ExpirationDate, user.Id);
+        int licenceId = licence.Id;
         Distributor distributor = await distributorService.CreateDistributorAsync(dto, licenceId, coverId);
-        throw ResponseFactory.Create<OkResponse<Distributor>>(distributor, ["Distributors created successfully"]);
+        DistributorDTO responseDto = new()
+        {
+            Id = distributor.Id,
+            Name = distributor.Name,
+            CoverUrl = distributor.Cover?.Url ?? string.Empty,
+            License = new LicenseDTO
+            {
+                Id = licenceId,
+                IssuingDate = DateTime.UtcNow,
+                ExpirationDate = licence.ExpirationDate,
+                IssuerId = user.Id
+            }
+        };
+        throw ResponseFactory.Create<OkResponse<DistributorDTO>>(responseDto, ["Distributors created successfully"]);
     }
 
     [HttpGet]
+    [Authorize]
     public async Task<IActionResult> GetDistributors()
     {
         IEnumerable<Distributor> distributors = (await distributorService.GetAllAsync()).ToList();
-        throw ResponseFactory.Create<OkResponse<IEnumerable<Distributor>>>(distributors,
+        IEnumerable<DistributorDTO> dtos = distributors.Select(d => new DistributorDTO
+        {
+            Id = d.Id,
+            Name = d.Name,
+            CoverUrl = d.Cover?.Url ?? string.Empty,
+            License = new LicenseDTO
+            {
+                Id = d.License.Id,
+                IssuingDate = DateTime.UtcNow,
+                ExpirationDate = d.License.ExpirationDate,
+                IssuerId = d.License.IssuerId,
+            }
+        });
+        throw ResponseFactory.Create<OkResponse<IEnumerable<DistributorDTO>>>(dtos,
             ["Distributors retrieved successfully"]);
     }
 
     [HttpGet("{id:int}")]
     public async Task<IActionResult> GetDistributorById(int id)
     {
-        Distributor distributor = await distributorService.GetByIdValidatedAsync(id);
-        throw ResponseFactory.Create<OkResponse<Distributor>>(distributor, ["Distributor retrieved successfully"]);
+        Distributor d = await distributorService.GetByIdValidatedAsync(id);
+        DistributorDTO dto = new()
+        {
+            Id = d.Id,
+            Name = d.Name,
+            CoverUrl = d.Cover?.Url ?? string.Empty,
+            License = new LicenseDTO
+            {
+                Id = d.License.Id,
+                IssuingDate = DateTime.UtcNow,
+                ExpirationDate = d.License.ExpirationDate,
+                IssuerId = d.License.IssuerId,
+            }
+        };
+        throw ResponseFactory.Create<OkResponse<DistributorDTO>>(dto, ["Distributor retrieved successfully"]);
     }
 
     [HttpPut("{id:int}")]
@@ -55,8 +97,21 @@ public class DistributorController(
     public async Task<IActionResult> UpdateDistributor(int id, UpdateDistributorDTO dto)
     {
         await CheckAccessFeatures([AccessFeatureStruct.ManageDistributors]);
-        Distributor distributor = await distributorService.UpdateDistributorAsync(id, dto);
-        throw ResponseFactory.Create<OkResponse<Distributor>>(distributor, ["Distributor updated successfully"]);
+        Distributor d = await distributorService.UpdateDistributorAsync(id, dto);
+        DistributorDTO responseDto = new()
+        {
+            Id = d.Id,
+            Name = d.Name,
+            CoverUrl = d.Cover?.Url ?? string.Empty,
+            License = new LicenseDTO
+            {
+                Id = d.License.Id,
+                IssuingDate = DateTime.UtcNow,
+                ExpirationDate = d.License.ExpirationDate,
+                IssuerId = d.License.IssuerId,
+            }
+        };
+        throw ResponseFactory.Create<OkResponse<DistributorDTO>>(responseDto, ["Distributor updated successfully"]);
     }
 
     [HttpDelete("{id:int}")]
@@ -83,10 +138,16 @@ public class DistributorController(
     public async Task<IActionResult> GetArtistRequest()
     {
         int distributorId = (await this.GetDistributorAccountByJwtAsync()).DistributorId;
-
-        IEnumerable<ArtistRegistrationRequest> requests =
-            await distributorService.GetAllRegistrationRequestsAsync(distributorId);
-        throw ResponseFactory.Create<OkResponse<IEnumerable<ArtistRegistrationRequest>>>(requests,
+        IEnumerable<ArtistRegistrationRequest> requests = await distributorService.GetAllRegistrationRequestsAsync(distributorId);
+        IEnumerable<ArtistRegistrationRequestDTO> dtos = requests.Select(r => new ArtistRegistrationRequestDTO
+        {
+            UserId = r.Id,
+            ArtistName = r.ArtistName,
+            RequestedAt = r.RequestedAt,
+            ResolvedAt = r.ResolvedAt,
+            DistributorId = r.DistributorId
+        });
+        throw ResponseFactory.Create<OkResponse<IEnumerable<ArtistRegistrationRequestDTO>>>(dtos,
             ["Artist registration requests retrieved successfully"]);
     }
 
@@ -95,10 +156,17 @@ public class DistributorController(
     public async Task<IActionResult> GetArtistRequestById(int requestId)
     {
         int distributorId = (await this.GetDistributorAccountByJwtAsync()).DistributorId;
-
-        ArtistRegistrationRequest request =
-            await distributorService.GetRegistrationRequestByIdAsync(distributorId, requestId);
-        throw ResponseFactory.Create<OkResponse<ArtistRegistrationRequest>>(request, ["Artist registration request retrieved successfully"]);
+        ArtistRegistrationRequest request = await distributorService.GetRegistrationRequestByIdAsync(distributorId, requestId);
+        ArtistRegistrationRequestDTO dto = new()
+        {
+            Id = requestId,
+            UserId = request.UserId,
+            ArtistName = request.ArtistName,
+            RequestedAt = request.RequestedAt,
+            ResolvedAt = request.ResolvedAt,
+            DistributorId = request.DistributorId
+        };
+        throw ResponseFactory.Create<OkResponse<ArtistRegistrationRequestDTO>>(dto, ["Artist registration request retrieved successfully"]);
     }
 
     [HttpPost("request/{requestId:int}")]

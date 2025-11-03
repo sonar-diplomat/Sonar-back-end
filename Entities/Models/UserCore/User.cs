@@ -1,7 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Text.Json.Serialization;
-using Entities.Models.Access;
+﻿using Entities.Models.Access;
 using Entities.Models.Chat;
 using Entities.Models.ClientSettings;
 using Entities.Models.Distribution;
@@ -10,6 +7,9 @@ using Entities.Models.Music;
 using Entities.Models.UserExperience;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 using LibraryModel = Entities.Models.Library.Library;
 
 namespace Entities.Models.UserCore;
@@ -28,10 +28,11 @@ public class User : IdentityUser<int>
     [Required]
     public DateOnly DateOfBirth { get; set; }
 
-    [Required]
+
     [MaxLength(16)]
     [MinLength(4)]
-    [JsonIgnore]
+    //[JsonIgnore]
+    [Required]
     public string Login { get; set; }
 
     [MaxLength(4000)]
@@ -51,7 +52,6 @@ public class User : IdentityUser<int>
 
     // Authenticator apps
     [MaxLength(500)]
-    [JsonIgnore]
     public string? GoogleAuthorizationKey { get; set; }
     // facebook .... and ect...
 
@@ -109,20 +109,16 @@ public class User : IdentityUser<int>
     public virtual ICollection<Achievement> AchievementProgresses { get; set; }
     public virtual ICollection<AccessFeature> AccessFeatures { get; set; }
 
-    [JsonIgnore]
     public virtual ICollection<Message> Messages { get; set; }
 
-    [JsonIgnore]
     public virtual ICollection<Chat.Chat> Chats { get; set; }
 
     public virtual ICollection<Collection> Collections { get; set; }
 
-    [JsonIgnore]
     public virtual ICollection<License> Licenses { get; set; }
 
     public virtual ICollection<Track> Tracks { get; set; }
     public virtual ICollection<Settings> SettingsBlockedUsers { get; set; }
 
-    [JsonIgnore]
     public virtual ICollection<ArtistRegistrationRequest> ArtistRegistrationRequests { get; set; }
 }

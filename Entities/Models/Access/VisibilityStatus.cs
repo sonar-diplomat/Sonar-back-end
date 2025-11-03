@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
+using Microsoft.EntityFrameworkCore;
 
 namespace Entities.Models.Access;
 
@@ -13,6 +14,5 @@ public class VisibilityStatus : BaseModel
 
     /// <summary>
     /// </summary>
-    [JsonIgnore]
     public virtual ICollection<VisibilityState> VisibilityStates { get; set; }
 }

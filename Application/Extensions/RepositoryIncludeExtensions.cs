@@ -1,11 +1,11 @@
-﻿using System.Linq.Expressions;
-using Application.Abstractions.Interfaces.Repository;
+﻿using Application.Abstractions.Interfaces.Repository;
 using Application.Abstractions.Interfaces.Repository.UserCore;
 using Application.Response;
 using Entities.Models;
 using Entities.Models.UserCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
+using System.Linq.Expressions;
 
 namespace Application.Extensions;
 
@@ -49,18 +49,18 @@ public static class RepositoryIncludeExtensions
     {
         return await query.FirstOrDefaultAsync(e => e.Id == id);
     }
-    
+
     public static async Task<T> GetByIdValidatedAsync<T>(this IQueryable<T> query, int id) where T : BaseModel
     {
         T? entity = await query.FirstOrDefaultAsync(e => e.Id == id);
         return entity ?? throw ResponseFactory.Create<NotFoundResponse>([$"{typeof(T).Name} not found"]);
     }
-    
+
     public static async Task<User?> GetByIdAsync(this IQueryable<User> query, int id)
     {
         return await query.FirstOrDefaultAsync(e => e.Id == id);
     }
-    
+
     public static async Task<User> GetByIdValidatedAsync(this IQueryable<User> query, int id)
     {
         User? user = await query.FirstOrDefaultAsync(e => e.Id == id);

@@ -29,7 +29,6 @@ public class Folder : BaseModel
 
     [ForeignKey("LibraryId")]
     [DeleteBehavior(DeleteBehavior.NoAction)]
-    [JsonIgnore]
     public virtual Library Library { get; set; }
 
     public virtual ICollection<Folder> SubFolders { get; set; }

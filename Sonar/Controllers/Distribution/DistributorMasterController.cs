@@ -1,5 +1,6 @@
 ﻿using Application.Abstractions.Interfaces.Services;
 using Application.DTOs;
+using Application.DTOs.Distribution;
 using Application.Response;
 using Entities.Models.Distribution;
 using Entities.Models.UserCore;
@@ -50,7 +51,15 @@ public class DistributorMasterController(
         DistributorAccount? distributorAccount = await accountService.GetByIdAsync(id);
         if (distributorAccount == null)
             throw ResponseFactory.Create<NotFoundResponse>(["Distributor account not found"]);
-        throw ResponseFactory.Create<OkResponse<DistributorAccount>>(distributorAccount,
+        DistributorAccountDTO dto = new DistributorAccountDTO
+        {
+            Id = distributorAccount.Id,
+            UserName = distributorAccount.UserName,
+            Email = distributorAccount.Email,
+            IsMaster = distributorAccount.IsMaster,
+            DistributorId = distributorAccount.DistributorId
+        };
+        throw ResponseFactory.Create<OkResponse<DistributorAccountDTO>>(dto,
             ["Distributor account retrieved successfully"]);
     }
 

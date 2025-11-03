@@ -35,7 +35,15 @@ public class AlbumController(
     {
         int distributorId = (await this.CheckDistributorAsync()).Id;
         Album album = await albumService.UploadAsync(dto, distributorId);
-        throw ResponseFactory.Create<OkResponse<Album>>(album, ["Album was created successfully"]);
+        AlbumResponseDTO responseDto = new AlbumResponseDTO
+        {
+            Id = album.Id,
+            Name = album.Name,
+            CoverUrl = album.Cover?.Url ?? string.Empty,
+            DistributorName = album.Distributor?.Name ?? string.Empty,
+            TrackCount = album.Tracks?.Count ?? 0
+        };
+        throw ResponseFactory.Create<OkResponse<AlbumResponseDTO>>(responseDto, ["Album was created successfully"]);
     }
 
     [HttpDelete("{albumId:int}")]
@@ -53,7 +61,15 @@ public class AlbumController(
     {
         await MatchAlbumAndDistributor(albumId);
         Album album = await albumService.UpdateNameAsync(albumId, name);
-        throw ResponseFactory.Create<OkResponse<Album>>(album, ["Album name was updated successfully"]);
+        AlbumResponseDTO responseDto = new AlbumResponseDTO
+        {
+            Id = album.Id,
+            Name = album.Name,
+            CoverUrl = album.Cover?.Url ?? string.Empty,
+            DistributorName = album.Distributor?.Name ?? string.Empty,
+            TrackCount = album.Tracks?.Count ?? 0
+        };
+        throw ResponseFactory.Create<OkResponse<AlbumResponseDTO>>(responseDto, ["Album name was updated successfully"]);
     }
 
     [HttpPost("{albumId:int}/add")]
@@ -61,6 +77,7 @@ public class AlbumController(
     public async Task<IActionResult> UploadTrack(int albumId, UploadTrackDTO dto)
     {
         await MatchAlbumAndDistributor(albumId);
+        // TODO: create DTO
         Track track = await trackService.CreateTrackAsync(albumId, dto);
         throw ResponseFactory.Create<OkResponse<Track>>(track, ["Track was added successfully"]);
     }
