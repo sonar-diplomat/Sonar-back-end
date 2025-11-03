@@ -8,6 +8,7 @@ using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Sonar.Extensions;
 
 namespace Sonar.Controllers.Distribution;
 
@@ -81,7 +82,7 @@ public class DistributorController(
     [Authorize]
     public async Task<IActionResult> GetArtistRequest()
     {
-        int distributorId = (await GetDistributorAccountByJwt()).DistributorId;
+        int distributorId = (await this.GetDistributorAccountByJwtAsync()).DistributorId;
 
         IEnumerable<ArtistRegistrationRequest> requests =
             await distributorService.GetAllRegistrationRequestsAsync(distributorId);
@@ -93,7 +94,7 @@ public class DistributorController(
     [Authorize]
     public async Task<IActionResult> GetArtistRequestById(int requestId)
     {
-        int distributorId = (await GetDistributorAccountByJwt()).DistributorId;
+        int distributorId = (await this.GetDistributorAccountByJwtAsync()).DistributorId;
 
         ArtistRegistrationRequest request =
             await distributorService.GetRegistrationRequestByIdAsync(distributorId, requestId);
@@ -104,7 +105,7 @@ public class DistributorController(
     [Authorize]
     public async Task<IActionResult> ResolveArtistRequest(int requestId, bool approve)
     {
-        int distributorId = (await GetDistributorAccountByJwt()).DistributorId;
+        int distributorId = (await this.GetDistributorAccountByJwtAsync()).DistributorId;
         await distributorService.ResolveArtistRequestAsync(distributorId, requestId, approve);
         throw ResponseFactory.Create<OkResponse>(["Artist registration request resolved successfully"]);
     }

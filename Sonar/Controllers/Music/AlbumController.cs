@@ -10,8 +10,7 @@ using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Primitives;
-using System.IdentityModel.Tokens.Jwt;
+using Sonar.Extensions;
 
 namespace Sonar.Controllers.Music;
 
@@ -29,36 +28,12 @@ public class AlbumController(
 )
     : CollectionController<Album>(userManager, collectionService)
 {
-    [Authorize]
-    private async Task<DistributorAccount> GetDistributorAccountByJwt()
-    {
-        string? email = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value ?? User.FindFirst("email")?.Value;
-        if (email == null)
-            throw ResponseFactory.Create<UnauthorizedResponse>(["Invalid JWT token"]);
-        DistributorAccount? distributorAccount = await accountService.GetByEmailAsync(email);
-        return distributorAccount ?? throw ResponseFactory.Create<UnauthorizedResponse>();
-    }
-
-    [Authorize]
-    private async Task<Distributor> CheckDistributor()
-    {
-        DistributorAccount distributorAccount = await GetDistributorAccountByJwt();
-        if (!Request.Headers.TryGetValue("X-Api-Key", out StringValues apiKey))
-            throw ResponseFactory.Create<UnauthorizedResponse>();
-        string key = apiKey.ToString();
-        if (string.IsNullOrEmpty(key))
-            throw ResponseFactory.Create<UnauthorizedResponse>();
-        Distributor? distributor = await distributorService.GetByApiKeyAsync(key);
-        return !(await accountService.GetAllByDistributor(distributor)).Contains(distributorAccount)
-            ? throw ResponseFactory.Create<UnauthorizedResponse>()
-            : distributor!;
-    }
 
     [HttpPost]
     [Authorize]
     public async Task<IActionResult> UploadAlbum(UploadAlbumDTO dto)
     {
-        int distributorId = (await CheckDistributor()).Id;
+        int distributorId = (await this.CheckDistributorAsync()).Id;
         Album album = await albumService.UploadAsync(dto, distributorId);
         throw ResponseFactory.Create<OkResponse<Album>>(album, ["Album was created successfully"]);
     }
@@ -111,7 +86,7 @@ public class AlbumController(
 
     private async Task MatchAlbumAndDistributor(int albumId)
     {
-        Distributor distributor = await CheckDistributor();
+        Distributor distributor = await this.CheckDistributorAsync();
         Album album = await albumService.GetByIdValidatedAsync(albumId);
         if (album.DistributorId != distributor.Id)
             throw ResponseFactory.Create<UnauthorizedResponse>([""]);

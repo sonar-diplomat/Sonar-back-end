@@ -22,7 +22,7 @@ public class PlaylistController(
     : CollectionController<Playlist>(userManager, collectionService)
 {
     [HttpPost("create")]
-    public async Task<IActionResult> CreatePlaylist([FromBody] CreatePlaylistDTO dto)
+    public async Task<IActionResult> CreatePlaylist([FromForm] CreatePlaylistDTO dto)
     {
         User user = await CheckAccessFeatures([]);
         Playlist playlist = await playlistService.CreatePlaylistAsync(user.Id, dto);
@@ -39,7 +39,7 @@ public class PlaylistController(
     }
 
     [HttpPut("{playlistId:int}/update-name")]
-    public async Task<IActionResult> UpdatePlaylistName(int playlistId, [FromBody] string newName)
+    public async Task<IActionResult> UpdatePlaylistName(int playlistId, [FromQuery] string newName)
     {
         User user = await CheckAccessFeatures([]);
         Playlist playlist = await playlistService.UpdateNameAsync(playlistId, user.Id, newName);
@@ -47,7 +47,7 @@ public class PlaylistController(
     }
 
     [HttpPut("{playlistId:int}/update-cover")]
-    public async Task<IActionResult> UpdatePlaylistCover(int playlistId, IFormFile coverFile)
+    public async Task<IActionResult> UpdatePlaylistCover(int playlistId, [FromForm] IFormFile coverFile)
     {
         User user = await CheckAccessFeatures([]);
         await playlistService.UpdatePlaylistCoverAsync(playlistId, user.Id, coverFile);

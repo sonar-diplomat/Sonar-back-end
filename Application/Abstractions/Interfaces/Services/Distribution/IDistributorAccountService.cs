@@ -12,5 +12,5 @@ public interface IDistributorAccountService : IGenericService<DistributorAccount
     Task<DistributorAccount> ChangeUserNameAsync(int id, string newUserName);
     Task<DistributorAccount> ChangeEmailAsync(int id, string newEmail);
     Task<DistributorAccount> ChangePasswordAsync(int id, DistributorAccountChangePasswordDTO dto);
-    Task<IEnumerable<DistributorAccount>> GetAllByDistributor(Distributor? distributor);
+    Task<IEnumerable<DistributorAccount>> GetAllByDistributorAsync(int id);
 }

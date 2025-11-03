@@ -25,17 +25,17 @@ public class DistributorSessionRepository(SonarContext dbContext) : GenericRepos
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<ActiveSessionDTO>> GetAllActiveSessionsByDistributorIdAsync(int userId)
+    public async Task<IEnumerable<ActiveSessionDTO>> GetAllActiveSessionsByDistributorIdAsync(int distributorId)
     {
         return await Task.FromResult(
-            context.UserSessions
-                .Where(s => s.UserId == userId && !s.Revoked && s.ExpiresAt > DateTime.UtcNow)
+            context.DistributorSessions
+                .Where(s => s.DistributorAccountId == distributorId && !s.Revoked && s.ExpiresAt > DateTime.UtcNow)
                 .Select(s => new ActiveSessionDTO
                 {
                     Id = s.Id,
                     DeviceName = s.DeviceName,
                     UserAgent = s.UserAgent,
-                    IpAddress = s.IPAddress.ToString(),
+                    IpAddress = s.IPAddress == null ? null : s.IPAddress.ToString(),
                     CreatedAt = s.CreatedAt,
                     LastActive = s.LastActive
                 }));

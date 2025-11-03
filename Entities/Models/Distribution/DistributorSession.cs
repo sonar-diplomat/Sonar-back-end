@@ -1,7 +1,7 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Net;
-using Microsoft.EntityFrameworkCore;
 
 namespace Entities.Models.Distribution;
 
@@ -11,7 +11,7 @@ public class DistributorSession : BaseModel
     [Required]
     [MinLength(4)]
     [MaxLength(16)]
-    private byte[] IpAddressBytes;
+    private byte[]? IpAddressBytes;
 
     [Required]
     [MaxLength(30)]
@@ -46,9 +46,9 @@ public class DistributorSession : BaseModel
     public virtual DistributorAccount DistributorAccount { get; set; }
 
     [NotMapped]
-    public IPAddress IPAddress
+    public IPAddress? IPAddress
     {
-        get => new(IpAddressBytes);
-        set => IpAddressBytes = value.GetAddressBytes();
+        get => IpAddressBytes == null ? null : new(IpAddressBytes);
+        set => IpAddressBytes = value == null ? null : value.GetAddressBytes();
     }
 }

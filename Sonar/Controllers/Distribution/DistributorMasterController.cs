@@ -6,6 +6,7 @@ using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Sonar.Extensions;
 
 namespace Sonar.Controllers.Distribution;
 
@@ -22,7 +23,7 @@ public class DistributorMasterController(
     [Authorize]
     public async Task CheckAccessDistributorAccount()
     {
-        DistributorAccount distributorAccount = await GetDistributorAccountByJwt();
+        DistributorAccount distributorAccount = await this.GetDistributorAccountByJwtAsync();
         if (!distributorAccount.IsMaster)
             throw ResponseFactory.Create<ForbiddenResponse>(["Access denied. Master distributor account required."]);
     }
