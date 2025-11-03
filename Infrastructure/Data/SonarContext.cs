@@ -123,6 +123,12 @@ public class SonarContext(DbContextOptions<SonarContext> options)
             .HasForeignKey(f => f.ParentFolderId)
             .OnDelete(DeleteBehavior.NoAction);
 
+        builder.Entity<Chat>().HasOne(c => c.Creator).WithMany(u => u.ChatsWhereCreator);
+        builder.Entity<Chat>().HasMany(c => c.Admins).WithMany(u => u.ChatsWhereAdmin)
+            .UsingEntity(j => j.ToTable("ChatAdmins"));
+        builder.Entity<Chat>().HasMany(c => c.Members).WithMany(u => u.ChatsWhereMember)
+            .UsingEntity(j => j.ToTable("ChatMembers"));
+
         builder.Entity<NotificationType>()
             .HasData(NotificationTypeSeedFactory.CreateSeedData());
         builder.Entity<Theme>()

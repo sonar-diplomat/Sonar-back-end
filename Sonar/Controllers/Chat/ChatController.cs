@@ -1,8 +1,10 @@
 using Application.Abstractions.Interfaces.Services;
+using Application.DTOs;
 using Application.DTOs.Chat;
 using Application.Response;
 using Entities.Models.Chat;
 using Entities.Models.UserCore;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
@@ -48,21 +50,37 @@ public class ChatController(
     }
 
     [HttpGet("{chatId:int}/messages")]
-    public async Task<IActionResult> GetMessagesWithCursor(int chatId, [FromQuery] int? cursor = null)
+    [Authorize]
+    public async Task<IActionResult> GetMessagesWithCursor(int chatId, [FromQuery] int? cursor = null,
+        [FromQuery] int take = 50)
     {
-        throw new NotImplementedException();
+        User user = await CheckAccessFeatures([]);
+        CursorPageDTO<MessageDTO> page = await chatService.GetMessagesWithCursorAsync(user.Id, chatId, cursor, take);
+        throw ResponseFactory.Create<OkResponse<CursorPageDTO<MessageDTO>>>(page, ["Messages retrieved successfully"]);
     }
 
     [HttpPost("{chatId:int}/add/{userId:int}")]
     public async Task<IActionResult> AddUserToChat(int chatId, int userId)
     {
-        throw new NotImplementedException();
+        int chatMemberId = (await CheckAccessFeatures([])).Id;
+        await chatService.AddUserToChat(chatMemberId, chatId, userId);
+        throw ResponseFactory.Create<OkResponse>(["User added successfully"]);
+    }
+
+    [HttpDelete("{chatId:int}/leave")]
+    public async Task<IActionResult> LeaveChat(int chatId)
+    {
+        User user = await CheckAccessFeatures([]);
+        await chatService.LeaveChat(user.Id, chatId);
+        throw ResponseFactory.Create<OkResponse>(["Chat leaved successfully"]);
     }
 
     [HttpDelete("{chatId:int}/remove/{userId:int}")]
     public async Task<IActionResult> RemoveUserFromChat(int chatId, int userId)
     {
-        throw new NotImplementedException();
+        User user = await CheckAccessFeatures([]);
+        await chatService.RemoveUserFromChat(user.Id, userId, chatId);
+        throw ResponseFactory.Create<OkResponse>(["User removed from chat successfully"]);
     }
 
     [HttpPut("{chatId:int}/cover")]
