@@ -6,6 +6,7 @@ using Application.Response;
 using Entities.Enums;
 using Entities.Models.UserCore;
 using Entities.Models.UserExperience;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
@@ -22,8 +23,13 @@ public class SubscriptionController(
 {
     #region Subscription Pack Endpoints
 
-    // TODO: write XML comments and returnType attributes
+    /// <summary>
+    /// Retrieves all available subscription packs with their features and pricing.
+    /// </summary>
+    /// <returns>List of subscription pack DTOs including associated features.</returns>
+    /// <response code="200">Subscription packs retrieved successfully.</response>
     [HttpGet("packs")]
+    [ProducesResponseType(typeof(OkResponse<IEnumerable<SubscriptionPackDTO>>), StatusCodes.Status200OK)]
     public async Task<ActionResult<IEnumerable<SubscriptionPackDTO>>> GetAllPacks()
     {
         IEnumerable<SubscriptionPack> packs = (await subscriptionPackService.GetAllAsync()).ToList();
@@ -46,8 +52,16 @@ public class SubscriptionController(
             ["Subscription packs retrieved successfully"]);
     }
 
-    // TODO: write XML comments and returnType attributes
+    /// <summary>
+    /// Retrieves a specific subscription pack by ID with its features.
+    /// </summary>
+    /// <param name="id">The ID of the subscription pack to retrieve.</param>
+    /// <returns>Subscription pack DTO with features.</returns>
+    /// <response code="200">Subscription pack retrieved successfully.</response>
+    /// <response code="404">Subscription pack not found.</response>
     [HttpGet("packs/{id}")]
+    [ProducesResponseType(typeof(OkResponse<SubscriptionPackDTO>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<SubscriptionPackDTO>> GetPack(int id)
     {
         SubscriptionPack pack = await subscriptionPackService.GetByIdValidatedAsync(id);
@@ -73,8 +87,19 @@ public class SubscriptionController(
 
     #region Subscription Payment Endpoints
 
-    // TODO: write XML comments and returnType attributes
+    /// <summary>
+    /// Purchases a subscription pack for the authenticated user.
+    /// </summary>
+    /// <param name="dto">Purchase subscription DTO containing pack ID and payment details.</param>
+    /// <returns>Subscription payment DTO with purchase details.</returns>
+    /// <response code="201">Subscription purchased successfully.</response>
+    /// <response code="401">User not authenticated.</response>
+    /// <response code="400">Invalid subscription pack or insufficient funds.</response>
     [HttpPost("purchase")]
+    [Authorize]
+    [ProducesResponseType(typeof(CreatedResponse<SubscriptionPaymentDTO>), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(BadRequestResponse), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<SubscriptionPaymentDTO>> PurchaseSubscription([FromBody] PurchaseSubscriptionDTO dto)
     {
         User user = await CheckAccessFeatures([]);
@@ -101,8 +126,19 @@ public class SubscriptionController(
     }
 
 
-    // TODO: write XML comments and returnType attributes
+    /// <summary>
+    /// Retrieves all subscription payments in the system (admin only).
+    /// </summary>
+    /// <returns>List of subscription payment DTOs.</returns>
+    /// <response code="200">Subscription payments retrieved successfully.</response>
+    /// <response code="401">User not authorized (requires 'IamAGod' access feature).</response>
+    /// <remarks>
+    /// This endpoint requires the 'IamAGod' access feature for administrative access.
+    /// </remarks>
     [HttpGet("payments")]
+    [Authorize]
+    [ProducesResponseType(typeof(OkResponse<IEnumerable<SubscriptionPaymentDTO>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<IEnumerable<SubscriptionPaymentDTO>>> GetAllPayments()
     {
         await CheckAccessFeatures([AccessFeatureStruct.IamAGod]);
@@ -128,8 +164,16 @@ public class SubscriptionController(
             ["Subscription payments retrieved successfully"]);
     }
 
-    // TODO: write XML comments and returnType attributes
+    /// <summary>
+    /// Retrieves a specific subscription payment by ID.
+    /// </summary>
+    /// <param name="id">The ID of the subscription payment to retrieve.</param>
+    /// <returns>Subscription payment DTO with purchase details.</returns>
+    /// <response code="200">Subscription payment retrieved successfully.</response>
+    /// <response code="404">Subscription payment not found.</response>
     [HttpGet("payments/{id}")]
+    [ProducesResponseType(typeof(OkResponse<SubscriptionPaymentDTO>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<SubscriptionPaymentDTO>> GetPayment(int id)
     {
         SubscriptionPayment payment = await subscriptionPaymentService.GetByIdValidatedAsync(id);
@@ -158,8 +202,13 @@ public class SubscriptionController(
 
     #region Subscription Feature Endpoints
 
-    // TODO: write XML comments and returnType attributes
+    /// <summary>
+    /// Retrieves all available subscription features.
+    /// </summary>
+    /// <returns>List of subscription feature DTOs with pricing and descriptions.</returns>
+    /// <response code="200">Subscription features retrieved successfully.</response>
     [HttpGet("features")]
+    [ProducesResponseType(typeof(OkResponse<IEnumerable<SubscriptionFeatureDTO>>), StatusCodes.Status200OK)]
     public async Task<ActionResult<IEnumerable<SubscriptionFeatureDTO>>> GetAllFeatures()
     {
         IEnumerable<SubscriptionFeature> features = (await subscriptionFeatureService.GetAllAsync()).ToList();
@@ -174,8 +223,16 @@ public class SubscriptionController(
             ["Subscription features retrieved successfully"]);
     }
 
-    // TODO: write XML comments and returnType attributes
+    /// <summary>
+    /// Retrieves a specific subscription feature by ID.
+    /// </summary>
+    /// <param name="id">The ID of the subscription feature to retrieve.</param>
+    /// <returns>Subscription feature DTO with pricing and description.</returns>
+    /// <response code="200">Subscription feature retrieved successfully.</response>
+    /// <response code="404">Subscription feature not found.</response>
     [HttpGet("features/{id}")]
+    [ProducesResponseType(typeof(OkResponse<SubscriptionFeatureDTO>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<SubscriptionFeatureDTO>> GetFeature(int id)
     {
         SubscriptionFeature feature = await subscriptionFeatureService.GetByIdValidatedAsync(id);

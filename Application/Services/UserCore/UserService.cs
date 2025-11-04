@@ -1,5 +1,4 @@
-﻿using System.Security.Cryptography;
-using Application.Abstractions.Interfaces.Repository.UserCore;
+﻿using Application.Abstractions.Interfaces.Repository.UserCore;
 using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.File;
 using Application.DTOs.Auth;
@@ -10,6 +9,7 @@ using Entities.Models.Access;
 using Entities.Models.Music;
 using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Http;
+using System.Security.Cryptography;
 
 namespace Application.Services.UserCore;
 
@@ -41,7 +41,7 @@ public class UserService(
 
     public async Task<IEnumerable<User>> GetAllAsync()
     {
-        return await repository.GetAllAsync();
+        return await repository.Include(u => u.AccessFeatures).GetAllAsync();
     }
 
     public async Task<User> UpdateUserAsync(int userId, UserUpdateDTO userUpdateUpdateDto)

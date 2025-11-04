@@ -1,11 +1,12 @@
-﻿using System.Text.Json;
-using Application.Abstractions.Interfaces.Services;
+﻿using Application.Abstractions.Interfaces.Services;
 using Application.DTOs.ClientSettings;
 using Application.Response;
 using Entities.Models.ClientSettings;
 using Entities.Models.UserCore;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
 
 namespace Sonar.Controllers.ClientSettings;
 
@@ -14,13 +15,21 @@ public class ClientSettingsController(
     ISettingsService settingsService
 ) : BaseController(userManager)
 {
-    // TODO: write XML comments and returnType attributes
+    /// <summary>
+    /// Retrieves the current user's client settings including theme, language, privacy, and playback preferences.
+    /// </summary>
+    /// <returns>Settings DTO with full configuration details.</returns>
+    /// <response code="200">User settings retrieved successfully.</response>
+    /// <response code="401">User not authenticated.</response>
     [HttpGet]
+    [Authorize]
+    [ProducesResponseType(typeof(OkResponse<SettingsDTO>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetCurrentUserSettings()
     {
         User user = await CheckAccessFeatures([]);
         Settings settings = await settingsService.GetByIdValidatedFullAsync(user.SettingsId);
-        SettingsDTO dto = new SettingsDTO
+        SettingsDTO dto = new()
         {
             Id = settings.Id,
             AutoPlay = settings.AutoPlay,
@@ -71,13 +80,25 @@ public class ClientSettingsController(
         throw ResponseFactory.Create<OkResponse<SettingsDTO>>(dto, ["User settings retrieved successfully."]);
     }
 
-    // TODO: write XML comments and returnType attributes
+    /// <summary>
+    /// Partially updates the current user's client settings using JSON Patch format.
+    /// </summary>
+    /// <param name="updates">JSON element containing the settings properties to update.</param>
+    /// <returns>Updated settings DTO with all current values.</returns>
+    /// <response code="200">Settings updated successfully.</response>
+    /// <response code="401">User not authenticated.</response>
+    /// <remarks>
+    /// Supports partial updates - only provide the fields you want to change.
+    /// </remarks>
     [HttpPatch]
+    [Authorize]
+    [ProducesResponseType(typeof(OkResponse<SettingsDTO>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> PatchSettings([FromBody] JsonElement updates)
     {
         int settingsId = (await CheckAccessFeatures([])).SettingsId;
         Settings updated = await settingsService.PatchAsync(settingsId, updates);
-        SettingsDTO dto = new SettingsDTO
+        SettingsDTO dto = new()
         {
             Id = updated.Id,
             AutoPlay = updated.AutoPlay,

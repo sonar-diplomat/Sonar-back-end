@@ -27,16 +27,35 @@ public class AuthDistributorController(
 {
     private readonly IDistributorAccountService accountService = accountService;
 
-    // TODO: write XML comments and returnType attributes
+    /// <summary>
+    /// Terminates a specific distributor session.
+    /// </summary>
+    /// <param name="id">The session ID to terminate.</param>
+    /// <returns>Success response upon termination.</returns>
+    /// <response code="200">Session terminated successfully.</response>
+    /// <response code="404">Session not found.</response>
     [HttpDelete("session/{id}")]
+    [ProducesResponseType(typeof(OkResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> TerminateSession(int id)
     {
         await sessionService.TerminateSessionAsync(id);
         throw ResponseFactory.Create<OkResponse>(["Session terminated successfully"]);
     }
 
-    // TODO: write XML comments and returnType attributes
+    /// <summary>
+    /// Registers a new distributor account.
+    /// </summary>
+    /// <param name="dto">Distributor account registration data including username, email, and password.</param>
+    /// <returns>Created distributor account entity.</returns>
+    /// <response code="201">Distributor account registered successfully.</response>
+    /// <response code="401">User not authorized (requires 'ManageDistributors' feature).</response>
+    /// <response code="400">Invalid registration data or account already exists.</response>
     [HttpPost("register")]
+    [Authorize]
+    [ProducesResponseType(typeof(CreatedResponse<DistributorAccount>), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(BadRequestResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Register(DistributorAccountRegisterDTO dto)
     {
         await CheckAccessFeatures([AccessFeatureStruct.ManageDistributors]);
@@ -44,8 +63,20 @@ public class AuthDistributorController(
             ["Distributor account registered successfully"]);
     }
 
-    // TODO: write XML comments and returnType attributes
+    /// <summary>
+    /// Authenticates a distributor account and returns JWT tokens.
+    /// </summary>
+    /// <param name="email">Distributor account email.</param>
+    /// <param name="password">Distributor account password.</param>
+    /// <returns>Login response containing JWT access token, refresh token, and session ID.</returns>
+    /// <response code="200">Login successful.</response>
+    /// <response code="401">Invalid credentials.</response>
+    /// <remarks>
+    /// Requires X-Device-Name header for session tracking.
+    /// </remarks>
     [HttpPost("login")]
+    [ProducesResponseType(typeof(OkResponse<LoginResponseDTO>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Login(string email, string password)
     {
         DistributorAccount account = await accountService.GetByEmailValidatedAsync(email);
@@ -78,8 +109,16 @@ public class AuthDistributorController(
             ["Distributor account logged in successfully"]);
     }
 
-    // TODO: write XML comments and returnType attributes
+    /// <summary>
+    /// Refreshes an expired distributor access token using a valid refresh token.
+    /// </summary>
+    /// <param name="refreshToken">The refresh token string.</param>
+    /// <returns>New access token and the same refresh token.</returns>
+    /// <response code="200">Token refreshed successfully.</response>
+    /// <response code="401">Invalid or expired refresh token.</response>
     [HttpPost("refresh-token")]
+    [ProducesResponseType(typeof(OkResponse<RefreshTokenResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> RefreshToken([FromBody] string refreshToken)
     {
         string refreshHash = authService.ComputeSha256(refreshToken);
@@ -91,9 +130,19 @@ public class AuthDistributorController(
             ["Token refreshed successfully"]);
     }
 
-    // TODO: write XML comments and returnType attributes
+    /// <summary>
+    /// Revokes a specific distributor session by session ID.
+    /// </summary>
+    /// <param name="sessionId">The session ID to revoke.</param>
+    /// <returns>Success response upon session revocation.</returns>
+    /// <response code="200">Session revoked successfully.</response>
+    /// <response code="401">User not authenticated.</response>
+    /// <response code="404">Session not found.</response>
     [Authorize]
     [HttpPost("{sessionId:int}/revoke")]
+    [ProducesResponseType(typeof(OkResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> RevokeSessionAsync(int sessionId)
     {
         await CheckAccessFeatures([]);
@@ -103,9 +152,16 @@ public class AuthDistributorController(
     }
 
 
-    // TODO: write XML comments and returnType attributes
+    /// <summary>
+    /// Revokes all active sessions for the authenticated distributor account.
+    /// </summary>
+    /// <returns>Success response upon revoking all sessions.</returns>
+    /// <response code="200">All sessions revoked successfully.</response>
+    /// <response code="401">User not authenticated.</response>
     [Authorize]
     [HttpPost("sessions/revoke-all")]
+    [ProducesResponseType(typeof(OkResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> RevokeAllSessions()
     {
         DistributorAccount account = await this.GetDistributorAccountByJwtAsync();
@@ -113,9 +169,16 @@ public class AuthDistributorController(
         throw ResponseFactory.Create<OkResponse>(["All sessions revoked successfully"]);
     }
 
-    // TODO: write XML comments and returnType attributes
+    /// <summary>
+    /// Retrieves all active sessions for the authenticated distributor account.
+    /// </summary>
+    /// <returns>List of active sessions with device information and last active times.</returns>
+    /// <response code="200">Sessions retrieved successfully.</response>
+    /// <response code="401">User not authenticated.</response>
     [Authorize]
     [HttpGet("sessions")]
+    [ProducesResponseType(typeof(OkResponse<IEnumerable<ActiveSessionDTO>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetSessions()
     {
         DistributorAccount account = await this.GetDistributorAccountByJwtAsync();

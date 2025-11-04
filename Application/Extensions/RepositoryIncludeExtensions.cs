@@ -56,6 +56,12 @@ public static class RepositoryIncludeExtensions
         return entity ?? throw ResponseFactory.Create<NotFoundResponse>([$"{typeof(T).Name} not found"]);
     }
 
+
+
+    public static async Task<IEnumerable<User>> GetAllAsync(this IQueryable<User> query)
+    {
+        return await query.ToListAsync();
+    }
     public static async Task<User?> GetByIdAsync(this IQueryable<User> query, int id)
     {
         return await query.FirstOrDefaultAsync(e => e.Id == id);

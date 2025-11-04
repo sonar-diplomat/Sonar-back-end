@@ -20,9 +20,19 @@ public class GiftController(
 )
     : BaseController(userManager)
 {
-    // TODO: write XML comments and returnType attributes
+    /// <summary>
+    /// Sends a gift with a subscription pack to another user.
+    /// </summary>
+    /// <param name="giftDto">Gift data including buyer ID, receiver ID, subscription pack, and message.</param>
+    /// <returns>Created gift entity.</returns>
+    /// <response code="201">Gift sent successfully.</response>
+    /// <response code="400">Invalid buyer ID or gift data.</response>
+    /// <response code="401">User not authenticated.</response>
     [HttpPost("send")]
     [Authorize]
+    [ProducesResponseType(typeof(Gift), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(BadRequestResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<Gift>> SendGift([FromBody] SendGiftDTO giftDto)
     {
         User user = await CheckAccessFeatures([]);
@@ -32,9 +42,19 @@ public class GiftController(
         return CreatedAtAction(nameof(GetGift), new { id = gift.Id }, gift);
     }
 
-    // TODO: write XML comments and returnType attributes
+    /// <summary>
+    /// Accepts a gift and activates the associated subscription.
+    /// </summary>
+    /// <param name="id">The ID of the gift to accept.</param>
+    /// <returns>Subscription payment DTO with activated subscription details.</returns>
+    /// <response code="200">Gift accepted and subscription activated.</response>
+    /// <response code="401">User not authenticated or not the gift recipient.</response>
+    /// <response code="404">Gift not found.</response>
     [HttpPost("{id}/accept")]
     [Authorize]
+    [ProducesResponseType(typeof(OkResponse<SubscriptionPaymentDTO>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<SubscriptionPaymentDTO>> AcceptGift(int id)
     {
         User user = await CheckAccessFeatures([]);
@@ -60,9 +80,16 @@ public class GiftController(
             ["Gift accepted and subscription activated."]);
     }
 
-    // TODO: write XML comments and returnType attributes
+    /// <summary>
+    /// Retrieves all gifts received by the authenticated user.
+    /// </summary>
+    /// <returns>List of gift response DTOs.</returns>
+    /// <response code="200">Received gifts retrieved successfully.</response>
+    /// <response code="401">User not authenticated.</response>
     [HttpGet("received")]
     [Authorize]
+    [ProducesResponseType(typeof(OkResponse<IEnumerable<GiftResponseDTO>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<IEnumerable<GiftResponseDTO>>> GetReceivedGifts()
     {
         User user = await CheckAccessFeatures([]);
@@ -82,9 +109,17 @@ public class GiftController(
         throw ResponseFactory.Create<OkResponse<IEnumerable<GiftResponseDTO>>>(dtos, ["Received gifts retrieved successfully."]);
     }
 
-    // TODO: write XML comments and returnType attributes
+    /// <summary>
+    /// Retrieves all gifts sent by the authenticated user.
+    /// </summary>
+    /// <param name="senderId">The ID of the sender (must match authenticated user).</param>
+    /// <returns>List of gift response DTOs.</returns>
+    /// <response code="200">Sent gifts retrieved successfully.</response>
+    /// <response code="401">User not authenticated.</response>
     [HttpGet("sent")]
     [Authorize]
+    [ProducesResponseType(typeof(OkResponse<IEnumerable<GiftResponseDTO>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<IEnumerable<GiftResponseDTO>>> GetSentGifts(int senderId)
     {
         User user = await CheckAccessFeatures([]);
@@ -104,9 +139,19 @@ public class GiftController(
         throw ResponseFactory.Create<OkResponse<IEnumerable<GiftResponseDTO>>>(dtos, ["Sent gifts retrieved successfully"]);
     }
 
-    // TODO: write XML comments and returnType attributes
+    /// <summary>
+    /// Retrieves detailed information about a specific gift.
+    /// </summary>
+    /// <param name="id">The ID of the gift to retrieve.</param>
+    /// <returns>Gift response DTO with full details.</returns>
+    /// <response code="200">Gift retrieved successfully.</response>
+    /// <response code="401">User not authenticated.</response>
+    /// <response code="404">Gift not found.</response>
     [HttpGet("{id}")]
     [Authorize]
+    [ProducesResponseType(typeof(OkResponse<GiftResponseDTO>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<GiftResponseDTO>> GetGift(int id)
     {
         Gift gift = await giftService.GetByIdValidatedAsync(id);
@@ -126,9 +171,19 @@ public class GiftController(
     }
 
 
-    // TODO: write XML comments and returnType attributes
+    /// <summary>
+    /// Cancels a sent gift before it has been accepted.
+    /// </summary>
+    /// <param name="id">The ID of the gift to cancel.</param>
+    /// <returns>Success response upon cancellation.</returns>
+    /// <response code="200">Gift cancelled successfully.</response>
+    /// <response code="401">User not authenticated or not the gift sender.</response>
+    /// <response code="400">Gift has already been accepted.</response>
     [HttpDelete("{id}/cancel")]
     [Authorize]
+    [ProducesResponseType(typeof(OkResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(BadRequestResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> CancelGift(int id)
     {
         User user = await CheckAccessFeatures([]);
@@ -138,8 +193,13 @@ public class GiftController(
 
     #region Gift Style Endpoints
 
-    // TODO: write XML comments and returnType attributes
+    /// <summary>
+    /// Retrieves all available gift styles.
+    /// </summary>
+    /// <returns>List of gift style DTOs.</returns>
+    /// <response code="200">Gift styles retrieved successfully.</response>
     [HttpGet("styles")]
+    [ProducesResponseType(typeof(OkResponse<IEnumerable<GiftStyleDTO>>), StatusCodes.Status200OK)]
     public async Task<ActionResult<IEnumerable<GiftStyleDTO>>> GetAllStyles()
     {
         IEnumerable<GiftStyle> styles = await giftStyleService.GetAllAsync();
@@ -152,8 +212,16 @@ public class GiftController(
             ["Gift styles retrieved successfully"]);
     }
 
-    // TODO: write XML comments and returnType attributes
+    /// <summary>
+    /// Retrieves a specific gift style by its ID.
+    /// </summary>
+    /// <param name="id">The ID of the gift style to retrieve.</param>
+    /// <returns>Gift style DTO.</returns>
+    /// <response code="200">Gift style retrieved successfully.</response>
+    /// <response code="404">Gift style not found.</response>
     [HttpGet("styles/{id}")]
+    [ProducesResponseType(typeof(OkResponse<GiftStyleDTO>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<GiftStyleDTO>> GetStyle(int id)
     {
         GiftStyle style = await giftStyleService.GetByIdValidatedAsync(id);

@@ -13,9 +13,23 @@ namespace Sonar.Controllers;
 public class CollectionController<T>(UserManager<User> userManager, ICollectionService<T> collectionService)
     : BaseController(userManager) where T : Collection
 {
-    // TODO: write XML comments and returnType attributes
+    /// <summary>
+    /// Updates the visibility status of a collection.
+    /// </summary>
+    /// <param name="collectionId">The ID of the collection to update visibility for.</param>
+    /// <param name="visibilityStatusId">The ID of the new visibility status.</param>
+    /// <returns>Success response upon visibility status update.</returns>
+    /// <response code="200">Visibility status updated successfully.</response>
+    /// <response code="401">User not authenticated or lacks 'ManageContent' access feature.</response>
+    /// <response code="404">Collection or visibility status not found.</response>
+    /// <remarks>
+    /// Requires 'ManageContent' access feature.
+    /// </remarks>
     [HttpPut("visibility")]
     [Authorize]
+    [ProducesResponseType(typeof(OkResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UpdateVisibilityStatus([FromRoute] int collectionId,
         [FromQuery] int visibilityStatusId)
     {
@@ -24,9 +38,19 @@ public class CollectionController<T>(UserManager<User> userManager, ICollectionS
         throw ResponseFactory.Create<OkResponse>([$"{nameof(T)} visibility status was changed successfully"]);
     }
 
-    // TODO: write XML comments and returnType attributes
+    /// <summary>
+    /// Toggles the favorite status of a collection in the user's library.
+    /// </summary>
+    /// <param name="collectionId">The ID of the collection to toggle favorite status for.</param>
+    /// <returns>Success response upon toggling favorite status.</returns>
+    /// <response code="200">Favorite status toggled successfully.</response>
+    /// <response code="401">User not authenticated.</response>
+    /// <response code="404">Collection not found.</response>
     [HttpPost("toggle-favorite")]
     [Authorize]
+    [ProducesResponseType(typeof(OkResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ToggleFavorite(int collectionId)
     {
         User user = await CheckAccessFeatures([]);

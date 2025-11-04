@@ -25,9 +25,19 @@ public class DistributorController(
 {
     private readonly IDistributorService distributorService = distributorService;
 
-    // TODO: write XML comments and returnType attributes
+    /// <summary>
+    /// Creates a new distributor in the system.
+    /// </summary>
+    /// <param name="dto">Distributor creation data including name, cover image, and license expiration date.</param>
+    /// <returns>Distributor DTO with created distributor details and license information.</returns>
+    /// <response code="200">Distributor created successfully.</response>
+    /// <response code="401">User not authorized (requires 'ManageDistributors' feature).</response>
+    /// <response code="400">Invalid distributor data or image file.</response>
     [HttpPost]
     [Authorize]
+    [ProducesResponseType(typeof(OkResponse<DistributorDTO>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(BadRequestResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> CreateDistributor([FromForm] CreateDistributorDTO dto)
     {
         User user = await CheckAccessFeatures([AccessFeatureStruct.ManageDistributors]);
@@ -51,9 +61,16 @@ public class DistributorController(
         throw ResponseFactory.Create<OkResponse<DistributorDTO>>(responseDto, ["Distributors created successfully"]);
     }
 
-    // TODO: write XML comments and returnType attributes
+    /// <summary>
+    /// Retrieves all distributors in the system.
+    /// </summary>
+    /// <returns>List of distributor DTOs with license information.</returns>
+    /// <response code="200">Distributors retrieved successfully.</response>
+    /// <response code="401">User not authenticated.</response>
     [HttpGet]
     [Authorize]
+    [ProducesResponseType(typeof(OkResponse<IEnumerable<DistributorDTO>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetDistributors()
     {
         IEnumerable<Distributor> distributors = (await distributorService.GetAllAsync()).ToList();
@@ -74,8 +91,16 @@ public class DistributorController(
             ["Distributors retrieved successfully"]);
     }
 
-    // TODO: write XML comments and returnType attributes
+    /// <summary>
+    /// Retrieves detailed information about a specific distributor.
+    /// </summary>
+    /// <param name="id">The ID of the distributor to retrieve.</param>
+    /// <returns>Distributor DTO with full details and license information.</returns>
+    /// <response code="200">Distributor retrieved successfully.</response>
+    /// <response code="404">Distributor not found.</response>
     [HttpGet("{id:int}")]
+    [ProducesResponseType(typeof(OkResponse<DistributorDTO>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetDistributorById(int id)
     {
         Distributor d = await distributorService.GetByIdValidatedAsync(id);
@@ -95,9 +120,20 @@ public class DistributorController(
         throw ResponseFactory.Create<OkResponse<DistributorDTO>>(dto, ["Distributor retrieved successfully"]);
     }
 
-    // TODO: write XML comments and returnType attributes
+    /// <summary>
+    /// Updates an existing distributor's information.
+    /// </summary>
+    /// <param name="id">The ID of the distributor to update.</param>
+    /// <param name="dto">Updated distributor data.</param>
+    /// <returns>Updated distributor DTO.</returns>
+    /// <response code="200">Distributor updated successfully.</response>
+    /// <response code="401">User not authorized (requires 'ManageDistributors' feature).</response>
+    /// <response code="404">Distributor not found.</response>
     [HttpPut("{id:int}")]
     [Authorize]
+    [ProducesResponseType(typeof(OkResponse<DistributorDTO>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UpdateDistributor(int id, UpdateDistributorDTO dto)
     {
         await CheckAccessFeatures([AccessFeatureStruct.ManageDistributors]);
@@ -118,9 +154,19 @@ public class DistributorController(
         throw ResponseFactory.Create<OkResponse<DistributorDTO>>(responseDto, ["Distributor updated successfully"]);
     }
 
-    // TODO: write XML comments and returnType attributes
+    /// <summary>
+    /// Deletes a distributor from the system.
+    /// </summary>
+    /// <param name="id">The ID of the distributor to delete.</param>
+    /// <returns>Success response upon deletion.</returns>
+    /// <response code="200">Distributor deleted successfully.</response>
+    /// <response code="401">User not authorized (requires 'ManageDistributors' feature).</response>
+    /// <response code="404">Distributor not found.</response>
     [HttpDelete("{id:int}")]
     [Authorize]
+    [ProducesResponseType(typeof(OkResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteDistributor(int id)
     {
         await CheckAccessFeatures([AccessFeatureStruct.ManageDistributors]);
@@ -129,9 +175,19 @@ public class DistributorController(
         throw ResponseFactory.Create<OkResponse>(["Distributor deleted successfully"]);
     }
 
-    // TODO: write XML comments and returnType attributes
+    /// <summary>
+    /// Regenerates the API key for a distributor's license.
+    /// </summary>
+    /// <param name="id">The license ID for which to update the API key.</param>
+    /// <returns>The new API key.</returns>
+    /// <response code="200">API key updated successfully.</response>
+    /// <response code="401">User not authorized (requires 'ManageDistributors' feature).</response>
+    /// <response code="404">License not found.</response>
     [HttpGet("update-key/{id:int}")]
     [Authorize]
+    [ProducesResponseType(typeof(OkResponse<string>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UpdateLicenseKey(int id)
     {
         await CheckAccessFeatures([AccessFeatureStruct.ManageDistributors]);
@@ -139,9 +195,16 @@ public class DistributorController(
         throw ResponseFactory.Create<OkResponse<string>>(key, ["Api key updated successfully"]);
     }
 
-    // TODO: write XML comments and returnType attributes
+    /// <summary>
+    /// Retrieves all artist registration requests for the authenticated distributor.
+    /// </summary>
+    /// <returns>List of artist registration request DTOs.</returns>
+    /// <response code="200">Registration requests retrieved successfully.</response>
+    /// <response code="401">User not authenticated or not a distributor.</response>
     [HttpGet("request")]
     [Authorize]
+    [ProducesResponseType(typeof(OkResponse<IEnumerable<ArtistRegistrationRequestDTO>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetArtistRequest()
     {
         int distributorId = (await this.GetDistributorAccountByJwtAsync()).DistributorId;
@@ -158,9 +221,19 @@ public class DistributorController(
             ["Artist registration requests retrieved successfully"]);
     }
 
-    // TODO: write XML comments and returnType attributes
+    /// <summary>
+    /// Retrieves a specific artist registration request by ID.
+    /// </summary>
+    /// <param name="requestId">The ID of the registration request to retrieve.</param>
+    /// <returns>Artist registration request DTO with full details.</returns>
+    /// <response code="200">Registration request retrieved successfully.</response>
+    /// <response code="401">User not authenticated or not a distributor.</response>
+    /// <response code="404">Request not found or not associated with this distributor.</response>
     [HttpGet("request/{requestId:int}")]
     [Authorize]
+    [ProducesResponseType(typeof(OkResponse<ArtistRegistrationRequestDTO>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetArtistRequestById(int requestId)
     {
         int distributorId = (await this.GetDistributorAccountByJwtAsync()).DistributorId;
@@ -177,9 +250,20 @@ public class DistributorController(
         throw ResponseFactory.Create<OkResponse<ArtistRegistrationRequestDTO>>(dto, ["Artist registration request retrieved successfully"]);
     }
 
-    // TODO: write XML comments and returnType attributes
+    /// <summary>
+    /// Resolves an artist registration request by approving or rejecting it.
+    /// </summary>
+    /// <param name="requestId">The ID of the registration request to resolve.</param>
+    /// <param name="approve">True to approve the request, false to reject it.</param>
+    /// <returns>Success response upon resolution.</returns>
+    /// <response code="200">Registration request resolved successfully.</response>
+    /// <response code="401">User not authenticated or not a distributor.</response>
+    /// <response code="404">Request not found.</response>
     [HttpPost("request/{requestId:int}")]
     [Authorize]
+    [ProducesResponseType(typeof(OkResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ResolveArtistRequest(int requestId, [FromQuery] bool approve)
     {
         int distributorId = (await this.GetDistributorAccountByJwtAsync()).DistributorId;
