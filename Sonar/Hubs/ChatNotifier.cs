@@ -35,6 +35,11 @@ public sealed class ChatNotifier(IHubContext<ChatHub> hub) : IChatNotifier
         return hub.Clients.Group(G(payload.ChatId)).SendAsync("chat.user.removed", payload);
     }
 
+    public Task MessageDeleted(MessageDeletedEvent payload)
+    {
+        return hub.Clients.Group(G(payload.ChatId)).SendAsync("message.deleted", payload);
+    }
+
     private static string G(int chatId)
     {
         return $"chat:{chatId}";

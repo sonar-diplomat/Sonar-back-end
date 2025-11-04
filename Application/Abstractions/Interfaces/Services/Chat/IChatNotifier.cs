@@ -10,6 +10,8 @@ public interface IChatNotifier
 
     Task UserAdded(UserAddedToChatEvent payload);
     Task UserRemoved(UserRemovedFromChatEvent payload);
+
+    Task MessageDeleted(MessageDeletedEvent payload);
 }
 
 public sealed record MessageCreatedEvent(
@@ -26,6 +28,12 @@ public sealed record MessagesReadEvent(
     int UserId,
     IReadOnlyCollection<int> MessageIds,
     DateTime ReadAtUtc
+);
+
+public sealed record MessageDeletedEvent(
+    int ChatId,
+    int MessageId,
+    int InitiatorId
 );
 
 public sealed record ChatNameUpdatedEvent(int ChatId, string Name);

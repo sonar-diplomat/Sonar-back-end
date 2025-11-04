@@ -28,6 +28,8 @@ public class ChatService(
         ImageFile image = await imageFileService.UploadFileAsync(file);
         chat.CoverId = image.Id;
         await repository.UpdateAsync(chat);
+
+        await notifier.ChatCoverUpdated(new ChatCoverUpdatedEvent(chatId, chat.CoverId));
     }
 
     public async Task UpdateChatNameAsync(int userId, int chatId, string newName)
@@ -35,6 +37,8 @@ public class ChatService(
         ChatModel chat = await CheckUserIsMemberAsync(userId, chatId, true);
         chat.Name = newName;
         await repository.UpdateAsync(chat);
+
+        await notifier.ChatNameUpdated(new ChatNameUpdatedEvent(chatId, chat.Name));
     }
 
     public async Task<Message> GetMessageByIdAsync(int userId, int messageId)
@@ -47,9 +51,15 @@ public class ChatService(
     public async Task DeleteMessageAsync(int userId, int messageId)
     {
         Message message = await messageService.GetByIdValidatedAsync(messageId);
-        if (message.SenderId == userId)
-            await messageService.DeleteAsync(messageId);
-        throw ResponseFactory.Create<ForbiddenResponse>(["User is not the sender of the message"]);
+        if (message.SenderId != userId)
+            throw ResponseFactory.Create<ForbiddenResponse>(["User is not the sender of the message"]);
+        await messageService.DeleteAsync(messageId);
+
+        await notifier.MessageDeleted(new MessageDeletedEvent(
+            message.ChatId,
+            message.Id,
+            userId
+        ));
     }
 
     public async Task<ChatDTO> GetChatInfoAsync(int userId, int chatId)
@@ -113,13 +123,14 @@ public class ChatService(
         }
     }
 
-
     public async Task ReadAllMessagesAsync(int userId, int chatId)
     {
         await CheckUserIsMemberAsync(userId, chatId);
         ChatModel chat = await repository.Include(c => c.Messages).GetByIdValidatedAsync(chatId);
         foreach (Message message in chat.Messages)
         {
+            if (message.MessagesReads.FirstOrDefault(mr => mr.MessageId == message.Id && mr.UserId == userId) != null)
+                continue;
             MessageRead messageRead = new()
             {
                 MessageId = message.Id,
@@ -140,6 +151,8 @@ public class ChatService(
             throw ResponseFactory.Create<BadRequestResponse>(["User is the member of the chat"]);
         chat.Members.Add(user);
         await repository.UpdateAsync(chat);
+
+        await notifier.UserAdded(new UserAddedToChatEvent(chatId, userId));
     }
 
     public async Task RemoveUserFromChat(int initiatorId, int userId, int chatId)
@@ -148,12 +161,16 @@ public class ChatService(
         if (chat.Members.Any(u => u.Id == userId))
         {
             chat.Members.Remove(await userService.GetByIdValidatedAsync(userId));
+            await repository.UpdateAsync(chat);
             return;
         }
 
         if (chat.CreatorId != initiatorId || chat.Admins.All(a => a.Id != userId))
             throw ResponseFactory.Create<ForbiddenResponse>(["User is not a regular member of the chat"]);
         chat.Admins.Remove(await userService.GetByIdValidatedAsync(userId));
+        await repository.UpdateAsync(chat);
+
+        await notifier.UserRemoved(new UserRemovedFromChatEvent(chatId, userId));
     }
 
     public async Task LeaveChat(int userId, int chatId)
@@ -172,6 +189,9 @@ public class ChatService(
         if (chat.Admins.Any(a => a.Id == userId))
             chat.Admins.Remove(await userService.GetByIdValidatedAsync(chatId));
         chat.Members.Remove(await userService.GetByIdValidatedAsync(userId));
+        await repository.UpdateAsync(chat);
+
+        await notifier.UserRemoved(new UserRemovedFromChatEvent(chatId, userId));
     }
 
     public async Task<ChatModel> CreateChatAsync(int userId, CreateChatDTO dto)
