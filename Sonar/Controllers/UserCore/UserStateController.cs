@@ -17,6 +17,7 @@ public class UserStateController(
     IUserSessionService userSessionService
 ) : BaseController(userManager)
 {
+    // TODO: write XML comments and returnType attributes
     // TODO: Consider replacing TimeSpan with bytes
     [HttpPut("current-position")]
     public async Task<IActionResult> UpdateCurrentPosition(TimeSpan position)
@@ -26,6 +27,7 @@ public class UserStateController(
         throw ResponseFactory.Create<OkResponse>(["Current position updated successfully."]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpPut("listening/{trackId:int}/{collectionId:int?}")]
     public async Task<IActionResult>
         UpdateListeningTarget(int trackId, int? collectionId) // Current collectionId and/or trackId
@@ -35,18 +37,21 @@ public class UserStateController(
         throw ResponseFactory.Create<OkResponse>(["Listening target updated successfully."]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpPost("queue")]
     public async Task<IActionResult> AddToQueue() // Collection or track ids
     {
         throw new NotImplementedException();
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpDelete("queue")]
     public async Task<IActionResult> DeleteFromQueue() // Collection or track ids
     {
         throw new NotImplementedException();
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpPut("status/{statusId:int}")]
     public async Task<IActionResult> UpdateUserStatus(int statusId)
     {
@@ -55,6 +60,7 @@ public class UserStateController(
         throw ResponseFactory.Create<OkResponse>(["User status updated successfully."]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpPatch("session")]
     [Authorize]
     public async Task<IActionResult> UpdateUserPrimarySession()

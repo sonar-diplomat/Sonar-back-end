@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 using Entities.Models.Chat;
 using Entities.Models.UserCore;
 using Microsoft.EntityFrameworkCore;
@@ -18,11 +19,15 @@ public class Artist : BaseModel
 
     /// <summary>
     /// </summary>
+    [JsonIgnore]
     [ForeignKey("UserId")]
     [DeleteBehavior(DeleteBehavior.Cascade)]
     public virtual User User { get; set; }
 
+    [JsonIgnore]
     public virtual ICollection<Post> Posts { get; set; }
+    [JsonIgnore]
     public virtual ICollection<Track> Tracks { get; set; }
+    [JsonIgnore]
     public virtual ICollection<AlbumArtist> AlbumArtists { get; set; }
 }

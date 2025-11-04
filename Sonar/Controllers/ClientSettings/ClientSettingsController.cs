@@ -14,6 +14,7 @@ public class ClientSettingsController(
     ISettingsService settingsService
 ) : BaseController(userManager)
 {
+    // TODO: write XML comments and returnType attributes
     [HttpGet]
     public async Task<IActionResult> GetCurrentUserSettings()
     {
@@ -70,6 +71,7 @@ public class ClientSettingsController(
         throw ResponseFactory.Create<OkResponse<SettingsDTO>>(dto, ["User settings retrieved successfully."]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpPatch]
     public async Task<IActionResult> PatchSettings([FromBody] JsonElement updates)
     {

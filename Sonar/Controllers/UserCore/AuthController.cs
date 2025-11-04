@@ -28,6 +28,7 @@ public class AuthController(
     private readonly string frontEndUrl = configuration["FrontEnd-Url"]!;
     private readonly UserManager<User> userManager = userManager;
 
+    // TODO: write XML comments and returnType attributes
     [HttpPost("register")]
     public async Task<IActionResult> Register(UserRegisterDTO model)
     {
@@ -38,6 +39,7 @@ public class AuthController(
         throw ResponseFactory.Create<BadRequestResponse>(result.Errors.Select(e => e.Description.ToString()).ToArray()!);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpPost("login")]
     public async Task<IActionResult> Login(string userIdentifier, string password)
     {
@@ -89,6 +91,7 @@ public class AuthController(
             new LoginResponseDTO(accessToken, refreshToken, session.Id), ["Login successful"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpPost("verify-2fa")]
     public async Task<IActionResult> Verify2Fa([FromBody] Verify2FaDTO dto)
     {
@@ -126,6 +129,7 @@ public class AuthController(
             new RefreshTokenResponse(accessToken, refreshToken), ["Login successful"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpPost("refresh-token")]
     public async Task<IActionResult> RefreshToken([FromBody] string refreshToken)
     {
@@ -137,6 +141,7 @@ public class AuthController(
             new RefreshTokenResponse(newAccessToken, refreshToken), ["Token refreshed successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [Authorize]
     [HttpPost("request-email-change")]
     public async Task<IActionResult> RequestEmailChange([FromBody] string newEmail)
@@ -160,6 +165,7 @@ public class AuthController(
         throw ResponseFactory.Create<OkResponse>(["Email change token sent to new email address"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpPost("confirm-email-change")]
     public async Task<IActionResult> ConfirmEmailChange([FromBody] ConfirmEmailChangeDTO changeDTO)
     {
@@ -175,6 +181,7 @@ public class AuthController(
         throw ResponseFactory.Create<OkResponse>(["Email successfully changed"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [Authorize]
     [HttpPost("confirm-password-change")]
     public async Task<IActionResult> ConfirmPasswordChange([FromBody] ConfirmPasswordChangeDTO dto)
@@ -204,6 +211,7 @@ public class AuthController(
         throw ResponseFactory.Create<OkResponse>(["Password successfully changed"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [Authorize]
     [HttpPost("request-password-change")]
     public async Task<IActionResult> RequestPasswordChange()
@@ -226,6 +234,7 @@ public class AuthController(
         throw ResponseFactory.Create<OkResponse>(["2FA is enabled. Please verify the token before changing password."]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [Authorize]
     [HttpPost("sessions/{sessionId:int}/revoke")]
     public async Task<IActionResult> RevokeSessionAsync(int sessionId)
@@ -240,6 +249,7 @@ public class AuthController(
     }
 
 
+    // TODO: write XML comments and returnType attributes
     [Authorize]
     [HttpPost("sessions/revoke-all")]
     public async Task<IActionResult> RevokeAllSessions()
@@ -249,6 +259,7 @@ public class AuthController(
         throw ResponseFactory.Create<OkResponse>(["All sessions revoked successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [Authorize]
     [HttpGet("sessions")]
     public async Task<IActionResult> GetSessions()

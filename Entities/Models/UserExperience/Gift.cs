@@ -33,14 +33,17 @@ public class Gift : BaseModel
 
     /// <summary>
     /// </summary>
+    [JsonIgnore]
     [ForeignKey("ReceiverId")]
     [DeleteBehavior(DeleteBehavior.NoAction)]
     public virtual User Receiver { get; set; }
 
+    [JsonIgnore]
     [ForeignKey("GiftStyleId")]
     [DeleteBehavior(DeleteBehavior.NoAction)]
     public virtual GiftStyle GiftStyle { get; set; }
 
+    [JsonIgnore]
     [ForeignKey("SubscriptionPaymentId")]
     public virtual SubscriptionPayment SubscriptionPayment { get; set; }
 }

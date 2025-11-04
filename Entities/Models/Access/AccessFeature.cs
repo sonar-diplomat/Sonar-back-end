@@ -15,6 +15,7 @@ public class AccessFeature : BaseModel
 
     /// <summary>
     /// </summary>
+    [JsonIgnore]
     [OpenApiIgnore]
     public virtual ICollection<User> Users { get; set; }
 }

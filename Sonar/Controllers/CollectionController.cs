@@ -13,6 +13,7 @@ namespace Sonar.Controllers;
 public class CollectionController<T>(UserManager<User> userManager, ICollectionService<T> collectionService)
     : BaseController(userManager) where T : Collection
 {
+    // TODO: write XML comments and returnType attributes
     [HttpPut("visibility")]
     [Authorize]
     public async Task<IActionResult> UpdateVisibilityStatus([FromRoute] int collectionId,
@@ -23,6 +24,7 @@ public class CollectionController<T>(UserManager<User> userManager, ICollectionS
         throw ResponseFactory.Create<OkResponse>([$"{nameof(T)} visibility status was changed successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpPost("toggle-favorite")]
     [Authorize]
     public async Task<IActionResult> ToggleFavorite(int collectionId)

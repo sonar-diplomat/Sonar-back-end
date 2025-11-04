@@ -14,5 +14,6 @@ public class VisibilityStatus : BaseModel
 
     /// <summary>
     /// </summary>
+    [JsonIgnore]
     public virtual ICollection<VisibilityState> VisibilityStates { get; set; }
 }

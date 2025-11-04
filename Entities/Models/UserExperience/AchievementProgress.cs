@@ -21,10 +21,12 @@ public class AchievementProgress : BaseModel
 
     /// <summary>
     /// </summary>
+    [JsonIgnore]
     [ForeignKey("AchievementId")]
     [DeleteBehavior(DeleteBehavior.NoAction)]
     public virtual Achievement Achievement { get; set; }
 
+    [JsonIgnore]
     [ForeignKey("UserId")]
     public virtual User User { get; set; }
 }

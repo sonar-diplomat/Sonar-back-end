@@ -23,14 +23,18 @@ public class Folder : BaseModel
 
     /// <summary>
     /// </summary>
+    [JsonIgnore]
     [ForeignKey("ParentFolderId")]
     [DeleteBehavior(DeleteBehavior.NoAction)]
     public virtual Folder ParentFolder { get; set; }
 
+    [JsonIgnore]
     [ForeignKey("LibraryId")]
     [DeleteBehavior(DeleteBehavior.NoAction)]
     public virtual Library Library { get; set; }
 
+    [JsonIgnore]
     public virtual ICollection<Folder> SubFolders { get; set; }
+    [JsonIgnore]
     public virtual ICollection<Collection> Collections { get; set; }
 }

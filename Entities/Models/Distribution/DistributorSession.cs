@@ -42,6 +42,7 @@ public class DistributorSession : BaseModel
 
     /// <summary>
     /// </summary>
+    [JsonIgnore]
     [ForeignKey("DistributorAccountId")]
     [DeleteBehavior(DeleteBehavior.NoAction)]
     public virtual DistributorAccount DistributorAccount { get; set; }

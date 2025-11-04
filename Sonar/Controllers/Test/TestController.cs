@@ -33,6 +33,7 @@ public class TestController(
 {
     # region dist
 
+    // TODO: write XML comments and returnType attributes
     [HttpGet("apikey")]
     public async Task<ActionResult> Ping()
     {
@@ -40,6 +41,7 @@ public class TestController(
             ["API Key generated successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpGet("qr")]
     public async Task<ActionResult> GetDistributors([FromQuery] string link = "https://www.youtube.com/")
     {
@@ -47,6 +49,7 @@ public class TestController(
         throw ResponseFactory.Create<OkResponse<string>>(svg, ["image/svg+xml"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpGet("test_include")]
     public async Task<ActionResult> TestInclude()
     {
@@ -55,6 +58,7 @@ public class TestController(
         throw ResponseFactory.Create<OkResponse<Distributor>>(d);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpGet("appdata")]
     public async Task<ActionResult> CheckAppData()
     {
@@ -69,6 +73,7 @@ public class TestController(
         throw ResponseFactory.Create<OkResponse>(["File read successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpPost("fileuploadtest")]
     public async Task<ActionResult> FileUploadTest(IFormFile file)
     {
@@ -80,18 +85,21 @@ public class TestController(
 
     # region response tests
 
+    // TODO: write XML comments and returnType attributes
     [HttpGet("error")]
     public async Task<ActionResult> GenerateError()
     {
         throw ResponseFactory.Create<BadRequestResponse>(["Test exception"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpGet("ok")]
     public async Task<ActionResult> GenerateOk()
     {
         throw ResponseFactory.Create<OkResponse>(["Test exception"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpGet("okdata")]
     public async Task<ActionResult> GenerateOkWithData()
     {
@@ -115,6 +123,7 @@ public class TestController(
 
     # region settings and folder tests
 
+    // TODO: write XML comments and returnType attributes
     [HttpGet("settings/{settingsId?}")]
     public async Task<ActionResult> GetSettings(int settingsId = 1)
     {
@@ -123,6 +132,7 @@ public class TestController(
     }
 
 
+    // TODO: write XML comments and returnType attributes
     [HttpPatch("settings/{settingsId:int}")]
     public async Task<IActionResult> PatchSettings(int settingsId, [FromBody] JsonElement updates)
     {
@@ -134,6 +144,7 @@ public class TestController(
 
     # region folder tests
 
+    // TODO: write XML comments and returnType attributes
     [HttpGet("folder/{folderId:int}")]
     public async Task<IActionResult> GetFolder(int folderId)
     {
@@ -141,6 +152,7 @@ public class TestController(
         throw ResponseFactory.Create<OkResponse<Folder>>(folder, ["Successfully retrieved folder"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpGet("folder")]
     public async Task<IActionResult> GetAllFolders()
     {
@@ -148,6 +160,7 @@ public class TestController(
         throw ResponseFactory.Create<OkResponse<IEnumerable<Folder>>>(folders, ["Successfully retrieved all folders"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpPost("folder")]
     public async Task<IActionResult> CreateFolder()
     {
@@ -161,6 +174,7 @@ public class TestController(
         throw ResponseFactory.Create<OkResponse<Folder>>(folder, ["Successfully created folder"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpPost("library/default")]
     public async Task<IActionResult> CreateDefaultFolder()
     {

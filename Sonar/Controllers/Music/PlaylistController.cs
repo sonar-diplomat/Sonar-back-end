@@ -21,6 +21,7 @@ public class PlaylistController(
     IShareService shareService)
     : CollectionController<Playlist>(userManager, collectionService)
 {
+    // TODO: write XML comments and returnType attributes
     [HttpPost("create")]
     public async Task<IActionResult> CreatePlaylist([FromForm] CreatePlaylistDTO dto)
     {
@@ -38,6 +39,7 @@ public class PlaylistController(
         throw ResponseFactory.Create<OkResponse<PlaylistResponseDTO>>(responseDto, ["Playlist was created successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpDelete("{playlistId:int}")]
     [Authorize]
     public async Task<IActionResult> DeletePlaylist(int playlistId)
@@ -47,6 +49,7 @@ public class PlaylistController(
         throw ResponseFactory.Create<OkResponse>(["Playlist was deleted successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpPut("{playlistId:int}/update-name")]
     public async Task<IActionResult> UpdatePlaylistName(int playlistId, [FromQuery] string newName)
     {
@@ -64,6 +67,7 @@ public class PlaylistController(
         throw ResponseFactory.Create<OkResponse<PlaylistResponseDTO>>(responseDto, ["Playlist name was updated successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpPut("{playlistId:int}/update-cover")]
     public async Task<IActionResult> UpdatePlaylistCover(int playlistId, [FromForm] IFormFile coverFile)
     {
@@ -72,6 +76,7 @@ public class PlaylistController(
         throw ResponseFactory.Create<OkResponse>(["Playlist cover was updated successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpPost("{playlistId:int}/add-contributor/{contributorId:int}")]
     [Authorize]
     public async Task<IActionResult> AddContributor(int playlistId, int contributorId)
@@ -81,6 +86,7 @@ public class PlaylistController(
         throw ResponseFactory.Create<OkResponse>(["Playlist contributor was added successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpDelete("{playlistId:int}/delete-contributor/{contributorId:int}")]
     [Authorize]
     public async Task<IActionResult> RemoveContributor(int playlistId, int contributorId)
@@ -90,6 +96,7 @@ public class PlaylistController(
         throw ResponseFactory.Create<OkResponse>(["Playlist contributor was removed successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpPost("{playlistId:int}/add-track/{trackId:int}")]
     [Authorize]
     public async Task<IActionResult> AddTrack(int playlistId, int trackId)
@@ -99,6 +106,7 @@ public class PlaylistController(
         throw ResponseFactory.Create<OkResponse>(["Track was added to playlist successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpDelete("{playlistId:int}/remove-track/{trackId:int}")]
     public async Task<IActionResult> RemoveTrack(int playlistId, int trackId)
     {
@@ -107,6 +115,7 @@ public class PlaylistController(
         throw ResponseFactory.Create<OkResponse>(["Track was removed from playlist successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpGet("{playlistId}/tracks")]
     public async Task<IActionResult> GetPlaylistWithCursor(int playlistId, [FromQuery] string? after,
         [FromQuery] int limit = 20)
@@ -116,6 +125,7 @@ public class PlaylistController(
             ["Playlist tracks retrieved successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpGet("{playlistId:int}")]
     public async Task<IActionResult> GetPlaylistById(int playlistId)
     {
@@ -132,6 +142,7 @@ public class PlaylistController(
         throw ResponseFactory.Create<OkResponse<PlaylistResponseDTO>>(responseDto, ["Playlist retrieved successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     // TODO: 😭😭😿😭😭  
     [HttpPost("{playlistId:int}/import-collection/{collection}/{collectionId:int}")]
     public async Task<IActionResult> ImportCollection(int playlistId, string collection, int collectionId)

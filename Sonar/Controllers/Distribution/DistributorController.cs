@@ -25,6 +25,7 @@ public class DistributorController(
 {
     private readonly IDistributorService distributorService = distributorService;
 
+    // TODO: write XML comments and returnType attributes
     [HttpPost]
     [Authorize]
     public async Task<IActionResult> CreateDistributor([FromForm] CreateDistributorDTO dto)
@@ -50,6 +51,7 @@ public class DistributorController(
         throw ResponseFactory.Create<OkResponse<DistributorDTO>>(responseDto, ["Distributors created successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpGet]
     [Authorize]
     public async Task<IActionResult> GetDistributors()
@@ -72,6 +74,7 @@ public class DistributorController(
             ["Distributors retrieved successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpGet("{id:int}")]
     public async Task<IActionResult> GetDistributorById(int id)
     {
@@ -92,6 +95,7 @@ public class DistributorController(
         throw ResponseFactory.Create<OkResponse<DistributorDTO>>(dto, ["Distributor retrieved successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpPut("{id:int}")]
     [Authorize]
     public async Task<IActionResult> UpdateDistributor(int id, UpdateDistributorDTO dto)
@@ -114,6 +118,7 @@ public class DistributorController(
         throw ResponseFactory.Create<OkResponse<DistributorDTO>>(responseDto, ["Distributor updated successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpDelete("{id:int}")]
     [Authorize]
     public async Task<IActionResult> DeleteDistributor(int id)
@@ -124,6 +129,7 @@ public class DistributorController(
         throw ResponseFactory.Create<OkResponse>(["Distributor deleted successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpGet("update-key/{id:int}")]
     [Authorize]
     public async Task<IActionResult> UpdateLicenseKey(int id)
@@ -133,6 +139,7 @@ public class DistributorController(
         throw ResponseFactory.Create<OkResponse<string>>(key, ["Api key updated successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpGet("request")]
     [Authorize]
     public async Task<IActionResult> GetArtistRequest()
@@ -151,6 +158,7 @@ public class DistributorController(
             ["Artist registration requests retrieved successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpGet("request/{requestId:int}")]
     [Authorize]
     public async Task<IActionResult> GetArtistRequestById(int requestId)
@@ -169,9 +177,10 @@ public class DistributorController(
         throw ResponseFactory.Create<OkResponse<ArtistRegistrationRequestDTO>>(dto, ["Artist registration request retrieved successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpPost("request/{requestId:int}")]
     [Authorize]
-    public async Task<IActionResult> ResolveArtistRequest(int requestId, bool approve)
+    public async Task<IActionResult> ResolveArtistRequest(int requestId, [FromQuery] bool approve)
     {
         int distributorId = (await this.GetDistributorAccountByJwtAsync()).DistributorId;
         await distributorService.ResolveArtistRequestAsync(distributorId, requestId, approve);

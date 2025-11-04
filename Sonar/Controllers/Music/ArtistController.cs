@@ -31,12 +31,14 @@ public class ArtistController(
             : throw ResponseFactory.Create<ForbiddenResponse>(["You do not have permission to perform this action"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpPost("register")]
     public async Task<IActionResult> RegisterArtist()
     {
         throw new NotImplementedException();
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpPut("{artistId:int}/update-name")]
     [Authorize]
     public async Task<IActionResult> UpdateArtistName(int artistId, [FromBody] string newArtistName)
@@ -46,6 +48,7 @@ public class ArtistController(
         throw ResponseFactory.Create<OkResponse>([$"Artist with ID {artistId} successfully updated"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpDelete]
     [Authorize]
     public async Task<IActionResult> DeleteArtist()
@@ -55,6 +58,7 @@ public class ArtistController(
         throw ResponseFactory.Create<OkResponse>([$"Artist with ID {artistId} successfully deleted"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpPost]
     [Authorize]
     public async Task<IActionResult> CreatePost(PostDTO dto)
@@ -64,6 +68,7 @@ public class ArtistController(
         throw ResponseFactory.Create<OkResponse>([$"Post successfully created for artist with ID {artistId}"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpDelete("post/{postId:int}")]
     [Authorize]
     public async Task<IActionResult> DeletePost(int postId)
@@ -74,6 +79,7 @@ public class ArtistController(
         throw ResponseFactory.Create<OkResponse>([$"Post with ID {postId} successfully deleted"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpPut("post/{postId:int}")]
     [Authorize]
     public async Task<IActionResult> UpdatePost(int postId, PostDTO dto)
@@ -83,6 +89,7 @@ public class ArtistController(
         throw ResponseFactory.Create<OkResponse>([$"Post successfully created for artist with ID {artistId}"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpPut("{postId:int}/visibility")]
     [Authorize]
     public async Task<IActionResult> ChangePostVisibilityStatus(int postId, int visibilityStatusId)

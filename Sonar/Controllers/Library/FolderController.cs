@@ -17,6 +17,7 @@ public class FolderController(
     ILibraryService libraryService
 ) : BaseController(userManager)
 {
+    // TODO: write XML comments and returnType attributes
     // TODO: Make it work only with a user from JWT
     [HttpGet("{folderId:int}")]
     public async Task<IActionResult> GetFolder(int folderId)
@@ -48,6 +49,7 @@ public class FolderController(
         throw ResponseFactory.Create<OkResponse<FolderDTO>>(dto, ["Successfully retrieved folder"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpGet]
     public async Task<IActionResult> GetAllFolders()
     {
@@ -78,6 +80,7 @@ public class FolderController(
         throw ResponseFactory.Create<OkResponse<IEnumerable<FolderDTO>>>(dtos, ["Successfully retrieved all folders"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpPost]
     public async Task<IActionResult> CreateFolder([FromBody] CreateFolderDTO request)
     {
@@ -96,6 +99,7 @@ public class FolderController(
         throw ResponseFactory.Create<OkResponse<FolderDTO>>(dto, ["Successfully created folder"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpPut("{folderId:int}/update-name")]
     public async Task<IActionResult> UpdateFolderName(int folderId, [FromBody] string newName)
     {
@@ -127,6 +131,7 @@ public class FolderController(
         throw ResponseFactory.Create<OkResponse<FolderDTO>>(dto, ["Successfully updated folder name"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpDelete("{folderId:int}")]
     public async Task<IActionResult> DeleteFolder(int folderId)
     {
@@ -135,6 +140,7 @@ public class FolderController(
         throw ResponseFactory.Create<OkResponse>(["Successfully deleted folder"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     // TODO: Implement adding/removing collections to/from folders when collections have been tested
     [HttpPost("{folderId:int}/add-collection/{collectionId:int}")]
     public async Task<IActionResult> AddCollectionToFolder(int folderId, int collectionId)
@@ -142,12 +148,14 @@ public class FolderController(
         throw new NotImplementedException();
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpDelete("{folderId:int}/remove-collection/{collectionId:int}")]
     public async Task<IActionResult> RemoveCollectionFromFolder(int folderId, int collectionId)
     {
         throw new NotImplementedException();
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpPut("{folderId:int}/move/{newParentFolderId:int}")]
     public async Task<IActionResult> MoveFolder(int folderId, int newParentFolderId)
     {

@@ -21,5 +21,6 @@ public class SubscriptionFeature : BaseModel
 
     /// <summary>
     /// </summary>
+    [JsonIgnore]
     public virtual ICollection<SubscriptionPack> SubscriptionPacks { get; set; }
 }

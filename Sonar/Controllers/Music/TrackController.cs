@@ -23,6 +23,7 @@ public class TrackController(
     IShareService shareService) : ShareController<Track>(userManager, shareService)
 {
 
+    // TODO: write XML comments and returnType attributes
     [HttpGet("{trackId}/stream")]
     [Authorize]
     public async Task<IActionResult> StreamMusic(int trackId, [FromQuery] bool download = false)
@@ -44,6 +45,7 @@ public class TrackController(
         return File(stream, contentType, enableRangeProcessing);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpDelete("{trackId:int}")]
     public async Task<IActionResult> DeleteTrack(int trackId)
     {
@@ -52,6 +54,7 @@ public class TrackController(
         throw ResponseFactory.Create<OkResponse>([$"Track with ID {trackId} successfully deleted"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpPut("{trackId:int}")]
     public async Task<Track> UpdateTrackInfo(int trackId, [FromBody] UpdateTrackDTO dto)
     {
@@ -65,6 +68,7 @@ public class TrackController(
         throw ResponseFactory.Create<OkResponse<Track>>(track, ["Track updated successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpPut("{trackId:int}/audio-file")]
     public async Task UpdateTrackFile(int trackId, [FromForm] UpdateTrackFileDTO dto)
     {
@@ -73,6 +77,7 @@ public class TrackController(
         throw ResponseFactory.Create<OkResponse>(["Track audio file updated successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpGet("{trackId:int}")]
     public async Task<IActionResult> GetTrackById(int trackId)
     {
@@ -81,6 +86,7 @@ public class TrackController(
         throw ResponseFactory.Create<OkResponse<Track>>(track, ["Track successfully retrieved"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpPut("{trackId:int}/visibility")]
     public async Task<IActionResult> UpdateTrackVisibilityStatus(int trackId, [FromQuery] int visibilityStatusId)
     {
@@ -89,6 +95,7 @@ public class TrackController(
         throw ResponseFactory.Create<OkResponse>(["Track visibility status was changed successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpPost("{trackId:int}/toggle-favorite")]
     [Authorize]
     public async Task<IActionResult> ToggleFavoriteTrack(int trackId)

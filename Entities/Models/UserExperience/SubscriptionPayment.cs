@@ -24,10 +24,12 @@ public class SubscriptionPayment : BaseModel
 
     /// <summary>
     /// </summary>
+    [JsonIgnore]
     [ForeignKey("BuyerId")]
     [DeleteBehavior(DeleteBehavior.Restrict)]
     public virtual User Buyer { get; set; }
 
+    [JsonIgnore]
     [ForeignKey("SubscriptionPackId")]
     [DeleteBehavior(DeleteBehavior.Restrict)]
     public virtual SubscriptionPack SubscriptionPack { get; set; }

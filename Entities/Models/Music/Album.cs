@@ -14,9 +14,11 @@ public class Album : Collection
 
     /// <summary>
     /// </summary>
+    [JsonIgnore]
     [ForeignKey("DistributorId")]
     [DeleteBehavior(DeleteBehavior.NoAction)]
     public virtual Distributor Distributor { get; set; }
 
+    [JsonIgnore]
     public virtual ICollection<AlbumArtist> AlbumArtists { get; set; }
 }

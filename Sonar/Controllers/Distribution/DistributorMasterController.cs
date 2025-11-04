@@ -11,6 +11,8 @@ using Sonar.Extensions;
 
 namespace Sonar.Controllers.Distribution;
 
+[Route("api/[controller]")]
+[ApiController]
 public class DistributorMasterController(
     UserManager<User> userManager,
     IDistributorSessionService sessionService,
@@ -21,6 +23,8 @@ public class DistributorMasterController(
 {
     private readonly IDistributorAccountService accountService = accountService;
 
+    // Helper method - not an API endpoint
+    [NonAction]
     [Authorize]
     public async Task CheckAccessDistributorAccount()
     {
@@ -29,21 +33,28 @@ public class DistributorMasterController(
             throw ResponseFactory.Create<ForbiddenResponse>(["Access denied. Master distributor account required."]);
     }
 
+    // TODO: write XML comments and returnType attributes
+    [HttpDelete("account/{id:int}")]
     [Authorize]
     public async Task<IActionResult> DeleteDistributorAccount(int id)
     {
         await CheckAccessDistributorAccount();
+        await accountService.DeleteAsync(id);
         throw ResponseFactory.Create<OkResponse>(["Distributor account deleted successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
+    [HttpPut("account/{id:int}/username")]
     [Authorize]
-    public async Task<IActionResult> ChangeUserName(int id, string newUserName)
+    public async Task<IActionResult> ChangeUserName(int id, [FromBody] string newUserName)
     {
         await CheckAccessDistributorAccount();
         await accountService.ChangeUserNameAsync(id, newUserName);
         throw ResponseFactory.Create<OkResponse>(["Distributor account username changed successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
+    [HttpGet("account/{id:int}")]
     [Authorize]
     public async Task<IActionResult> GetDistributorAccountById(int id)
     {
@@ -63,16 +74,20 @@ public class DistributorMasterController(
             ["Distributor account retrieved successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
+    [HttpPut("account/{id:int}/email")]
     [Authorize]
-    public async Task<IActionResult> ChangeEmailDistributorAccount(int id, string newEmail)
+    public async Task<IActionResult> ChangeEmailDistributorAccount(int id, [FromBody] string newEmail)
     {
         await CheckAccessDistributorAccount();
         await accountService.ChangeEmailAsync(id, newEmail);
         throw ResponseFactory.Create<OkResponse>(["Distributor account email changed successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
+    [HttpPut("account/{id:int}/password")]
     [Authorize]
-    public async Task<IActionResult> ChangePasswordDistributorAccount(int id, DistributorAccountChangePasswordDTO dto)
+    public async Task<IActionResult> ChangePasswordDistributorAccount(int id, [FromBody] DistributorAccountChangePasswordDTO dto)
     {
         await CheckAccessDistributorAccount();
         await accountService.ChangePasswordAsync(id, dto);

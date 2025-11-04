@@ -19,6 +19,7 @@ public class UserController(
 )
     : ShareController<User>(userManager, shareService)
 {
+    // TODO: write XML comments and returnType attributes
     [HttpGet]
     [Authorize]
     public async Task<ActionResult<IEnumerable<UserAdminDTO>>> GetUsers()
@@ -54,6 +55,7 @@ public class UserController(
         throw ResponseFactory.Create<OkResponse<IEnumerable<UserAdminDTO>>>(dtos, ["Users retrieved successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpGet("{userId:int}")]
     public async Task<ActionResult<User>> GetUser(int userId)
     {
@@ -63,22 +65,27 @@ public class UserController(
             Biography = user.Biography,
             PublicIdentifier = user.PublicIdentifier,
             RegistrationDate = user.RegistrationDate,
-            AvatarImage = user.AvatarImage,
-            AccessFeatures = user.AccessFeatures
+            ImageUrl = user.AvatarImage.Url,
+            AccessFeatures = user.AccessFeatures.Select(af => new Application.DTOs.Access.AccessFeatureDTO
+            {
+                Id = af.Id,
+                Name = af.Name
+            }).ToList()
         };
         throw ResponseFactory.Create<OkResponse<NonSensetiveUserDTO>>(userDto, ["User retrieved successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpPut("update")]
     [Authorize]
     public async Task<IActionResult> UpdateUser(UserUpdateDTO request)
     {
         User user = await CheckAccessFeatures([]);
         user = await userService.UpdateUserAsync(user.Id, request);
-        UserResponseDTO dto = new UserResponseDTO
+        UserResponseDTO dto = new()
         {
             Id = user.Id,
-            UserName = user.UserName,
+            UserName = user.UserName ?? string.Empty,
             PublicIdentifier = user.PublicIdentifier,
             Biography = user.Biography,
             RegistrationDate = user.RegistrationDate,
@@ -87,6 +94,7 @@ public class UserController(
         throw ResponseFactory.Create<OkResponse<UserResponseDTO>>(dto, ["User updated successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpPost("update-avatar")]
     [Consumes("multipart/form-data")]
     [Authorize]
@@ -97,6 +105,7 @@ public class UserController(
         throw ResponseFactory.Create<OkResponse>(["File uploaded successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpPut("{collectionId:int}/visibility")]
     [Authorize]
     public async Task<IActionResult> UpdateVisibilityStatus(int collectionId, int visibilityStatusId)

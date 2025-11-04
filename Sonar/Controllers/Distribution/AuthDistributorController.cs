@@ -27,6 +27,7 @@ public class AuthDistributorController(
 {
     private readonly IDistributorAccountService accountService = accountService;
 
+    // TODO: write XML comments and returnType attributes
     [HttpDelete("session/{id}")]
     public async Task<IActionResult> TerminateSession(int id)
     {
@@ -34,6 +35,7 @@ public class AuthDistributorController(
         throw ResponseFactory.Create<OkResponse>(["Session terminated successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpPost("register")]
     public async Task<IActionResult> Register(DistributorAccountRegisterDTO dto)
     {
@@ -42,6 +44,7 @@ public class AuthDistributorController(
             ["Distributor account registered successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpPost("login")]
     public async Task<IActionResult> Login(string email, string password)
     {
@@ -75,6 +78,7 @@ public class AuthDistributorController(
             ["Distributor account logged in successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpPost("refresh-token")]
     public async Task<IActionResult> RefreshToken([FromBody] string refreshToken)
     {
@@ -87,6 +91,7 @@ public class AuthDistributorController(
             ["Token refreshed successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [Authorize]
     [HttpPost("{sessionId:int}/revoke")]
     public async Task<IActionResult> RevokeSessionAsync(int sessionId)
@@ -98,6 +103,7 @@ public class AuthDistributorController(
     }
 
 
+    // TODO: write XML comments and returnType attributes
     [Authorize]
     [HttpPost("sessions/revoke-all")]
     public async Task<IActionResult> RevokeAllSessions()
@@ -107,6 +113,7 @@ public class AuthDistributorController(
         throw ResponseFactory.Create<OkResponse>(["All sessions revoked successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [Authorize]
     [HttpGet("sessions")]
     public async Task<IActionResult> GetSessions()

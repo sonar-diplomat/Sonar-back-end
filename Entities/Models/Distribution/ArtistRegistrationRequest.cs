@@ -25,9 +25,11 @@ public class ArtistRegistrationRequest : BaseModel
 
     /// <summary>
     /// </summary>
+    [JsonIgnore]
     [ForeignKey("UserId")]
     public virtual User User { get; set; }
 
+    [JsonIgnore]
     [ForeignKey("DistributorId")]
     public virtual Distributor Distributor { get; set; }
 }

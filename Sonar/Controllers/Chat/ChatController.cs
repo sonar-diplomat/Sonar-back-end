@@ -17,6 +17,7 @@ public class ChatController(
     IChatService chatService
 ) : BaseController(userManager)
 {
+    // TODO: write XML comments and returnType attributes
     [HttpPost("{chatId:int}/send")]
     public async Task<IActionResult> SendMessage(int chatId, [FromBody] MessageDTO message)
     {
@@ -25,6 +26,7 @@ public class ChatController(
         throw ResponseFactory.Create<OkResponse>(["Message sent successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpDelete("message/{messageId:int}")]
     public async Task<IActionResult> DeleteMessage(int messageId)
     {
@@ -33,6 +35,7 @@ public class ChatController(
         throw ResponseFactory.Create<OkResponse>(["Message retrieved successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpGet("message/{messageId:int}")]
     public async Task<IActionResult> GetMessageById(int messageId)
     {
@@ -41,6 +44,7 @@ public class ChatController(
         throw ResponseFactory.Create<OkResponse<Message>>(message, ["Message retrieved successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpGet("{chatId:int}/info")]
     public async Task<IActionResult> GetChatInfo(int chatId)
     {
@@ -49,6 +53,7 @@ public class ChatController(
         throw ResponseFactory.Create<OkResponse<ChatDTO>>(chat, ["Chat info retrieved successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpGet("{chatId:int}/messages")]
     [Authorize]
     public async Task<IActionResult> GetMessagesWithCursor(int chatId, [FromQuery] int? cursor = null,
@@ -59,6 +64,7 @@ public class ChatController(
         throw ResponseFactory.Create<OkResponse<CursorPageDTO<MessageDTO>>>(page, ["Messages retrieved successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpPost("{chatId:int}/add/{userId:int}")]
     public async Task<IActionResult> AddUserToChat(int chatId, int userId)
     {
@@ -67,6 +73,7 @@ public class ChatController(
         throw ResponseFactory.Create<OkResponse>(["User added successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpDelete("{chatId:int}/leave")]
     public async Task<IActionResult> LeaveChat(int chatId)
     {
@@ -75,6 +82,7 @@ public class ChatController(
         throw ResponseFactory.Create<OkResponse>(["Chat leaved successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpDelete("{chatId:int}/remove/{userId:int}")]
     public async Task<IActionResult> RemoveUserFromChat(int chatId, int userId)
     {
@@ -83,6 +91,7 @@ public class ChatController(
         throw ResponseFactory.Create<OkResponse>(["User removed from chat successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpPut("{chatId:int}/cover")]
     public async Task<IActionResult> UpdateChatCover(int chatId, IFormFile file)
     {
@@ -91,6 +100,7 @@ public class ChatController(
         throw ResponseFactory.Create<OkResponse>(["Album cover was updated successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpPut("{chatId:int}/name")]
     public async Task<IActionResult> UpdateChatName(int chatId, string newName)
     {
@@ -99,6 +109,7 @@ public class ChatController(
         throw ResponseFactory.Create<OkResponse>(["Album name was updated successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpPut("{chatId:int}read")]
     public async Task<IActionResult> ReadMessages(int chatId, [FromBody] IEnumerable<int> messageIds)
     {
@@ -107,6 +118,7 @@ public class ChatController(
         throw ResponseFactory.Create<OkResponse>(["Messages read successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpPut("{chatId:int}/read-all")]
     public async Task<IActionResult> ReadAllMessages(int chatId)
     {

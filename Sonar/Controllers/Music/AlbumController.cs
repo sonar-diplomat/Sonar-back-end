@@ -29,6 +29,7 @@ public class AlbumController(
     : CollectionController<Album>(userManager, collectionService)
 {
 
+    // TODO: write XML comments and returnType attributes
     [HttpPost]
     [Authorize]
     public async Task<IActionResult> UploadAlbum(UploadAlbumDTO dto)
@@ -46,6 +47,7 @@ public class AlbumController(
         throw ResponseFactory.Create<OkResponse<AlbumResponseDTO>>(responseDto, ["Album was created successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpDelete("{albumId:int}")]
     [Authorize]
     public async Task<IActionResult> DeleteAlbum(int albumId)
@@ -55,6 +57,7 @@ public class AlbumController(
         throw ResponseFactory.Create<OkResponse>(["Album was deleted successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpPut("{albumId:int}/name")]
     [Authorize]
     public async Task<IActionResult> UpdateAlbumName(int albumId, string name)
@@ -72,6 +75,7 @@ public class AlbumController(
         throw ResponseFactory.Create<OkResponse<AlbumResponseDTO>>(responseDto, ["Album name was updated successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpPost("{albumId:int}/add")]
     [Authorize]
     public async Task<IActionResult> UploadTrack(int albumId, UploadTrackDTO dto)
@@ -82,6 +86,7 @@ public class AlbumController(
         throw ResponseFactory.Create<OkResponse<Track>>(track, ["Track was added successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpPut("{albumId:int}/cover")]
     [Authorize]
     public async Task<IActionResult> UpdateAlbumCover(int albumId, IFormFile file)

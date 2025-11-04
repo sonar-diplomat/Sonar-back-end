@@ -9,6 +9,7 @@ namespace Sonar.Controllers;
 public class ShareController<T>(UserManager<User> userManager, IShareService shareService)
     : BaseController(userManager) where T : class
 {
+    // TODO: write XML comments and returnType attributes
     [HttpGet("{entityId:int}/link")]
     public async Task<IActionResult> ShareLink(int entityId)
     {
@@ -16,6 +17,7 @@ public class ShareController<T>(UserManager<User> userManager, IShareService sha
         throw ResponseFactory.Create<OkResponse<string>>(link, ["Link generated successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpGet("{entityId:int}/qr")]
     public async Task<IActionResult> ShareQr(int entityId)
     {

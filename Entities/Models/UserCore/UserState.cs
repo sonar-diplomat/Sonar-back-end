@@ -18,17 +18,21 @@ public class UserState : BaseModel
 
     /// <summary>
     /// </summary>
+    [JsonIgnore]
     [ForeignKey("PrimarySessionId")]
     [DeleteBehavior(DeleteBehavior.Cascade)]
     public virtual UserSession? PrimarySession { get; set; }
 
+    [JsonIgnore]
     [ForeignKey("UserStatusId")]
     [DeleteBehavior(DeleteBehavior.NoAction)]
     public virtual UserStatus UserStatus { get; set; }
 
+    [JsonIgnore]
     [ForeignKey("QueueId")]
     [DeleteBehavior(DeleteBehavior.Cascade)]
     public virtual Queue Queue { get; set; }
 
+    [JsonIgnore]
     public virtual User User { get; set; }
 }

@@ -20,7 +20,8 @@ public class PlaylistService(
     ICollectionService<Playlist> playlistCollectionService,
     ILibraryService libraryService,
     IFolderService folderService,
-    ITrackService trackService)
+    ITrackService trackService,
+    IVisibilityStateService visibilityStateService)
     : CollectionService<Playlist>(repository, libraryService, folderService), IPlaylistService
 {
     private const string FavoritePlaylistName = "Favorites";

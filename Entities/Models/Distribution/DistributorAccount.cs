@@ -24,9 +24,11 @@ public class DistributorAccount : BaseModel
 
     [Required] public int DistributorId { get; set; }
 
+    [JsonIgnore]
     [ForeignKey("DistributorId")]
     [DeleteBehavior(DeleteBehavior.NoAction)]
     public virtual Distributor Distributor { get; set; }
 
+    [JsonIgnore]
     public virtual ICollection<DistributorSession> Sessions { get; set; }
 }

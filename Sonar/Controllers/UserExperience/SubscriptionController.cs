@@ -22,6 +22,7 @@ public class SubscriptionController(
 {
     #region Subscription Pack Endpoints
 
+    // TODO: write XML comments and returnType attributes
     [HttpGet("packs")]
     public async Task<ActionResult<IEnumerable<SubscriptionPackDTO>>> GetAllPacks()
     {
@@ -45,6 +46,7 @@ public class SubscriptionController(
             ["Subscription packs retrieved successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpGet("packs/{id}")]
     public async Task<ActionResult<SubscriptionPackDTO>> GetPack(int id)
     {
@@ -71,6 +73,7 @@ public class SubscriptionController(
 
     #region Subscription Payment Endpoints
 
+    // TODO: write XML comments and returnType attributes
     [HttpPost("purchase")]
     public async Task<ActionResult<SubscriptionPaymentDTO>> PurchaseSubscription([FromBody] PurchaseSubscriptionDTO dto)
     {
@@ -98,6 +101,7 @@ public class SubscriptionController(
     }
 
 
+    // TODO: write XML comments and returnType attributes
     [HttpGet("payments")]
     public async Task<ActionResult<IEnumerable<SubscriptionPaymentDTO>>> GetAllPayments()
     {
@@ -124,6 +128,7 @@ public class SubscriptionController(
             ["Subscription payments retrieved successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpGet("payments/{id}")]
     public async Task<ActionResult<SubscriptionPaymentDTO>> GetPayment(int id)
     {
@@ -153,6 +158,7 @@ public class SubscriptionController(
 
     #region Subscription Feature Endpoints
 
+    // TODO: write XML comments and returnType attributes
     [HttpGet("features")]
     public async Task<ActionResult<IEnumerable<SubscriptionFeatureDTO>>> GetAllFeatures()
     {
@@ -168,6 +174,7 @@ public class SubscriptionController(
             ["Subscription features retrieved successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpGet("features/{id}")]
     public async Task<ActionResult<SubscriptionFeatureDTO>> GetFeature(int id)
     {

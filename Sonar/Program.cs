@@ -65,13 +65,14 @@ builder.Services.AddDbContext<SonarContext>(options =>
                       throw new InvalidOperationException("Connection string 'SonarContext' not found.")));
 
 // Add services to the container.
-builder.Services.AddControllers();
-//builder.Services.AddControllers()
-//    .AddJsonOptions(options =>
-//    {
-//        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve;
-//        options.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
-//    });
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        // Increase MaxDepth to allow OpenAPI schema generation to complete
+        // The NavigationPropertyIgnoreTransformer will prevent actual circular references
+        options.JsonSerializerOptions.MaxDepth = 64;
+        options.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
+    });
 
 // CORS policy configuration
 builder.Services.AddCors(options =>
@@ -125,11 +126,15 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddOpenApi(o =>
 {
-    o.AddOperationTransformer<OperationTraceTransformer>();               // какой экшен
-    o.AddSchemaTransformer<SchemaBreadcrumbsTransformer>();               // стек типов "на лету"
-    o.AddSchemaTransformer<CollapseSchemaByNameTransformer>();
-    o.AddDocumentTransformer<RefGraphCycleDetectorDocumentTransformer>(); // циклы по $ref в готовом документе
+    o.AddOperationTransformer<OperationTraceTransformer>();               // пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
+    o.AddSchemaTransformer<NavigationPropertyIgnoreTransformer>();        // Remove navigation properties FIRST
+    o.AddSchemaTransformer<SchemaBreadcrumbsTransformer>();               // пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ "пїЅпїЅ пїЅпїЅпїЅпїЅ"
+    o.AddSchemaTransformer<CollapseSchemaByNameTransformer>();            // Collapse on repeated depth
+    o.AddDocumentTransformer<RefGraphCycleDetectorDocumentTransformer>(); // пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ $ref пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 });
+
+// Add Swagger UI for OpenAPI visualization
+builder.Services.AddSwaggerGen();
 
 builder.Services.Configure<FormOptions>(options =>
 {
@@ -318,7 +323,17 @@ WebApplication app = builder.Build();
 app.UseMiddleware<ExceptionMiddleware>();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment()) app.MapOpenApi();
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi(); // Exposes OpenAPI JSON at /openapi/v1.json
+    
+    // Add Swagger UI
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/openapi/v1.json", "Sonar API v1");
+        options.RoutePrefix = "swagger"; // Access UI at /swagger
+    });
+}
 
 app.UseHttpsRedirection();
 

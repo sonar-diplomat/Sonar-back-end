@@ -27,14 +27,18 @@ public class Report : BaseModel
 
     /// <summary>
     /// </summary>
+    [JsonIgnore]
     [ForeignKey("ReportableEntityTypeId")]
     [DeleteBehavior(DeleteBehavior.NoAction)]
     public virtual ReportableEntityType ReportableEntityType { get; set; }
 
+    [JsonIgnore]
     [ForeignKey("ReporterId")]
     [DeleteBehavior(DeleteBehavior.NoAction)]
     public virtual User Reporter { get; set; }
 
+    [JsonIgnore]
     public virtual ICollection<ReportReasonType> ReportReasonType { get; set; }
+    [JsonIgnore]
     public virtual ICollection<Suspension> Suspensions { get; set; }
 }

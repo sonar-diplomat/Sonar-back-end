@@ -22,6 +22,7 @@ public class ReportController(
 {
     #region Report CRUD Endpoints
 
+    // TODO: write XML comments and returnType attributes
     [HttpGet]
     public async Task<ActionResult<IEnumerable<ReportDTO>>> GetReports()
     {
@@ -30,6 +31,7 @@ public class ReportController(
         throw ResponseFactory.Create<OkResponse<IEnumerable<ReportDTO>>>(dtos, ["Reports retrieved successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpGet("{id}")]
     public async Task<ActionResult<ReportDTO>> GetReport(int id)
     {
@@ -38,6 +40,7 @@ public class ReportController(
         throw ResponseFactory.Create<OkResponse<ReportDTO>>(dto, ["Report retrieved successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteReport(int id)
     {
@@ -50,6 +53,7 @@ public class ReportController(
 
     #region Business-Specific Report Endpoints
 
+    // TODO: write XML comments and returnType attributes
     [HttpPost]
     public async Task<ActionResult<ReportDTO>> CreateReport([FromBody] CreateReportDTO dto)
     {
@@ -59,6 +63,7 @@ public class ReportController(
         throw ResponseFactory.Create<OkResponse<ReportDTO>>(responseDto, ["Report created successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpPut("{id}/close")]
     public async Task<IActionResult> CloseReport(int id)
     {
@@ -67,6 +72,7 @@ public class ReportController(
         throw ResponseFactory.Create<OkResponse>(["Report closed successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpGet("filter")]
     public async Task<ActionResult<IEnumerable<ReportDTO>>> GetFiltered([FromBody] ReportFilterDTO dto)
     {
@@ -76,6 +82,7 @@ public class ReportController(
         throw ResponseFactory.Create<OkResponse<IEnumerable<ReportDTO>>>(dtos, ["Reports retrieved successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpGet("reporter/{reporterId}")]
     public async Task<ActionResult<IEnumerable<ReportDTO>>> GetReportsByReporter(int reporterId)
     {
@@ -85,6 +92,7 @@ public class ReportController(
         throw ResponseFactory.Create<OkResponse<IEnumerable<ReportDTO>>>(dtos, ["Reports retrieved successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpGet("open")]
     public async Task<ActionResult<IEnumerable<ReportDTO>>> GetOpenReports()
     {
@@ -98,6 +106,7 @@ public class ReportController(
 
     #region Report Reason Type Endpoints
 
+    // TODO: write XML comments and returnType attributes
     [HttpGet("reason-types")]
     public async Task<ActionResult<IEnumerable<ReportReasonTypeDTO>>> GetReasonTypes()
     {
@@ -112,6 +121,7 @@ public class ReportController(
             ["Reason types retrieved successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpGet("reason-types/{id}")]
     public async Task<ActionResult<ReportReasonTypeDTO>> GetReasonType(int id)
     {
@@ -129,6 +139,7 @@ public class ReportController(
 
     #region Reportable Entity Type Endpoints
 
+    // TODO: write XML comments and returnType attributes
     [HttpGet("entity-types")]
     public async Task<ActionResult<IEnumerable<ReportableEntityTypeDTO>>> GetEntityTypes()
     {
@@ -142,6 +153,7 @@ public class ReportController(
             ["Entity types retrieved successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpGet("entity-types/{id}")]
     public async Task<ActionResult<ReportableEntityTypeDTO>> GetEntityType(int id)
     {

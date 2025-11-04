@@ -19,10 +19,12 @@ public class MessageRead : BaseModel
 
     /// <summary>
     /// </summary>
+    [JsonIgnore]
     [ForeignKey("MessageId")]
     [DeleteBehavior(DeleteBehavior.Restrict)]
     public virtual Message Message { get; set; }
 
+    [JsonIgnore]
     [ForeignKey("UserId")]
     [DeleteBehavior(DeleteBehavior.NoAction)]
     public virtual User User { get; set; }

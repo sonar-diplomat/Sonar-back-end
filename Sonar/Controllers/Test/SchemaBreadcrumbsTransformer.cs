@@ -27,9 +27,17 @@ public sealed class SchemaBreadcrumbsTransformer : IOpenApiSchemaTransformer
         stack.Push(type);
         try
         {
-            // полезный диагностический лог
-            _log.LogInformation("🧩 Schema for {Type} (Depth={Depth}) — props: {Props}",
-                type.FullName, stack.Count, schema.Properties?.Count ?? 0);
+            // полезный диагностический лог (only log if depth is concerning)
+            if (stack.Count > 5)
+            {
+                _log.LogWarning("🧩 Deep schema for {Type} (Depth={Depth}) — props: {Props}",
+                    type.FullName, stack.Count, schema.Properties?.Count ?? 0);
+            }
+            else
+            {
+                _log.LogDebug("🧩 Schema for {Type} (Depth={Depth}) — props: {Props}",
+                    type.FullName, stack.Count, schema.Properties?.Count ?? 0);
+            }
         }
         finally
         {

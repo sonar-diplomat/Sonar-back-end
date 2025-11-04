@@ -20,6 +20,7 @@ public class GiftController(
 )
     : BaseController(userManager)
 {
+    // TODO: write XML comments and returnType attributes
     [HttpPost("send")]
     [Authorize]
     public async Task<ActionResult<Gift>> SendGift([FromBody] SendGiftDTO giftDto)
@@ -31,6 +32,7 @@ public class GiftController(
         return CreatedAtAction(nameof(GetGift), new { id = gift.Id }, gift);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpPost("{id}/accept")]
     [Authorize]
     public async Task<ActionResult<SubscriptionPaymentDTO>> AcceptGift(int id)
@@ -58,6 +60,7 @@ public class GiftController(
             ["Gift accepted and subscription activated."]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpGet("received")]
     [Authorize]
     public async Task<ActionResult<IEnumerable<GiftResponseDTO>>> GetReceivedGifts()
@@ -79,6 +82,7 @@ public class GiftController(
         throw ResponseFactory.Create<OkResponse<IEnumerable<GiftResponseDTO>>>(dtos, ["Received gifts retrieved successfully."]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpGet("sent")]
     [Authorize]
     public async Task<ActionResult<IEnumerable<GiftResponseDTO>>> GetSentGifts(int senderId)
@@ -100,6 +104,7 @@ public class GiftController(
         throw ResponseFactory.Create<OkResponse<IEnumerable<GiftResponseDTO>>>(dtos, ["Sent gifts retrieved successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpGet("{id}")]
     [Authorize]
     public async Task<ActionResult<GiftResponseDTO>> GetGift(int id)
@@ -121,6 +126,7 @@ public class GiftController(
     }
 
 
+    // TODO: write XML comments and returnType attributes
     [HttpDelete("{id}/cancel")]
     [Authorize]
     public async Task<IActionResult> CancelGift(int id)
@@ -132,6 +138,7 @@ public class GiftController(
 
     #region Gift Style Endpoints
 
+    // TODO: write XML comments and returnType attributes
     [HttpGet("styles")]
     public async Task<ActionResult<IEnumerable<GiftStyleDTO>>> GetAllStyles()
     {
@@ -145,6 +152,7 @@ public class GiftController(
             ["Gift styles retrieved successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpGet("styles/{id}")]
     public async Task<ActionResult<GiftStyleDTO>> GetStyle(int id)
     {

@@ -13,6 +13,7 @@ namespace Sonar.Controllers;
 [ApiController]
 public class AccessFeatureController(UserManager<User> userManager, IAccessFeatureService accessFeatureService, IUserService userService) : BaseController(userManager)
 {
+    // TODO: write XML comments and returnType attributes
     [HttpPost("assign/{userId:int}")]
     public async Task<IActionResult> AssignAccessFeatures(int userId, [FromBody] int[] accessFeatureIds)
     {
@@ -21,6 +22,7 @@ public class AccessFeatureController(UserManager<User> userManager, IAccessFeatu
         throw ResponseFactory.Create<OkResponse>(["Access feature was assigned to user successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpPost("revoke/{userId:int}")]
     public async Task<IActionResult> RevokeAccessFeatures(int userId, [FromBody] int[] accessFeatureIds)
     {
@@ -29,6 +31,7 @@ public class AccessFeatureController(UserManager<User> userManager, IAccessFeatu
         throw ResponseFactory.Create<OkResponse>(["Access feature was revoked from user successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpGet]
     public async Task<IActionResult> GetAccessFeatures()
     {
@@ -41,6 +44,7 @@ public class AccessFeatureController(UserManager<User> userManager, IAccessFeatu
         throw ResponseFactory.Create<OkResponse<IEnumerable<AccessFeatureDTO>>>(dtos, ["Access features retrieved successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpGet("{id:int}")]
     public async Task<IActionResult> GetAccessFeatureById(int id)
     {
@@ -53,6 +57,7 @@ public class AccessFeatureController(UserManager<User> userManager, IAccessFeatu
         throw ResponseFactory.Create<OkResponse<AccessFeatureDTO>>(dto, ["Access feature retrieved successfully"]);
     }
 
+    // TODO: write XML comments and returnType attributes
     [HttpGet("user/{userId:int}")]
     public async Task<IActionResult> GetAccessFeaturesByUserId(int userId)
     {

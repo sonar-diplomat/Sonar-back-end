@@ -19,6 +19,7 @@ public class CosmeticSticker : BaseModel
 
     /// <summary>
     /// </summary>
+    [JsonIgnore]
     [ForeignKey("CosmeticItemId")]
     [DeleteBehavior(DeleteBehavior.Cascade)]
     public virtual CosmeticItem CosmeticItem { get; set; }
