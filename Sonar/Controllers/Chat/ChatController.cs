@@ -17,6 +17,14 @@ public class ChatController(
     IChatService chatService
 ) : BaseController(userManager)
 {
+    [HttpPost]
+    public async Task<IActionResult> CreateChat([FromBody] CreateChatDTO dto)
+    {
+        User user = await CheckAccessFeatures([]);
+        await chatService.CreateChatAsync(user.Id, dto);
+        throw ResponseFactory.Create<OkResponse>(["Chat successfully created"]);
+    }
+
     [HttpPost("{chatId:int}/send")]
     public async Task<IActionResult> SendMessage(int chatId, [FromBody] MessageDTO message)
     {

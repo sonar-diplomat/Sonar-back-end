@@ -18,12 +18,13 @@ public class ChatService(
     IImageFileService imageFileService,
     IMessageService messageService,
     IMessageReadService messageReadService,
-    IUserService userService
+    IUserService userService,
+    IChatNotifier notifier
 ) : GenericService<ChatModel>(repository), IChatService
 {
     public async Task UpdateChatCoverAsync(int userId, int chatId, IFormFile file)
     {
-        ChatModel chat = await CheckUserIsMemberAsync(userId, chatId);
+        ChatModel chat = await CheckUserIsMemberAsync(userId, chatId, true);
         ImageFile image = await imageFileService.UploadFileAsync(file);
         chat.CoverId = image.Id;
         await repository.UpdateAsync(chat);
@@ -31,7 +32,7 @@ public class ChatService(
 
     public async Task UpdateChatNameAsync(int userId, int chatId, string newName)
     {
-        ChatModel chat = await CheckUserIsMemberAsync(userId, chatId);
+        ChatModel chat = await CheckUserIsMemberAsync(userId, chatId, true);
         chat.Name = newName;
         await repository.UpdateAsync(chat);
     }
@@ -79,6 +80,7 @@ public class ChatService(
         HashSet<int> existingReadSet = new(existingReadIds);
 
         DateTime now = DateTime.UtcNow;
+
         List<MessageRead> newReads = [];
 
         foreach (int messageId in validMessageIds)
@@ -99,7 +101,16 @@ public class ChatService(
             }
 
         if (newReads.Count > 0)
+        {
             await messageReadService.AddRangeAsync(newReads);
+
+            await notifier.MessagesRead(new MessagesReadEvent(
+                chatId,
+                userId,
+                newReads.Select(mr => mr.Id).ToList(),
+                now
+            ));
+        }
     }
 
 
@@ -121,7 +132,7 @@ public class ChatService(
 
     public async Task AddUserToChat(int memberId, int chatId, int userId)
     {
-        ChatModel chat = await CheckUserIsMemberAsync(memberId, chatId);
+        ChatModel chat = await CheckUserIsMemberAsync(memberId, chatId, true);
         if (!chat.IsGroup)
             throw ResponseFactory.Create<ForbiddenResponse>(["User is not the member of the chat"]);
         User user = await userService.GetByIdValidatedAsync(userId);
@@ -147,7 +158,7 @@ public class ChatService(
 
     public async Task LeaveChat(int userId, int chatId)
     {
-        ChatModel chat = await CheckUserIsMemberAsync(userId, chatId);
+        ChatModel chat = await CheckUserIsMemberAsync(userId, chatId, true);
         if (chat.CreatorId == userId)
         {
             if (chat.Admins.Count != 0)
@@ -163,10 +174,39 @@ public class ChatService(
         chat.Members.Remove(await userService.GetByIdValidatedAsync(userId));
     }
 
+    public async Task<ChatModel> CreateChatAsync(int userId, CreateChatDTO dto)
+    {
+        ChatModel chat = new()
+        {
+            Name = dto.Name,
+            IsGroup = dto.IsGroup,
+            CoverId = dto.CoverId,
+            CreatorId = userId
+        };
+        await repository.AddAsync(chat);
+        if (chat.IsGroup)
+            return await repository.UpdateAsync(chat);
+        if (dto.UserId == null)
+            throw ResponseFactory.Create<ForbiddenResponse>(["Personal chat requires another user"]);
+        chat.Members.Add(await userService.GetByIdValidatedAsync((int)dto.UserId));
+        return await repository.UpdateAsync(chat);
+    }
+
     public async Task<Message> SendMessageAsync(int userId, int chatId, MessageDTO message)
     {
         await CheckUserIsMemberAsync(userId, chatId);
-        return await messageService.CreateAsync(userId, chatId, message);
+        Message created = await messageService.CreateAsync(userId, chatId, message);
+
+        await notifier.MessageCreated(new MessageCreatedEvent(
+            created.Id,
+            created.ChatId,
+            created.SenderId,
+            created.TextContent,
+            created.ReplyMessageId,
+            created.CreatedAt
+        ));
+
+        return created;
     }
 
     public async Task<CursorPageDTO<MessageDTO>> GetMessagesWithCursorAsync(int userId, int chatId, int? cursor,
@@ -178,19 +218,22 @@ public class ChatService(
 
     private async Task<ChatModel> CheckUserCanManageChatAsync(int userId, int chatId)
     {
-        ChatModel chat = await CheckUserIsMemberAsync(userId, chatId);
+        ChatModel chat = await CheckUserIsMemberAsync(userId, chatId, true);
         if (chat.Admins.All(a => a.Id != userId) && chat.CreatorId != userId)
             throw ResponseFactory.Create<ForbiddenResponse>(["The user does not have admin privileges"]);
         return chat;
     }
 
-    private async Task<ChatModel> CheckUserIsMemberAsync(int userId, int chatId)
+    private async Task<ChatModel> CheckUserIsMemberAsync(int userId, int chatId, bool blockIfPrivate = false)
     {
         ChatModel chat = await repository
             .Include(c => c.Members)
             .Include(c => c.Admins)
             .Include(c => c.Creator)
             .GetByIdValidatedAsync(chatId);
+
+        if (!chat.IsGroup && blockIfPrivate)
+            throw ResponseFactory.Create<ForbiddenResponse>(["This cannot be done in the personal chat"]);
 
         HashSet<int> userIds = chat.Members.Select(u => u.Id).ToHashSet();
         return userIds.Contains(userId)
