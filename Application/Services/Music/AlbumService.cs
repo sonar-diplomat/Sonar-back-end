@@ -66,4 +66,14 @@ public class AlbumService(
     {
         return await repository.Include(a => a.VisibilityState).GetByIdValidatedAsync(id);
     }
+
+    public async Task UpdateCoverAsync(int albumId, int imageId)
+    {
+        Album album = await repository.Include(a => a.Tracks).GetByIdValidatedAsync(albumId);
+
+        album.CoverId = imageId;
+        foreach (var track in album.Tracks) { track.CoverId = imageId; }
+
+        await repository.UpdateAsync(album);
+    }
 }

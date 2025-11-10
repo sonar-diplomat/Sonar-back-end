@@ -118,6 +118,7 @@ public class AlbumController(
     /// <response code="404">Album not found.</response>
     [HttpPost("{albumId:int}/add")]
     [Authorize]
+    [RequestFormLimits(MultipartBodyLengthLimit = 104857600, ValueLengthLimit = 104857600)]
     [ProducesResponseType(typeof(OkResponse<Track>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
@@ -149,9 +150,7 @@ public class AlbumController(
     {
         await MatchAlbumAndDistributor(albumId);
         ImageFile image = await imageFileService.UploadFileAsync(file);
-        Album album = await albumService.GetByIdValidatedAsync(albumId);
-        album.CoverId = image.Id;
-        await albumService.UpdateAsync(album);
+        await albumService.UpdateCoverAsync(albumId, image.Id);
         throw ResponseFactory.Create<OkResponse>(["Album cover was updated successfully"]);
     }
 

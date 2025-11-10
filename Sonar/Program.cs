@@ -63,9 +63,25 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<SonarContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("SonarContext") ??
                       throw new InvalidOperationException("Connection string 'SonarContext' not found.")));
+builder.Services.Configure<FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = 104857600; // 100 MB
+    options.ValueLengthLimit = 104857600; // 100 MB - allows individual form values up to 100 MB
+    options.KeyLengthLimit = 1024;
+});
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = 100L * 1024 * 1024; // 100 MB
+});
+
 
 // Add services to the container.
-builder.Services.AddControllers()
+builder.Services.AddControllers(options =>
+    {
+        // Configure form model binding limits
+        options.MaxModelBindingCollectionSize = int.MaxValue;
+    })
+    .ConfigureApiBehaviorOptions(options => { })
     .AddJsonOptions(options =>
     {
         // Increase MaxDepth to allow OpenAPI schema generation to complete
@@ -136,10 +152,7 @@ builder.Services.AddOpenApi(o =>
 // Add Swagger UI for OpenAPI visualization
 builder.Services.AddSwaggerGen();
 
-builder.Services.Configure<FormOptions>(options =>
-{
-    options.MultipartBodyLengthLimit = 104857600; // 100 MB
-});
+
 
 
 #region RegisterRepositories
@@ -335,11 +348,11 @@ if (app.Environment.IsDevelopment())
     });
 }
 
+app.UseCors("CorsPolicy");
+
 app.UseHttpsRedirection();
 
 app.UseRouting();
-
-app.UseCors("CorsPolicy");
 
 app.UseAuthentication();
 

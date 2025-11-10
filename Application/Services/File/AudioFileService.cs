@@ -15,11 +15,11 @@ public class AudioFileService(
     IFileFormatInspector inspector
 ) : FileService<AudioFile>(repository, fileStorage, inspector), IAudioFileService
 {
-    public async Task<FileStream?> GetMusicStreamAsync(int fileId, long? startByte, long? length)
-    {
-        return new FileStream("C:\\Users\\timpf\\Music\\Нова папка\\Infected Mushroom - Guitarmass.aac", FileMode.Open,
-            FileAccess.Read);
-    }
+    //public async Task<FileStream?> GetMusicStreamAsync(int fileId, long? startByte, long? length)
+    //{
+    //    return new FileStream("C:\\Users\\timpf\\Music\\Нова папка\\Infected Mushroom - Guitarmass.aac", FileMode.Open,
+    //        FileAccess.Read);
+    //}
 
     public async Task<AudioFile> UploadFileAsync(IFormFile file)
     {
@@ -73,52 +73,78 @@ public class AudioFileService(
         }
     }
 
-    //public async Task<FileStream?> GetMusicStreamAsync(int fileId, long? startByte, long? length)
-    //{
-    //    FileModel file = await GetByIdValidatedAsync(fileId);
+    public async Task<FileStream?> GetMusicStreamAsync(int fileId, TimeSpan? startPosition, TimeSpan? length)
+    {
+        AudioFile file = await GetByIdValidatedAsync(fileId);
 
-    //    try
-    //    {
-    //        if (!System.IO.File.Exists(file.Url))
-    //        {
-    //            throw AppExceptionFactory.Create<Exception.FileNotFoundException>();
-    //        }
+        try
+        {
+            if (!System.IO.File.Exists(file.Url))
+            {
+                throw ResponseFactory.Create<NotFoundResponse>([$"Audio file with ID {fileId} not found"]);
+            }
 
-    //        FileStream fileStream = new FileStream(
-    //            file.Url,
-    //            FileMode.Open,
-    //            FileAccess.Read,
-    //            FileShare.Read, // Позволяет другим процессам читать файл
-    //            bufferSize: 4096, // Стандартный размер буфера
-    //            useAsync: true // Асинхронный режим
-    //        );
-    //        if (startByte.HasValue && length.HasValue)
-    //        {
+            FileStream fileStream = new(
+                file.Url,
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.Read, // Позволяет другим процессам читать файл
+                bufferSize: 4096, // Стандартный размер буфера
+                useAsync: true // Асинхронный режим
+            );
 
-    //            if (startByte.Value < 0 || startByte.Value >= fileStream.Length)
-    //            {
-    //                fileStream.Dispose();
-    //                throw new ArgumentException();
-    //            }
+            if (startPosition.HasValue)
+            {
+                // Convert TimeSpan to byte position using NAudio
+                long startByte = await ConvertTimeSpanToBytePositionAsync(file.Url, startPosition.Value);
 
-    //            if (length.Value <= 0 || startByte.Value + length.Value > fileStream.Length)
-    //            {
-    //                fileStream.Dispose();
-    //                throw new ArgumentException();
-    //            }
+                if (startByte < 0 || startByte >= fileStream.Length)
+                {
+                    fileStream.Dispose();
+                    throw ResponseFactory.Create<BadRequestResponse>([$"Invalid start position: {startPosition.Value}"]);
+                }
 
-    //            // Установка позиции в потоке
-    //            fileStream.Seek(startByte.Value, SeekOrigin.Begin);
-    //        }
-    //        return fileStream;
-    //    }
-    //    catch (IOException ex)
-    //    {
-    //        throw new IOException($"IO error while accessing file: {ex.Message}");
-    //    }
-    //    catch (System.Exception ex)
-    //    {
-    //        throw new System.Exception($"Unexpected error in file service: {ex.Message}");
-    //    }
-    //}
+                // Установка позиции в потоке
+                fileStream.Seek(startByte, SeekOrigin.Begin);
+
+                // Note: length parameter is available but not used for stream limiting
+                // To implement length limiting, we would need to wrap the stream
+            }
+
+            return fileStream;
+        }
+        catch (IOException ex)
+        {
+            throw ResponseFactory.Create<InternalServerErrorResponse>([$"IO error while accessing file: {ex.Message}"]);
+        }
+        catch (Exception ex)
+        {
+            throw ResponseFactory.Create<InternalServerErrorResponse>([$"Unexpected error in file service: {ex.Message}"]);
+        }
+    }
+
+    private async Task<long> ConvertTimeSpanToBytePositionAsync(string filePath, TimeSpan position)
+    {
+        try
+        {
+            await using (AudioFileReader reader = new(filePath))
+            {
+                if (position >= reader.TotalTime)
+                {
+                    return reader.Length;
+                }
+
+                // Calculate byte position based on time position
+                // This is an approximation - for more accurate results, we'd need to parse the audio file format
+                double positionRatio = position.TotalSeconds / reader.TotalTime.TotalSeconds;
+                long estimatedBytePosition = (long)(reader.Length * positionRatio);
+
+                return estimatedBytePosition;
+            }
+        }
+        catch (Exception)
+        {
+            throw ResponseFactory.Create<InternalServerErrorResponse>(["Error while calculating audio file position"]);
+        }
+    }
 }

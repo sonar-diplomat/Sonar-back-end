@@ -1,5 +1,4 @@
-﻿using System.Text.Json;
-using Application.Abstractions.Interfaces.Repository.Distribution;
+﻿using Application.Abstractions.Interfaces.Repository.Distribution;
 using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.File;
 using Application.Abstractions.Interfaces.Services.Utilities;
@@ -11,6 +10,7 @@ using Entities.Models.Library;
 using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
 using Settings = Entities.Models.ClientSettings.Settings;
 using SysFile = System.IO.File;
 
@@ -31,7 +31,13 @@ public class TestController(
     IImageFileService imageFileService
 ) : BaseController(userManager)
 {
-    # region dist
+    #region dist
+
+    [HttpPost("IspottedABigFuckingTankinYoureArea")]
+    public async Task<IActionResult> IspottedABigFuckingTankinYoureArea([FromForm] IFormFile tank)
+    {
+        throw ResponseFactory.Create<OkResponse>(["UUUUUUUUUUUUUUUUUOOOOOOOOOOOOOOOOOOAAAAAAAAAAAAAAAAAA (►__◄)"]);
+    }
 
     /// <summary>
     /// [TEST] Generates a test API key.

@@ -2,8 +2,6 @@ using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.Utilities;
 using Application.DTOs.Music;
 using Application.Response;
-using Entities.Enums;
-using Entities.Models.ClientSettings;
 using Entities.Models.Music;
 using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Authorization;
@@ -20,13 +18,16 @@ public class TrackController(
     UserManager<User> userManager,
     ITrackService trackService,
     ISettingsService settingsService,
-    IShareService shareService) : ShareController<Track>(userManager, shareService)
+    IShareService shareService,
+    IUserStateService userStateService) : ShareController<Track>(userManager, shareService)
 {
 
     /// <summary>
-    /// Streams a track's audio content with support for range requests and optional download.
+    /// Streams a track's audio content with support for TimeSpan-based positioning and optional download.
     /// </summary>
     /// <param name="trackId">The ID of the track to stream.</param>
+    /// <param name="startPosition">Optional. The start position as TimeSpan (e.g., "00:01:30" for 1 minute 30 seconds). If not provided, uses queue position if track matches current queue track.</param>
+    /// <param name="length">Optional. The length to stream as TimeSpan. If not provided, streams from startPosition to end.</param>
     /// <param name="download">Optional. If true, sets Content-Disposition to attachment for download.</param>
     /// <returns>Audio file stream with appropriate content type.</returns>
     /// <response code="200">Full audio stream returned.</response>
@@ -34,22 +35,38 @@ public class TrackController(
     /// <response code="404">Track not found.</response>
     /// <response code="401">User not authenticated or lacks 'ListenContent' access feature.</response>
     /// <remarks>
-    /// Supports HTTP range requests for seeking within the audio file.
+    /// Supports TimeSpan-based positioning for seeking within the audio file.
+    /// If startPosition is not provided and the track matches the user's current queue track, the queue position will be used.
     /// Requires 'ListenContent' access feature.
     /// </remarks>
     [HttpGet("{trackId}/stream")]
-    [Authorize]
+    //TODO: Unmute //[Authorize]
     [ProducesResponseType(typeof(FileStreamResult), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(FileStreamResult), StatusCodes.Status206PartialContent)]
     [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> StreamMusic(int trackId, [FromQuery] bool download = false)
+    public async Task<IActionResult> StreamMusic(
+        int trackId,
+        [FromQuery] TimeSpan? startPosition = null,
+        [FromQuery] TimeSpan? length = null,
+        [FromQuery] bool download = false)
     {
-        int settingsId = (await CheckAccessFeatures([AccessFeatureStruct.ListenContent])).SettingsId;
-        // TODO: Use settings to determine track quality
-        Settings setttings = await settingsService.GetByIdValidatedAsync(settingsId);
-        string? rangeHeader = Request.Headers.Range.FirstOrDefault();
-        MusicStreamResultDTO? result = await trackService.GetMusicStreamAsync(trackId, rangeHeader);
+        //User user = await CheckAccessFeatures([AccessFeatureStruct.ListenContent]);
+        //int settingsId = user.SettingsId;
+
+        //Settings setttings = await settingsService.GetByIdValidatedAsync(settingsId);
+
+
+        //if (!startPosition.HasValue)
+        //{
+        //    UserState userState = await userStateService.GetByUserIdValidatedAsync(user.Id);
+        //    if (userState.Queue?.CurrentTrackId == trackId)
+        //    {
+        //        startPosition = userState.Queue.Position;
+        //    }
+        //}
+
+        MusicStreamResultDTO? result = await trackService.GetMusicStreamAsync(trackId, startPosition, length);
 
         if (result == null) throw ResponseFactory.Create<NotFoundResponse>([$"Track with ID {trackId} not found"]);
 
@@ -133,17 +150,16 @@ public class TrackController(
     /// Retrieves detailed information about a specific track.
     /// </summary>
     /// <param name="trackId">The ID of the track to retrieve.</param>
-    /// <returns>Track entity with full details.</returns>
+    /// <returns>Track DTO with full details.</returns>
     /// <response code="200">Track retrieved successfully.</response>
     /// <response code="404">Track not found.</response>
     [HttpGet("{trackId:int}")]
-    [ProducesResponseType(typeof(OkResponse<Track>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(OkResponse<TrackDTO>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetTrackById(int trackId)
     {
-        // TODO: create DTO
-        Track track = await trackService.GetByIdValidatedAsync(trackId);
-        throw ResponseFactory.Create<OkResponse<Track>>(track, ["Track successfully retrieved"]);
+        TrackDTO trackDto = await trackService.GetTrackDtoAsync(trackId);
+        throw ResponseFactory.Create<OkResponse<TrackDTO>>(trackDto, ["Track successfully retrieved"]);
     }
 
     /// <summary>

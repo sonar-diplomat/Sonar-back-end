@@ -10,6 +10,7 @@ public class UserStateRepository(SonarContext dbContext) : GenericRepository<Use
     public async Task<UserState?> GetByUserIdAsync(int userId)
     {
         return await context.UserStates.Include(u => u.User)
+            .Include(us => us.Queue)
             .FirstOrDefaultAsync(us => us.User.Id == userId);
     }
 }
