@@ -96,7 +96,7 @@ public class SonarContext(DbContextOptions<SonarContext> options)
             .WithOne(q => q.CurrentTrack)
             .HasForeignKey(q => q.CurrentTrackId);
 
-        builder.Entity<AlbumArtist>().HasKey(aa => new { aa.AlbumId, aa.ArtistId });
+        //builder.Entity<AlbumArtist>().HasKey(aa => aa.Id);
 
         builder.Entity<AlbumArtist>()
             .HasOne(aa => aa.Album)
@@ -105,8 +105,8 @@ public class SonarContext(DbContextOptions<SonarContext> options)
 
         builder.Entity<AlbumArtist>()
             .HasOne(aa => aa.Artist)
-            .WithMany(a => a.AlbumArtists)
-            .HasForeignKey(aa => aa.ArtistId);
+            .WithMany(a => a.AlbumArtists)/*.IsRequired(false)*/
+            .HasForeignKey(aa => aa.ArtistId)/*.IsRequired(false)*/;
 
         builder.Entity<User>().HasOne(u => u.Settings).WithOne(s => s.User).HasForeignKey<User>(s => s.SettingsId);
         builder.Entity<Settings>().HasMany(s => s.BlockedUsers).WithMany(s => s.SettingsBlockedUsers);

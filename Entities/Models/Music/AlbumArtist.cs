@@ -9,8 +9,8 @@ public class AlbumArtist : BaseModel
     [MaxLength(100)]
     public required string Pseudonym { get; set; }
 
-    public required int? ArtistId { get; set; }
-    public required int AlbumId { get; set; }
+    public int? ArtistId { get; set; }
+    public int AlbumId { get; set; }
 
     /// <summary>
     /// </summary>

@@ -184,7 +184,7 @@ public class PlaylistService(
         bool isCreator = playlist.CreatorId == userId;
         bool isContributor = allowContributor && playlist.Contributors.Any(c => c.Id == userId);
         if (!isCreator && !isContributor)
-            throw ResponseFactory.Create<UnauthorizedResponse>(["You do not have permission to modify this playlist"]);
+            throw ResponseFactory.Create<ForbiddenResponse>(["You do not have permission to modify this playlist"]);
 
         return playlist;
     }

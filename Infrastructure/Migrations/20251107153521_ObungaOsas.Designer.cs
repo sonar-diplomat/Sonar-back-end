@@ -3,6 +3,7 @@ using System;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(SonarContext))]
-    partial class SonarContextModelSnapshot : ModelSnapshot
+    [Migration("20251107153521_ObungaOsas")]
+    partial class ObungaOsas
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -969,16 +972,13 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Entities.Models.Music.AlbumArtist", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
                     b.Property<int>("AlbumId")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("ArtistId")
+                    b.Property<int>("ArtistId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Id")
                         .HasColumnType("integer");
 
                     b.Property<string>("Pseudonym")
@@ -986,9 +986,7 @@ namespace Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.HasKey("Id");
-
-                    b.HasIndex("AlbumId");
+                    b.HasKey("AlbumId", "ArtistId");
 
                     b.HasIndex("ArtistId");
 
@@ -2613,7 +2611,9 @@ namespace Infrastructure.Migrations
 
                     b.HasOne("Entities.Models.Music.Artist", "Artist")
                         .WithMany("AlbumArtists")
-                        .HasForeignKey("ArtistId");
+                        .HasForeignKey("ArtistId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Album");
 

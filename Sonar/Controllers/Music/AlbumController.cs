@@ -1,4 +1,3 @@
-using System.IdentityModel.Tokens.Jwt;
 using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.File;
 using Application.DTOs.Music;
@@ -11,7 +10,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Sonar.Extensions;
-using Microsoft.Extensions.Primitives;
 
 namespace Sonar.Controllers.Music;
 
@@ -49,7 +47,7 @@ public class AlbumController(
     {
         int distributorId = (await this.CheckDistributorAsync()).Id;
         Album album = await albumService.UploadAsync(dto, distributorId);
-        AlbumResponseDTO responseDto = new AlbumResponseDTO
+        AlbumResponseDTO responseDto = new()
         {
             Id = album.Id,
             Name = album.Name,
@@ -94,11 +92,11 @@ public class AlbumController(
     [ProducesResponseType(typeof(OkResponse<AlbumResponseDTO>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> UpdateAlbumName(int albumId, string name)
+    public async Task<IActionResult> UpdateAlbumName(int albumId, [FromQuery] string name)
     {
         await MatchAlbumAndDistributor(albumId);
         Album album = await albumService.UpdateNameAsync(albumId, name);
-        AlbumResponseDTO responseDto = new AlbumResponseDTO
+        AlbumResponseDTO responseDto = new()
         {
             Id = album.Id,
             Name = album.Name,
@@ -123,7 +121,7 @@ public class AlbumController(
     [ProducesResponseType(typeof(OkResponse<Track>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> UploadTrack(int albumId, UploadTrackDTO dto)
+    public async Task<IActionResult> UploadTrack(int albumId, [FromForm] UploadTrackDTO dto)
     {
         await MatchAlbumAndDistributor(albumId);
         // TODO: create DTO

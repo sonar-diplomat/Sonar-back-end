@@ -69,12 +69,12 @@ public class AuthController(
         User? user = await userManager.Users
             .FirstOrDefaultAsync(u => u.UserName == userIdentifier || u.Email == userIdentifier);
 
-        if (user == null) ResponseFactory.Create<BadRequestResponse>([$"User {userIdentifier} not found"]);
+        if (user == null) throw ResponseFactory.Create<BadRequestResponse>([$"User {userIdentifier} not found"]);
 
         SignInResult result = await signInManager.CheckPasswordSignInAsync(
             user!, password, false);
 
-        if (!result.Succeeded) ResponseFactory.Create<ExpectationFailedResponse>();
+        if (!result.Succeeded) throw ResponseFactory.Create<ExpectationFailedResponse>();
 
         if (user!.Enabled2FA)
         {

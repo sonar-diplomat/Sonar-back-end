@@ -126,11 +126,11 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddOpenApi(o =>
 {
-    o.AddOperationTransformer<OperationTraceTransformer>();               // ����� �����
-    o.AddSchemaTransformer<NavigationPropertyIgnoreTransformer>();        // Remove navigation properties FIRST
-    o.AddSchemaTransformer<SchemaBreadcrumbsTransformer>();               // ���� ����� "�� ����"
-    o.AddSchemaTransformer<CollapseSchemaByNameTransformer>();            // Collapse on repeated depth
-    o.AddDocumentTransformer<RefGraphCycleDetectorDocumentTransformer>(); // ����� �� $ref � ������� ���������
+    o.AddOperationTransformer<OperationTraceTransformer>();
+    o.AddSchemaTransformer<NavigationPropertyIgnoreTransformer>();
+    o.AddSchemaTransformer<SchemaBreadcrumbsTransformer>();
+    o.AddSchemaTransformer<CollapseSchemaByNameTransformer>();
+    o.AddDocumentTransformer<RefGraphCycleDetectorDocumentTransformer>();
 });
 
 // Add Swagger UI for OpenAPI visualization
@@ -326,7 +326,7 @@ app.UseMiddleware<ExceptionMiddleware>();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi(); // Exposes OpenAPI JSON at /openapi/v1.json
-    
+
     // Add Swagger UI
     app.UseSwaggerUI(options =>
     {
