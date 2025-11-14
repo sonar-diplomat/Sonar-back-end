@@ -101,8 +101,7 @@ public class AuthController(
             UserAgent = Request.Headers["User-Agent"].ToString(),
             IPAddress = HttpContext.Connection.RemoteIpAddress!,
             RefreshTokenHash = authService.ComputeSha256(refreshToken),
-            //ExpiresAt = DateTime.UtcNow.AddDays(30),
-            ExpiresAt = DateTime.UtcNow.AddMinutes(1),
+            ExpiresAt = DateTime.UtcNow.AddDays(30),
             CreatedAt = DateTime.UtcNow,
             LastActive = DateTime.UtcNow,
             Revoked = false

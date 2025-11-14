@@ -1,4 +1,5 @@
 ﻿using Application.Response;
+using System.Runtime.ExceptionServices;
 using System.Text.Json;
 
 namespace Sonar.Middleware;
@@ -34,14 +35,13 @@ public class ExceptionMiddleware(RequestDelegate next, IHostEnvironment environm
     {
         if (ex is not Response appResponse)
         {
-            // In development, let ASP.NET Core handle non-Response exceptions
-            // to show the developer exception page
             if (environment.IsDevelopment())
             {
-                throw ex;
+
+                ExceptionDispatchInfo.Capture(ex).Throw();
+                return;
             }
 
-            // In production, return a generic error for non-Response exceptions
             context.Response.ContentType = "application/json";
             context.Response.StatusCode = 500;
             var genericError = new

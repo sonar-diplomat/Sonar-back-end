@@ -2,6 +2,8 @@ using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.Utilities;
 using Application.DTOs.Music;
 using Application.Response;
+using Entities.Enums;
+using Entities.Models.ClientSettings;
 using Entities.Models.Music;
 using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Authorization;
@@ -40,7 +42,7 @@ public class TrackController(
     /// Requires 'ListenContent' access feature.
     /// </remarks>
     [HttpGet("{trackId}/stream")]
-    //TODO: Unmute //[Authorize]
+    [Authorize]
     [ProducesResponseType(typeof(FileStreamResult), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(FileStreamResult), StatusCodes.Status206PartialContent)]
     [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
@@ -51,20 +53,20 @@ public class TrackController(
         [FromQuery] TimeSpan? length = null,
         [FromQuery] bool download = false)
     {
-        //User user = await CheckAccessFeatures([AccessFeatureStruct.ListenContent]);
-        //int settingsId = user.SettingsId;
+        User user = await CheckAccessFeatures([AccessFeatureStruct.ListenContent]);
+        int settingsId = user.SettingsId;
 
-        //Settings setttings = await settingsService.GetByIdValidatedAsync(settingsId);
+        Settings setttings = await settingsService.GetByIdValidatedAsync(settingsId);
 
 
-        //if (!startPosition.HasValue)
-        //{
-        //    UserState userState = await userStateService.GetByUserIdValidatedAsync(user.Id);
-        //    if (userState.Queue?.CurrentTrackId == trackId)
-        //    {
-        //        startPosition = userState.Queue.Position;
-        //    }
-        //}
+        if (!startPosition.HasValue)
+        {
+            UserState userState = await userStateService.GetByUserIdValidatedAsync(user.Id);
+            if (userState.Queue?.CurrentTrackId == trackId)
+            {
+                startPosition = userState.Queue.Position;
+            }
+        }
 
         MusicStreamResultDTO? result = await trackService.GetMusicStreamAsync(trackId, startPosition, length);
 

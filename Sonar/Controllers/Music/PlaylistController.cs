@@ -38,6 +38,7 @@ public class PlaylistController(
     {
         User user = await CheckAccessFeatures([]);
         Playlist playlist = await playlistService.CreatePlaylistAsync(user.Id, dto);
+#pragma warning disable CS8619 // Nullability of reference types in value doesn't match target type.
         PlaylistResponseDTO responseDto = new()
         {
             Id = playlist.Id,
@@ -45,8 +46,9 @@ public class PlaylistController(
             CoverUrl = playlist.Cover?.Url ?? string.Empty,
             CreatorName = playlist.Creator?.UserName ?? string.Empty,
             TrackCount = playlist.Tracks?.Count ?? 0,
-            ContributorNames = playlist.Contributors?.Select(c => c.UserName).ToList() ?? new List<string>()
+            ContributorNames = playlist.Contributors?.Select(c => c.UserName).ToList() ?? new List<string?>()
         };
+#pragma warning restore CS8619 // Nullability of reference types in value doesn't match target type.
         throw ResponseFactory.Create<OkResponse<PlaylistResponseDTO>>(responseDto, ["Playlist was created successfully"]);
     }
 

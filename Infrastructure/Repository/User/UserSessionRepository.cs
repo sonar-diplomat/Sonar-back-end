@@ -35,7 +35,7 @@ public class UserSessionRepository(SonarContext dbContext)
 
     public async Task<IEnumerable<ActiveSessionDTO>> GetAllActiveSessionsByUserIdAsync(int userId)
     {
-        return await Task.FromResult(
+        return await
             context.UserSessions
                 .Where(s => s.UserId == userId && !s.Revoked && s.ExpiresAt > DateTime.UtcNow)
                 .Select(s => new ActiveSessionDTO
@@ -46,7 +46,7 @@ public class UserSessionRepository(SonarContext dbContext)
                     IpAddress = s.IPAddress == null ? null : s.IPAddress.ToString(),
                     CreatedAt = s.CreatedAt,
                     LastActive = s.LastActive
-                }));
+                }).ToListAsync();
     }
 
     public Task<UserSession?> GetByUserIdAndDeviceIdAsync(int userId, string deviceId)

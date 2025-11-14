@@ -36,6 +36,17 @@ public class UserRepository(SonarContext context) : IUserRepository
         return user;
     }
 
+    public async Task UpdateAvatarImageIdAsync(int userId, int avatarImageId)
+    {
+        User? user = await context.Set<User>().FindAsync(userId);
+        if (user == null)
+            throw new InvalidOperationException($"User with ID {userId} not found.");
+        user.AvatarImageId = avatarImageId;
+        var entry = context.Entry(user);
+        entry.Property(u => u.AvatarImageId).IsModified = true;
+        await context.SaveChangesAsync();
+    }
+
     public async Task RemoveAsync(User user)
     {
         context.Set<User>().Remove(user);
