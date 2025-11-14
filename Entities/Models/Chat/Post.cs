@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 using Entities.Models.Access;
 using Entities.Models.Music;
 using Microsoft.EntityFrameworkCore;
@@ -28,13 +29,16 @@ public class Post : BaseModel
 
     /// <summary>
     /// </summary>
+    [JsonIgnore]
     [ForeignKey("UserId")]
     [DeleteBehavior(DeleteBehavior.NoAction)]
     public virtual Artist Artist { get; set; }
 
+    [JsonIgnore]
     [ForeignKey("VisibilityStateId")]
     [DeleteBehavior(DeleteBehavior.NoAction)]
     public virtual VisibilityState VisibilityState { get; set; }
 
+    [JsonIgnore]
     public virtual ICollection<File.File>? Files { get; set; }
 }

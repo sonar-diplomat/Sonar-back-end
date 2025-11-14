@@ -1,5 +1,4 @@
-﻿using System.Security.Cryptography;
-using Application.Abstractions.Interfaces.Repository.UserCore;
+﻿using Application.Abstractions.Interfaces.Repository.UserCore;
 using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.File;
 using Application.DTOs.Auth;
@@ -7,9 +6,11 @@ using Application.DTOs.User;
 using Application.Extensions;
 using Application.Response;
 using Entities.Models.Access;
+using Entities.Models.File;
 using Entities.Models.Music;
 using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Http;
+using System.Security.Cryptography;
 
 namespace Application.Services.UserCore;
 
@@ -41,7 +42,7 @@ public class UserService(
 
     public async Task<IEnumerable<User>> GetAllAsync()
     {
-        return await repository.GetAllAsync();
+        return await repository.Include(u => u.AccessFeatures).GetAllAsync();
     }
 
     public async Task<User> UpdateUserAsync(int userId, UserUpdateDTO userUpdateUpdateDto)
@@ -126,18 +127,19 @@ public class UserService(
     {
         User user = await GetByIdValidatedAsync(userId);
         int oldAvatarId = user.AvatarImageId;
+
+        ImageFile newAvatar = await imageFileService.UploadFileAsync(file);
+        await repository.UpdateAvatarImageIdAsync(userId, newAvatar.Id);
+
         if (oldAvatarId != 1)
             await imageFileService.DeleteAsync(oldAvatarId);
-
-        user.AvatarImage = await imageFileService.UploadFileAsync(file);
-        await repository.UpdateAsync(user);
     }
 
     public async Task AssignAccessFeaturesAsync(int userId, int[] accessFeatureIds)
     {
         User user = await GetValidatedIncludeAccessFeaturesAsync(userId);
         foreach (int accessFeatureId in accessFeatureIds)
-            if (user.AccessFeatures.All(af => af.Id != accessFeatureId))
+            if (user.AccessFeatures.All(af => af.Id != accessFeatureId) && accessFeatureId != 1 /*IAmGod protection*/)
                 user.AccessFeatures.Add(await accessFeatureService.GetByIdValidatedAsync(accessFeatureId));
 
         await repository.UpdateAsync(user);
@@ -158,7 +160,9 @@ public class UserService(
         User user = await GetValidatedIncludeAccessFeaturesAsync(userId);
         IEnumerable<AccessFeature> toRemove = user.AccessFeatures.Where(af => accessFeatureIds.Contains(af.Id));
         foreach (AccessFeature af in toRemove)
-            user.AccessFeatures.Remove(af);
+        {
+            if (af.Id != 1 && af.Name != "IAmGod" /*protection for IAmGod*/) user.AccessFeatures.Remove(af);
+        }
         await repository.UpdateAsync(user);
     }
 

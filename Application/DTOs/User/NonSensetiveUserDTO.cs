@@ -1,5 +1,4 @@
-﻿using Entities.Models.Access;
-using Entities.Models.File;
+﻿using Application.DTOs.Access;
 
 namespace Application.DTOs.User;
 
@@ -10,8 +9,8 @@ public record NonSensetiveUserDTO
     public DateTime RegistrationDate { get; set; }
     public int AvatarImageId { get; set; }
 
-    public virtual ImageFile AvatarImage { get; set; }
+    public string ImageUrl { get; set; }
 
     //public virtual Artist Artist { get; set; }
-    public virtual ICollection<AccessFeature> AccessFeatures { get; set; }
+    public ICollection<AccessFeatureDTO> AccessFeatures { get; set; }
 }

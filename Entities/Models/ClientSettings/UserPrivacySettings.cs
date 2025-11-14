@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 using Entities.Models.UserCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,10 +17,12 @@ public class UserPrivacySettings : BaseModel
 
     /// <summary>
     /// </summary>
+    [JsonIgnore]
     [ForeignKey("WhichCanViewProfileId")]
     [DeleteBehavior(DeleteBehavior.NoAction)]
     public virtual UserPrivacyGroup WhichCanViewProfile { get; set; }
 
+    [JsonIgnore]
     [ForeignKey("WhichCanMessageId")]
     [DeleteBehavior(DeleteBehavior.NoAction)]
     public virtual UserPrivacyGroup WhichCanMessage { get; set; }

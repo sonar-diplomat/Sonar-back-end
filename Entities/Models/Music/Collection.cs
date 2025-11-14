@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 using Entities.Models.Access;
 using Entities.Models.File;
 using Entities.Models.Library;
@@ -22,15 +23,20 @@ public abstract class Collection : BaseModel
 
     /// <summary>
     /// </summary>
+    [JsonIgnore]
     [ForeignKey("VisibilityStateId")]
     [DeleteBehavior(DeleteBehavior.Cascade)]
     public virtual VisibilityState VisibilityState { get; set; }
 
+    [JsonIgnore]
     [ForeignKey("CoverId")]
     [DeleteBehavior(DeleteBehavior.Cascade)]
     public virtual ImageFile Cover { get; set; }
 
+    [JsonIgnore]
     public virtual ICollection<User> Users { get; set; }
+    [JsonIgnore]
     public virtual ICollection<Track> Tracks { get; set; }
+    [JsonIgnore]
     public virtual ICollection<Folder> Folders { get; set; }
 }

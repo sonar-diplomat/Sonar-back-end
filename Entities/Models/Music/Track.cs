@@ -4,6 +4,7 @@ using Entities.Models.UserCore;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace Entities.Models.Music;
 
@@ -37,28 +38,37 @@ public class Track : BaseModel
 
     /// <summary>
     /// </summary>
+    [JsonIgnore]
     [ForeignKey("LowQualityAudioFileId")]
     [DeleteBehavior(DeleteBehavior.Cascade)]
     public virtual AudioFile LowQualityAudioFile { get; set; }
 
+    [JsonIgnore]
     [ForeignKey("MediumQualityAudioFileId")]
     [DeleteBehavior(DeleteBehavior.Cascade)]
     public virtual AudioFile? MediumQualityAudioFile { get; set; }
 
+    [JsonIgnore]
     [ForeignKey("HighQualityAudioFileId")]
     [DeleteBehavior(DeleteBehavior.Cascade)]
     public virtual AudioFile? HighQualityAudioFile { get; set; }
 
+    [JsonIgnore]
     [ForeignKey("VisibilityStateId")]
     [DeleteBehavior(DeleteBehavior.Cascade)]
     public virtual VisibilityState VisibilityState { get; set; }
 
+    [JsonIgnore]
     [ForeignKey("CoverId")]
     [DeleteBehavior(DeleteBehavior.Cascade)]
     public virtual ImageFile Cover { get; set; }
 
+    [JsonIgnore]
     public virtual ICollection<Queue> QueuesWherePrimary { get; set; }
+    [JsonIgnore]
     public virtual ICollection<Artist> Artists { get; set; }
+    [JsonIgnore]
     public virtual ICollection<Collection> Collections { get; set; }
+    [JsonIgnore]
     public virtual ICollection<Queue> Queues { get; set; }
 }

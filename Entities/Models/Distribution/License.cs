@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 using Entities.Models.UserCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -25,6 +26,7 @@ public class License : BaseModel
     [Required]
     public int IssuerId { get; set; }
 
+    [JsonIgnore]
     [ForeignKey("IssuerId")]
     [DeleteBehavior(DeleteBehavior.NoAction)]
     public virtual User Issuer { get; set; }

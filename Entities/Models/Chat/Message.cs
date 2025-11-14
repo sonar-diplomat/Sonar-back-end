@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 using Entities.Models.UserCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -25,17 +26,21 @@ public class Message : BaseModel
 
     /// <summary>
     /// </summary>
+    [JsonIgnore]
     [ForeignKey("ReplyMessageId")]
     [DeleteBehavior(DeleteBehavior.NoAction)]
     public virtual Message? ReplyMessage { get; set; }
 
+    [JsonIgnore]
     [ForeignKey("ChatId")]
     [DeleteBehavior(DeleteBehavior.NoAction)]
     public virtual Chat Chat { get; set; }
 
+    [JsonIgnore]
     [ForeignKey("SenderId")]
     [DeleteBehavior(DeleteBehavior.NoAction)]
     public virtual User Sender { get; set; }
 
+    [JsonIgnore]
     public virtual ICollection<MessageRead> MessagesReads { get; set; }
 }

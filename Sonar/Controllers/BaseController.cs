@@ -32,8 +32,8 @@ public abstract class BaseController(
 
         string[] baseRoles = [AccessFeatureStruct.UserLogin];
         IEnumerable<string> features = baseRoles.Concat(feature);
-        return user.AccessFeatures.All(af => !features.Contains(af.Name))
-            ? throw ResponseFactory.Create<ForbiddenResponse>(["You do not have permission to perform this action"])
-            : user;
+        return features.All(f => user.AccessFeatures.Any(af => af.Name == f))
+            ? user
+            : throw ResponseFactory.Create<ForbiddenResponse>(["You do not have permission to perform this action"]);
     }
 }

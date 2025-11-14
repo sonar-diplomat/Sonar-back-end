@@ -34,10 +34,12 @@ public class Distributor : BaseModel
 
     /// <summary>
     /// </summary>
+    [JsonIgnore]
     [ForeignKey("LicenseId")]
     [DeleteBehavior(DeleteBehavior.Cascade)]
     public virtual License License { get; set; }
 
+    [JsonIgnore]
     [ForeignKey("CoverId")]
     [DeleteBehavior(DeleteBehavior.Cascade)]
     public virtual ImageFile Cover { get; set; }
@@ -45,6 +47,7 @@ public class Distributor : BaseModel
     [JsonIgnore]
     public virtual ICollection<DistributorAccount> Accounts { get; set; }
 
+    [JsonIgnore]
     public virtual ICollection<Album> Albums { get; set; }
 
     [JsonIgnore]
