@@ -31,14 +31,39 @@ public class ArtistController(
             : throw ResponseFactory.Create<ForbiddenResponse>(["You do not have permission to perform this action"]);
     }
 
+    /// <summary>
+    /// Registers a new artist account on the platform.
+    /// </summary>
+    /// <returns>Success response upon registration.</returns>
+    /// <response code="200">Artist registered successfully.</response>
+    /// <response code="501">Not yet implemented.</response>
+    /// <remarks>
+    /// This endpoint is currently under development.
+    /// </remarks>
     [HttpPost("register")]
+    [ProducesResponseType(typeof(OkResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status501NotImplemented)]
     public async Task<IActionResult> RegisterArtist()
     {
         throw new NotImplementedException();
     }
 
+    /// <summary>
+    /// Updates the name of an artist profile.
+    /// </summary>
+    /// <param name="artistId">The ID of the artist to update.</param>
+    /// <param name="newArtistName">The new artist name.</param>
+    /// <returns>Success response upon name update.</returns>
+    /// <response code="200">Artist name updated successfully.</response>
+    /// <response code="401">User not authenticated.</response>
+    /// <response code="403">User not authorized to modify this artist.</response>
+    /// <response code="404">Artist not found.</response>
     [HttpPut("{artistId:int}/update-name")]
     [Authorize]
+    [ProducesResponseType(typeof(OkResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ForbiddenResponse), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UpdateArtistName(int artistId, [FromBody] string newArtistName)
     {
         await CheckManageAccess(artistId);
@@ -46,8 +71,21 @@ public class ArtistController(
         throw ResponseFactory.Create<OkResponse>([$"Artist with ID {artistId} successfully updated"]);
     }
 
+    /// <summary>
+    /// Deletes the authenticated user's artist account.
+    /// </summary>
+    /// <returns>Success response upon deletion.</returns>
+    /// <response code="200">Artist deleted successfully.</response>
+    /// <response code="401">User not authenticated or lacks 'ManageUsers' access feature.</response>
+    /// <response code="404">Artist not found.</response>
+    /// <remarks>
+    /// Requires 'ManageUsers' access feature.
+    /// </remarks>
     [HttpDelete]
     [Authorize]
+    [ProducesResponseType(typeof(OkResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteArtist()
     {
         int artistId = (await CheckAccessFeatures([AccessFeatureStruct.ManageUsers])).Id;
@@ -55,8 +93,19 @@ public class ArtistController(
         throw ResponseFactory.Create<OkResponse>([$"Artist with ID {artistId} successfully deleted"]);
     }
 
+    /// <summary>
+    /// Creates a new post for the authenticated artist.
+    /// </summary>
+    /// <param name="dto">Post data including content, media, and visibility settings.</param>
+    /// <returns>Success response upon post creation.</returns>
+    /// <response code="200">Post created successfully.</response>
+    /// <response code="401">User not authenticated.</response>
+    /// <response code="400">Invalid post data.</response>
     [HttpPost]
     [Authorize]
+    [ProducesResponseType(typeof(OkResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(BadRequestResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> CreatePost(PostDTO dto)
     {
         int artistId = (await CheckAccessFeatures([])).Id;
@@ -64,8 +113,21 @@ public class ArtistController(
         throw ResponseFactory.Create<OkResponse>([$"Post successfully created for artist with ID {artistId}"]);
     }
 
+    /// <summary>
+    /// Deletes a specific artist post.
+    /// </summary>
+    /// <param name="postId">The ID of the post to delete.</param>
+    /// <returns>Success response upon deletion.</returns>
+    /// <response code="200">Post deleted successfully.</response>
+    /// <response code="401">User not authenticated.</response>
+    /// <response code="403">User not authorized to delete this post.</response>
+    /// <response code="404">Post not found.</response>
     [HttpDelete("post/{postId:int}")]
     [Authorize]
+    [ProducesResponseType(typeof(OkResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ForbiddenResponse), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeletePost(int postId)
     {
         Post post = await postService.GetByIdValidatedAsync(postId);
@@ -74,8 +136,22 @@ public class ArtistController(
         throw ResponseFactory.Create<OkResponse>([$"Post with ID {postId} successfully deleted"]);
     }
 
+    /// <summary>
+    /// Updates an existing artist post.
+    /// </summary>
+    /// <param name="postId">The ID of the post to update.</param>
+    /// <param name="dto">Updated post data.</param>
+    /// <returns>Success response upon update.</returns>
+    /// <response code="200">Post updated successfully.</response>
+    /// <response code="401">User not authenticated.</response>
+    /// <response code="404">Post not found.</response>
+    /// <response code="400">Invalid post data.</response>
     [HttpPut("post/{postId:int}")]
     [Authorize]
+    [ProducesResponseType(typeof(OkResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(BadRequestResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> UpdatePost(int postId, PostDTO dto)
     {
         int artistId = (await CheckAccessFeatures([])).Id;
@@ -83,8 +159,20 @@ public class ArtistController(
         throw ResponseFactory.Create<OkResponse>([$"Post successfully created for artist with ID {artistId}"]);
     }
 
+    /// <summary>
+    /// Changes the visibility status of an artist post.
+    /// </summary>
+    /// <param name="postId">The ID of the post to update.</param>
+    /// <param name="visibilityStatusId">The new visibility status ID.</param>
+    /// <returns>Success response upon status change.</returns>
+    /// <response code="200">Post visibility updated successfully.</response>
+    /// <response code="401">User not authorized (requires 'ManageUsers' feature).</response>
+    /// <response code="404">Post not found.</response>
     [HttpPut("{postId:int}/visibility")]
     [Authorize]
+    [ProducesResponseType(typeof(OkResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ChangePostVisibilityStatus(int postId, int visibilityStatusId)
     {
         await CheckAccessFeatures([AccessFeatureStruct.ManageUsers]);

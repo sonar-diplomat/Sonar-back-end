@@ -26,4 +26,9 @@ public class DistributorAccountRepository(SonarContext dbContext)
                            .AsAsyncEnumerable())
             yield return account;
     }
+
+    public async Task<IEnumerable<DistributorAccount>> GetAllByDistributorId(int id)
+    {
+        return context.DistributorAccounts.Where(da => da.DistributorId == id).ToList();
+    }
 }

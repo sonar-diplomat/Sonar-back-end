@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 using Entities.Models.Distribution;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,9 +14,11 @@ public class Album : Collection
 
     /// <summary>
     /// </summary>
+    [JsonIgnore]
     [ForeignKey("DistributorId")]
     [DeleteBehavior(DeleteBehavior.NoAction)]
     public virtual Distributor Distributor { get; set; }
 
+    [JsonIgnore]
     public virtual ICollection<AlbumArtist> AlbumArtists { get; set; }
 }

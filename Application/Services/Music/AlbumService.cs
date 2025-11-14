@@ -23,8 +23,11 @@ public class AlbumService(
         {
             Name = dto.Name,
             Cover = await imageFileService.UploadFileAsync(dto.Cover),
-            VisibilityStateId = (await visibilityStateService.CreateDefaultAsync()).Id
+            VisibilityStateId = (await visibilityStateService.CreateDefaultAsync()).Id,
+            DistributorId = distributorId
         };
+
+        album = await repository.AddAsync(album);
 
         foreach (string authorPseudonym in dto.Authors)
         {
@@ -37,7 +40,7 @@ public class AlbumService(
             await albumArtistService.CreateAsync(albumArtist);
         }
 
-        return await repository.AddAsync(album);
+        return album;
     }
 
     public async Task<Album> UpdateNameAsync(int albumId, string newName)
@@ -62,5 +65,15 @@ public class AlbumService(
     public async Task<Album> GetValidatedIncludeVisibilityStateAsync(int id)
     {
         return await repository.Include(a => a.VisibilityState).GetByIdValidatedAsync(id);
+    }
+
+    public async Task UpdateCoverAsync(int albumId, int imageId)
+    {
+        Album album = await repository.Include(a => a.Tracks).GetByIdValidatedAsync(albumId);
+
+        album.CoverId = imageId;
+        foreach (var track in album.Tracks) { track.CoverId = imageId; }
+
+        await repository.UpdateAsync(album);
     }
 }

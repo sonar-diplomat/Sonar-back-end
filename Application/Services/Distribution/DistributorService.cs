@@ -10,6 +10,11 @@ namespace Application.Services.Distribution;
 public class DistributorService(IDistributorRepository repository, IArtistService artistService, IArtistRegistrationRequestRepository requestRepository)
     : GenericService<Distributor>(repository), IDistributorService
 {
+    public override async Task<IEnumerable<Distributor>> GetAllAsync()
+    {
+        return repository.Include(d => d.License);
+    }
+
     public async Task<Distributor?> GetByApiKeyAsync(string apiKey)
     {
         return await repository.GetByApiKeyAsync(apiKey);

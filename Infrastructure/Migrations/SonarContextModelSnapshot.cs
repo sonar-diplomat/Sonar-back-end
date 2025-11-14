@@ -17,7 +17,7 @@ namespace Infrastructure.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.9")
+                .HasAnnotation("ProductVersion", "9.0.10")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -969,13 +969,16 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Entities.Models.Music.AlbumArtist", b =>
                 {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
                     b.Property<int>("AlbumId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("ArtistId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Id")
+                    b.Property<int?>("ArtistId")
                         .HasColumnType("integer");
 
                     b.Property<string>("Pseudonym")
@@ -983,7 +986,9 @@ namespace Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.HasKey("AlbumId", "ArtistId");
+                    b.HasKey("Id");
+
+                    b.HasIndex("AlbumId");
 
                     b.HasIndex("ArtistId");
 
@@ -1108,6 +1113,9 @@ namespace Infrastructure.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("EntityIdentifier")
                         .HasColumnType("integer");
@@ -1920,6 +1928,9 @@ namespace Infrastructure.Migrations
                     b.Property<int>("BuyerId")
                         .HasColumnType("integer");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<int>("SubscriptionPackId")
                         .HasColumnType("integer");
 
@@ -2602,9 +2613,7 @@ namespace Infrastructure.Migrations
 
                     b.HasOne("Entities.Models.Music.Artist", "Artist")
                         .WithMany("AlbumArtists")
-                        .HasForeignKey("ArtistId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("ArtistId");
 
                     b.Navigation("Album");
 

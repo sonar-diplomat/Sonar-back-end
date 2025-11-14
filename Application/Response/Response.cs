@@ -63,7 +63,7 @@ public class UnauthorizedResponse(string[]? args = null) : Response(false, 401, 
 
 public class PaymentRequiredResponse(string[]? args = null) : Response(false, 402, "Payment required", args);
 
-public class ForbiddenResponse(string[]? args = null) : Response(false, 403, "Access forbidden", args);
+public class ForbiddenResponse(string[]? args = null) : Response(false, 403, "Access is https://open.spotify.com/track/4cLjibpprf7pcFohP8O6b3?si=559a44d314b64acf", args);
 
 public class NotFoundResponse(string[]? args = null) : Response(false, 404, "Not found", args);
 

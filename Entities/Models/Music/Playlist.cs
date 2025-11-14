@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 using Entities.Models.UserCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,9 +13,11 @@ public class Playlist : Collection
 
     /// <summary>
     /// </summary>
+    [JsonIgnore]
     [ForeignKey("CreatorId")]
     [DeleteBehavior(DeleteBehavior.NoAction)]
     public virtual User Creator { get; set; }
 
+    [JsonIgnore]
     public virtual ICollection<User> Contributors { get; set; }
 }

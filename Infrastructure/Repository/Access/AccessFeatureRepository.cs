@@ -28,11 +28,12 @@ public class AccessFeatureRepository(SonarContext dbContext)
         return features;
     }
 
-    public async Task<ICollection<AccessFeature>> GetUserFeaturesByIdAsync(int userId)
+    public async Task<ICollection<AccessFeature>?> GetUserFeaturesByIdAsync(int userId)
     {
-        return (await context.Users.Include(u=>u.AccessFeatures).FirstOrDefaultAsync(u=> u.Id == userId))!.AccessFeatures;
+        Entities.Models.UserCore.User? user = (await context.Users.Include(u => u.AccessFeatures).FirstOrDefaultAsync(u => u.Id == userId));
+        return user?.AccessFeatures;
     }
-    
+
     public async Task<AccessFeature> GetByNameValidatedAsync(string name)
     {
         AccessFeature? accessFeature = await context.AccessFeatures.FirstOrDefaultAsync(af => af.Name == name);

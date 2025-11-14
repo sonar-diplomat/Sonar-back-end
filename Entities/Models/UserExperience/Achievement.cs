@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 
 namespace Entities.Models.UserExperience;
@@ -29,6 +30,7 @@ public class Achievement : BaseModel
 
     /// <summary>
     /// </summary>
+    [JsonIgnore]
     [ForeignKey("CategoryId")]
     [DeleteBehavior(DeleteBehavior.NoAction)]
     public virtual AchievementCategory AchievementCategory { get; set; }

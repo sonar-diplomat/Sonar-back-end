@@ -1,4 +1,3 @@
-using System.Text;
 using Application.Abstractions.Interfaces.Repository;
 using Application.Abstractions.Interfaces.Repository.Access;
 using Application.Abstractions.Interfaces.Repository.Chat;
@@ -59,21 +58,39 @@ using Sonar.Infrastructure.Repository.Report;
 using Sonar.Infrastructure.Repository.UserCore;
 using Sonar.Infrastructure.Repository.UserExperience;
 using Sonar.Middleware;
+using System.Text;
 using Flac = Application.Services.File.Flac;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<SonarContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("SonarContext") ??
                       throw new InvalidOperationException("Connection string 'SonarContext' not found.")));
+builder.Services.Configure<FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = 104857600; // 100 MB
+    options.ValueLengthLimit = 104857600; // 100 MB - allows individual form values up to 100 MB
+    options.KeyLengthLimit = 1024;
+});
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = 100L * 1024 * 1024; // 100 MB
+});
+
 
 // Add services to the container.
-builder.Services.AddControllers();
-//builder.Services.AddControllers()
-//    .AddJsonOptions(options =>
-//    {
-//        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve;
-//        options.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
-//    });
+builder.Services.AddControllers(options =>
+    {
+        // Configure form model binding limits
+        options.MaxModelBindingCollectionSize = int.MaxValue;
+    })
+    .ConfigureApiBehaviorOptions(options => { })
+    .AddJsonOptions(options =>
+    {
+        // Increase MaxDepth to allow OpenAPI schema generation to complete
+        // The NavigationPropertyIgnoreTransformer will prevent actual circular references
+        options.JsonSerializerOptions.MaxDepth = 64;
+        options.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
+    });
 
 // CORS policy configuration
 builder.Services.AddCors(options =>
@@ -152,6 +169,11 @@ builder.Services.Configure<FormOptions>(options =>
 {
     options.MultipartBodyLengthLimit = 104857600; // 100 MB
 });
+
+// Add Swagger UI for OpenAPI visualization
+builder.Services.AddSwaggerGen();
+
+
 
 
 #region RegisterRepositories
@@ -339,7 +361,19 @@ WebApplication app = builder.Build();
 app.UseMiddleware<ExceptionMiddleware>();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment()) app.MapOpenApi();
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi(); // Exposes OpenAPI JSON at /openapi/v1.json
+
+    // Add Swagger UI
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/openapi/v1.json", "Sonar API v1");
+        options.RoutePrefix = "swagger"; // Access UI at /swagger
+    });
+}
+
+app.UseCors("CorsPolicy");
 
 app.UseHttpsRedirection();
 

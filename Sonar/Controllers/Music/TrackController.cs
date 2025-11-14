@@ -1,17 +1,16 @@
-using System.IdentityModel.Tokens.Jwt;
 using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.Utilities;
 using Application.DTOs.Music;
 using Application.Response;
 using Entities.Enums;
 using Entities.Models.ClientSettings;
-using Entities.Models.Distribution;
 using Entities.Models.Music;
 using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
+using Sonar.Extensions;
 
 namespace Sonar.Controllers.Music;
 
@@ -19,46 +18,57 @@ namespace Sonar.Controllers.Music;
 [ApiController]
 public class TrackController(
     UserManager<User> userManager,
-    IDistributorAccountService accountService,
-    IDistributorService distributorService,
     ITrackService trackService,
     ISettingsService settingsService,
-    IShareService shareService) : ShareController<Track>(userManager, shareService)
+    IShareService shareService,
+    IUserStateService userStateService) : ShareController<Track>(userManager, shareService)
 {
-    [Authorize]
-    private async Task<DistributorAccount> GetDistributorAccountByJwt()
-    {
-        string? email = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value ?? User.FindFirst("email")?.Value;
-        if (email == null)
-            throw ResponseFactory.Create<UnauthorizedResponse>(["Invalid JWT token"]);
-        DistributorAccount? distributorAccount = await accountService.GetByEmailAsync(email);
-        return distributorAccount ?? throw ResponseFactory.Create<UnauthorizedResponse>();
-    }
 
-    [Authorize]
-    private async Task<Distributor> CheckDistributor()
-    {
-        DistributorAccount distributorAccount = await GetDistributorAccountByJwt();
-        if (!Request.Headers.TryGetValue("X-Api-Key", out StringValues apiKey))
-            throw ResponseFactory.Create<UnauthorizedResponse>();
-        string key = apiKey.ToString();
-        if (string.IsNullOrEmpty(key))
-            throw ResponseFactory.Create<UnauthorizedResponse>();
-        Distributor? distributor = await distributorService.GetByApiKeyAsync(key);
-        return !(await accountService.GetAllByDistributor(distributor)).Contains(distributorAccount)
-            ? throw ResponseFactory.Create<UnauthorizedResponse>()
-            : distributor!;
-    }
-
+    /// <summary>
+    /// Streams a track's audio content with support for TimeSpan-based positioning and optional download.
+    /// </summary>
+    /// <param name="trackId">The ID of the track to stream.</param>
+    /// <param name="startPosition">Optional. The start position as TimeSpan (e.g., "00:01:30" for 1 minute 30 seconds). If not provided, uses queue position if track matches current queue track.</param>
+    /// <param name="length">Optional. The length to stream as TimeSpan. If not provided, streams from startPosition to end.</param>
+    /// <param name="download">Optional. If true, sets Content-Disposition to attachment for download.</param>
+    /// <returns>Audio file stream with appropriate content type.</returns>
+    /// <response code="200">Full audio stream returned.</response>
+    /// <response code="206">Partial content returned (range request).</response>
+    /// <response code="404">Track not found.</response>
+    /// <response code="401">User not authenticated or lacks 'ListenContent' access feature.</response>
+    /// <remarks>
+    /// Supports TimeSpan-based positioning for seeking within the audio file.
+    /// If startPosition is not provided and the track matches the user's current queue track, the queue position will be used.
+    /// Requires 'ListenContent' access feature.
+    /// </remarks>
     [HttpGet("{trackId}/stream")]
     [Authorize]
-    public async Task<IActionResult> StreamMusic(int trackId, [FromQuery] bool download = false)
+    [ProducesResponseType(typeof(FileStreamResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(FileStreamResult), StatusCodes.Status206PartialContent)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> StreamMusic(
+        int trackId,
+        [FromQuery] TimeSpan? startPosition = null,
+        [FromQuery] TimeSpan? length = null,
+        [FromQuery] bool download = false)
     {
-        int settingsId = (await CheckAccessFeatures([AccessFeatureStruct.ListenContent])).SettingsId;
-        // TODO: Use settings to determine track quality
+        User user = await CheckAccessFeatures([AccessFeatureStruct.ListenContent]);
+        int settingsId = user.SettingsId;
+
         Settings setttings = await settingsService.GetByIdValidatedAsync(settingsId);
-        string? rangeHeader = Request.Headers.Range.FirstOrDefault();
-        MusicStreamResultDTO? result = await trackService.GetMusicStreamAsync(trackId, rangeHeader);
+
+
+        if (!startPosition.HasValue)
+        {
+            UserState userState = await userStateService.GetByUserIdValidatedAsync(user.Id);
+            if (userState.Queue?.CurrentTrackId == trackId)
+            {
+                startPosition = userState.Queue.Position;
+            }
+        }
+
+        MusicStreamResultDTO? result = await trackService.GetMusicStreamAsync(trackId, startPosition, length);
 
         if (result == null) throw ResponseFactory.Create<NotFoundResponse>([$"Track with ID {trackId} not found"]);
 
@@ -71,51 +81,123 @@ public class TrackController(
         return File(stream, contentType, enableRangeProcessing);
     }
 
+    /// <summary>
+    /// Deletes a track from the platform.
+    /// </summary>
+    /// <param name="trackId">The ID of the track to delete.</param>
+    /// <returns>Success response upon deletion.</returns>
+    /// <response code="200">Track deleted successfully.</response>
+    /// <response code="401">User not authorized (must be distributor).</response>
+    /// <response code="404">Track not found.</response>
     [HttpDelete("{trackId:int}")]
+    [Authorize]
+    [ProducesResponseType(typeof(OkResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteTrack(int trackId)
     {
-        await CheckDistributor();
+        await this.CheckDistributorAsync();
         await trackService.DeleteAsync(trackId);
         throw ResponseFactory.Create<OkResponse>([$"Track with ID {trackId} successfully deleted"]);
     }
 
+    /// <summary>
+    /// Updates track metadata information.
+    /// </summary>
+    /// <param name="trackId">The ID of the track to update.</param>
+    /// <param name="dto">Updated track information including title, explicit flag, and driving noises flag.</param>
+    /// <returns>Updated track entity.</returns>
+    /// <response code="200">Track updated successfully.</response>
+    /// <response code="401">User not authorized (must be distributor).</response>
+    /// <response code="404">Track not found.</response>
     [HttpPut("{trackId:int}")]
-    public async Task<Track> UpdateTrackInfo(int trackId, UpdateTrackDTO dto)
+    [Authorize]
+    [ProducesResponseType(typeof(OkResponse<Track>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
+    public async Task<Track> UpdateTrackInfo(int trackId, [FromBody] UpdateTrackDTO dto)
     {
-        await CheckDistributor();
+        await this.CheckDistributorAsync();
         Track track = await trackService.GetByIdValidatedAsync(trackId);
         track.Title = dto.Title ?? track.Title;
         track.IsExplicit = dto.IsExplicit ?? track.IsExplicit;
         track.DrivingDisturbingNoises = dto.DrivingDisturbingNoises ?? track.DrivingDisturbingNoises;
+        // TODO: create DTO
         track = await trackService.UpdateAsync(track);
         throw ResponseFactory.Create<OkResponse<Track>>(track, ["Track updated successfully"]);
     }
 
+    /// <summary>
+    /// Updates the audio file for a track at a specific playback quality.
+    /// </summary>
+    /// <param name="trackId">The ID of the track to update.</param>
+    /// <param name="dto">Update data including playback quality ID and audio file.</param>
+    /// <returns>Success response upon file update.</returns>
+    /// <response code="200">Track audio file updated successfully.</response>
+    /// <response code="401">User not authorized (must be distributor).</response>
+    /// <response code="404">Track not found.</response>
     [HttpPut("{trackId:int}/audio-file")]
-    public async Task UpdateTrackFile(int trackId, UpdateTrackFileDTO dto)
+    [Authorize]
+    [ProducesResponseType(typeof(OkResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
+    public async Task UpdateTrackFile(int trackId, [FromForm] UpdateTrackFileDTO dto)
     {
-        await CheckDistributor();
+        await this.CheckDistributorAsync();
         await trackService.UpdateTrackFileAsync(trackId, dto.PlaybackQualityId, dto.File);
         throw ResponseFactory.Create<OkResponse>(["Track audio file updated successfully"]);
     }
 
+    /// <summary>
+    /// Retrieves detailed information about a specific track.
+    /// </summary>
+    /// <param name="trackId">The ID of the track to retrieve.</param>
+    /// <returns>Track DTO with full details.</returns>
+    /// <response code="200">Track retrieved successfully.</response>
+    /// <response code="404">Track not found.</response>
     [HttpGet("{trackId:int}")]
+    [ProducesResponseType(typeof(OkResponse<TrackDTO>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetTrackById(int trackId)
     {
-        Track track = await trackService.GetByIdValidatedAsync(trackId);
-        throw ResponseFactory.Create<OkResponse<Track>>(track, ["Track successfully retrieved"]);
+        TrackDTO trackDto = await trackService.GetTrackDtoAsync(trackId);
+        throw ResponseFactory.Create<OkResponse<TrackDTO>>(trackDto, ["Track successfully retrieved"]);
     }
 
+    /// <summary>
+    /// Updates the visibility status of a track (e.g., public, private, unlisted).
+    /// </summary>
+    /// <param name="trackId">The ID of the track to update.</param>
+    /// <param name="visibilityStatusId">The new visibility status ID.</param>
+    /// <returns>Success response upon status update.</returns>
+    /// <response code="200">Track visibility updated successfully.</response>
+    /// <response code="401">User not authorized (must be distributor).</response>
+    /// <response code="404">Track not found.</response>
     [HttpPut("{trackId:int}/visibility")]
-    public async Task<IActionResult> UpdateTrackVisibilityStatus(int trackId, int visibilityStatusId)
+    [Authorize]
+    [ProducesResponseType(typeof(OkResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpdateTrackVisibilityStatus(int trackId, [FromQuery] int visibilityStatusId)
     {
-        await CheckDistributor();
+        await this.CheckDistributorAsync();
         await trackService.UpdateVisibilityStatusAsync(trackId, visibilityStatusId);
         throw ResponseFactory.Create<OkResponse>(["Track visibility status was changed successfully"]);
     }
 
+    /// <summary>
+    /// Toggles a track's favorite status for the authenticated user.
+    /// </summary>
+    /// <param name="trackId">The ID of the track to toggle.</param>
+    /// <returns>Success response with message indicating whether track was added or removed from favorites.</returns>
+    /// <response code="200">Favorite status toggled successfully.</response>
+    /// <response code="401">User not authenticated.</response>
+    /// <response code="404">Track not found.</response>
     [HttpPost("{trackId:int}/toggle-favorite")]
     [Authorize]
+    [ProducesResponseType(typeof(OkResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ToggleFavoriteTrack(int trackId)
     {
         User user = await CheckAccessFeatures([]);

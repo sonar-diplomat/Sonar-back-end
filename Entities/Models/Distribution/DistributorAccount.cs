@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 
 namespace Entities.Models.Distribution;
@@ -23,9 +24,11 @@ public class DistributorAccount : BaseModel
 
     [Required] public int DistributorId { get; set; }
 
+    [JsonIgnore]
     [ForeignKey("DistributorId")]
     [DeleteBehavior(DeleteBehavior.NoAction)]
     public virtual Distributor Distributor { get; set; }
 
+    [JsonIgnore]
     public virtual ICollection<DistributorSession> Sessions { get; set; }
 }
