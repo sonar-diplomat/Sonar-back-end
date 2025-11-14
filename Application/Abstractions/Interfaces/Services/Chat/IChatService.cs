@@ -19,4 +19,5 @@ public interface IChatService : IGenericService<Chat>
     Task RemoveUserFromChat(int initiatorId, int userId, int chatId);
     Task<CursorPageDTO<MessageDTO>> GetMessagesWithCursorAsync(int userId, int chatId, int? cursor, int take = 50);
     Task LeaveChat(int userId, int chatId);
+    Task<Chat> CreateChatAsync(int userId, CreateChatDTO chat);
 }

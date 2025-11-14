@@ -43,9 +43,11 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Primitives;
 using Microsoft.IdentityModel.Tokens;
 using QRCoder;
 using Sonar.Controllers;
+using Sonar.Hubs;
 using Sonar.Infrastructure.Repository;
 using Sonar.Infrastructure.Repository.Access;
 using Sonar.Infrastructure.Repository.Chat;
@@ -100,6 +102,14 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod();
         // .AllowCredentials();
     });
+    options.AddPolicy("ViteDev", policy =>
+    {
+        policy
+            .WithOrigins("http://localhost:5173") // Vite dev origin
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials(); 
+    });
 });
 
 // Configure Identity
@@ -138,15 +148,26 @@ builder.Services.AddAuthentication(options =>
             IssuerSigningKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
         };
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = ctx =>
+            {
+                StringValues accessToken = ctx.Request.Query["access_token"];
+                PathString path = ctx.HttpContext.Request.Path;
+                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs/chat"))
+                    ctx.Token = accessToken;
+                return Task.CompletedTask;
+            }
+        };
     });
 
-builder.Services.AddOpenApi(o =>
+builder.Services.AddOpenApi();
+
+builder.Services.AddSignalR();
+
+builder.Services.Configure<FormOptions>(options =>
 {
-    o.AddOperationTransformer<OperationTraceTransformer>();
-    o.AddSchemaTransformer<NavigationPropertyIgnoreTransformer>();
-    o.AddSchemaTransformer<SchemaBreadcrumbsTransformer>();
-    o.AddSchemaTransformer<CollapseSchemaByNameTransformer>();
-    o.AddDocumentTransformer<RefGraphCycleDetectorDocumentTransformer>();
+    options.MultipartBodyLengthLimit = 104857600; // 100 MB
 });
 
 // Add Swagger UI for OpenAPI visualization
@@ -319,6 +340,9 @@ builder.Services.AddScoped<MailgunSettings>(_ =>
     }
 );
 
+builder.Services.AddSingleton<IChatNotifier, ChatNotifier>();
+
+
 // Utility Services
 builder.Services.AddScoped<IEmailSenderService, MailgunEmailService>();
 builder.Services.AddScoped<AuthService>();
@@ -328,6 +352,7 @@ builder.Services.AddSingleton<IFileFormatInspector>(new FileFormatInspector(
     [new Png(), new Jpeg(), new Mp3(), new Flac(), new Gif()]));
 builder.Services.AddSingleton<IFileStorageService, FileStorageService>();
 builder.Services.AddHttpClient();
+builder.Services.AddHttpContextAccessor();
 
 #endregion
 
@@ -354,10 +379,14 @@ app.UseHttpsRedirection();
 
 app.UseRouting();
 
+app.UseCors("ViteDev");
+
 app.UseAuthentication();
 
 app.UseAuthorization();
 
+app.MapHub<ChatHub>("/hubs/chat");
 app.MapControllers();
+
 
 app.Run();
