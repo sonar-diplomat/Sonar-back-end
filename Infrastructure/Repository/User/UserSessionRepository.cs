@@ -19,7 +19,7 @@ public class UserSessionRepository(SonarContext dbContext)
 
     public async Task<UserSession?> GetByRefreshToken(string refreshHash)
     {
-        return await RepositoryIncludeExtensions.Include(context.UserSessions, s => s.User)
+        return await RepositoryIncludeExtensions.SnInclude(context.UserSessions, s => s.User)
             .FirstOrDefaultAsync(s =>
                 s.RefreshTokenHash == refreshHash &&
                 !s.Revoked &&

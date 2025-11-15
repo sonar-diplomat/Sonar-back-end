@@ -15,6 +15,8 @@ public class PlaylistRepository(SonarContext dbContext) : GenericRepository<Play
             .Include(t => t.Cover)
             .Include(t => t.LowQualityAudioFile) // TODO: Get audio file based on user's ClientSettings
             .Include(t => t.Artists)
+            .Include(t => t.VisibilityState)
+            .ThenInclude(vs => vs.Status)
             .AsQueryable();
 
         if (afterId.HasValue)

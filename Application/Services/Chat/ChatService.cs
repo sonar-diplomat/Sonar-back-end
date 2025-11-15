@@ -65,12 +65,14 @@ public class ChatService(
     public async Task<ChatDTO> GetChatInfoAsync(int userId, int chatId)
     {
         await CheckUserIsMemberAsync(userId, chatId);
-        ChatModel chat = await repository.Include(c => c.Members)
-            .Include(c => c.Cover).GetByIdValidatedAsync(chatId);
+        ChatModel chat = await repository.SnInclude(c => c.Members)
+            .SnInclude(c => c.Cover).GetByIdValidatedAsync(chatId);
         ChatDTO dto = new()
         {
             Name = chat.Name,
-            Cover = chat.Cover,
+            IsGroup = chat.IsGroup,
+            CoverId = chat.CoverId,
+            CreatorId = chat.CreatorId,
             UserIds = chat.Members.Select(u => u.Id).ToArray()
         };
         return dto;
@@ -126,7 +128,7 @@ public class ChatService(
     public async Task ReadAllMessagesAsync(int userId, int chatId)
     {
         await CheckUserIsMemberAsync(userId, chatId);
-        ChatModel chat = await repository.Include(c => c.Messages).GetByIdValidatedAsync(chatId);
+        ChatModel chat = await repository.SnInclude(c => c.Messages).GetByIdValidatedAsync(chatId);
         foreach (Message message in chat.Messages)
         {
             if (message.MessagesReads.FirstOrDefault(mr => mr.MessageId == message.Id && mr.UserId == userId) != null)
@@ -247,9 +249,9 @@ public class ChatService(
     private async Task<ChatModel> CheckUserIsMemberAsync(int userId, int chatId, bool blockIfPrivate = false)
     {
         ChatModel chat = await repository
-            .Include(c => c.Members)
-            .Include(c => c.Admins)
-            .Include(c => c.Creator)
+            .SnInclude(c => c.Members)
+            .SnInclude(c => c.Admins)
+            .SnInclude(c => c.Creator)
             .GetByIdValidatedAsync(chatId);
 
         if (!chat.IsGroup && blockIfPrivate)

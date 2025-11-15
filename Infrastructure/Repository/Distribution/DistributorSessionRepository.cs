@@ -11,7 +11,7 @@ public class DistributorSessionRepository(SonarContext dbContext) : GenericRepos
 {
     public async Task<DistributorSession?> GetByRefreshTokenAsync(string refreshHash)
     {
-        return await RepositoryIncludeExtensions.Include(context.DistributorSessions, s => s.DistributorAccount)
+        return await RepositoryIncludeExtensions.SnInclude(context.DistributorSessions, s => s.DistributorAccount)
             .FirstOrDefaultAsync(s =>
                 s.RefreshTokenHash == refreshHash &&
                 !s.Revoked &&

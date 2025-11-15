@@ -29,6 +29,6 @@ public class CollectionSummaryDTO
     public int Id { get; set; }
     public string Name { get; set; }
     public string Type { get; set; } // "Album", "Playlist", "Blend"
-    public string CoverUrl { get; set; }
+    public int CoverId { get; set; }
 }
 

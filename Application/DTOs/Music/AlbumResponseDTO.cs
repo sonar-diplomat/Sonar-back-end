@@ -6,7 +6,8 @@ public class AlbumResponseDTO
     public string Name { get; set; }
     
     // Related data
-    public string CoverUrl { get; set; }
+    public int VisibilityStateId { get; set; }
+    public int CoverId { get; set; }
     public string DistributorName { get; set; }
     public int TrackCount { get; set; }
 }

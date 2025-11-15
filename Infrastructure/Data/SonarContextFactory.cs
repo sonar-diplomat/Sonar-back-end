@@ -12,11 +12,16 @@ public class SonarContextFactory : IDesignTimeDbContextFactory<SonarContext>
             .SetBasePath(Path.Combine(Directory.GetCurrentDirectory(), "../Sonar"))
             .AddJsonFile("appsettings.json", false, true)
             .AddJsonFile("appsettings.Development.json", true, true)
+            .AddUserSecrets<SonarContext>()
+            .AddEnvironmentVariables()
             .Build();
+
         DbContextOptionsBuilder<SonarContext> optionsBuilder = new();
         string? connectionString = configuration.GetConnectionString("SonarContext");
+
         if (string.IsNullOrEmpty(connectionString))
             throw new InvalidOperationException("Connection string 'SonarContext' not found.");
+
         optionsBuilder.UseNpgsql(connectionString);
         return new SonarContext(optionsBuilder.Options);
     }

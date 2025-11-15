@@ -2,6 +2,7 @@ using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.Utilities;
 using Application.DTOs;
 using Application.DTOs.Music;
+using Application.Extensions;
 using Application.Response;
 using Entities.Enums;
 using Entities.Models.Music;
@@ -43,7 +44,7 @@ public class PlaylistController(
         {
             Id = playlist.Id,
             Name = playlist.Name,
-            CoverUrl = playlist.Cover?.Url ?? string.Empty,
+            CoverId = playlist.CoverId,
             CreatorName = playlist.Creator?.UserName ?? string.Empty,
             TrackCount = playlist.Tracks?.Count ?? 0,
             ContributorNames = playlist.Contributors?.Select(c => c.UserName).ToList() ?? new List<string?>()
@@ -98,7 +99,8 @@ public class PlaylistController(
         {
             Id = playlist.Id,
             Name = playlist.Name,
-            CoverUrl = playlist.Cover?.Url ?? string.Empty,
+            VisibilityStateId = playlist.VisibilityStateId,
+            CoverId = playlist.CoverId,
             CreatorName = playlist.Creator?.UserName ?? string.Empty,
             TrackCount = playlist.Tracks?.Count ?? 0,
             ContributorNames = playlist.Contributors?.Select(c => c.UserName).ToList() ?? new List<string>()
@@ -256,12 +258,17 @@ public class PlaylistController(
     [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetPlaylistById(int playlistId)
     {
-        Playlist playlist = await playlistService.GetByIdValidatedAsync(playlistId);
+        // Get playlist with VisibilityState included for validation
+        Playlist playlist = await playlistService.GetByIdWithVisibilityStateAsync(playlistId);
+
+        // Validate visibility before returning playlist data
+        playlist.VisibilityState.ValidateVisibility("Playlist", playlistId);
+
         PlaylistResponseDTO responseDto = new()
         {
             Id = playlist.Id,
             Name = playlist.Name,
-            CoverUrl = playlist.Cover?.Url ?? string.Empty,
+            CoverId = playlist.CoverId,
             CreatorName = playlist.Creator?.UserName ?? string.Empty,
             TrackCount = playlist.Tracks?.Count ?? 0,
             ContributorNames = playlist.Contributors?.Select(c => c.UserName).ToList() ?? new List<string>()

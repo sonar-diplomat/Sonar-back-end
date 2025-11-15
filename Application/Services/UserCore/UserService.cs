@@ -42,7 +42,7 @@ public class UserService(
 
     public async Task<IEnumerable<User>> GetAllAsync()
     {
-        return await repository.Include(u => u.AccessFeatures).GetAllAsync();
+        return await repository.SnInclude(u => u.AccessFeatures).GetAllAsync();
     }
 
     public async Task<User> UpdateUserAsync(int userId, UserUpdateDTO userUpdateUpdateDto)
@@ -177,14 +177,14 @@ public class UserService(
 
     public async Task UpdateVisibilityStatusAsync(int userId, int newVisibilityStatusId)
     {
-        User user = await repository.Include(a => a.VisibilityState).GetByIdValidatedAsync(userId);
+        User user = await repository.SnInclude(a => a.VisibilityState).GetByIdValidatedAsync(userId);
         user.VisibilityState.StatusId = newVisibilityStatusId;
         await repository.UpdateAsync(user);
     }
 
     public async Task<User> GetValidatedIncludeAccessFeaturesAsync(int id)
     {
-        return await repository.Include(u => u.AccessFeatures).GetByIdValidatedAsync(id);
+        return await repository.SnInclude(u => u.AccessFeatures).GetByIdValidatedAsync(id);
     }
 
     public async Task<bool> DeleteUserAsync(int userId)

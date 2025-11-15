@@ -51,7 +51,7 @@ public class AlbumController(
         {
             Id = album.Id,
             Name = album.Name,
-            CoverUrl = album.Cover?.Url ?? string.Empty,
+            CoverId = album.CoverId,
             DistributorName = album.Distributor?.Name ?? string.Empty,
             TrackCount = album.Tracks?.Count ?? 0
         };
@@ -100,7 +100,8 @@ public class AlbumController(
         {
             Id = album.Id,
             Name = album.Name,
-            CoverUrl = album.Cover?.Url ?? string.Empty,
+            VisibilityStateId = album.VisibilityStateId,
+            CoverId = album.CoverId,
             DistributorName = album.Distributor?.Name ?? string.Empty,
             TrackCount = album.Tracks?.Count ?? 0
         };

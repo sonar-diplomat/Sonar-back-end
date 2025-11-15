@@ -16,12 +16,12 @@ public class CollectionService<T>(
 
     public async Task<IEnumerable<Track>> GetAllTracksAsync(int collectionId)
     {
-        return (await repository.Include(c => c.Tracks).GetByIdValidatedAsync(collectionId)).Tracks;
+        return (await repository.SnInclude(c => c.Tracks).GetByIdValidatedAsync(collectionId)).Tracks;
     }
 
     public async Task UpdateVisibilityStatusAsync(int collectionId, int newVisibilityStatusId)
     {
-        T collection = await repository.Include(a => a.VisibilityState).GetByIdValidatedAsync(collectionId);
+        T collection = await repository.SnInclude(a => a.VisibilityState).GetByIdValidatedAsync(collectionId);
         collection.VisibilityState.StatusId = newVisibilityStatusId;
         await repository.UpdateAsync(collection);
     }

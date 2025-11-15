@@ -43,7 +43,7 @@ public class UserStateService(
 
     public async Task UpdateCurrentPositionAsync(int stateId, TimeSpan position)
     {
-        UserState userState = await repository.Include(q => q.Queue).GetByIdValidatedAsync(stateId);
+        UserState userState = await repository.SnInclude(q => q.Queue).GetByIdValidatedAsync(stateId);
         userState.Queue!.Position = position;
         await repository.UpdateAsync(userState);
     }
@@ -57,7 +57,7 @@ public class UserStateService(
 
     public async Task UpdateListeningTargetAsync(int stateId, int trackId, int? collectionId)
     {
-        UserState userState = await repository.Include(us => us.Queue).GetByIdValidatedAsync(stateId);
+        UserState userState = await repository.SnInclude(us => us.Queue).GetByIdValidatedAsync(stateId);
         await trackService.GetByIdValidatedAsync(trackId);
         userState.Queue!.CurrentTrackId = trackId;
         if (collectionId == null)
