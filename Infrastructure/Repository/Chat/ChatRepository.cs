@@ -4,9 +4,7 @@ using Sonar.Infrastructure.Repository;
 
 namespace Infrastructure.Repository.Chat;
 
-public class ChatRepository : GenericRepository<Entities.Models.Chat.Chat>, IChatRepository
+public class ChatRepository(SonarContext dbContext)
+    : GenericRepository<Entities.Models.Chat.Chat>(dbContext), IChatRepository
 {
-    public ChatRepository(SonarContext dbContext) : base(dbContext)
-    {
-    }
 }

@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace Entities.Models.UserExperience;
 
@@ -20,5 +21,6 @@ public class SubscriptionFeature : BaseModel
 
     /// <summary>
     /// </summary>
+    [JsonIgnore]
     public virtual ICollection<SubscriptionPack> SubscriptionPacks { get; set; }
 }

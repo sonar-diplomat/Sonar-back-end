@@ -60,6 +60,7 @@ public class SonarContext(DbContextOptions<SonarContext> options)
     public DbSet<Blend> Blends { get; set; } = null!;
     public DbSet<Playlist> Playlists { get; set; } = null!;
     public DbSet<Track> Tracks { get; set; } = null!;
+    public DbSet<AlbumArtist> AlbumArtists { get; set; }
 
     // Report
     public DbSet<Report> Reports { get; set; } = null!;
@@ -89,8 +90,44 @@ public class SonarContext(DbContextOptions<SonarContext> options)
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
+        builder.Entity<Queue>().HasMany(q => q.Tracks).WithMany(t => t.Queues);
+
+        builder.Entity<Track>().HasMany(t => t.QueuesWherePrimary)
+            .WithOne(q => q.CurrentTrack)
+            .HasForeignKey(q => q.CurrentTrackId);
+
+        //builder.Entity<AlbumArtist>().HasKey(aa => aa.Id);
+
+        builder.Entity<AlbumArtist>()
+            .HasOne(aa => aa.Album)
+            .WithMany(a => a.AlbumArtists)
+            .HasForeignKey(aa => aa.AlbumId);
+
+        builder.Entity<AlbumArtist>()
+            .HasOne(aa => aa.Artist)
+            .WithMany(a => a.AlbumArtists)/*.IsRequired(false)*/
+            .HasForeignKey(aa => aa.ArtistId)/*.IsRequired(false)*/;
+
         builder.Entity<User>().HasOne(u => u.Settings).WithOne(s => s.User).HasForeignKey<User>(s => s.SettingsId);
         builder.Entity<Settings>().HasMany(s => s.BlockedUsers).WithMany(s => s.SettingsBlockedUsers);
+
+        builder.Entity<Library>()
+            .HasMany(l => l.Folders)
+            .WithOne(f => f.Library)
+            .HasForeignKey(f => f.LibraryId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        builder.Entity<Folder>()
+            .HasOne(f => f.ParentFolder)
+            .WithMany(f => f.SubFolders)
+            .HasForeignKey(f => f.ParentFolderId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        builder.Entity<Chat>().HasOne(c => c.Creator).WithMany(u => u.ChatsWhereCreator);
+        builder.Entity<Chat>().HasMany(c => c.Admins).WithMany(u => u.ChatsWhereAdmin)
+            .UsingEntity(j => j.ToTable("ChatAdmins"));
+        builder.Entity<Chat>().HasMany(c => c.Members).WithMany(u => u.ChatsWhereMember)
+            .UsingEntity(j => j.ToTable("ChatMembers"));
 
         builder.Entity<NotificationType>()
             .HasData(NotificationTypeSeedFactory.CreateSeedData());
@@ -118,6 +155,8 @@ public class SonarContext(DbContextOptions<SonarContext> options)
             .HasData(UserPrivacyGroupSeedFactory.CreateSeedData());
         builder.Entity<UserStatus>()
             .HasData(UserStatusSeedFactory.CreateSeedData());
+        builder.Entity<SubscriptionFeature>()
+            .HasData(SubscribtionFeatureSeedFactory.CreateSeedData());
         base.OnModelCreating(builder);
     }
 }

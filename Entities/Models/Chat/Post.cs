@@ -1,7 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 using Entities.Models.Access;
-using Entities.Models.UserCore;
+using Entities.Models.Music;
 using Microsoft.EntityFrameworkCore;
 
 namespace Entities.Models.Chat;
@@ -21,20 +22,23 @@ public class Post : BaseModel
     public DateTime CreatedAt { get; set; }
 
     [Required]
-    public int UserId { get; set; }
+    public int ArtistId { get; set; }
 
     [Required]
     public int VisibilityStateId { get; set; }
 
     /// <summary>
     /// </summary>
+    [JsonIgnore]
     [ForeignKey("UserId")]
     [DeleteBehavior(DeleteBehavior.NoAction)]
-    public User User { get; set; }
+    public virtual Artist Artist { get; set; }
 
+    [JsonIgnore]
     [ForeignKey("VisibilityStateId")]
     [DeleteBehavior(DeleteBehavior.NoAction)]
-    public VisibilityState VisibilityState { get; set; }
+    public virtual VisibilityState VisibilityState { get; set; }
 
-    public ICollection<File.File> Files { get; set; }
+    [JsonIgnore]
+    public virtual ICollection<File.File>? Files { get; set; }
 }

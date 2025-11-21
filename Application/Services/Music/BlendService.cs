@@ -4,6 +4,7 @@ using Entities.Models.Music;
 
 namespace Application.Services.Music;
 
-public class BlendService(IBlendRepository repository) : GenericService<Blend>(repository), IBlendService
+public class BlendService(IBlendRepository repository, ILibraryService libraryService, IFolderService folderService)
+    : CollectionService<Blend>(repository, libraryService, folderService), IBlendService
 {
 }

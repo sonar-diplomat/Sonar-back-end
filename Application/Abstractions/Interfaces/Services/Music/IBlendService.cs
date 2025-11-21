@@ -2,6 +2,6 @@
 
 namespace Application.Abstractions.Interfaces.Services;
 
-public interface IBlendService : IGenericService<Blend>
+public interface IBlendService : ICollectionService<Blend>
 {
 }

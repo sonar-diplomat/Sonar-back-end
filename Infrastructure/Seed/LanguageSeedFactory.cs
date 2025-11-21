@@ -11,7 +11,7 @@ public static class LanguageSeedFactory
             new Language
             {
                 Id = 1,
-                Locale = "eng",
+                Locale = "en-US",
                 Name = "English",
                 NativeName = "English"
             },

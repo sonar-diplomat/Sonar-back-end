@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 using Entities.Models.UserCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -23,10 +24,12 @@ public class Suspension : BaseModel
 
     /// <summary>
     /// </summary>
+    [JsonIgnore]
     [ForeignKey("PunisherId")]
     [DeleteBehavior(DeleteBehavior.Restrict)]
     public virtual User Punisher { get; set; }
 
+    [JsonIgnore]
     [ForeignKey("AssociatedReportId")]
     [DeleteBehavior(DeleteBehavior.Cascade)]
     public virtual Report.Report AssociatedReport { get; set; }

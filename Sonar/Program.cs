@@ -1,4 +1,4 @@
-using System.Text;
+using Application.Abstractions.Interfaces.Repository;
 using Application.Abstractions.Interfaces.Repository.Access;
 using Application.Abstractions.Interfaces.Repository.Chat;
 using Application.Abstractions.Interfaces.Repository.Client;
@@ -23,8 +23,10 @@ using Application.Services.Report;
 using Application.Services.UserCore;
 using Application.Services.UserExperience;
 using Application.Services.Utilities;
+using Entities.Models.Music;
 using Entities.Models.UserCore;
 using FileSignatures;
+using FileSignatures.Formats;
 using Infrastructure.Data;
 using Infrastructure.Repository.Access;
 using Infrastructure.Repository.Chat;
@@ -38,11 +40,15 @@ using Infrastructure.Repository.User;
 using Infrastructure.Repository.UserExperience;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Primitives;
 using Microsoft.IdentityModel.Tokens;
 using QRCoder;
 using Sonar.Controllers;
+using Sonar.Hubs;
+using Sonar.Infrastructure.Repository;
 using Sonar.Infrastructure.Repository.Access;
 using Sonar.Infrastructure.Repository.Chat;
 using Sonar.Infrastructure.Repository.Client;
@@ -52,20 +58,39 @@ using Sonar.Infrastructure.Repository.Report;
 using Sonar.Infrastructure.Repository.UserCore;
 using Sonar.Infrastructure.Repository.UserExperience;
 using Sonar.Middleware;
+using System.Text;
+using Flac = Application.Services.File.Flac;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<SonarContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("SonarContext") ??
                       throw new InvalidOperationException("Connection string 'SonarContext' not found.")));
+builder.Services.Configure<FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = 104857600; // 100 MB
+    options.ValueLengthLimit = 104857600; // 100 MB - allows individual form values up to 100 MB
+    options.KeyLengthLimit = 1024;
+});
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = 100L * 1024 * 1024; // 100 MB
+});
+
 
 // Add services to the container.
-builder.Services.AddControllers();
-//builder.Services.AddControllers()
-//    .AddJsonOptions(options =>
-//    {
-//        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve;
-//        options.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
-//    });
+builder.Services.AddControllers(options =>
+    {
+        // Configure form model binding limits
+        options.MaxModelBindingCollectionSize = int.MaxValue;
+    })
+    .ConfigureApiBehaviorOptions(options => { })
+    .AddJsonOptions(options =>
+    {
+        // Increase MaxDepth to allow OpenAPI schema generation to complete
+        // The NavigationPropertyIgnoreTransformer will prevent actual circular references
+        options.JsonSerializerOptions.MaxDepth = 64;
+        options.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
+    });
 
 // CORS policy configuration
 builder.Services.AddCors(options =>
@@ -76,6 +101,14 @@ builder.Services.AddCors(options =>
             .AllowAnyHeader()
             .AllowAnyMethod();
         // .AllowCredentials();
+    });
+    options.AddPolicy("ViteDev", policy =>
+    {
+        policy
+            .WithOrigins("http://localhost:5173") // Vite dev origin
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials(); 
     });
 });
 
@@ -115,9 +148,32 @@ builder.Services.AddAuthentication(options =>
             IssuerSigningKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
         };
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = ctx =>
+            {
+                StringValues accessToken = ctx.Request.Query["access_token"];
+                PathString path = ctx.HttpContext.Request.Path;
+                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs/chat"))
+                    ctx.Token = accessToken;
+                return Task.CompletedTask;
+            }
+        };
     });
 
 builder.Services.AddOpenApi();
+
+builder.Services.AddSignalR();
+
+builder.Services.Configure<FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = 104857600; // 100 MB
+});
+
+// Add Swagger UI for OpenAPI visualization
+builder.Services.AddSwaggerGen();
+
+
 
 
 #region RegisterRepositories
@@ -148,6 +204,7 @@ builder.Services.AddScoped<IDistributorRepository, DistributorRepository>();
 builder.Services.AddScoped<IDistributorSessionRepository, DistributorSessionRepository>();
 builder.Services.AddScoped<ILicenseRepository, LicenseRepository>();
 builder.Services.AddScoped<IDistributorAccountRepository, DistributorAccountRepository>();
+builder.Services.AddScoped<IArtistRegistrationRequestRepository, ArtistRegistrationRequestRepository>();
 
 // File Repositories
 builder.Services.AddScoped<IAudioFileRepository, AudioFileRepository>();
@@ -163,6 +220,7 @@ builder.Services.AddScoped<IAlbumRepository, AlbumRepository>();
 builder.Services.AddScoped<IBlendRepository, BlendRepository>();
 builder.Services.AddScoped<IPlaylistRepository, PlaylistRepository>();
 builder.Services.AddScoped<ITrackRepository, TrackRepository>();
+builder.Services.AddScoped<IAlbumArtistRepository, AlbumArtistRepository>();
 
 // Report Repositories
 builder.Services.AddScoped<IReportableEntityTypeRepository, ReportableEntityTypeRepository>();
@@ -175,6 +233,7 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserSessionRepository, UserSessionRepository>();
 builder.Services.AddScoped<IUserStateRepository, UserStateRepository>();
 builder.Services.AddScoped<IUserStatusRepository, UserStatusRepository>();
+builder.Services.AddScoped<IQueueRepository, QueueRepository>();
 
 // UserExperience Repositories
 builder.Services.AddScoped<IAchievementCategoryRepository, AchievementCategoryRepository>();
@@ -236,6 +295,12 @@ builder.Services.AddScoped<IAlbumService, AlbumService>();
 builder.Services.AddScoped<IBlendService, BlendService>();
 builder.Services.AddScoped<IPlaylistService, PlaylistService>();
 builder.Services.AddScoped<ITrackService, TrackService>();
+builder.Services.AddScoped<IAlbumArtistService, AlbumArtistService>();
+builder.Services.AddScoped<ICollectionService<Album>, CollectionService<Album>>();
+builder.Services.AddScoped<ICollectionService<Blend>, CollectionService<Blend>>();
+builder.Services.AddScoped<ICollectionService<Playlist>, CollectionService<Playlist>>();
+
+builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 
 // Report Services
 builder.Services.AddScoped<IReportableEntityTypeService, ReportableEntityTypeService>();
@@ -248,6 +313,7 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IUserSessionService, UserSessionService>();
 builder.Services.AddScoped<IUserStateService, UserStateService>();
 builder.Services.AddScoped<IUserStatusService, UserStatusService>();
+builder.Services.AddScoped<IQueueService, QueueService>();
 
 // UserExperience Services
 builder.Services.AddScoped<IAchievementCategoryService, AchievementCategoryService>();
@@ -274,14 +340,19 @@ builder.Services.AddScoped<MailgunSettings>(_ =>
     }
 );
 
+builder.Services.AddSingleton<IChatNotifier, ChatNotifier>();
+
+
 // Utility Services
 builder.Services.AddScoped<IEmailSenderService, MailgunEmailService>();
+builder.Services.AddScoped<AuthService>();
 builder.Services.AddSingleton<QRCodeGenerator>();
-builder.Services.AddSingleton<IQrCodeService, QrCodeService>();
-builder.Services.AddSingleton<IFileFormatInspector, FileFormatInspector>();
+builder.Services.AddSingleton<IShareService, ShareService>();
+builder.Services.AddSingleton<IFileFormatInspector>(new FileFormatInspector(
+    [new Png(), new Jpeg(), new Mp3(), new Flac(), new Gif()]));
 builder.Services.AddSingleton<IFileStorageService, FileStorageService>();
-builder.Services.AddSingleton<AuthService>();
 builder.Services.AddHttpClient();
+builder.Services.AddHttpContextAccessor();
 
 #endregion
 
@@ -290,18 +361,32 @@ WebApplication app = builder.Build();
 app.UseMiddleware<ExceptionMiddleware>();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment()) app.MapOpenApi();
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi(); // Exposes OpenAPI JSON at /openapi/v1.json
+
+    // Add Swagger UI
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/openapi/v1.json", "Sonar API v1");
+        options.RoutePrefix = "swagger"; // Access UI at /swagger
+    });
+}
+
+app.UseCors("CorsPolicy");
 
 app.UseHttpsRedirection();
 
 app.UseRouting();
 
-app.UseCors("CorsPolicy");
+app.UseCors("ViteDev");
 
 app.UseAuthentication();
 
 app.UseAuthorization();
 
+app.MapHub<ChatHub>("/hubs/chat");
 app.MapControllers();
+
 
 app.Run();

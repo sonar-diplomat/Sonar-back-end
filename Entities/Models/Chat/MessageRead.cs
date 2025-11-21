@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 using Entities.Models.UserCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -18,10 +19,12 @@ public class MessageRead : BaseModel
 
     /// <summary>
     /// </summary>
+    [JsonIgnore]
     [ForeignKey("MessageId")]
     [DeleteBehavior(DeleteBehavior.Restrict)]
     public virtual Message Message { get; set; }
 
+    [JsonIgnore]
     [ForeignKey("UserId")]
     [DeleteBehavior(DeleteBehavior.NoAction)]
     public virtual User User { get; set; }

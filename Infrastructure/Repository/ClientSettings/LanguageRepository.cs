@@ -10,6 +10,7 @@ public class LanguageRepository(SonarContext dbContext) : GenericRepository<Lang
 {
     public async Task<Language> GetByLocaleAsync(string locale)
     {
-        return (await context.Languages.FirstOrDefaultAsync(l => l.Locale == locale))!;
+        Language? lang = await context.Languages.FirstOrDefaultAsync(l => l.Locale == locale);
+        return lang ?? context.Languages.First(l => l.Id == 1);
     }
 }

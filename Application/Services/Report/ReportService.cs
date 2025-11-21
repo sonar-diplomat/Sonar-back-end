@@ -1,7 +1,6 @@
 ﻿using Application.Abstractions.Interfaces.Repository.Report;
 using Application.Abstractions.Interfaces.Services;
-using Application.DTOs;
-using Application.Response;
+using Application.DTOs.Report;
 using Entities.Models.Report;
 using Microsoft.EntityFrameworkCore;
 using ReportModel = Entities.Models.Report.Report;
@@ -16,23 +15,23 @@ public class ReportService(
 )
     : GenericService<ReportModel>(repository), IReportService
 {
-    public async Task<ReportModel> CreateReportAsync(CreateReportDTO dto)
+    public async Task<ReportModel> CreateReportAsync(int userId, CreateReportDTO dto)
     {
-        List<ReportReasonType?> reasonTypes = [];
+        List<ReportReasonType> reasonTypes = [];
         foreach (int reasonTypeId in dto.ReportReasonTypeIds)
         {
-            ReportReasonType reasonType = await reportReasonTypeService.GetByIdAsync(reasonTypeId);
-            reasonTypes.Add(reasonType);
+            ReportReasonType? reasonType = await reportReasonTypeService.GetByIdAsync(reasonTypeId);
+            if (reasonType != null) reasonTypes.Add(reasonType);
         }
 
-        if (reasonTypes.Any(rt => rt == null))
-            throw ResponseFactory.Create<BadRequestResponse>();
+        //if (reasonTypes.Any(rt => rt == null))
+        //    throw ResponseFactory.Create<BadRequestResponse>();
 
         ReportModel report = new()
         {
             EntityIdentifier = dto.EntityIdentifier,
-            ReportableEntityType = await reportableEntityTypeService.GetByIdValidatedAsync(dto.ReportableEntityTypeId),
-            Reporter = await userService.GetByIdValidatedAsync(dto.ReporterId),
+            ReportableEntityTypeId = dto.ReportableEntityTypeId,
+            ReporterId = userId,
             IsClosed = false,
             ReportReasonType = reasonTypes!
         };
@@ -47,11 +46,16 @@ public class ReportService(
         await repository.UpdateAsync(report);
     }
 
-    public async Task<IEnumerable<ReportModel>> GetReportsByEntityAsync(int entityId, int entityTypeId)
+    public async Task<IEnumerable<ReportModel>> GetReportsFilteredAsync(ReportFilterDTO dto)
     {
         IQueryable<ReportModel> allReports = await repository.GetAllAsync();
         return await allReports
-            .Where(r => r.EntityIdentifier == entityId && r.ReportableEntityTypeId == entityTypeId)
+            .Where(r =>
+        (!dto.entityId.HasValue || r.EntityIdentifier == dto.entityId) &&
+        (!dto.typeId.HasValue || r.ReportableEntityTypeId == dto.typeId) &&
+        (!dto.isClosed.HasValue || r.IsClosed == dto.isClosed) &&
+        (!dto.reporterId.HasValue || r.ReporterId == dto.reporterId)
+    )
             .ToListAsync();
     }
 

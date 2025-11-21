@@ -1,5 +1,6 @@
 ﻿using Application.Abstractions.Interfaces.Repository.File;
 using Application.Abstractions.Interfaces.Services.File;
+using Application.Response;
 using Entities.Models.File;
 using FileSignatures;
 using FileSignatures.Formats;
@@ -17,7 +18,10 @@ public class ImageFileService(
     public async Task<ImageFile> UploadFileAsync(IFormFile file)
     {
         await ValidateFileType(file, [typeof(Png), typeof(Jpeg)]);
-        string url = await fileStorageService.SaveImageFileAsync(file);
+        string? url = await fileStorageService.SaveImageFileAsync(file);
+
+        if (url == null) throw ResponseFactory.Create<InternalServerErrorResponse>(["Can`t save image"]);
+
         ImageFile fileModel = new()
         {
             ItemName = file.FileName,
@@ -29,5 +33,10 @@ public class ImageFileService(
     public async Task<ImageFile> GetDefaultAsync()
     {
         return await repository.GetDefaultAsync();
+    }
+
+    public Task<ImageFile> GetFavoriteDefaultAsync()
+    {
+        return repository.GetFavoriteDefaultAsync();
     }
 }

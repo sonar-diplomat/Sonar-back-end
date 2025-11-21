@@ -1,4 +1,5 @@
 using Application.Abstractions.Interfaces.Repository.Client;
+using Application.Extensions;
 using Entities.Models.ClientSettings;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -12,6 +13,6 @@ public class SettingsRepository(SonarContext dbContext) : GenericRepository<Sett
         throw new NotImplementedException();
     }
     public override async Task<Settings?> GetByIdAsync(int? id) {
-        return context.Set<Settings>().Include(s => s.UserPrivacy).Include(s => s.PreferredPlaybackQuality).FirstOrDefault(s=>s.Id == id);
+        return RepositoryIncludeExtensions.Include(RepositoryIncludeExtensions.Include(context.Set<Settings>(), s => s.UserPrivacy), s => s.PreferredPlaybackQuality).FirstOrDefault(s=>s.Id == id);
     }
 }

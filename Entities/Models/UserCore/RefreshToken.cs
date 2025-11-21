@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace Entities.Models.UserCore;
 
@@ -13,5 +14,6 @@ public class RefreshToken : BaseModel
     [Required]
     public DateTime ExpiryDate { get; set; } = DateTime.UtcNow.AddDays(7);
 
+    [JsonIgnore]
     public virtual ICollection<User> Users { get; set; } = null!;
 }

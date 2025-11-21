@@ -5,9 +5,6 @@ using Sonar.Infrastructure.Repository;
 
 namespace Infrastructure.Repository.Music;
 
-public class AlbumRepository : GenericRepository<Album>, IAlbumRepository
+public class AlbumRepository(SonarContext dbContext) : GenericRepository<Album>(dbContext), IAlbumRepository
 {
-    public AlbumRepository(SonarContext dbContext) : base(dbContext)
-    {
-    }
 }

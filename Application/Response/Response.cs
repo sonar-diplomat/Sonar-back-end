@@ -1,4 +1,6 @@
-﻿namespace Application.Response;
+﻿using System.Collections;
+
+namespace Application.Response;
 
 public abstract class Response(bool success, int statusCode, string message, string[]? args = null)
     : Exception(message)
@@ -24,7 +26,14 @@ public abstract class Response<T>(T data, bool success, int statusCode, string m
     public override Dictionary<string, object> GetSerializableProperties()
     {
         Dictionary<string, object> dict = base.GetSerializableProperties();
-        if (data != null) dict.Add("data", data);
+        if (data is ICollection)
+        {
+            ICollection? col = data as ICollection;
+            if (col == null || col.Count == 0)
+                dict.Add("data", "empty list");
+            else dict.Add("data", data);
+        }
+        else if (data != null) dict.Add("data", data);
         return dict;
     }
 }
@@ -54,7 +63,7 @@ public class UnauthorizedResponse(string[]? args = null) : Response(false, 401, 
 
 public class PaymentRequiredResponse(string[]? args = null) : Response(false, 402, "Payment required", args);
 
-public class ForbiddenResponse(string[]? args = null) : Response(false, 403, "Access forbidden", args);
+public class ForbiddenResponse(string[]? args = null) : Response(false, 403, "Access is https://open.spotify.com/track/4cLjibpprf7pcFohP8O6b3?si=559a44d314b64acf", args);
 
 public class NotFoundResponse(string[]? args = null) : Response(false, 404, "Not found", args);
 

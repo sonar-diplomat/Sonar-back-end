@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 
 namespace Entities.Models.UserExperience;
@@ -18,6 +19,7 @@ public class CosmeticSticker : BaseModel
 
     /// <summary>
     /// </summary>
+    [JsonIgnore]
     [ForeignKey("CosmeticItemId")]
     [DeleteBehavior(DeleteBehavior.Cascade)]
     public virtual CosmeticItem CosmeticItem { get; set; }

@@ -8,7 +8,11 @@ public interface IUserRepository
     Task<IQueryable<User>> GetAllAsync();
     Task<User> AddAsync(User user);
     Task<User> UpdateAsync(User user);
+    Task UpdateAvatarImageIdAsync(int userId, int avatarImageId);
     Task RemoveAsync(User user);
     Task RemoveRangeAsync(List<User> users);
-    Task<bool> IsUserNameTakenAsync(string UserName);
+    Task<bool> IsUserNameTakenAsync(string userName);
+    IQueryable<User> Query();
+    Task SaveChangesAsync();
+    Task<bool> CheckExists(string publicIdentifier);
 }

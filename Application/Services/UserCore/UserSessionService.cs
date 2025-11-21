@@ -1,6 +1,6 @@
 ﻿using Application.Abstractions.Interfaces.Repository.UserCore;
 using Application.Abstractions.Interfaces.Services;
-using Application.DTOs;
+using Application.DTOs.Auth;
 using Application.Response;
 using Entities.Models.UserCore;
 
@@ -17,9 +17,7 @@ public class UserSessionService(IUserSessionRepository repository)
     public async Task<UserSession> GetValidatedByRefreshTokenAsync(string refreshHash)
     {
         UserSession? userSession = await repository.GetByRefreshToken(refreshHash);
-        if (userSession == null)
-            ResponseFactory.Create<NotFoundResponse>();
-        return userSession!;
+        return userSession ?? throw ResponseFactory.Create<NotFoundResponse>();
     }
 
     public async Task UpdateLastActiveAsync(UserSession session)
@@ -48,5 +46,12 @@ public class UserSessionService(IUserSessionRepository repository)
     public async Task<IEnumerable<ActiveSessionDTO>> GetAllByUserIdAsync(int userId)
     {
         return await repository.GetAllActiveSessionsByUserIdAsync(userId);
+    }
+
+    public async Task<UserSession> GetByUserIdAndDeviceIdValidatedAsync(int userId, string deviceId)
+    {
+        UserSession? userSession = await repository.GetByUserIdAndDeviceIdAsync(userId, deviceId);
+        return userSession ??
+               throw ResponseFactory.Create<BadRequestResponse>(["No active session found for this device."]);
     }
 }

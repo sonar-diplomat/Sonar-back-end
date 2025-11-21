@@ -1,5 +1,5 @@
-﻿using Application.DTOs;
-using Application.DTOs.Auth;
+﻿using Application.DTOs.Auth;
+using Application.DTOs.User;
 using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Http;
 
@@ -12,8 +12,13 @@ public interface IUserService
     Task<User> UpdateUserAsync(int userId, UserUpdateDTO userUpdateUpdateDto);
     Task<User> UpdateUserAsync(User user);
     Task ChangeUserNameAsync(int userId, string newUserName);
-    Task<User> GetByIdAsync(int id);
+    Task<User?> GetByIdAsync(int id);
     Task<IEnumerable<User>> GetAllAsync();
     Task<User> GetByIdValidatedAsync(int id);
     Task UpdateAvatar(int userId, IFormFile file);
+    Task UpdateVisibilityStatusAsync(int collectionId, int newVisibilityStatusId);
+    Task AssignAccessFeaturesAsync(int userId, int[] accessFeatureIds);
+    Task AssignAccessFeaturesByNameAsync(int userId, string[] accessFeatures);
+    Task RevokeAccessFeaturesAsync(int userId, int[] accessFeatureIds);
+    Task RevokeAccessFeaturesByNameAsync(int userId, string[] accessFeatures);
 }

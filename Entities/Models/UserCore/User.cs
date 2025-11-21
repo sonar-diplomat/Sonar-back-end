@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using Entities.Models.Access;
+﻿using Entities.Models.Access;
 using Entities.Models.Chat;
 using Entities.Models.ClientSettings;
 using Entities.Models.Distribution;
@@ -9,6 +7,10 @@ using Entities.Models.Music;
 using Entities.Models.UserExperience;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
+using LibraryModel = Entities.Models.Library.Library;
 
 namespace Entities.Models.UserCore;
 
@@ -26,9 +28,11 @@ public class User : IdentityUser<int>
     [Required]
     public DateOnly DateOfBirth { get; set; }
 
-    [Required]
+
     [MaxLength(16)]
     [MinLength(4)]
+    //[JsonIgnore]
+    [Required]
     public string Login { get; set; }
 
     [MaxLength(4000)]
@@ -69,41 +73,78 @@ public class User : IdentityUser<int>
     [Required]
     public int InventoryId { get; set; }
 
+    [Required]
+    public int LibraryId { get; set; }
 
     /// <summary>
     /// </summary>
+    [JsonIgnore]
     [ForeignKey("VisibilityStateId")]
     [DeleteBehavior(DeleteBehavior.Cascade)]
     public virtual VisibilityState VisibilityState { get; set; }
 
+    [JsonIgnore]
+    [ForeignKey("LibraryId")]
+    [DeleteBehavior(DeleteBehavior.Cascade)]
+    public virtual LibraryModel Library { get; set; }
+
+    [JsonIgnore]
     [ForeignKey("AvatarImageId")]
     public virtual ImageFile AvatarImage { get; set; }
 
+    [JsonIgnore]
     [ForeignKey("SubscriptionPackId")]
     public virtual SubscriptionPack? SubscriptionPack { get; set; }
 
+    [JsonIgnore]
     [ForeignKey("UserStateId")]
     [DeleteBehavior(DeleteBehavior.Cascade)]
     public virtual UserState UserState { get; set; }
 
+    [JsonIgnore]
     [ForeignKey("SettingsId")]
     [DeleteBehavior(DeleteBehavior.Cascade)]
     public virtual Settings Settings { get; set; }
 
+    [JsonIgnore]
     [ForeignKey("InventoryId")]
     [DeleteBehavior(DeleteBehavior.Cascade)]
     public virtual Inventory Inventory { get; set; }
 
+    [JsonIgnore]
     public virtual Artist Artist { get; set; }
-
+    [JsonIgnore]
     public virtual ICollection<UserSession> UserSessions { get; set; }
+    [JsonIgnore]
     public virtual ICollection<Achievement> AchievementProgresses { get; set; }
-    public virtual ICollection<Post> Posts { get; set; }
+    [JsonIgnore]
     public virtual ICollection<AccessFeature> AccessFeatures { get; set; }
+
+    [JsonIgnore]
     public virtual ICollection<Message> Messages { get; set; }
-    public virtual ICollection<Chat.Chat> Chats { get; set; }
+
+    [JsonIgnore]
+    public virtual ICollection<Chat.Chat> ChatsWhereMember { get; set; }
+
+    [JsonIgnore]
+    public virtual ICollection<Chat.Chat> ChatsWhereCreator { get; set; }
+
+    [JsonIgnore]
+    public virtual ICollection<Chat.Chat> ChatsWhereAdmin { get; set; }
+
+    [JsonIgnore]
     public virtual ICollection<Collection> Collections { get; set; }
+
+    [JsonIgnore]
     public virtual ICollection<License> Licenses { get; set; }
+
+    [JsonIgnore]
     public virtual ICollection<Track> Tracks { get; set; }
+    [JsonIgnore]
     public virtual ICollection<Settings> SettingsBlockedUsers { get; set; }
+    [JsonIgnore]
+    public virtual ICollection<MessageRead> MessagesReads { get; set; }
+
+    [JsonIgnore]
+    public virtual ICollection<ArtistRegistrationRequest> ArtistRegistrationRequests { get; set; }
 }

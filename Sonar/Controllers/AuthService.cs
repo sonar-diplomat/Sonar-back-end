@@ -1,12 +1,15 @@
-﻿using System.IdentityModel.Tokens.Jwt;
+﻿using Application.Abstractions.Interfaces.Services;
+using Entities.Models.Distribution;
+using Entities.Models.UserCore;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using Microsoft.IdentityModel.Tokens;
 
 namespace Sonar.Controllers;
 
-public class AuthService(IConfiguration configuration)
+public class AuthService(IConfiguration configuration, IUserService userService)
 {
     public string ComputeSha256(string input)
     {
@@ -19,13 +22,34 @@ public class AuthService(IConfiguration configuration)
         return Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
     }
 
-    public string GenerateJwtToken(string email, string login)
+    public string GenerateJwtToken(User user, string deviceId)
     {
         Claim[] claims =
         [
-            new(JwtRegisteredClaimNames.Sub, email),
+            new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+            new(ClaimTypes.NameIdentifier, user.Login),
+            new(ClaimTypes.Name, user.UserName!),
+            new(ClaimTypes.Email, user.Email!),
+            new(ClaimTypes.Sid, deviceId)
+        ];
+        SymmetricSecurityKey key = new(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!));
+        SigningCredentials creds = new(key, SecurityAlgorithms.HmacSha256);
+        JwtSecurityToken token = new(
+            configuration["Jwt:Issuer"],
+            configuration["Jwt:Audience"],
+            claims,
+            expires: DateTime.Now.AddHours(1),
+            signingCredentials: creds);
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+    public string GenerateJwtToken(DistributorAccount distributor)
+    {
+        Claim[] claims =
+        [
+            new(JwtRegisteredClaimNames.Sub, distributor.Id.ToString()),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            new(ClaimTypes.NameIdentifier, login)
+            new(ClaimTypes.Name, distributor.UserName!),
+            new(ClaimTypes.Email, distributor.Email!)
         ];
         SymmetricSecurityKey key = new(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!));
         SigningCredentials creds = new(key, SecurityAlgorithms.HmacSha256);

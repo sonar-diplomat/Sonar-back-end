@@ -12,17 +12,17 @@ public class SubscriptionPaymentService(
     ISubscriptionPackService subscriptionPackService)
     : GenericService<SubscriptionPayment>(repository), ISubscriptionPaymentService
 {
-    public async Task<SubscriptionPayment> PurchaseSubscriptionAsync(PurchaseSubscriptionDTO dto)
+    public async Task<SubscriptionPayment> PurchaseSubscriptionAsync(int buyerId, PurchaseSubscriptionDTO dto)
     {
         SubscriptionPayment payment = new()
         {
-            Buyer = await userService.GetByIdValidatedAsync(dto.UserId),
+            Buyer = await userService.GetByIdValidatedAsync(buyerId),
             SubscriptionPack = await subscriptionPackService.GetByIdValidatedAsync(dto.SubscriptionPackId),
             Amount = dto.Amount
         };
 
         SubscriptionPayment createdPayment = await repository.AddAsync(payment);
-        User? user = await userService.GetByIdValidatedAsync(dto.UserId);
+        User? user = await userService.GetByIdValidatedAsync(buyerId);
         user.SubscriptionPackId = dto.SubscriptionPackId;
         await userService.UpdateUserAsync(user);
         return createdPayment;

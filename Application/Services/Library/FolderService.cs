@@ -1,9 +1,60 @@
 ﻿using Application.Abstractions.Interfaces.Repository.Library;
 using Application.Abstractions.Interfaces.Services;
+using Application.DTOs;
+using Application.Extensions;
+using Application.Response;
 using Entities.Models.Library;
 
 namespace Application.Services.Library;
 
 public class FolderService(IFolderRepository repository) : GenericService<Folder>(repository), IFolderService
 {
+    public async Task<Folder> CreateFolderAsync(int libraryId, CreateFolderDTO dto)
+    {
+        if (dto.ParentFolderId != null)
+            await CheckFolderBelongsToLibrary(libraryId, dto.ParentFolderId.Value);
+        Folder newFolder = new()
+        {
+            Name = dto.Name,
+            ParentFolderId = dto.ParentFolderId
+        };
+        return await repository.AddAsync(newFolder);
+    }
+
+    public async Task<Folder> UpdateNameAsync(int libraryId, int folderId, string newName)
+    {
+        Folder folder = await CheckFolderBelongsToLibrary(libraryId, folderId);
+        folder.Name = newName;
+        return await repository.UpdateAsync(folder);
+    }
+
+    public async Task DeleteFolderAsync(int libraryId, int folderId)
+    {
+        Folder folder = await CheckFolderBelongsToLibrary(libraryId, folderId);
+        if (folder.IsProtected)
+            throw ResponseFactory.Create<ForbiddenResponse>(["This folder is protected and cannot be deleted"]);
+        await repository.RemoveAsync(folder);
+    }
+
+    public async Task MoveFolder(int libraryId, int folderId, int newParentFolderId)
+    {
+        Folder folder = await CheckFolderBelongsToLibrary(libraryId, folderId);
+        Folder parentFolder = await CheckFolderBelongsToLibrary(libraryId, newParentFolderId);
+        folder.ParentFolderId = parentFolder.Id;
+        await repository.UpdateAsync(folder);
+    }
+
+    public async Task<Folder> GetFolderByIdIncludeCollectionsValidatedAsync(int folderId)
+    {
+        return await repository.Include(f => f.Collections).GetByIdValidatedAsync(folderId);
+    }
+
+
+    private async Task<Folder> CheckFolderBelongsToLibrary(int libraryId, int folderId)
+    {
+        Folder folder = await repository.Include(f => f.Library).GetByIdValidatedAsync(folderId);
+        return folder.Library.Id != libraryId
+            ? throw ResponseFactory.Create<BadRequestResponse>(["Folder does not belong to the specified library"])
+            : folder;
+    }
 }

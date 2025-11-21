@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace Entities.Models.Report;
 
@@ -12,5 +13,6 @@ public class ReportableEntityType : BaseModel
 
     /// <summary>
     /// </summary>
+    [JsonIgnore]
     public virtual ICollection<Report> Reports { get; set; }
 }
