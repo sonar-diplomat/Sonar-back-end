@@ -26,13 +26,17 @@ public static class VisibilityStateExtensions
         if (visibilityState == null)
             throw ResponseFactory.Create<NotFoundResponse>([$"{entityTypeName} with ID {entityId} not found"]);
 
+        if (visibilityState.StatusId == VisibleStatusId)
+            return;
+
         // Check if content is Hidden - return 404 as if entity doesn't exist
         if (visibilityState.StatusId == HiddenStatusId)
             throw ResponseFactory.Create<NotFoundResponse>([$"{entityTypeName} with ID {entityId} not found"]);
 
-        // Check if content is not yet public (SetPublicOn is in the future)
-        if (visibilityState.SetPublicOn > DateTime.UtcNow)
+        if (visibilityState.StatusId == HiddenStatusId)
             throw ResponseFactory.Create<NotFoundResponse>([$"{entityTypeName} with ID {entityId} not found"]);
+
+
 
         // Visible, Unlisted, and Restricted are accessible (Restricted may have limited functionality on client side)
         // The actual restrictions for Restricted status are handled on the client side
@@ -49,7 +53,7 @@ public static class VisibilityStateExtensions
             return false;
 
         // Hidden and Unlisted should not appear in search
-        if (visibilityState.StatusId == HiddenStatusId || visibilityState.StatusId == UnlistedStatusId)
+        if (visibilityState.StatusId is HiddenStatusId or UnlistedStatusId)
             return false;
 
         // Check if content is not yet public
@@ -57,7 +61,7 @@ public static class VisibilityStateExtensions
             return false;
 
         // Visible and Restricted can appear in search
-        return visibilityState.StatusId == VisibleStatusId || visibilityState.StatusId == RestrictedStatusId;
+        return visibilityState.StatusId is VisibleStatusId or RestrictedStatusId;
     }
 
     /// <summary>
