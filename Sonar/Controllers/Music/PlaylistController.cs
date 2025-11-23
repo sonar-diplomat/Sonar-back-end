@@ -99,7 +99,6 @@ public class PlaylistController(
         {
             Id = playlist.Id,
             Name = playlist.Name,
-            VisibilityStateId = playlist.VisibilityStateId,
             CoverId = playlist.CoverId,
             CreatorName = playlist.Creator?.UserName ?? string.Empty,
             TrackCount = playlist.Tracks?.Count ?? 0,

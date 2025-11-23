@@ -100,7 +100,6 @@ public class AlbumController(
         {
             Id = album.Id,
             Name = album.Name,
-            VisibilityStateId = album.VisibilityStateId,
             CoverId = album.CoverId,
             DistributorName = album.Distributor?.Name ?? string.Empty,
             TrackCount = album.Tracks?.Count ?? 0
