@@ -2,7 +2,7 @@
 
 namespace Application.DTOs.User;
 
-public record NonSensetiveUserDTO
+public record NonSensitiveUserDTO
 {
     public string FirstName { get; set; }
     public string LastName { get; set; }

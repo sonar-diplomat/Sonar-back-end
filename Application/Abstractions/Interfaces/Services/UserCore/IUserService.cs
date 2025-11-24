@@ -21,4 +21,10 @@ public interface IUserService
     Task AssignAccessFeaturesByNameAsync(int userId, string[] accessFeatures);
     Task RevokeAccessFeaturesAsync(int userId, int[] accessFeatureIds);
     Task RevokeAccessFeaturesByNameAsync(int userId, string[] accessFeatures);
+    Task<UserFriendRequest> SendFriendRequestAsync(int fromUserId, int toUserId);
+    Task<IEnumerable<UserFriendRequest>> GetPendingFriendRequestsAsync(int userId);
+    Task<IEnumerable<UserFriendRequest>> GetSentFriendRequestsAsync(int userId);
+    Task<bool> ResolveFriendRequestAsync(int userId, int requestId, bool accept);
+    Task RemoveFriendAsync(int userId, int friendId);
+    Task<IEnumerable<User>> GetFriendsAsync(int userId);
 }
