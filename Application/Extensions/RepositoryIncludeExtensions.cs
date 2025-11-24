@@ -11,8 +11,8 @@ namespace Application.Extensions;
 
 public static class RepositoryIncludeExtensions
 {
-    // Include от репозитория
-    public static IIncludableQueryable<T, TProperty> Include<T, TProperty>(
+    // SnInclude от репозитория
+    public static IIncludableQueryable<T, TProperty> SnInclude<T, TProperty>(
         this IGenericRepository<T> repository,
         Expression<Func<T, TProperty>> navigationPropertyPath)
         where T : BaseModel
@@ -20,16 +20,16 @@ public static class RepositoryIncludeExtensions
         return EntityFrameworkQueryableExtensions.Include(repository.Query(), navigationPropertyPath);
     }
 
-    // Include от репозитория
-    public static IIncludableQueryable<User, TProperty> Include<TProperty>(
+    // SnInclude от репозитория
+    public static IIncludableQueryable<User, TProperty> SnInclude<TProperty>(
         this IUserRepository repository,
         Expression<Func<User, TProperty>> navigationPropertyPath)
     {
         return EntityFrameworkQueryableExtensions.Include(repository.Query(), navigationPropertyPath);
     }
 
-    // Include от IQueryable (для цепочки вызовов)
-    public static IIncludableQueryable<T, TProperty> Include<T, TProperty>(
+    // SnInclude от IQueryable (для цепочки вызовов)
+    public static IIncludableQueryable<T, TProperty> SnInclude<T, TProperty>(
         this IQueryable<T> source,
         Expression<Func<T, TProperty>> navigationPropertyPath)
         where T : BaseModel
@@ -37,13 +37,14 @@ public static class RepositoryIncludeExtensions
         return EntityFrameworkQueryableExtensions.Include(source, navigationPropertyPath);
     }
 
-    public static IIncludableQueryable<T, TNextProperty> ThenInclude<T, TPreviousProperty, TNextProperty>(
+    public static IIncludableQueryable<T, TNextProperty> SnThenInclude<T, TPreviousProperty, TNextProperty>(
         this IIncludableQueryable<T, TPreviousProperty> source,
         Expression<Func<TPreviousProperty, TNextProperty>> navigationPropertyPath)
         where T : BaseModel
     {
         return EntityFrameworkQueryableExtensions.ThenInclude(source, navigationPropertyPath);
     }
+
 
     public static async Task<T?> GetByIdAsync<T>(this IQueryable<T> query, int id) where T : BaseModel
     {

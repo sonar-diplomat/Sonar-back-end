@@ -13,6 +13,6 @@ public class SettingsRepository(SonarContext dbContext) : GenericRepository<Sett
         throw new NotImplementedException();
     }
     public override async Task<Settings?> GetByIdAsync(int? id) {
-        return RepositoryIncludeExtensions.Include(RepositoryIncludeExtensions.Include(context.Set<Settings>(), s => s.UserPrivacy), s => s.PreferredPlaybackQuality).FirstOrDefault(s=>s.Id == id);
+        return RepositoryIncludeExtensions.SnInclude(RepositoryIncludeExtensions.SnInclude(context.Set<Settings>(), s => s.UserPrivacy), s => s.PreferredPlaybackQuality).FirstOrDefault(s=>s.Id == id);
     }
 }

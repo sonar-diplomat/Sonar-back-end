@@ -298,10 +298,15 @@ public class ReportController(
             {
                 Id = report.Reporter.Id,
                 UserName = report.Reporter.UserName ?? string.Empty,
+                FirstName = report.Reporter.FirstName,
+                LastName = report.Reporter.LastName,
+                DateOfBirth = report.Reporter.DateOfBirth,
+                Login = report.Reporter.Login,
                 PublicIdentifier = report.Reporter.PublicIdentifier,
                 Biography = report.Reporter.Biography,
                 RegistrationDate = report.Reporter.RegistrationDate,
-                AvatarUrl = report.Reporter.AvatarImage?.Url ?? string.Empty
+                AvailableCurrency = report.Reporter.AvailableCurrency,
+                AvatarImageId = report.Reporter.AvatarImageId
             },
             EntityType = new ReportableEntityTypeDTO
             {

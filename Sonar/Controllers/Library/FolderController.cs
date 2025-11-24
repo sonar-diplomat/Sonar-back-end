@@ -1,6 +1,7 @@
 using Application.Abstractions.Interfaces.Services;
 using Application.DTOs;
 using Application.DTOs.Library;
+using Application.Extensions;
 using Application.Response;
 using Entities.Models.Library;
 using Entities.Models.UserCore;
@@ -33,7 +34,7 @@ public class FolderController(
     [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetFolder(int folderId)
     {
-        Folder folder = await folderService.GetByIdValidatedAsync(folderId);
+        Folder folder = await folderService.GetFolderByIdIncludeCollectionsValidatedAsync(folderId);
         FolderDTO dto = new()
         {
             Id = folder.Id,
@@ -49,13 +50,15 @@ public class FolderController(
                 SubFolderCount = sf.SubFolders?.Count ?? 0,
                 CollectionCount = sf.Collections?.Count ?? 0
             }).ToList() ?? new List<SubFolderDTO>(),
-            Collections = folder.Collections?.Select(c => new CollectionSummaryDTO
-            {
-                Id = c.Id,
-                Name = c.Name,
-                Type = c.GetType().Name,
-                CoverUrl = c.Cover?.Url ?? string.Empty
-            }).ToList() ?? new List<CollectionSummaryDTO>()
+            Collections = folder.Collections?
+                .Where(c => c.VisibilityState?.IsAccessible() ?? false)
+                .Select(c => new CollectionSummaryDTO
+                {
+                    Id = c.Id,
+                    Name = c.Name,
+                    Type = c.GetType().Name,
+                    CoverId = c.CoverId
+                }).ToList() ?? new List<CollectionSummaryDTO>()
         };
         throw ResponseFactory.Create<OkResponse<FolderDTO>>(dto, ["Successfully retrieved folder"]);
     }
@@ -69,7 +72,7 @@ public class FolderController(
     [ProducesResponseType(typeof(OkResponse<IEnumerable<FolderDTO>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAllFolders()
     {
-        IEnumerable<Folder> folders = await folderService.GetAllAsync();
+        IEnumerable<Folder> folders = await folderService.GetAllFoldersWithCollectionsAsync();
         IEnumerable<FolderDTO> dtos = folders.Select(folder => new FolderDTO
         {
             Id = folder.Id,
@@ -85,13 +88,15 @@ public class FolderController(
                 SubFolderCount = sf.SubFolders?.Count ?? 0,
                 CollectionCount = sf.Collections?.Count ?? 0
             }).ToList() ?? new List<SubFolderDTO>(),
-            Collections = folder.Collections?.Select(c => new CollectionSummaryDTO
-            {
-                Id = c.Id,
-                Name = c.Name,
-                Type = c.GetType().Name,
-                CoverUrl = c.Cover?.Url ?? string.Empty
-            }).ToList() ?? new List<CollectionSummaryDTO>()
+            Collections = folder.Collections?
+                .Where(c => c.VisibilityState?.IsAccessible() ?? false)
+                .Select(c => new CollectionSummaryDTO
+                {
+                    Id = c.Id,
+                    Name = c.Name,
+                    Type = c.GetType().Name,
+                    CoverId = c.CoverId
+                }).ToList() ?? new List<CollectionSummaryDTO>()
         });
         throw ResponseFactory.Create<OkResponse<IEnumerable<FolderDTO>>>(dtos, ["Successfully retrieved all folders"]);
     }
@@ -161,13 +166,15 @@ public class FolderController(
                 SubFolderCount = sf.SubFolders?.Count ?? 0,
                 CollectionCount = sf.Collections?.Count ?? 0
             }).ToList() ?? new List<SubFolderDTO>(),
-            Collections = folder.Collections?.Select(c => new CollectionSummaryDTO
-            {
-                Id = c.Id,
-                Name = c.Name,
-                Type = c.GetType().Name,
-                CoverUrl = c.Cover?.Url ?? string.Empty
-            }).ToList() ?? new List<CollectionSummaryDTO>()
+            Collections = folder.Collections?
+                .Where(c => c.VisibilityState?.IsAccessible() ?? false)
+                .Select(c => new CollectionSummaryDTO
+                {
+                    Id = c.Id,
+                    Name = c.Name,
+                    Type = c.GetType().Name,
+                    CoverId = c.CoverId
+                }).ToList() ?? new List<CollectionSummaryDTO>()
         };
         throw ResponseFactory.Create<OkResponse<FolderDTO>>(dto, ["Successfully updated folder name"]);
     }

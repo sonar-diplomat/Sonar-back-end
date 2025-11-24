@@ -80,10 +80,15 @@ public class UserController(
         User user = await userService.GetByIdValidatedAsync(userId);
         NonSensetiveUserDTO userDto = new()
         {
+            FirstName = user.FirstName,
+            LastName = user.LastName,
+            DateOfBirth = user.DateOfBirth,
+            Login = user.Login,
             Biography = user.Biography,
             PublicIdentifier = user.PublicIdentifier,
             RegistrationDate = user.RegistrationDate,
-            ImageUrl = user.AvatarImage.Url,
+            AvailableCurrency = user.AvailableCurrency,
+            AvatarImageId = user.AvatarImageId,
             AccessFeatures = user.AccessFeatures.Select(af => new Application.DTOs.Access.AccessFeatureDTO
             {
                 Id = af.Id,
@@ -112,10 +117,15 @@ public class UserController(
         {
             Id = user.Id,
             UserName = user.UserName ?? string.Empty,
+            FirstName = user.FirstName,
+            LastName = user.LastName,
+            DateOfBirth = user.DateOfBirth,
+            Login = user.Login,
             PublicIdentifier = user.PublicIdentifier,
             Biography = user.Biography,
             RegistrationDate = user.RegistrationDate,
-            AvatarUrl = user.AvatarImage?.Url ?? string.Empty
+            AvailableCurrency = user.AvailableCurrency,
+            AvatarImageId = user.AvatarImageId
         };
         throw ResponseFactory.Create<OkResponse<UserResponseDTO>>(dto, ["User updated successfully"]);
     }

@@ -208,6 +208,7 @@ builder.Services.AddScoped<IArtistRegistrationRequestRepository, ArtistRegistrat
 
 // File Repositories
 builder.Services.AddScoped<IAudioFileRepository, AudioFileRepository>();
+builder.Services.AddScoped<IFileRepository, FileRepository>();
 builder.Services.AddScoped<IImageFileRepository, ImageFileRepository>();
 builder.Services.AddScoped<IVideoFileRepository, VideoFileRepository>();
 

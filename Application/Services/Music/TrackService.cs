@@ -26,7 +26,13 @@ public class TrackService(
 
     public async Task<MusicStreamResultDTO?> GetMusicStreamAsync(int trackId, TimeSpan? startPosition, TimeSpan? length)
     {
-        Track track = await GetByIdValidatedAsync(trackId);
+        Track track = await repository
+            .SnInclude(t => t.VisibilityState)
+            .SnThenInclude(vs => vs.Status)
+            .GetByIdValidatedAsync(trackId);
+        
+        // Validate visibility before allowing stream access
+        track.VisibilityState.ValidateVisibility("Track", trackId);
         
         // TODO: Use settings to determine track quality (LowQualityAudioFileId, MediumQualityAudioFileId, HighQualityAudioFileId)
         int audioFileId = track.LowQualityAudioFileId;
@@ -40,18 +46,25 @@ public class TrackService(
     public async Task<TrackDTO> GetTrackDtoAsync(int trackId)
     {
         Track track = await repository
-            .Include(t => t.Cover)
-            .Include(t => t.LowQualityAudioFile) // TODO: Get audio file based on user's ClientSettings
-            .Include(t => t.Artists)
+            .SnInclude(t => t.Cover)
+            .SnInclude(t => t.LowQualityAudioFile) // TODO: Get audio file based on user's ClientSettings
+            .SnInclude(t => t.Artists)
+            .SnInclude(t => t.VisibilityState)
+            .SnThenInclude(vs => vs.Status)
             .GetByIdValidatedAsync(trackId);
+
+        // Validate visibility before returning track data
+        track.VisibilityState.ValidateVisibility("Track", trackId);
 
         return new TrackDTO
         {
             Id = track.Id,
-            Name = track.Title,
+            Title = track.Title,
             DurationInSeconds = (int)(track.Duration?.TotalSeconds ?? 0),
-            CoverUrl = track.Cover.Url,
-            FileUrl = track.LowQualityAudioFile.Url,
+            IsExplicit = track.IsExplicit,
+            DrivingDisturbingNoises = track.DrivingDisturbingNoises,
+            CoverId = track.CoverId,
+            AudioFileId = track.LowQualityAudioFileId,
             Artists = track.Artists.Select(a => a.ArtistName)
         };
     }
@@ -95,7 +108,7 @@ public class TrackService(
 
     public async Task UpdateVisibilityStatusAsync(int trackId, int newVisibilityStatusId)
     {
-        Track track = await repository.Include(a => a.VisibilityState).GetByIdValidatedAsync(trackId);
+        Track track = await repository.SnInclude(a => a.VisibilityState).GetByIdValidatedAsync(trackId);
         track.VisibilityState.StatusId = newVisibilityStatusId;
         await repository.UpdateAsync(track);
     }
@@ -103,7 +116,7 @@ public class TrackService(
     public async Task<bool> ToggleFavoriteAsync(int trackId, int libraryId)
     {
         Playlist playlist = await libraryService.GetFavoritesPlaylistByLibraryIdValidatedAsync(libraryId);
-        Track track = await repository.Include(t => t.Collections).GetByIdValidatedAsync(trackId);
+        Track track = await repository.SnInclude(t => t.Collections).GetByIdValidatedAsync(trackId);
         HashSet<int> collectionIds = new(track.Collections.Select(c => c.Id));
         if (collectionIds.Contains(playlist.Id))
         {

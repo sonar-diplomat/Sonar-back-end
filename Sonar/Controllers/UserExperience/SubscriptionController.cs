@@ -113,10 +113,15 @@ public class SubscriptionController(
             {
                 Id = payment.Buyer.Id,
                 UserName = payment.Buyer.UserName ?? string.Empty,
+                FirstName = payment.Buyer.FirstName,
+                LastName = payment.Buyer.LastName,
+                DateOfBirth = payment.Buyer.DateOfBirth,
+                Login = payment.Buyer.Login,
                 PublicIdentifier = payment.Buyer.PublicIdentifier,
                 Biography = payment.Buyer.Biography,
                 RegistrationDate = payment.Buyer.RegistrationDate,
-                AvatarUrl = payment.Buyer.AvatarImage?.Url ?? string.Empty
+                AvailableCurrency = payment.Buyer.AvailableCurrency,
+                AvatarImageId = payment.Buyer.AvatarImageId
             },
             SubscriptionPackId = payment.SubscriptionPackId,
             SubscriptionPackName = payment.SubscriptionPack?.Name ?? string.Empty
@@ -155,7 +160,7 @@ public class SubscriptionController(
                 PublicIdentifier = payment.Buyer.PublicIdentifier,
                 Biography = payment.Buyer.Biography,
                 RegistrationDate = payment.Buyer.RegistrationDate,
-                AvatarUrl = payment.Buyer.AvatarImage?.Url ?? string.Empty
+                AvatarImageId = payment.Buyer.AvatarImageId
             },
             SubscriptionPackId = payment.SubscriptionPackId,
             SubscriptionPackName = payment.SubscriptionPack?.Name ?? string.Empty
@@ -189,7 +194,7 @@ public class SubscriptionController(
                 PublicIdentifier = payment.Buyer.PublicIdentifier,
                 Biography = payment.Buyer.Biography,
                 RegistrationDate = payment.Buyer.RegistrationDate,
-                AvatarUrl = payment.Buyer.AvatarImage?.Url ?? string.Empty
+                AvatarImageId = payment.Buyer.AvatarImageId
             },
             SubscriptionPackId = payment.SubscriptionPackId,
             SubscriptionPackName = payment.SubscriptionPack?.Name ?? string.Empty

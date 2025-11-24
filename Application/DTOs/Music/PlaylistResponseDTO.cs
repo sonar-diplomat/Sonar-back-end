@@ -6,7 +6,7 @@ public class PlaylistResponseDTO
     public string Name { get; set; }
     
     // Related data
-    public string CoverUrl { get; set; }
+    public int CoverId { get; set; }
     public string CreatorName { get; set; }
     public int TrackCount { get; set; }
     public List<string> ContributorNames { get; set; }

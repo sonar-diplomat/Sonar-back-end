@@ -73,19 +73,19 @@ public class TestController(
     }
 
     /// <summary>
-    /// [TEST] Tests eager loading (Include/ThenInclude) with EF Core on distributor relationships.
+    /// [TEST] Tests eager loading (SnInclude/SnThenInclude) with EF Core on distributor relationships.
     /// </summary>
     /// <returns>Distributor entity with loaded relationships.</returns>
     /// <response code="200">Entity retrieved successfully with loaded relationships.</response>
     /// <remarks>
-    /// This is a test endpoint for development/testing purposes to verify EF Core Include functionality.
+    /// This is a test endpoint for development/testing purposes to verify EF Core SnInclude functionality.
     /// </remarks>
     [HttpGet("test_include")]
     [ProducesResponseType(typeof(OkResponse<Distributor>), StatusCodes.Status200OK)]
     public async Task<ActionResult> TestInclude()
     {
-        Distributor? d = await distributorRepository.Include(d => d.Cover).Include(d => d.License)
-            .ThenInclude(l => l.Issuer).GetByIdAsync(4);
+        Distributor? d = await distributorRepository.SnInclude(d => d.Cover).SnInclude(d => d.License)
+            .SnThenInclude(l => l.Issuer).GetByIdAsync(4);
         throw ResponseFactory.Create<OkResponse<Distributor>>(d);
     }
 
