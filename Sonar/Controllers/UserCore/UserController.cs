@@ -186,7 +186,7 @@ public class UserController(
     /// <response code="404">Target user not found.</response>
     [HttpPost("friend-request/{toUserId:int}")]
     [Authorize]
-    [ProducesResponseType(typeof(OkResponse<UserReceivedFriendRequestDTO>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(OkResponse<UserFriendRequestDTO>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(BadRequestResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
@@ -240,7 +240,7 @@ public class UserController(
     /// <response code="401">User not authenticated.</response>
     [HttpGet("friend-requests/sent")]
     [Authorize]
-    [ProducesResponseType(typeof(OkResponse<IEnumerable<UserReceivedFriendRequestDTO>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(OkResponse<IEnumerable<UserSentFriendRequestDTO>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetSentFriendRequests()
     {
