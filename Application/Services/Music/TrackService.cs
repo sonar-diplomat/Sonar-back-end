@@ -150,24 +150,38 @@ public class TrackService(
         // Добавляем дополнительных авторов из DTO
         if (dto.AdditionalArtists != null)
         {
-            foreach (string artistName in dto.AdditionalArtists)
+            foreach (AuthorDTO authorDto in dto.AdditionalArtists)
             {
                 // Пропускаем, если псевдоним уже добавлен
-                if (addedPseudonyms.Contains(artistName))
+                if (addedPseudonyms.Contains(authorDto.Pseudonym))
                     continue;
 
-                Artist? artist = await artistService.GetByNameAsync(artistName);
-                if (artist != null && !addedArtistIds.Contains(artist.Id))
+                int? artistId = authorDto.ArtistId;
+                
+                // Если ArtistId указан в DTO, используем его
+                if (artistId.HasValue && !addedArtistIds.Contains(artistId.Value))
                 {
                     TrackArtist trackArtist = new()
                     {
-                        Pseudonym = artistName,
+                        Pseudonym = authorDto.Pseudonym,
                         TrackId = track.Id,
-                        ArtistId = artist.Id
+                        ArtistId = artistId
                     };
                     await trackArtistService.CreateAsync(trackArtist);
-                    addedArtistIds.Add(artist.Id);
-                    addedPseudonyms.Add(artistName);
+                    addedArtistIds.Add(artistId.Value);
+                    addedPseudonyms.Add(authorDto.Pseudonym);
+                }
+                // Если ArtistId не указан, создаем TrackArtist только с Pseudonym
+                else if (!artistId.HasValue)
+                {
+                    TrackArtist trackArtist = new()
+                    {
+                        Pseudonym = authorDto.Pseudonym,
+                        TrackId = track.Id,
+                        ArtistId = null
+                    };
+                    await trackArtistService.CreateAsync(trackArtist);
+                    addedPseudonyms.Add(authorDto.Pseudonym);
                 }
             }
         }
@@ -212,5 +226,37 @@ public class TrackService(
         track.Collections.Add(playlist);
         await repository.UpdateAsync(track);
         return true;
+    }
+
+    public async Task AssignArtistToTrackAsync(int trackId, AuthorDTO authorDto)
+    {
+        Track track = await repository
+            .Query()
+            .Include(t => t.Collections)
+            .FirstOrDefaultAsync(t => t.Id == trackId)
+            ?? throw ResponseFactory.Create<NotFoundResponse>([$"{nameof(Track)} not found"]);
+
+        // Проверяем, что трек принадлежит альбому (треки всегда в альбомах)
+        Album? album = track.Collections.OfType<Album>().FirstOrDefault();
+        if (album == null)
+            throw ResponseFactory.Create<BadRequestResponse>(["Track must belong to an album"]);
+
+        // Проверяем, не добавлен ли уже этот артист
+        bool alreadyExists = await trackArtistService.GetAllAsync() is IEnumerable<TrackArtist> existing &&
+                             existing.Any(ta => ta.TrackId == trackId && 
+                                 (authorDto.ArtistId.HasValue && ta.ArtistId == authorDto.ArtistId.Value ||
+                                  ta.Pseudonym == authorDto.Pseudonym));
+
+        if (alreadyExists)
+            throw ResponseFactory.Create<BadRequestResponse>(["Artist already assigned to this track"]);
+
+        TrackArtist trackArtist = new()
+        {
+            Pseudonym = authorDto.Pseudonym,
+            TrackId = trackId,
+            ArtistId = authorDto.ArtistId
+        };
+
+        await trackArtistService.CreateAsync(trackArtist);
     }
 }
