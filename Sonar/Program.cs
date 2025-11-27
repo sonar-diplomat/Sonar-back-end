@@ -43,7 +43,10 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
+using Logging;
 using Microsoft.IdentityModel.Tokens;
 using QRCoder;
 using Sonar.Controllers;
@@ -62,9 +65,43 @@ using System.Text;
 using Flac = Application.Services.File.Flac;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
-builder.Services.AddDbContext<SonarContext>(options =>
+
+// Initialize custom logger
+Logger.Initialize(builder.Configuration);
+
+// Configure logging
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
+if (builder.Environment.IsDevelopment())
+{
+    builder.Logging.SetMinimumLevel(LogLevel.Debug);
+}
+else
+{
+    builder.Logging.SetMinimumLevel(LogLevel.Warning);
+}
+
+// Register custom EF Core logger factory as singleton
+builder.Services.AddSingleton<ILoggerFactory>(_ => 
+    LoggerFactory.Create(builder => builder.AddProvider(new EfCoreLoggerProvider())));
+
+builder.Services.AddDbContext<SonarContext>((serviceProvider, options) =>
+{
     options.UseNpgsql(builder.Configuration.GetConnectionString("SonarContext") ??
-                      throw new InvalidOperationException("Connection string 'SonarContext' not found.")));
+                      throw new InvalidOperationException("Connection string 'SonarContext' not found."));
+    
+    // Enable EF Core logging using custom logger factory
+    ILoggerFactory efCoreLoggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
+    options.UseLoggerFactory(efCoreLoggerFactory);
+    
+    // Enable sensitive data logging and detailed errors in development
+    if (builder.Environment.IsDevelopment())
+    {
+        options.EnableSensitiveDataLogging();
+        options.EnableDetailedErrors();
+    }
+});
 builder.Services.Configure<FormOptions>(options =>
 {
     options.MultipartBodyLengthLimit = 104857600; // 100 MB
