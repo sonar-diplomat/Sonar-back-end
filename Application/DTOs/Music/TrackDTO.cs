@@ -9,5 +9,5 @@ public class TrackDTO
     public required bool DrivingDisturbingNoises { get; set; }
     public required int CoverId { get; set; }
     public required int AudioFileId { get; set; }
-    public required IEnumerable<string> Artists { get; set; }
+    public required IEnumerable<AuthorDTO> Artists { get; set; }
 }

@@ -268,6 +268,7 @@ builder.Services.AddScoped<IBlendRepository, BlendRepository>();
 builder.Services.AddScoped<IPlaylistRepository, PlaylistRepository>();
 builder.Services.AddScoped<ITrackRepository, TrackRepository>();
 builder.Services.AddScoped<IAlbumArtistRepository, AlbumArtistRepository>();
+builder.Services.AddScoped<ITrackArtistRepository, TrackArtistRepository>();
 
 // Report Repositories
 builder.Services.AddScoped<IReportableEntityTypeRepository, ReportableEntityTypeRepository>();
@@ -343,6 +344,7 @@ builder.Services.AddScoped<IBlendService, BlendService>();
 builder.Services.AddScoped<IPlaylistService, PlaylistService>();
 builder.Services.AddScoped<ITrackService, TrackService>();
 builder.Services.AddScoped<IAlbumArtistService, AlbumArtistService>();
+builder.Services.AddScoped<ITrackArtistService, TrackArtistService>();
 builder.Services.AddScoped<ICollectionService<Album>, CollectionService<Album>>();
 builder.Services.AddScoped<ICollectionService<Blend>, CollectionService<Blend>>();
 builder.Services.AddScoped<ICollectionService<Playlist>, CollectionService<Playlist>>();

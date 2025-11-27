@@ -9,5 +9,6 @@ public class AlbumResponseDTO
     public int CoverId { get; set; }
     public string DistributorName { get; set; }
     public int TrackCount { get; set; }
+    public IEnumerable<AuthorDTO> Authors { get; set; } = new List<AuthorDTO>();
 }
 

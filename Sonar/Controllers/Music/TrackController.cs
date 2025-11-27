@@ -4,6 +4,7 @@ using Application.DTOs.Music;
 using Application.Response;
 using Entities.Enums;
 using Entities.Models.ClientSettings;
+using Entities.Models.Distribution;
 using Entities.Models.Music;
 using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Authorization;
@@ -19,6 +20,7 @@ namespace Sonar.Controllers.Music;
 public class TrackController(
     UserManager<User> userManager,
     ITrackService trackService,
+    IAlbumService albumService,
     ISettingsService settingsService,
     IShareService shareService,
     IUserStateService userStateService) : ShareController<Track>(userManager, shareService)
@@ -204,5 +206,59 @@ public class TrackController(
         bool isFavorite = await trackService.ToggleFavoriteAsync(trackId, user.LibraryId);
         string message = isFavorite ? "Track added to favorites" : "Track removed from favorites";
         throw ResponseFactory.Create<OkResponse>([message]);
+    }
+
+    /// <summary>
+    /// Assigns an artist to a track.
+    /// </summary>
+    /// <param name="trackId">The ID of the track.</param>
+    /// <param name="authorDto">Artist information including pseudonym and optional artist ID.</param>
+    /// <returns>Success response upon artist assignment.</returns>
+    /// <response code="200">Artist assigned successfully.</response>
+    /// <response code="401">User not authorized (must be distributor).</response>
+    /// <response code="404">Track not found.</response>
+    /// <response code="400">Invalid request (track must belong to an album, artist already assigned).</response>
+    [HttpPost("{trackId:int}/artist")]
+    [Authorize]
+    [ProducesResponseType(typeof(OkResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(BadRequestResponse), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> AssignArtistToTrack(int trackId, [FromBody] AuthorDTO authorDto)
+    {
+        Distributor distributor = await this.CheckDistributorAsync();
+
+        // Проверяем, что трек принадлежит текущему дистрибьютору
+        // Получаем трек с коллекциями для проверки альбома
+        Track track = await trackService.GetByIdValidatedAsync(trackId);
+
+        // Получаем трек с коллекциями через репозиторий
+        Track? trackWithCollections = await (trackService as ITrackService)!
+            .GetByIdAsync(trackId);
+
+        if (trackWithCollections == null)
+            throw ResponseFactory.Create<NotFoundResponse>([$"Track with ID {trackId} not found"]);
+
+        // Загружаем коллекции трека
+        trackWithCollections = await trackService
+            .GetByIdValidatedAsync(trackId);
+
+        // Получаем альбом трека
+        Album? album = null;
+        if (trackWithCollections.Collections != null)
+        {
+            album = trackWithCollections.Collections.OfType<Album>().FirstOrDefault();
+        }
+
+        if (album == null)
+            throw ResponseFactory.Create<BadRequestResponse>(["Track must belong to an album"]);
+
+        // Проверяем права доступа через альбом
+        Album albumWithDistributor = await albumService.GetValidatedIncludeDistributorAsync(album.Id);
+        if (albumWithDistributor.DistributorId != distributor.Id)
+            throw ResponseFactory.Create<UnauthorizedResponse>(["Track does not belong to your distributor"]);
+
+        await trackService.AssignArtistToTrackAsync(trackId, authorDto);
+        throw ResponseFactory.Create<OkResponse>(["Artist assigned to track successfully"]);
     }
 }
