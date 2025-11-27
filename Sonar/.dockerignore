@@ -1,0 +1,8 @@
+﻿**/bin/
+**/obj/
+.git
+.vs
+.idea
+node_modules
+*.user
+*.suo

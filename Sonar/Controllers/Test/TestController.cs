@@ -8,6 +8,7 @@ using Entities.Models.Chat;
 using Entities.Models.Distribution;
 using Entities.Models.Library;
 using Entities.Models.UserCore;
+using Logging;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
@@ -316,6 +317,38 @@ public class TestController(
     {
         throw ResponseFactory.Create<OkResponse<Entities.Models.Library.Library>>(
             await libraryService.CreateDefaultAsync(), ["Successfully created default folder"]);
+    }
+
+    # endregion
+
+    # region log tests
+
+    /// <summary>
+    /// [TEST] Retrieves the most recent log file.
+    /// </summary>
+    /// <returns>The most recent log file content and path.</returns>
+    /// <response code="200">Log file retrieved successfully.</response>
+    /// <response code="404">No log files found.</response>
+    /// <remarks>
+    /// This is a test endpoint for development/testing purposes.
+    /// Returns the most recently written log file from both general and guild logs directories.
+    /// </remarks>
+    [HttpGet("logs/last")]
+    [ProducesResponseType(typeof(OkResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> GetLastLogFile()
+    {
+        var result = await Logging.Logger.GetLastLogFileAsync();
+        if (result == null)
+            throw ResponseFactory.Create<NotFoundResponse>(["No log files found"]);
+
+        var response = new
+        {
+            FilePath = result.Value.FilePath,
+            Content = System.Text.Json.JsonSerializer.Deserialize<object>(result.Value.Content)
+        };
+
+        throw ResponseFactory.Create<OkResponse<object>>(response, ["Last log file retrieved successfully"]);
     }
 
     # endregion
