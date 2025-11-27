@@ -66,7 +66,7 @@ public class Track : BaseModel
     [JsonIgnore]
     public virtual ICollection<Queue> QueuesWherePrimary { get; set; }
     [JsonIgnore]
-    public virtual ICollection<Artist> Artists { get; set; }
+    public virtual ICollection<TrackArtist> TrackArtists { get; set; }
     [JsonIgnore]
     public virtual ICollection<Collection> Collections { get; set; }
     [JsonIgnore]

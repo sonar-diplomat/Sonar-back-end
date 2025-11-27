@@ -137,7 +137,11 @@ public class PlaylistService(
             DrivingDisturbingNoises = t.DrivingDisturbingNoises,
             CoverId = t.CoverId,
             AudioFileId = t.LowQualityAudioFileId,
-            Artists = t.Artists.Select<Artist, string>(a => a.ArtistName)
+            Artists = t.TrackArtists?.Select(ta => new AuthorDTO
+            {
+                Pseudonym = ta.Pseudonym,
+                ArtistId = ta.ArtistId
+            }).ToList() ?? new List<AuthorDTO>()
         }).ToList();
 
         string? nextCursor = null;

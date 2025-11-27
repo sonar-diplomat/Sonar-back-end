@@ -28,6 +28,41 @@ public class AlbumController(
 {
 
     /// <summary>
+    /// Gets all albums created by the current distributor.
+    /// </summary>
+    /// <returns>List of album response DTOs.</returns>
+    /// <response code="200">Albums retrieved successfully.</response>
+    /// <response code="401">User not authenticated or not a distributor.</response>
+    /// <remarks>
+    /// Requires distributor authentication. Returns only albums created by the authenticated distributor.
+    /// </remarks>
+    [HttpGet]
+    [Authorize]
+    [ProducesResponseType(typeof(OkResponse<IEnumerable<AlbumResponseDTO>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> GetAlbums()
+    {
+        int distributorId = (await this.CheckDistributorAsync()).Id;
+        IEnumerable<Album> albums = await albumService.GetAlbumsByDistributorIdAsync(distributorId);
+        
+        IEnumerable<AlbumResponseDTO> albumDTOs = albums.Select(a => new AlbumResponseDTO
+        {
+            Id = a.Id,
+            Name = a.Name,
+            CoverId = a.CoverId,
+            DistributorName = a.Distributor?.Name ?? string.Empty,
+            TrackCount = a.Tracks?.Count ?? 0,
+            Authors = a.AlbumArtists?.Select(aa => new AuthorDTO
+            {
+                Pseudonym = aa.Pseudonym,
+                ArtistId = aa.ArtistId
+            }).ToList() ?? new List<AuthorDTO>()
+        });
+
+        throw ResponseFactory.Create<OkResponse<IEnumerable<AlbumResponseDTO>>>(albumDTOs);
+    }
+
+    /// <summary>
     /// Uploads a new album to the platform.
     /// </summary>
     /// <param name="dto">Album upload data including name, release date, genre, and description.</param>
@@ -47,13 +82,19 @@ public class AlbumController(
     {
         int distributorId = (await this.CheckDistributorAsync()).Id;
         Album album = await albumService.UploadAsync(dto, distributorId);
+        Album albumWithArtists = await albumService.GetValidatedIncludeAlbumArtistsAsync(album.Id);
         AlbumResponseDTO responseDto = new()
         {
             Id = album.Id,
             Name = album.Name,
             CoverId = album.CoverId,
             DistributorName = album.Distributor?.Name ?? string.Empty,
-            TrackCount = album.Tracks?.Count ?? 0
+            TrackCount = album.Tracks?.Count ?? 0,
+            Authors = albumWithArtists.AlbumArtists?.Select(aa => new AuthorDTO
+            {
+                Pseudonym = aa.Pseudonym,
+                ArtistId = aa.ArtistId
+            }).ToList() ?? new List<AuthorDTO>()
         };
         throw ResponseFactory.Create<OkResponse<AlbumResponseDTO>>(responseDto, ["Album was created successfully"]);
     }
@@ -96,13 +137,19 @@ public class AlbumController(
     {
         await MatchAlbumAndDistributor(albumId);
         Album album = await albumService.UpdateNameAsync(albumId, name);
+        Album albumWithArtists = await albumService.GetValidatedIncludeAlbumArtistsAsync(albumId);
         AlbumResponseDTO responseDto = new()
         {
             Id = album.Id,
             Name = album.Name,
             CoverId = album.CoverId,
             DistributorName = album.Distributor?.Name ?? string.Empty,
-            TrackCount = album.Tracks?.Count ?? 0
+            TrackCount = album.Tracks?.Count ?? 0,
+            Authors = albumWithArtists.AlbumArtists?.Select(aa => new AuthorDTO
+            {
+                Pseudonym = aa.Pseudonym,
+                ArtistId = aa.ArtistId
+            }).ToList() ?? new List<AuthorDTO>()
         };
         throw ResponseFactory.Create<OkResponse<AlbumResponseDTO>>(responseDto, ["Album name was updated successfully"]);
     }
@@ -128,6 +175,29 @@ public class AlbumController(
         // TODO: create DTO
         Track track = await trackService.CreateTrackAsync(albumId, dto);
         throw ResponseFactory.Create<OkResponse<Track>>(track, ["Track was added successfully"]);
+    }
+
+    /// <summary>
+    /// Gets all tracks in an album.
+    /// </summary>
+    /// <param name="albumId">The ID of the album.</param>
+    /// <returns>List of track DTOs.</returns>
+    /// <response code="200">Album tracks retrieved successfully.</response>
+    /// <response code="401">User not authenticated or not a distributor.</response>
+    /// <response code="404">Album not found.</response>
+    /// <remarks>
+    /// Requires distributor authentication. Returns only tracks from albums created by the authenticated distributor.
+    /// </remarks>
+    [HttpGet("{albumId:int}/tracks")]
+    [Authorize]
+    [ProducesResponseType(typeof(OkResponse<IEnumerable<TrackDTO>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetAlbumTracks(int albumId)
+    {
+        await MatchAlbumAndDistributor(albumId);
+        IEnumerable<TrackDTO> tracks = await albumService.GetAlbumTracksAsync(albumId);
+        throw ResponseFactory.Create<OkResponse<IEnumerable<TrackDTO>>>(tracks, ["Album tracks retrieved successfully"]);
     }
 
     /// <summary>
