@@ -387,7 +387,15 @@ public static class Logger
     /// <summary>
     /// Get logs for specific guild
     /// </summary>
-    public static async Task<List<LogEntry>> GetGuildLogsAsync(ulong guildId, LogCategory? category = null, DateTime? fromDate = null, DateTime? toDate = null) {
+    public static async Task<List<LogEntry>> GetGuildLogsAsync(
+        ulong guildId, 
+        LogCategory? category = null, 
+        DateTime? fromDate = null, 
+        DateTime? toDate = null,
+        LogLevel? minLevel = null,
+        LogLevel? maxLevel = null,
+        LogLevel? exactLevel = null,
+        int? limit = null) {
         List<LogEntry> logs = new();
         string guildDir = Path.Combine(_guildLogsDirectory, guildId.ToString());
 
@@ -402,26 +410,49 @@ public static class Logger
                 string json = await File.ReadAllTextAsync(file);
                 List<LogEntry> fileLogs = JsonSerializer.Deserialize<List<LogEntry>>(json) ?? new List<LogEntry>();
 
-                if (fromDate.HasValue || toDate.HasValue) {
-                    fileLogs = fileLogs.Where(log =>
-                        (!fromDate.HasValue || log.Timestamp >= fromDate.Value) &&
-                        (!toDate.HasValue || log.Timestamp <= toDate.Value)
-                    ).ToList();
-                }
-
                 logs.AddRange(fileLogs);
             }
             catch {
             }
         }
 
-        return logs.OrderBy(log => log.Timestamp).ToList();
+        IEnumerable<LogEntry> filteredLogs = logs;
+
+        if (fromDate.HasValue || toDate.HasValue) {
+            filteredLogs = filteredLogs.Where(log =>
+                (!fromDate.HasValue || log.Timestamp >= fromDate.Value) &&
+                (!toDate.HasValue || log.Timestamp <= toDate.Value)
+            );
+        }
+
+        if (exactLevel.HasValue) {
+            filteredLogs = filteredLogs.Where(log => log.Level == exactLevel.Value);
+        }
+        else if (minLevel.HasValue || maxLevel.HasValue) {
+            filteredLogs = filteredLogs.Where(log =>
+                (!minLevel.HasValue || log.Level >= minLevel.Value) &&
+                (!maxLevel.HasValue || log.Level <= maxLevel.Value)
+            );
+        }
+
+        filteredLogs = filteredLogs.OrderByDescending(log => log.Timestamp);
+
+        if (limit.HasValue && limit.Value > 0) {
+            filteredLogs = filteredLogs.Take(limit.Value);
+        }
+
+        return filteredLogs.ToList();
     }
 
-    /// <summary>
-    /// Get logs by category
-    /// </summary>
-    public static async Task<List<LogEntry>> GetCategoryLogsAsync(LogCategory category, DateTime? fromDate = null, DateTime? toDate = null) {
+    public static async Task<List<LogEntry>> GetCategoryLogsAsync(
+        LogCategory category, 
+        DateTime? fromDate = null, 
+        DateTime? toDate = null,
+        LogLevel? minLevel = null,
+        LogLevel? maxLevel = null,
+        LogLevel? exactLevel = null,
+        int? limit = null)
+    {
         List<LogEntry> logs = new();
         string categoryDir = Path.Combine(_generalLogsDirectory, category.ToString());
 
@@ -435,20 +466,38 @@ public static class Logger
                 string json = await File.ReadAllTextAsync(file);
                 List<LogEntry> fileLogs = JsonSerializer.Deserialize<List<LogEntry>>(json) ?? new List<LogEntry>();
 
-                if (fromDate.HasValue || toDate.HasValue) {
-                    fileLogs = fileLogs.Where(log =>
-                        (!fromDate.HasValue || log.Timestamp >= fromDate.Value) &&
-                        (!toDate.HasValue || log.Timestamp <= toDate.Value)
-                    ).ToList();
-                }
-
                 logs.AddRange(fileLogs);
             }
             catch {
             }
         }
 
-        return logs.OrderBy(log => log.Timestamp).ToList();
+        IEnumerable<LogEntry> filteredLogs = logs;
+
+        if (fromDate.HasValue || toDate.HasValue) {
+            filteredLogs = filteredLogs.Where(log =>
+                (!fromDate.HasValue || log.Timestamp >= fromDate.Value) &&
+                (!toDate.HasValue || log.Timestamp <= toDate.Value)
+            );
+        }
+
+        if (exactLevel.HasValue) {
+            filteredLogs = filteredLogs.Where(log => log.Level == exactLevel.Value);
+        }
+        else if (minLevel.HasValue || maxLevel.HasValue) {
+            filteredLogs = filteredLogs.Where(log =>
+                (!minLevel.HasValue || log.Level >= minLevel.Value) &&
+                (!maxLevel.HasValue || log.Level <= maxLevel.Value)
+            );
+        }
+
+        filteredLogs = filteredLogs.OrderByDescending(log => log.Timestamp);
+
+        if (limit.HasValue && limit.Value > 0) {
+            filteredLogs = filteredLogs.Take(limit.Value);
+        }
+
+        return filteredLogs.ToList();
     }
 
     /// <summary>
