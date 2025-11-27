@@ -16,7 +16,7 @@ public static class Logger
 {
     private static readonly object _logLock = new();
     private static readonly ConcurrentQueue<LogEntry> _logQueue = new();
-    private static readonly string _logsDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs");
+    private static readonly string _logsDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "data", "logs");
     private static readonly string _generalLogsDirectory = Path.Combine(_logsDirectory, "general");
     private static readonly string _guildLogsDirectory = Path.Combine(_logsDirectory, "guilds");
 
