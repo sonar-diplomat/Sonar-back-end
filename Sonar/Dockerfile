@@ -25,9 +25,8 @@ WORKDIR "/src/Sonar"
 
 # Directly publish, without separate build and without a second restore
 RUN dotnet publish "Sonar.csproj" \
-    -c $BUILD_CONFIGURATION \
+    -c "$BUILD_CONFIGURATION" \
     -o /app/publish \
-    /p:UseAppHost=false \
     --no-restore
 
 # Final image for production
