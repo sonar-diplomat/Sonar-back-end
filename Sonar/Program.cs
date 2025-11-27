@@ -62,6 +62,8 @@ using Sonar.Infrastructure.Repository.UserCore;
 using Sonar.Infrastructure.Repository.UserExperience;
 using Sonar.Middleware;
 using System.Text;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Sonar.HealthChecks;
 using Flac = Application.Services.File.Flac;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -102,6 +104,13 @@ builder.Services.AddDbContext<SonarContext>((serviceProvider, options) =>
         options.EnableDetailedErrors();
     }
 });
+
+// Add Health Checks
+builder.Services.AddScoped<SonarContextHealthCheck>();
+builder.Services.AddHealthChecks()
+    .AddCheck<SonarContextHealthCheck>(
+        name: "database",
+        tags: new[] { "db", "sql", "postgresql" });
 builder.Services.Configure<FormOptions>(options =>
 {
     options.MultipartBodyLengthLimit = 104857600; // 100 MB
