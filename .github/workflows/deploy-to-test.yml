@@ -65,4 +65,10 @@ jobs:
               -e Mailgun__Domain="${{ secrets.MAILGUN_DOMAIN }}" \
               -e Mailgun__From="${{ secrets.MAILGUN_FROM }}" \
               -e ConnectionStrings__SonarContext="${{ secrets.CONNECTION_STRING }}" \
+              -e GitHubStorage__Enabled="${{ secrets.LOG_STORAGE_ENABLED }}" \
+              -e GitHubStorage__RepositoryOwner="${{ secrets.LOG_STORAGE_REPOSITORY_OWNER }}" \
+              -e GitHubStorage__RepositoryName="${{ secrets.LOG_STORAGE_REPOSITORY_NAME }}" \
+              -e GitHubStorage__Branch="${{ secrets.LOG_STORAGE_BRANCH }}" \
+              -e GitHubStorage__PersonalAccessToken="${{ secrets.LOG_STORAGE_PERSONAL_ACCESS_TOKEN }}" \
+              -e GitHubStorage__BaseUrl="${{ secrets.LOG_STORAGE_BASE_URL }}" \
               sonar:latest
