@@ -33,6 +33,7 @@
         <Folder Include="Controllers\Library\" />
         <Folder Include="Controllers\Report\" />
         <Folder Include="Controllers\UserExperience\" />
+        <Folder Include="wwwroot\uploads\audio\" />
     </ItemGroup>
 
 </Project>
