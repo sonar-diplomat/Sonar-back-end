@@ -45,19 +45,23 @@ public class UserService(
         return await repository.SnInclude(u => u.AccessFeatures).GetAllAsync();
     }
 
-    public async Task<User> UpdateUserAsync(int userId, UserUpdateDTO userUpdateUpdateDto)
+    public async Task<User> UpdateUserAsync(int userId, UserUpdateDTO userUpdateDto)
     {
         User user = await GetByIdValidatedAsync(userId);
-        if (userUpdateUpdateDto.PublicIdentifier is not null)
-            user.PublicIdentifier = userUpdateUpdateDto.PublicIdentifier;
-        if (userUpdateUpdateDto.Biography is not null)
-            user.Biography = userUpdateUpdateDto.Biography;
-        if (userUpdateUpdateDto.DateOfBirth is not null)
-            user.DateOfBirth = (DateOnly)userUpdateUpdateDto.DateOfBirth;
-        if (userUpdateUpdateDto.LastName is not null)
-            user.LastName = userUpdateUpdateDto.LastName;
-        if (userUpdateUpdateDto.FirstName is not null)
-            user.FirstName = userUpdateUpdateDto.FirstName;
+        if (userUpdateDto.PublicIdentifier is not null)
+        {
+            if ((await GetAllAsync()).Select(u => u.PublicIdentifier).Any(pi => pi == userUpdateDto.PublicIdentifier))
+                throw ResponseFactory.Create<BadRequestResponse>(["PublicIdentifier is already taken."]);
+            user.PublicIdentifier = userUpdateDto.PublicIdentifier;
+        }
+        if (userUpdateDto.Biography is not null)
+            user.Biography = userUpdateDto.Biography;
+        if (userUpdateDto.DateOfBirth is not null)
+            user.DateOfBirth = (DateOnly)userUpdateDto.DateOfBirth;
+        if (userUpdateDto.LastName is not null)
+            user.LastName = userUpdateDto.LastName;
+        if (userUpdateDto.FirstName is not null)
+            user.FirstName = userUpdateDto.FirstName;
 
         return await repository.UpdateAsync(user);
     }
