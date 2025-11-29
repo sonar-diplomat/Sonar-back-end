@@ -66,7 +66,10 @@ public class AlbumService(
 
     public async Task<Album> GetValidatedIncludeVisibilityStateAsync(int id)
     {
-        return await repository.SnInclude(a => a.VisibilityState).GetByIdValidatedAsync(id);
+        return await repository
+            .SnInclude(a => a.VisibilityState)
+            .SnThenInclude(vs => vs.Status)
+            .GetByIdValidatedAsync(id);
     }
 
     public async Task<Album> GetValidatedIncludeDistributorAsync(int id)
@@ -125,5 +128,11 @@ public class AlbumService(
             .ToList();
 
         return trackDTOs;
+    }
+
+    public async Task<IEnumerable<Track>> GetAlbumTracksWithVisibilityStateAsync(int albumId)
+    {
+        await GetByIdValidatedAsync(albumId);
+        return await repository.GetTracksFromAlbumAsync(albumId);
     }
 }

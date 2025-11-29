@@ -18,8 +18,12 @@ public class DistributorMasterController(
     IDistributorSessionService sessionService,
     IDistributorAccountService accountService,
     IDistributorService distributorService,
-    AuthService authService)
-    : AuthDistributorController(userManager, sessionService, accountService, distributorService, authService)
+    AuthService authService,
+    IArtistService artistService,
+    ITrackService trackService,
+    IAlbumService albumService,
+    IVisibilityStatusService visibilityStatusService)
+    : AuthDistributorController(userManager, sessionService, accountService, distributorService, authService, artistService, trackService, albumService, visibilityStatusService)
 {
     private readonly IDistributorAccountService accountService = accountService;
 

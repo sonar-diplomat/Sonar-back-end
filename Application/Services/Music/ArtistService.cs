@@ -14,6 +14,11 @@ public class ArtistService(IArtistRepository repository, IPostService postServic
         return await repository.GetByNameAsync(name);
     }
 
+    public async Task<IEnumerable<Artist>> SearchArtistsAsync(string searchTerm)
+    {
+        return await repository.SearchByNameAsync(searchTerm);
+    }
+
     public async Task UpdateNameAsync(int artistId, string newArtistName)
     {
         Artist artist = await GetByIdValidatedAsync(artistId);

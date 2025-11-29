@@ -82,6 +82,14 @@ public class TrackService(
         };
     }
 
+    public async Task<Track> GetTrackWithVisibilityStateAsync(int trackId)
+    {
+        return await repository
+            .SnInclude(t => t.VisibilityState)
+            .SnThenInclude(vs => vs.Status)
+            .GetByIdValidatedAsync(trackId);
+    }
+
     public async Task<Track> CreateTrackAsync(int albumId, UploadTrackDTO dto)
     {
         Album album = await albumService.GetValidatedIncludeTracksAsync(albumId);
