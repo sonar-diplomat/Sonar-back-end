@@ -6,6 +6,7 @@ namespace Application.Abstractions.Interfaces.Services;
 public interface IArtistService : IGenericService<Artist>
 {
     public Task<Artist?> GetByNameAsync(string name);
+    Task<IEnumerable<Artist>> SearchArtistsAsync(string searchTerm);
     Task UpdateNameAsync(int artistId, string newArtistName);
     Task DeleteArtistAsync(int artistId);
     Task CreatePostAsync(int artistId, PostDTO dto);

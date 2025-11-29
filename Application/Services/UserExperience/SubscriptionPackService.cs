@@ -15,7 +15,7 @@ public class SubscriptionPackService(
 {
     public override async Task<IEnumerable<SubscriptionPack>> GetAllAsync()
     {
-        return repository.Include(sp => sp.SubscriptionFeatures);
+        return repository.SnInclude(sp => sp.SubscriptionFeatures);
     }
 
 

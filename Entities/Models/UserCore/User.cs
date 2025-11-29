@@ -17,16 +17,11 @@ namespace Entities.Models.UserCore;
 [Table("User")]
 public class User : IdentityUser<int>
 {
-    [Required]
-    [MaxLength(100)]
-    public string FirstName { get; set; }
+    [Required] [MaxLength(100)] public string FirstName { get; set; }
 
-    [Required]
-    [MaxLength(100)]
-    public string LastName { get; set; }
+    [Required] [MaxLength(100)] public string LastName { get; set; }
 
-    [Required]
-    public DateOnly DateOfBirth { get; set; }
+    [Required] public DateOnly DateOfBirth { get; set; }
 
 
     [MaxLength(16)]
@@ -35,46 +30,34 @@ public class User : IdentityUser<int>
     [Required]
     public string Login { get; set; }
 
-    [MaxLength(4000)]
-    public string? Biography { get; set; } // md 
+    [MaxLength(4000)] public string? Biography { get; set; } // md 
 
-    [Required]
-    public string PublicIdentifier { get; set; }
+    [Required] public string PublicIdentifier { get; set; }
 
-    [Required]
-    public int AvailableCurrency { get; set; }
+    [Required] public int AvailableCurrency { get; set; }
 
-    [Required]
-    public DateTime RegistrationDate { get; set; }
+    [Required] public DateTime RegistrationDate { get; set; }
 
-    [Required]
-    public bool Enabled2FA { get; set; }
+    [Required] public bool Enabled2FA { get; set; }
 
     // Authenticator apps
-    [MaxLength(500)]
-    public string? GoogleAuthorizationKey { get; set; }
+    [MaxLength(500)] public string? GoogleAuthorizationKey { get; set; }
     // facebook .... and ect...
 
 
-    [Required]
-    public int AvatarImageId { get; set; }
+    [Required] public int AvatarImageId { get; set; }
 
-    [Required]
-    public int VisibilityStateId { get; set; }
+    [Required] public int VisibilityStateId { get; set; }
 
     public int? SubscriptionPackId { get; set; }
 
-    [Required]
-    public int UserStateId { get; set; }
+    [Required] public int UserStateId { get; set; }
 
-    [Required]
-    public int SettingsId { get; set; }
+    [Required] public int SettingsId { get; set; }
 
-    [Required]
-    public int InventoryId { get; set; }
+    [Required] public int InventoryId { get; set; }
 
-    [Required]
-    public int LibraryId { get; set; }
+    [Required] public int LibraryId { get; set; }
 
     /// <summary>
     /// </summary>
@@ -111,40 +94,34 @@ public class User : IdentityUser<int>
     [DeleteBehavior(DeleteBehavior.Cascade)]
     public virtual Inventory Inventory { get; set; }
 
-    [JsonIgnore]
-    public virtual Artist Artist { get; set; }
-    [JsonIgnore]
-    public virtual ICollection<UserSession> UserSessions { get; set; }
-    [JsonIgnore]
-    public virtual ICollection<Achievement> AchievementProgresses { get; set; }
-    [JsonIgnore]
-    public virtual ICollection<AccessFeature> AccessFeatures { get; set; }
+    [JsonIgnore] public virtual Artist Artist { get; set; }
+    [JsonIgnore] public virtual ICollection<UserSession> UserSessions { get; set; }
+    [JsonIgnore] public virtual ICollection<Achievement> AchievementProgresses { get; set; }
+    [JsonIgnore] public virtual ICollection<AccessFeature> AccessFeatures { get; set; }
 
-    [JsonIgnore]
-    public virtual ICollection<Message> Messages { get; set; }
+    [JsonIgnore] public virtual ICollection<Message> Messages { get; set; }
 
-    [JsonIgnore]
-    public virtual ICollection<Chat.Chat> ChatsWhereMember { get; set; }
+    [JsonIgnore] public virtual ICollection<Chat.Chat> ChatsWhereMember { get; set; }
 
-    [JsonIgnore]
-    public virtual ICollection<Chat.Chat> ChatsWhereCreator { get; set; }
+    [JsonIgnore] public virtual ICollection<Chat.Chat> ChatsWhereCreator { get; set; }
 
-    [JsonIgnore]
-    public virtual ICollection<Chat.Chat> ChatsWhereAdmin { get; set; }
+    [JsonIgnore] public virtual ICollection<Chat.Chat> ChatsWhereAdmin { get; set; }
 
-    [JsonIgnore]
-    public virtual ICollection<Collection> Collections { get; set; }
+    [JsonIgnore] public virtual ICollection<Collection> Collections { get; set; }
 
-    [JsonIgnore]
-    public virtual ICollection<License> Licenses { get; set; }
+    [JsonIgnore] public virtual ICollection<License> Licenses { get; set; }
 
-    [JsonIgnore]
-    public virtual ICollection<Track> Tracks { get; set; }
-    [JsonIgnore]
-    public virtual ICollection<Settings> SettingsBlockedUsers { get; set; }
-    [JsonIgnore]
-    public virtual ICollection<MessageRead> MessagesReads { get; set; }
+    [JsonIgnore] public virtual ICollection<Track> Tracks { get; set; }
+    [JsonIgnore] public virtual ICollection<Settings> SettingsBlockedUsers { get; set; }
+    [JsonIgnore] public virtual ICollection<MessageRead> MessagesReads { get; set; }
 
-    [JsonIgnore]
-    public virtual ICollection<ArtistRegistrationRequest> ArtistRegistrationRequests { get; set; }
+    [JsonIgnore] public virtual ICollection<ArtistRegistrationRequest> ArtistRegistrationRequests { get; set; }
+
+    [JsonIgnore] public virtual ICollection<UserFriendRequest> SentFriendRequests { get; set; }
+
+    [JsonIgnore] public virtual ICollection<UserFriendRequest> ReceivedFriendRequests { get; set; }
+
+    [JsonIgnore] public virtual ICollection<User> Friends { get; set; }
+
+    [JsonIgnore] public virtual ICollection<User> FriendOf { get; set; }
 }

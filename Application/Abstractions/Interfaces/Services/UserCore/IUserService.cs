@@ -9,7 +9,7 @@ public interface IUserService
 {
     Task<int> ChangeCurrencyAsync(int userId, int modifier);
     Task<User> CreateUserShellAsync(UserRegisterDTO userRegisterDTO);
-    Task<User> UpdateUserAsync(int userId, UserUpdateDTO userUpdateUpdateDto);
+    Task<User> UpdateUserAsync(int userId, UserUpdateDTO userUpdateDto);
     Task<User> UpdateUserAsync(User user);
     Task ChangeUserNameAsync(int userId, string newUserName);
     Task<User?> GetByIdAsync(int id);
@@ -21,4 +21,10 @@ public interface IUserService
     Task AssignAccessFeaturesByNameAsync(int userId, string[] accessFeatures);
     Task RevokeAccessFeaturesAsync(int userId, int[] accessFeatureIds);
     Task RevokeAccessFeaturesByNameAsync(int userId, string[] accessFeatures);
+    Task<UserFriendRequest> SendFriendRequestAsync(int fromUserId, int toUserId);
+    Task<IEnumerable<UserFriendRequest>> GetPendingFriendRequestsAsync(int userId);
+    Task<IEnumerable<UserFriendRequest>> GetSentFriendRequestsAsync(int userId);
+    Task<bool> ResolveFriendRequestAsync(int userId, int requestId, bool accept);
+    Task RemoveFriendAsync(int userId, int friendId);
+    Task<IEnumerable<User>> GetFriendsAsync(int userId);
 }

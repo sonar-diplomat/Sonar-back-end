@@ -15,11 +15,11 @@ public class UserSession : BaseModel
     private byte[]? IpAddressBytes;
 
     [Required]
-    [MaxLength(30)]
+    [MaxLength(256)]
     public string UserAgent { get; set; }
 
     [Required]
-    [MaxLength(128)]
+    [MaxLength(256)]
     public string DeviceName { get; set; }
 
     [Required]

@@ -12,7 +12,7 @@ public class DistributorService(IDistributorRepository repository, IArtistServic
 {
     public override async Task<IEnumerable<Distributor>> GetAllAsync()
     {
-        return repository.Include(d => d.License);
+        return repository.SnInclude(d => d.License);
     }
 
     public async Task<Distributor?> GetByApiKeyAsync(string apiKey)
@@ -46,13 +46,13 @@ public class DistributorService(IDistributorRepository repository, IArtistServic
 
     public async Task<IEnumerable<ArtistRegistrationRequest>> GetAllRegistrationRequestsAsync(int id)
     {
-        return (await repository.Include(d => d.ArtistRegistrationRequests)
+        return (await repository.SnInclude(d => d.ArtistRegistrationRequests)
             .GetByIdValidatedAsync(id)).ArtistRegistrationRequests;
     }
 
     public async Task<ArtistRegistrationRequest> GetRegistrationRequestByIdAsync(int distributorId, int requestId)
     {
-        Distributor distributor = await repository.Include(d => d.ArtistRegistrationRequests)
+        Distributor distributor = await repository.SnInclude(d => d.ArtistRegistrationRequests)
             .GetByIdValidatedAsync(distributorId);
         ArtistRegistrationRequest? request = distributor.ArtistRegistrationRequests
             .FirstOrDefault(r => r.Id == requestId);

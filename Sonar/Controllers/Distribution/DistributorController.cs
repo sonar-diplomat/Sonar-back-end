@@ -49,7 +49,7 @@ public class DistributorController(
         {
             Id = distributor.Id,
             Name = distributor.Name,
-            CoverUrl = distributor.Cover?.Url ?? string.Empty,
+            CoverId = distributor.CoverId,
             License = new LicenseDTO
             {
                 Id = licenceId,
@@ -78,7 +78,7 @@ public class DistributorController(
         {
             Id = d.Id,
             Name = d.Name,
-            CoverUrl = d.Cover?.Url ?? string.Empty,
+            CoverId = d.CoverId,
             License = new LicenseDTO
             {
                 Id = d.License.Id,
@@ -108,7 +108,7 @@ public class DistributorController(
         {
             Id = d.Id,
             Name = d.Name,
-            CoverUrl = d.Cover?.Url ?? string.Empty,
+            CoverId = d.CoverId,
             License = new LicenseDTO
             {
                 Id = d.License.Id,
@@ -142,7 +142,7 @@ public class DistributorController(
         {
             Id = d.Id,
             Name = d.Name,
-            CoverUrl = d.Cover?.Url ?? string.Empty,
+            CoverId = d.CoverId,
             License = new LicenseDTO
             {
                 Id = d.License.Id,

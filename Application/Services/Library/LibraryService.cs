@@ -28,7 +28,7 @@ public class LibraryService(
         rootFolder = await folderService.CreateAsync(rootFolder);
         library.RootFolderId = rootFolder.Id;
         await repository.UpdateAsync(library);
-        return await repository.Include(l => l.RootFolder).ThenInclude(c => c!.Collections)
+        return await repository.SnInclude(l => l.RootFolder).SnThenInclude(c => c!.Collections)
             .GetByIdValidatedAsync(library.Id);
     }
 
@@ -43,8 +43,8 @@ public class LibraryService(
     public async Task<Playlist> GetFavoritesPlaylistByLibraryIdValidatedAsync(int libraryId)
     {
         LibraryModel library = await repository
-            .Include(l => l.RootFolder)
-            .ThenInclude(rf => rf!.Collections)
+            .SnInclude(l => l.RootFolder)
+            .SnThenInclude(rf => rf!.Collections)
             .GetByIdValidatedAsync(libraryId);
         return library.RootFolder!.Collections.FirstOrDefault(c => c.Name == "Favorites") as Playlist
                ?? throw ResponseFactory.Create<NotFoundResponse>(["Favorites playlist not found"]);

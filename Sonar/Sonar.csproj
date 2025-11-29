@@ -25,6 +25,7 @@
         <ProjectReference Include="..\Application\Application.csproj" />
         <ProjectReference Include="..\Entities\Entities.csproj" />
         <ProjectReference Include="..\Infrastructure\Infrastructure.csproj" />
+        <ProjectReference Include="..\Logging\Logging.csproj" />
     </ItemGroup>
 
     <ItemGroup>
@@ -32,6 +33,7 @@
         <Folder Include="Controllers\Library\" />
         <Folder Include="Controllers\Report\" />
         <Folder Include="Controllers\UserExperience\" />
+        <Folder Include="wwwroot\uploads\audio\" />
     </ItemGroup>
 
 </Project>

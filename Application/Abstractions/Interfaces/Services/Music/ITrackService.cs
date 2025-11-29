@@ -10,8 +10,10 @@ public interface ITrackService : IGenericService<Track>
     Task<MusicStreamResultDTO?> GetMusicStreamAsync(int songId, TimeSpan? startPosition, TimeSpan? length);
     Task<MusicStreamResultDTO?> GetDemoMusicStreamAsync(int songId);
     Task<TrackDTO> GetTrackDtoAsync(int trackId);
+    Task<Track> GetTrackWithVisibilityStateAsync(int trackId);
     Task<Track> CreateTrackAsync(int albumId, UploadTrackDTO dto);
     Task<AudioFile> UpdateTrackFileAsync(int trackId, int playbackQualityId, IFormFile file);
     Task UpdateVisibilityStatusAsync(int trackId, int newVisibilityStatusId);
     Task<bool> ToggleFavoriteAsync(int trackId, int libraryId);
+    Task AssignArtistToTrackAsync(int trackId, AuthorDTO authorDto);
 }

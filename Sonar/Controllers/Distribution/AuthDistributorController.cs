@@ -1,6 +1,8 @@
 ﻿using Application.Abstractions.Interfaces.Services;
 using Application.DTOs;
+using Application.DTOs.Access;
 using Application.DTOs.Auth;
+using Application.DTOs.Music;
 using Application.Response;
 using Entities.Enums;
 using Entities.Models.Distribution;
@@ -21,7 +23,11 @@ public class AuthDistributorController(
     IDistributorSessionService sessionService,
     IDistributorAccountService accountService,
     IDistributorService distributorService,
-    AuthService authService
+    AuthService authService,
+    IArtistService artistService,
+    ITrackService trackService,
+    IAlbumService albumService,
+    IVisibilityStatusService visibilityStatusService
 )
     : BaseControllerExtended(userManager, accountService, distributorService)
 {
@@ -184,5 +190,218 @@ public class AuthDistributorController(
         DistributorAccount account = await this.GetDistributorAccountByJwtAsync();
         throw ResponseFactory.Create<OkResponse<IEnumerable<ActiveSessionDTO>>>(
             (await sessionService.GetAllByUserIdAsync(account.Id)).ToList(), ["Sessions retrieved successfully"]);
+    }
+
+    /// <summary>
+    /// Searches for artist accounts by name (partial match, case-insensitive).
+    /// </summary>
+    /// <param name="query">The search term to match against artist names.</param>
+    /// <returns>List of artist DTOs matching the search criteria.</returns>
+    /// <response code="200">Artists retrieved successfully.</response>
+    /// <response code="401">User not authenticated or not a distributor.</response>
+    /// <response code="400">Invalid search query (empty or too short).</response>
+    [Authorize]
+    [HttpGet("artists/search")]
+    [ProducesResponseType(typeof(OkResponse<IEnumerable<ArtistDTO>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(BadRequestResponse), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> SearchArtists([FromQuery] string query)
+    {
+        await this.GetDistributorAccountByJwtAsync();
+        
+        if (string.IsNullOrWhiteSpace(query))
+            throw ResponseFactory.Create<BadRequestResponse>(["Search query cannot be empty"]);
+
+        var artists = await artistService.SearchArtistsAsync(query);
+        var dtos = artists.Select(a => new ArtistDTO
+        {
+            Id = a.Id,
+            UserId = a.UserId,
+            ArtistName = a.ArtistName
+        });
+
+        throw ResponseFactory.Create<OkResponse<IEnumerable<ArtistDTO>>>(dtos, ["Artists retrieved successfully"]);
+    }
+
+    /// <summary>
+    /// Retrieves the visibility state of a track.
+    /// </summary>
+    /// <param name="trackId">The ID of the track.</param>
+    /// <returns>Visibility state DTO with status information.</returns>
+    /// <response code="200">Visibility state retrieved successfully.</response>
+    /// <response code="401">User not authenticated or not a distributor.</response>
+    /// <response code="404">Track not found.</response>
+    [Authorize]
+    [HttpGet("track/{trackId:int}/visibility")]
+    [ProducesResponseType(typeof(OkResponse<VisibilityStateDTO>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetTrackVisibility(int trackId)
+    {
+        await this.GetDistributorAccountByJwtAsync();
+        var track = await trackService.GetTrackWithVisibilityStateAsync(trackId);
+        var visibilityState = track.VisibilityState;
+        
+        var dto = new VisibilityStateDTO
+        {
+            Id = visibilityState.Id,
+            StatusId = visibilityState.StatusId,
+            StatusName = visibilityState.Status.Name,
+            SetPublicOn = visibilityState.SetPublicOn
+        };
+
+        throw ResponseFactory.Create<OkResponse<VisibilityStateDTO>>(dto, ["Track visibility state retrieved successfully"]);
+    }
+
+    /// <summary>
+    /// Updates the visibility state of a track.
+    /// </summary>
+    /// <param name="trackId">The ID of the track to update.</param>
+    /// <param name="dto">Visibility state update data.</param>
+    /// <returns>Success response upon update.</returns>
+    /// <response code="200">Track visibility updated successfully.</response>
+    /// <response code="401">User not authenticated or not a distributor.</response>
+    /// <response code="404">Track not found.</response>
+    /// <response code="400">Invalid visibility status ID.</response>
+    [Authorize]
+    [HttpPut("track/{trackId:int}/visibility")]
+    [ProducesResponseType(typeof(OkResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(BadRequestResponse), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> UpdateTrackVisibility(int trackId, [FromBody] UpdateVisibilityStateDTO dto)
+    {
+        await this.GetDistributorAccountByJwtAsync();
+        
+        if (dto.VisibilityStatusId <= 0)
+            throw ResponseFactory.Create<BadRequestResponse>(["Invalid visibility status ID"]);
+
+        await trackService.UpdateVisibilityStatusAsync(trackId, dto.VisibilityStatusId);
+        throw ResponseFactory.Create<OkResponse>(["Track visibility state updated successfully"]);
+    }
+
+    /// <summary>
+    /// Retrieves the visibility state of an album.
+    /// </summary>
+    /// <param name="albumId">The ID of the album.</param>
+    /// <returns>Visibility state DTO with status information.</returns>
+    /// <response code="200">Visibility state retrieved successfully.</response>
+    /// <response code="401">User not authenticated or not a distributor.</response>
+    /// <response code="404">Album not found.</response>
+    [Authorize]
+    [HttpGet("album/{albumId:int}/visibility")]
+    [ProducesResponseType(typeof(OkResponse<VisibilityStateDTO>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetAlbumVisibility(int albumId)
+    {
+        await this.GetDistributorAccountByJwtAsync();
+        var album = await albumService.GetValidatedIncludeVisibilityStateAsync(albumId);
+        var visibilityState = album.VisibilityState;
+        
+        var dto = new VisibilityStateDTO
+        {
+            Id = visibilityState.Id,
+            StatusId = visibilityState.StatusId,
+            StatusName = visibilityState.Status.Name,
+            SetPublicOn = visibilityState.SetPublicOn
+        };
+
+        throw ResponseFactory.Create<OkResponse<VisibilityStateDTO>>(dto, ["Album visibility state retrieved successfully"]);
+    }
+
+    /// <summary>
+    /// Updates the visibility state of an album.
+    /// </summary>
+    /// <param name="albumId">The ID of the album to update.</param>
+    /// <param name="dto">Visibility state update data.</param>
+    /// <returns>Success response upon update.</returns>
+    /// <response code="200">Album visibility updated successfully.</response>
+    /// <response code="401">User not authenticated or not a distributor.</response>
+    /// <response code="404">Album not found.</response>
+    /// <response code="400">Invalid visibility status ID.</response>
+    [Authorize]
+    [HttpPut("album/{albumId:int}/visibility")]
+    [ProducesResponseType(typeof(OkResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(BadRequestResponse), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> UpdateAlbumVisibility(int albumId, [FromBody] UpdateVisibilityStateDTO dto)
+    {
+        await this.GetDistributorAccountByJwtAsync();
+        
+        if (dto.VisibilityStatusId <= 0)
+            throw ResponseFactory.Create<BadRequestResponse>(["Invalid visibility status ID"]);
+
+        const int VisibleStatusId = 1;
+        const int UnlistedStatusId = 2;
+        const int RestrictedStatusId = 3;
+
+        // Загружаем альбом с VisibilityState
+        var album = await albumService.GetValidatedIncludeVisibilityStateAsync(albumId);
+        
+        // Обновляем видимость альбома
+        album.VisibilityState.StatusId = dto.VisibilityStatusId;
+        if (dto.SetPublicOn.HasValue)
+        {
+            album.VisibilityState.SetPublicOn = dto.SetPublicOn.Value;
+        }
+        await albumService.UpdateAsync(album);
+
+        // Если альбом меняется на Visible или меняется SetPublicOn, обновляем треки
+        bool shouldUpdateTracks = dto.VisibilityStatusId == VisibleStatusId || dto.SetPublicOn.HasValue;
+        
+        if (shouldUpdateTracks)
+        {
+            // Загружаем треки с их VisibilityState
+            var tracks = await albumService.GetAlbumTracksWithVisibilityStateAsync(albumId);
+            
+            foreach (var track in tracks)
+            {
+                // Обновляем только треки, которые НЕ имеют статус Unlisted или Restricted
+                if (track.VisibilityState.StatusId != UnlistedStatusId && 
+                    track.VisibilityState.StatusId != RestrictedStatusId)
+                {
+                    // Если альбом меняется на Visible, треки тоже становятся Visible
+                    if (dto.VisibilityStatusId == VisibleStatusId)
+                    {
+                        track.VisibilityState.StatusId = VisibleStatusId;
+                    }
+                    
+                    // Если меняется SetPublicOn, обновляем и у треков
+                    if (dto.SetPublicOn.HasValue)
+                    {
+                        track.VisibilityState.SetPublicOn = dto.SetPublicOn.Value;
+                    }
+                    
+                    await trackService.UpdateAsync(track);
+                }
+            }
+        }
+
+        throw ResponseFactory.Create<OkResponse>(["Album visibility state updated successfully"]);
+    }
+
+    /// <summary>
+    /// Retrieves all available visibility statuses.
+    /// </summary>
+    /// <returns>List of visibility status DTOs.</returns>
+    /// <response code="200">Visibility statuses retrieved successfully.</response>
+    /// <response code="401">User not authenticated or not a distributor.</response>
+    [Authorize]
+    [HttpGet("visibility-statuses")]
+    [ProducesResponseType(typeof(OkResponse<IEnumerable<VisibilityStatusDTO>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> GetVisibilityStatuses()
+    {
+        await this.GetDistributorAccountByJwtAsync();
+        var statuses = await visibilityStatusService.GetAllAsync();
+        var dtos = statuses.Select(s => new VisibilityStatusDTO
+        {
+            Id = s.Id,
+            Name = s.Name
+        });
+
+        throw ResponseFactory.Create<OkResponse<IEnumerable<VisibilityStatusDTO>>>(dtos, ["Visibility statuses retrieved successfully"]);
     }
 }

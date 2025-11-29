@@ -4,6 +4,7 @@ using Application.DTOs;
 using Application.Extensions;
 using Application.Response;
 using Entities.Models.Library;
+using Microsoft.EntityFrameworkCore;
 
 namespace Application.Services.Library;
 
@@ -46,13 +47,29 @@ public class FolderService(IFolderRepository repository) : GenericService<Folder
 
     public async Task<Folder> GetFolderByIdIncludeCollectionsValidatedAsync(int folderId)
     {
-        return await repository.Include(f => f.Collections).GetByIdValidatedAsync(folderId);
+        return await repository
+            .SnInclude(f => f.Collections)
+            .ThenInclude(c => c.VisibilityState)
+            .ThenInclude(vs => vs.Status)
+            .GetByIdValidatedAsync(folderId);
+    }
+
+    public async Task<IEnumerable<Folder>> GetAllFoldersWithCollectionsAsync()
+    {
+        IQueryable<Folder> query = await repository.GetAllAsync();
+        return query
+            .Include(f => f.Collections)
+            .ThenInclude(c => c.VisibilityState)
+            .ThenInclude(vs => vs.Status)
+            .Include(f => f.SubFolders)
+            .Include(f => f.ParentFolder)
+            .ToList();
     }
 
 
     private async Task<Folder> CheckFolderBelongsToLibrary(int libraryId, int folderId)
     {
-        Folder folder = await repository.Include(f => f.Library).GetByIdValidatedAsync(folderId);
+        Folder folder = await repository.SnInclude(f => f.Library).GetByIdValidatedAsync(folderId);
         return folder.Library.Id != libraryId
             ? throw ResponseFactory.Create<BadRequestResponse>(["Folder does not belong to the specified library"])
             : folder;

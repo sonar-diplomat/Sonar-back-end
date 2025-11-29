@@ -1,6 +1,7 @@
 ﻿using Application.Abstractions.Interfaces.Repository.Report;
 using Application.Abstractions.Interfaces.Services;
 using Application.DTOs.Report;
+using Application.Extensions;
 using Entities.Models.Report;
 using Microsoft.EntityFrameworkCore;
 using ReportModel = Entities.Models.Report.Report;
@@ -15,6 +16,15 @@ public class ReportService(
 )
     : GenericService<ReportModel>(repository), IReportService
 {
+    public async Task<ReportModel> GetByIdValidatedFullAsync(int id)
+    {
+        return await repository
+            .SnInclude(r => r.Reporter)
+            .SnInclude(r => r.ReportableEntityType)
+            .SnInclude(r => r.ReportReasonType)
+            .GetByIdValidatedAsync(id);
+    }
+
     public async Task<ReportModel> CreateReportAsync(int userId, CreateReportDTO dto)
     {
         List<ReportReasonType> reasonTypes = [];

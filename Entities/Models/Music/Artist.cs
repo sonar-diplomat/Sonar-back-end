@@ -27,7 +27,7 @@ public class Artist : BaseModel
     [JsonIgnore]
     public virtual ICollection<Post> Posts { get; set; }
     [JsonIgnore]
-    public virtual ICollection<Track> Tracks { get; set; }
+    public virtual ICollection<TrackArtist> TrackArtists { get; set; }
     [JsonIgnore]
     public virtual ICollection<AlbumArtist> AlbumArtists { get; set; }
 }

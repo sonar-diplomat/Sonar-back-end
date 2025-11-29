@@ -66,7 +66,7 @@ public class PlaylistService(
     public async Task AddContributorAsync(int playlistId, int contributorId, int creatorId)
     {
         await VerifyAccessAsync(playlistId, creatorId);
-        Playlist playlist = await repository.Include(p => p.Contributors).GetByIdValidatedAsync(playlistId);
+        Playlist playlist = await repository.SnInclude(p => p.Contributors).GetByIdValidatedAsync(playlistId);
         CheckForFavorites(playlist.Name);
         HashSet<int> contributorIds = new(playlist.Contributors.Select(c => c.Id));
 
@@ -81,7 +81,7 @@ public class PlaylistService(
     public async Task RemoveContributorAsync(int playlistId, int contributorId, int creatorId)
     {
         await VerifyAccessAsync(playlistId, creatorId);
-        Playlist playlist = await repository.Include(p => p.Contributors).GetByIdValidatedAsync(playlistId);
+        Playlist playlist = await repository.SnInclude(p => p.Contributors).GetByIdValidatedAsync(playlistId);
         CheckForFavorites(playlist.Name);
         playlist.Contributors.Remove(await userService.GetByIdValidatedAsync(contributorId));
         await repository.UpdateAsync(playlist);
@@ -108,7 +108,13 @@ public class PlaylistService(
     public async Task<CursorPageDTO<TrackDTO>> GetPlaylistTracksAsync(int playlistId, string? afterCursor, int limit)
     {
         int? afterId = null;
-        await GetByIdValidatedAsync(playlistId);
+        Playlist playlist = await repository
+            .SnInclude(p => p.VisibilityState)
+            .SnThenInclude(vs => vs.Status)
+            .GetByIdValidatedAsync(playlistId);
+        
+        // Validate playlist visibility before returning tracks
+        playlist.VisibilityState.ValidateVisibility("Playlist", playlistId);
 
         if (!string.IsNullOrEmpty(afterCursor))
         {
@@ -119,14 +125,23 @@ public class PlaylistService(
 
         List<Track> tracks = await repository.GetTracksFromPlaylistAfterAsync(playlistId, afterId, limit);
 
-        List<TrackDTO> items = tracks.Select(t => new TrackDTO
+        // Filter out tracks that are not accessible (Hidden or not yet public)
+        List<TrackDTO> items = tracks
+            .Where(t => t.VisibilityState?.IsAccessible() ?? false)
+            .Select(t => new TrackDTO
         {
             Id = t.Id,
-            Name = t.Title,
+            Title = t.Title,
             DurationInSeconds = (int)(t.Duration?.TotalSeconds ?? 0),
-            CoverUrl = t.Cover.Url,
-            FileUrl = t.LowQualityAudioFile.Url,
-            Artists = t.Artists.Select<Artist, string>(a => a.ArtistName)
+            IsExplicit = t.IsExplicit,
+            DrivingDisturbingNoises = t.DrivingDisturbingNoises,
+            CoverId = t.CoverId,
+            AudioFileId = t.LowQualityAudioFileId,
+            Artists = t.TrackArtists?.Select(ta => new AuthorDTO
+            {
+                Pseudonym = ta.Pseudonym,
+                ArtistId = ta.ArtistId
+            }).ToList() ?? new List<AuthorDTO>()
         }).ToList();
 
         string? nextCursor = null;
@@ -178,7 +193,7 @@ public class PlaylistService(
     private async Task<Playlist> VerifyAccessAsync(int playlistId, int userId, bool allowContributor = false)
     {
         Playlist playlist = allowContributor
-            ? await repository.Include(p => p.Contributors).Include(p => p.Tracks).GetByIdValidatedAsync(playlistId)
+            ? await repository.SnInclude(p => p.Contributors).SnInclude(p => p.Tracks).GetByIdValidatedAsync(playlistId)
             : await GetByIdValidatedAsync(playlistId);
 
         bool isCreator = playlist.CreatorId == userId;
@@ -194,5 +209,16 @@ public class PlaylistService(
         Playlist playlist = await VerifyAccessAsync(playlistId, creatorId);
         CheckForFavorites(playlist.Name);
         await base.UpdateVisibilityStatusAsync(playlistId, newVisibilityStatusId);
+    }
+
+    public async Task<Playlist> GetByIdWithVisibilityStateAsync(int playlistId)
+    {
+        return await repository
+            .SnInclude(p => p.VisibilityState)
+            .SnThenInclude(vs => vs.Status)
+            .SnInclude(p => p.Creator)
+            .SnInclude(p => p.Tracks)
+            .SnInclude(p => p.Contributors)
+            .GetByIdValidatedAsync(playlistId);
     }
 }

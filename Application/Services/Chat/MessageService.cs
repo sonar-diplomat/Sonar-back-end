@@ -72,6 +72,9 @@ public class MessageService(
                 m.CreatedAt,
                 DTO = new MessageDTO
                 {
+                    Id = m.Id,
+                    CreatedAt = m.CreatedAt,
+                    SenderId = m.SenderId,
                     TextContent = m.TextContent,
                     ReplyMessageId = m.ReplyMessageId
                 }

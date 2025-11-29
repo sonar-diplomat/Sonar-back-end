@@ -61,6 +61,7 @@ public class SonarContext(DbContextOptions<SonarContext> options)
     public DbSet<Playlist> Playlists { get; set; } = null!;
     public DbSet<Track> Tracks { get; set; } = null!;
     public DbSet<AlbumArtist> AlbumArtists { get; set; }
+    public DbSet<TrackArtist> TrackArtists { get; set; }
 
     // Report
     public DbSet<Report> Reports { get; set; } = null!;
@@ -69,6 +70,7 @@ public class SonarContext(DbContextOptions<SonarContext> options)
 
     // User
     public DbSet<User> Users { get; set; } = null!;
+    public DbSet<UserFriendRequest> UserFriendRequests { get; set; } = null!;
     public DbSet<UserPrivacyGroup> UserPrivacyGroups { get; set; } = null!;
     public DbSet<UserSession> UserSessions { get; set; } = null!;
     public DbSet<UserState> UserStates { get; set; } = null!;
@@ -105,8 +107,18 @@ public class SonarContext(DbContextOptions<SonarContext> options)
 
         builder.Entity<AlbumArtist>()
             .HasOne(aa => aa.Artist)
-            .WithMany(a => a.AlbumArtists)/*.IsRequired(false)*/
-            .HasForeignKey(aa => aa.ArtistId)/*.IsRequired(false)*/;
+            .WithMany(a => a.AlbumArtists) /*.IsRequired(false)*/
+            .HasForeignKey(aa => aa.ArtistId) /*.IsRequired(false)*/;
+
+        builder.Entity<TrackArtist>()
+            .HasOne(ta => ta.Track)
+            .WithMany(t => t.TrackArtists)
+            .HasForeignKey(ta => ta.TrackId);
+
+        builder.Entity<TrackArtist>()
+            .HasOne(ta => ta.Artist)
+            .WithMany(a => a.TrackArtists)/*.IsRequired(false)*/
+            .HasForeignKey(ta => ta.ArtistId)/*.IsRequired(false)*/;
 
         builder.Entity<User>().HasOne(u => u.Settings).WithOne(s => s.User).HasForeignKey<User>(s => s.SettingsId);
         builder.Entity<Settings>().HasMany(s => s.BlockedUsers).WithMany(s => s.SettingsBlockedUsers);
@@ -128,6 +140,23 @@ public class SonarContext(DbContextOptions<SonarContext> options)
             .UsingEntity(j => j.ToTable("ChatAdmins"));
         builder.Entity<Chat>().HasMany(c => c.Members).WithMany(u => u.ChatsWhereMember)
             .UsingEntity(j => j.ToTable("ChatMembers"));
+
+        builder.Entity<UserFriendRequest>()
+            .HasOne(ufr => ufr.FromUser)
+            .WithMany(u => u.SentFriendRequests)
+            .HasForeignKey(ufr => ufr.FromUserId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        builder.Entity<UserFriendRequest>()
+            .HasOne(ufr => ufr.ToUser)
+            .WithMany(u => u.ReceivedFriendRequests)
+            .HasForeignKey(ufr => ufr.ToUserId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        builder.Entity<User>()
+            .HasMany(u => u.Friends)
+            .WithMany(u => u.FriendOf)
+            .UsingEntity(j => j.ToTable("UserFriends"));
 
         builder.Entity<NotificationType>()
             .HasData(NotificationTypeSeedFactory.CreateSeedData());

@@ -4,12 +4,15 @@ using Application.Abstractions.Interfaces.Services.File;
 using Application.Abstractions.Interfaces.Services.Utilities;
 using Application.Extensions;
 using Application.Response;
+using Entities.Enums;
 using Entities.Models.Chat;
 using Entities.Models.Distribution;
 using Entities.Models.Library;
 using Entities.Models.UserCore;
+using Logging;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using Settings = Entities.Models.ClientSettings.Settings;
 using SysFile = System.IO.File;
@@ -73,19 +76,19 @@ public class TestController(
     }
 
     /// <summary>
-    /// [TEST] Tests eager loading (Include/ThenInclude) with EF Core on distributor relationships.
+    /// [TEST] Tests eager loading (SnInclude/SnThenInclude) with EF Core on distributor relationships.
     /// </summary>
     /// <returns>Distributor entity with loaded relationships.</returns>
     /// <response code="200">Entity retrieved successfully with loaded relationships.</response>
     /// <remarks>
-    /// This is a test endpoint for development/testing purposes to verify EF Core Include functionality.
+    /// This is a test endpoint for development/testing purposes to verify EF Core SnInclude functionality.
     /// </remarks>
     [HttpGet("test_include")]
     [ProducesResponseType(typeof(OkResponse<Distributor>), StatusCodes.Status200OK)]
     public async Task<ActionResult> TestInclude()
     {
-        Distributor? d = await distributorRepository.Include(d => d.Cover).Include(d => d.License)
-            .ThenInclude(l => l.Issuer).GetByIdAsync(4);
+        Distributor? d = await distributorRepository.SnInclude(d => d.Cover).SnInclude(d => d.License)
+            .SnThenInclude(l => l.Issuer).GetByIdAsync(4);
         throw ResponseFactory.Create<OkResponse<Distributor>>(d);
     }
 
@@ -316,6 +319,85 @@ public class TestController(
     {
         throw ResponseFactory.Create<OkResponse<Entities.Models.Library.Library>>(
             await libraryService.CreateDefaultAsync(), ["Successfully created default folder"]);
+    }
+
+    # endregion
+
+    # region log tests
+
+    /// <summary>
+    /// [TEST] Retrieves the most recent log file.
+    /// </summary>
+    /// <returns>The most recent log file content and path.</returns>
+    /// <response code="200">Log file retrieved successfully.</response>
+    /// <response code="404">No log files found.</response>
+    /// <remarks>
+    /// This is a test endpoint for development/testing purposes.
+    /// Returns the most recently written log file from both general and guild logs directories.
+    /// </remarks>
+    [HttpGet("logs/last")]
+    [ProducesResponseType(typeof(OkResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> GetLastLogFile()
+    {
+        var result = await Logging.Logger.GetLastLogFileAsync();
+        if (result == null)
+            throw ResponseFactory.Create<NotFoundResponse>(["No log files found"]);
+
+        var response = new
+        {
+            FilePath = result.Value.FilePath,
+            Content = System.Text.Json.JsonSerializer.Deserialize<object>(result.Value.Content)
+        };
+
+        throw ResponseFactory.Create<OkResponse<object>>(response, ["Last log file retrieved successfully"]);
+    }
+
+    [HttpGet("logs/category/{category}")]
+    [ProducesResponseType(typeof(OkResponse<List<LogEntry>>), StatusCodes.Status200OK)]
+    public async Task<ActionResult> GetCategoryLogs(
+        LogCategory category,
+        [FromQuery] DateTime? fromDate = null,
+        [FromQuery] DateTime? toDate = null,
+        [FromQuery] LogLevel? minLevel = null,
+        [FromQuery] LogLevel? maxLevel = null,
+        [FromQuery] LogLevel? exactLevel = null,
+        [FromQuery] int? limit = null)
+    {
+        List<LogEntry> logs = await Logging.Logger.GetCategoryLogsAsync(
+            category,
+            fromDate,
+            toDate,
+            minLevel,
+            maxLevel,
+            exactLevel,
+            limit);
+
+        throw ResponseFactory.Create<OkResponse<List<LogEntry>>>(logs, ["Category logs retrieved successfully"]);
+    }
+
+    [HttpGet("logs/guild/{guildId}")]
+    [ProducesResponseType(typeof(OkResponse<List<LogEntry>>), StatusCodes.Status200OK)]
+    public async Task<ActionResult> GetGuildLogs(
+        ulong guildId,
+        [FromQuery] DateTime? fromDate = null,
+        [FromQuery] DateTime? toDate = null,
+        [FromQuery] LogLevel? minLevel = null,
+        [FromQuery] LogLevel? maxLevel = null,
+        [FromQuery] LogLevel? exactLevel = null,
+        [FromQuery] int? limit = null)
+    {
+        List<LogEntry> logs = await Logging.Logger.GetGuildLogsAsync(
+            guildId,
+            null,
+            fromDate,
+            toDate,
+            minLevel,
+            maxLevel,
+            exactLevel,
+            limit);
+
+        throw ResponseFactory.Create<OkResponse<List<LogEntry>>>(logs, ["Guild logs retrieved successfully"]);
     }
 
     # endregion

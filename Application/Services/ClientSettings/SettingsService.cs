@@ -1,8 +1,8 @@
-﻿using System.Text.Json;
-using Application.Abstractions.Interfaces.Repository.Client;
+﻿using Application.Abstractions.Interfaces.Repository.Client;
 using Application.Abstractions.Interfaces.Services;
 using Application.Extensions;
 using Entities.Models.ClientSettings;
+using System.Text.Json;
 
 namespace Application.Services.ClientSettings;
 
@@ -18,15 +18,15 @@ public class SettingsService(
     public async Task<Settings> GetByIdValidatedFullAsync(int userSettingsId)
     {
         return await repository
-            .Include(s => s.Language)
-            .Include(s => s.PreferredPlaybackQuality)
-            .Include(s => s.Theme)
-            .Include(s => s.UserPrivacy)
-            .ThenInclude(upg => upg.WhichCanViewProfile)
-            .Include(s => s.UserPrivacy)
-            .ThenInclude(upg => upg.WhichCanMessage)
-            .Include(s => s.NotificationTypes)
-            .Include(bu => bu.BlockedUsers)
+            .SnInclude(s => s.Language)
+            .SnInclude(s => s.PreferredPlaybackQuality)
+            .SnInclude(s => s.Theme)
+            .SnInclude(s => s.UserPrivacy)
+            .SnThenInclude(upg => upg.WhichCanViewProfile)
+            .SnInclude(s => s.UserPrivacy)
+            .SnThenInclude(upg => upg.WhichCanMessage)
+            .SnInclude(s => s.NotificationTypes)
+            .SnInclude(bu => bu.BlockedUsers)
             .GetByIdValidatedAsync(userSettingsId);
     }
 
