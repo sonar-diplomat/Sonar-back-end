@@ -10,4 +10,5 @@ public class UploadTrackDTO
     public required IFormFile LowQualityAudioFile { get; set; }
     public required IFormFile? MediumQualityAudioFile { get; set; }
     public required IFormFile? HighQualityAudioFile { get; set; }
+    public IEnumerable<AuthorDTO>? AdditionalArtists { get; set; }
 }

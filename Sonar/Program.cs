@@ -37,6 +37,7 @@ using Infrastructure.Repository.Library;
 using Infrastructure.Repository.Music;
 using Infrastructure.Repository.Report;
 using Infrastructure.Repository.User;
+using Infrastructure.Repository.UserCore;
 using Infrastructure.Repository.UserExperience;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -62,6 +63,8 @@ using Sonar.Infrastructure.Repository.UserCore;
 using Sonar.Infrastructure.Repository.UserExperience;
 using Sonar.Middleware;
 using System.Text;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Sonar.HealthChecks;
 using Flac = Application.Services.File.Flac;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -102,6 +105,13 @@ builder.Services.AddDbContext<SonarContext>((serviceProvider, options) =>
         options.EnableDetailedErrors();
     }
 });
+
+// Add Health Checks
+builder.Services.AddScoped<SonarContextHealthCheck>();
+builder.Services.AddHealthChecks()
+    .AddCheck<SonarContextHealthCheck>(
+        name: "database",
+        tags: new[] { "db", "sql", "postgresql" });
 builder.Services.Configure<FormOptions>(options =>
 {
     options.MultipartBodyLengthLimit = 104857600; // 100 MB
@@ -120,13 +130,14 @@ builder.Services.AddControllers(options =>
         // Configure form model binding limits
         options.MaxModelBindingCollectionSize = int.MaxValue;
     })
-    .ConfigureApiBehaviorOptions(options => { })
+    .ConfigureApiBehaviorOptions(_ => { })
     .AddJsonOptions(options =>
     {
         // Increase MaxDepth to allow OpenAPI schema generation to complete
         // The NavigationPropertyIgnoreTransformer will prevent actual circular references
         options.JsonSerializerOptions.MaxDepth = 64;
-        options.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
+        options.JsonSerializerOptions.DefaultIgnoreCondition =
+            System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
     });
 
 // CORS policy configuration
@@ -145,7 +156,7 @@ builder.Services.AddCors(options =>
             .WithOrigins("http://localhost:5173") // Vite dev origin
             .AllowAnyHeader()
             .AllowAnyMethod()
-            .AllowCredentials(); 
+            .AllowCredentials();
     });
 });
 
@@ -210,9 +221,6 @@ builder.Services.Configure<FormOptions>(options =>
 // Add Swagger UI for OpenAPI visualization
 builder.Services.AddSwaggerGen();
 
-
-
-
 #region RegisterRepositories
 
 // Access Repositories
@@ -259,6 +267,7 @@ builder.Services.AddScoped<IBlendRepository, BlendRepository>();
 builder.Services.AddScoped<IPlaylistRepository, PlaylistRepository>();
 builder.Services.AddScoped<ITrackRepository, TrackRepository>();
 builder.Services.AddScoped<IAlbumArtistRepository, AlbumArtistRepository>();
+builder.Services.AddScoped<ITrackArtistRepository, TrackArtistRepository>();
 
 // Report Repositories
 builder.Services.AddScoped<IReportableEntityTypeRepository, ReportableEntityTypeRepository>();
@@ -268,6 +277,7 @@ builder.Services.AddScoped<IReportRepository, ReportRepository>();
 // User Repositories
 builder.Services.AddScoped<IUserPrivacyGroupRepository, UserPrivacyGroupRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IUserFriendRequestRepository, UserFriendRequestRepository>();
 builder.Services.AddScoped<IUserSessionRepository, UserSessionRepository>();
 builder.Services.AddScoped<IUserStateRepository, UserStateRepository>();
 builder.Services.AddScoped<IUserStatusRepository, UserStatusRepository>();
@@ -334,6 +344,7 @@ builder.Services.AddScoped<IBlendService, BlendService>();
 builder.Services.AddScoped<IPlaylistService, PlaylistService>();
 builder.Services.AddScoped<ITrackService, TrackService>();
 builder.Services.AddScoped<IAlbumArtistService, AlbumArtistService>();
+builder.Services.AddScoped<ITrackArtistService, TrackArtistService>();
 builder.Services.AddScoped<ICollectionService<Album>, CollectionService<Album>>();
 builder.Services.AddScoped<ICollectionService<Blend>, CollectionService<Blend>>();
 builder.Services.AddScoped<ICollectionService<Playlist>, CollectionService<Playlist>>();
@@ -348,6 +359,7 @@ builder.Services.AddScoped<IReportService, ReportService>();
 // User Services
 builder.Services.AddScoped<IUserPrivacyGroupService, UserPrivacyGroupService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IUserFriendRequestService, UserFriendRequestService>();
 builder.Services.AddScoped<IUserSessionService, UserSessionService>();
 builder.Services.AddScoped<IUserStateService, UserStateService>();
 builder.Services.AddScoped<IUserStatusService, UserStatusService>();

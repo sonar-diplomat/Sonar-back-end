@@ -57,9 +57,9 @@ public class AudioFileService(
                 return tagFile.Properties.Duration;
             }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            throw ResponseFactory.Create<InternalServerErrorResponse>(["Error while processing audio file"]);
+            throw ResponseFactory.Create<InternalServerErrorResponse>([$"Error while processing audio file : {ex.Message}"]);
         }
         finally
         {

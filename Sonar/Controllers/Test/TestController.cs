@@ -4,6 +4,7 @@ using Application.Abstractions.Interfaces.Services.File;
 using Application.Abstractions.Interfaces.Services.Utilities;
 using Application.Extensions;
 using Application.Response;
+using Entities.Enums;
 using Entities.Models.Chat;
 using Entities.Models.Distribution;
 using Entities.Models.Library;
@@ -11,6 +12,7 @@ using Entities.Models.UserCore;
 using Logging;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using Settings = Entities.Models.ClientSettings.Settings;
 using SysFile = System.IO.File;
@@ -349,6 +351,53 @@ public class TestController(
         };
 
         throw ResponseFactory.Create<OkResponse<object>>(response, ["Last log file retrieved successfully"]);
+    }
+
+    [HttpGet("logs/category/{category}")]
+    [ProducesResponseType(typeof(OkResponse<List<LogEntry>>), StatusCodes.Status200OK)]
+    public async Task<ActionResult> GetCategoryLogs(
+        LogCategory category,
+        [FromQuery] DateTime? fromDate = null,
+        [FromQuery] DateTime? toDate = null,
+        [FromQuery] LogLevel? minLevel = null,
+        [FromQuery] LogLevel? maxLevel = null,
+        [FromQuery] LogLevel? exactLevel = null,
+        [FromQuery] int? limit = null)
+    {
+        List<LogEntry> logs = await Logging.Logger.GetCategoryLogsAsync(
+            category,
+            fromDate,
+            toDate,
+            minLevel,
+            maxLevel,
+            exactLevel,
+            limit);
+
+        throw ResponseFactory.Create<OkResponse<List<LogEntry>>>(logs, ["Category logs retrieved successfully"]);
+    }
+
+    [HttpGet("logs/guild/{guildId}")]
+    [ProducesResponseType(typeof(OkResponse<List<LogEntry>>), StatusCodes.Status200OK)]
+    public async Task<ActionResult> GetGuildLogs(
+        ulong guildId,
+        [FromQuery] DateTime? fromDate = null,
+        [FromQuery] DateTime? toDate = null,
+        [FromQuery] LogLevel? minLevel = null,
+        [FromQuery] LogLevel? maxLevel = null,
+        [FromQuery] LogLevel? exactLevel = null,
+        [FromQuery] int? limit = null)
+    {
+        List<LogEntry> logs = await Logging.Logger.GetGuildLogsAsync(
+            guildId,
+            null,
+            fromDate,
+            toDate,
+            minLevel,
+            maxLevel,
+            exactLevel,
+            limit);
+
+        throw ResponseFactory.Create<OkResponse<List<LogEntry>>>(logs, ["Guild logs retrieved successfully"]);
     }
 
     # endregion

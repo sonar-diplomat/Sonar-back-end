@@ -34,17 +34,82 @@ public class AuthController(
     /// <param name="model">User registration data including username, email, password, and personal information.</param>
     /// <returns>Success response upon successful registration.</returns>
     /// <response code="200">Registration successful.</response>
-    /// <response code="400">Invalid registration data or user already exists.</response>
+    /// <response code="400">Invalid registration data.</response>
+    /// <response code="409">User with this login or email already exists.</response>
     [HttpPost("register")]
     [ProducesResponseType(typeof(OkResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(BadRequestResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ConflictResponse), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Register(UserRegisterDTO model)
     {
-        User user = await userService.CreateUserShellAsync(model);
-        IdentityResult result = await userManager.CreateAsync(user, model.Password);
-        if (result.Succeeded)
-            throw ResponseFactory.Create<OkResponse>(["Registration successfull"]);
-        throw ResponseFactory.Create<BadRequestResponse>(result.Errors.Select(e => e.Description.ToString()).ToArray()!);
+        if (!ModelState.IsValid)
+        {
+            List<string> validationErrors = ModelState.Values
+                .SelectMany(v => v.Errors)
+                .Select(e => e.ErrorMessage)
+                .Where(m => !string.IsNullOrEmpty(m))
+                .ToList();
+            
+            throw ResponseFactory.Create<BadRequestResponse>(validationErrors.ToArray());
+        }
+        
+        try
+        {
+            User user = await userService.CreateUserShellAsync(model);
+            IdentityResult result = await userManager.CreateAsync(user, model.Password);
+            
+            if (result.Succeeded)
+                throw ResponseFactory.Create<OkResponse>(["Registration successful"]);
+            
+            List<string> conflictErrors = new();
+            List<string> identityValidationErrors = new();
+            
+            foreach (IdentityError error in result.Errors)
+            {
+                string message = error.Code switch
+                {
+                    "DuplicateUserName" or "DuplicateNormalizedUserName" => "User with this username already exists",
+                    "DuplicateEmail" => "Email is already in use",
+                    "PasswordTooShort" => $"Password is too short. Minimum length: {userManager.Options.Password.RequiredLength} characters",
+                    "PasswordRequiresNonAlphanumeric" => "Password must contain at least one special character",
+                    "PasswordRequiresDigit" => "Password must contain at least one digit",
+                    "PasswordRequiresLower" => "Password must contain at least one lowercase letter",
+                    "PasswordRequiresUpper" => "Password must contain at least one uppercase letter",
+                    "InvalidEmail" => "Invalid email address",
+                    "InvalidUserName" => "Invalid username",
+                    _ => error.Description
+                };
+                
+                if (error.Code is "DuplicateUserName" or "DuplicateNormalizedUserName" or "DuplicateEmail")
+                    conflictErrors.Add(message);
+                else
+                    identityValidationErrors.Add(message);
+            }
+            
+            if (conflictErrors.Count > 0)
+                throw ResponseFactory.Create<ConflictResponse>(conflictErrors.ToArray());
+            
+            if (identityValidationErrors.Count > 0)
+                throw ResponseFactory.Create<BadRequestResponse>(identityValidationErrors.ToArray());
+            
+            throw ResponseFactory.Create<BadRequestResponse>(
+                result.Errors.Select(e => e.Description).ToArray());
+        }
+        catch (DbUpdateException dbEx) when (dbEx.InnerException?.Message.Contains("duplicate") == true ||
+                                             dbEx.InnerException?.Message.Contains("unique") == true ||
+                                             dbEx.InnerException?.Message.Contains("UserNameIndex") == true ||
+                                             dbEx.InnerException?.Message.Contains("EmailIndex") == true)
+        {
+            string errorMessage = dbEx.InnerException?.Message ?? dbEx.Message;
+            
+            if (errorMessage.Contains("UserName") || errorMessage.Contains("UserNameIndex"))
+                throw ResponseFactory.Create<ConflictResponse>(["User with this username already exists"]);
+            
+            if (errorMessage.Contains("Email") || errorMessage.Contains("EmailIndex"))
+                throw ResponseFactory.Create<ConflictResponse>(["Email is already in use"]);
+            
+            throw ResponseFactory.Create<ConflictResponse>(["User with such data already exists"]);
+        }
     }
 
     /// <summary>

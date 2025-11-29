@@ -52,7 +52,7 @@ public class ReportController(
     [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ReportDTO>> GetReport(int id)
     {
-        ReportModel report = await reportService.GetByIdValidatedAsync(id);
+        ReportModel report = await reportService.GetByIdValidatedFullAsync(id);
         ReportDTO dto = MapToDTO(report);
         throw ResponseFactory.Create<OkResponse<ReportDTO>>(dto, ["Report retrieved successfully"]);
     }
@@ -101,7 +101,8 @@ public class ReportController(
     {
         User user = await CheckAccessFeatures([AccessFeatureStruct.ReportContent]);
         ReportModel report = await reportService.CreateReportAsync(user.Id, dto);
-        ReportDTO responseDto = MapToDTO(report);
+        ReportModel fullReport = await reportService.GetByIdValidatedFullAsync(report.Id);
+        ReportDTO responseDto = MapToDTO(fullReport);
         throw ResponseFactory.Create<OkResponse<ReportDTO>>(responseDto, ["Report created successfully"]);
     }
 
@@ -313,12 +314,12 @@ public class ReportController(
                 Id = report.ReportableEntityType.Id,
                 Name = report.ReportableEntityType.Name
             },
-            Reasons = report.ReportReasonType?.Select(r => new ReportReasonTypeDTO
+            Reasons = report.ReportReasonType.Select(r => new ReportReasonTypeDTO
             {
                 Id = r.Id,
                 Name = r.Name,
                 RecommendedSuspensionDuration = r.RecommendedSuspensionDuration
-            }).ToList() ?? new List<ReportReasonTypeDTO>()
+            }).ToList()
         };
     }
 }

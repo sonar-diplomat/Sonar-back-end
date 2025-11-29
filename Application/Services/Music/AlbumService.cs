@@ -3,7 +3,9 @@ using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.File;
 using Application.DTOs.Music;
 using Application.Extensions;
+using Application.Response;
 using Entities.Models.Music;
+using Microsoft.EntityFrameworkCore;
 
 namespace Application.Services.Music;
 
@@ -64,7 +66,25 @@ public class AlbumService(
 
     public async Task<Album> GetValidatedIncludeVisibilityStateAsync(int id)
     {
-        return await repository.SnInclude(a => a.VisibilityState).GetByIdValidatedAsync(id);
+        return await repository
+            .SnInclude(a => a.VisibilityState)
+            .SnThenInclude(vs => vs.Status)
+            .GetByIdValidatedAsync(id);
+    }
+
+    public async Task<Album> GetValidatedIncludeDistributorAsync(int id)
+    {
+        return await repository.SnInclude(a => a.Distributor).GetByIdValidatedAsync(id);
+    }
+
+    public async Task<Album> GetValidatedIncludeAlbumArtistsAsync(int id)
+    {
+        return await repository
+            .Query()
+            .Include(a => a.AlbumArtists)
+            .ThenInclude(aa => aa.Artist)
+            .FirstOrDefaultAsync(a => a.Id == id) 
+            ?? throw ResponseFactory.Create<NotFoundResponse>([$"{nameof(Album)} not found"]);
     }
 
     public async Task UpdateCoverAsync(int albumId, int imageId)
@@ -75,5 +95,44 @@ public class AlbumService(
         foreach (var track in album.Tracks) { track.CoverId = imageId; }
 
         await repository.UpdateAsync(album);
+    }
+
+    public async Task<IEnumerable<Album>> GetAlbumsByDistributorIdAsync(int distributorId)
+    {
+        return await repository.GetByDistributorIdAsync(distributorId);
+    }
+
+    public async Task<IEnumerable<TrackDTO>> GetAlbumTracksAsync(int albumId)
+    {
+        await GetByIdValidatedAsync(albumId);
+        
+        List<Track> tracks = await repository.GetTracksFromAlbumAsync(albumId);
+
+        // Convert to DTOs
+        List<TrackDTO> trackDTOs = tracks
+            .Select(t => new TrackDTO
+            {
+                Id = t.Id,
+                Title = t.Title,
+                DurationInSeconds = (int)(t.Duration?.TotalSeconds ?? 0),
+                IsExplicit = t.IsExplicit,
+                DrivingDisturbingNoises = t.DrivingDisturbingNoises,
+                CoverId = t.CoverId,
+                AudioFileId = t.LowQualityAudioFileId,
+                Artists = t.TrackArtists?.Select(ta => new AuthorDTO
+                {
+                    Pseudonym = ta.Pseudonym,
+                    ArtistId = ta.ArtistId
+                }).ToList() ?? new List<AuthorDTO>()
+            })
+            .ToList();
+
+        return trackDTOs;
+    }
+
+    public async Task<IEnumerable<Track>> GetAlbumTracksWithVisibilityStateAsync(int albumId)
+    {
+        await GetByIdValidatedAsync(albumId);
+        return await repository.GetTracksFromAlbumAsync(albumId);
     }
 }

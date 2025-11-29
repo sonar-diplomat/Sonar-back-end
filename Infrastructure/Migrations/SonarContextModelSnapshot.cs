@@ -17,7 +17,7 @@ namespace Infrastructure.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.10")
+                .HasAnnotation("ProductVersion", "9.0.11")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -35,21 +35,6 @@ namespace Infrastructure.Migrations
                     b.HasIndex("UsersId");
 
                     b.ToTable("AccessFeatureUser");
-                });
-
-            modelBuilder.Entity("ArtistTrack", b =>
-                {
-                    b.Property<int>("ArtistsId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("TracksId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("ArtistsId", "TracksId");
-
-                    b.HasIndex("TracksId");
-
-                    b.ToTable("ArtistTrack");
                 });
 
             modelBuilder.Entity("ChatUser", b =>
@@ -674,6 +659,9 @@ namespace Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("AcceptFriendRequests")
+                        .HasColumnType("boolean");
+
                     b.Property<int>("WhichCanMessageId")
                         .HasColumnType("integer");
 
@@ -1106,6 +1094,34 @@ namespace Infrastructure.Migrations
                     b.ToTable("Track");
                 });
 
+            modelBuilder.Entity("Entities.Models.Music.TrackArtist", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("ArtistId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Pseudonym")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("TrackId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ArtistId");
+
+                    b.HasIndex("TrackId");
+
+                    b.ToTable("TrackArtists");
+                });
+
             modelBuilder.Entity("Entities.Models.Report.Report", b =>
                 {
                     b.Property<int>("Id")
@@ -1398,6 +1414,38 @@ namespace Infrastructure.Migrations
                     b.HasIndex("VisibilityStateId");
 
                     b.ToTable("AspNetUsers", (string)null);
+                });
+
+            modelBuilder.Entity("Entities.Models.UserCore.UserFriendRequest", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("FromUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<bool?>("IsAccepted")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("RequestedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("ResolvedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("ToUserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FromUserId");
+
+                    b.HasIndex("ToUserId");
+
+                    b.ToTable("UserFriendRequests");
                 });
 
             modelBuilder.Entity("Entities.Models.UserCore.UserPrivacyGroup", b =>
@@ -2150,6 +2198,21 @@ namespace Infrastructure.Migrations
                     b.ToTable("SubscriptionFeatureSubscriptionPack");
                 });
 
+            modelBuilder.Entity("UserUser", b =>
+                {
+                    b.Property<int>("FriendOfId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("FriendsId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("FriendOfId", "FriendsId");
+
+                    b.HasIndex("FriendsId");
+
+                    b.ToTable("UserFriends", (string)null);
+                });
+
             modelBuilder.Entity("Entities.Models.File.AudioFile", b =>
                 {
                     b.HasBaseType("Entities.Models.File.File");
@@ -2221,21 +2284,6 @@ namespace Infrastructure.Migrations
                     b.HasOne("Entities.Models.UserCore.User", null)
                         .WithMany()
                         .HasForeignKey("UsersId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("ArtistTrack", b =>
-                {
-                    b.HasOne("Entities.Models.Music.Artist", null)
-                        .WithMany()
-                        .HasForeignKey("ArtistsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Entities.Models.Music.Track", null)
-                        .WithMany()
-                        .HasForeignKey("TracksId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -2695,6 +2743,23 @@ namespace Infrastructure.Migrations
                     b.Navigation("VisibilityState");
                 });
 
+            modelBuilder.Entity("Entities.Models.Music.TrackArtist", b =>
+                {
+                    b.HasOne("Entities.Models.Music.Artist", "Artist")
+                        .WithMany("TrackArtists")
+                        .HasForeignKey("ArtistId");
+
+                    b.HasOne("Entities.Models.Music.Track", "Track")
+                        .WithMany("TrackArtists")
+                        .HasForeignKey("TrackId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Artist");
+
+                    b.Navigation("Track");
+                });
+
             modelBuilder.Entity("Entities.Models.Report.Report", b =>
                 {
                     b.HasOne("Entities.Models.Report.ReportableEntityType", "ReportableEntityType")
@@ -2790,6 +2855,25 @@ namespace Infrastructure.Migrations
                     b.Navigation("UserState");
 
                     b.Navigation("VisibilityState");
+                });
+
+            modelBuilder.Entity("Entities.Models.UserCore.UserFriendRequest", b =>
+                {
+                    b.HasOne("Entities.Models.UserCore.User", "FromUser")
+                        .WithMany("SentFriendRequests")
+                        .HasForeignKey("FromUserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("Entities.Models.UserCore.User", "ToUser")
+                        .WithMany("ReceivedFriendRequests")
+                        .HasForeignKey("ToUserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("FromUser");
+
+                    b.Navigation("ToUser");
                 });
 
             modelBuilder.Entity("Entities.Models.UserCore.UserSession", b =>
@@ -3065,6 +3149,21 @@ namespace Infrastructure.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("UserUser", b =>
+                {
+                    b.HasOne("Entities.Models.UserCore.User", null)
+                        .WithMany()
+                        .HasForeignKey("FriendOfId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Entities.Models.UserCore.User", null)
+                        .WithMany()
+                        .HasForeignKey("FriendsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Entities.Models.Music.Album", b =>
                 {
                     b.HasOne("Entities.Models.Distribution.Distributor", "Distributor")
@@ -3166,11 +3265,15 @@ namespace Infrastructure.Migrations
                     b.Navigation("AlbumArtists");
 
                     b.Navigation("Posts");
+
+                    b.Navigation("TrackArtists");
                 });
 
             modelBuilder.Entity("Entities.Models.Music.Track", b =>
                 {
                     b.Navigation("QueuesWherePrimary");
+
+                    b.Navigation("TrackArtists");
                 });
 
             modelBuilder.Entity("Entities.Models.Report.Report", b =>
@@ -3205,6 +3308,10 @@ namespace Infrastructure.Migrations
                     b.Navigation("Messages");
 
                     b.Navigation("MessagesReads");
+
+                    b.Navigation("ReceivedFriendRequests");
+
+                    b.Navigation("SentFriendRequests");
 
                     b.Navigation("Tracks");
 
