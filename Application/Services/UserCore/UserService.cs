@@ -11,6 +11,7 @@ using Entities.Models.Music;
 using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Http;
 using System.Security.Cryptography;
+using Microsoft.EntityFrameworkCore;
 
 namespace Application.Services.UserCore;
 
@@ -22,7 +23,8 @@ public class UserService(
     ISettingsService settingsService,
     IUserStateService stateService,
     IImageFileService imageFileService,
-    ILibraryService libraryService
+    ILibraryService libraryService,
+    IUserFriendRequestService friendRequestService
 )
     : IUserService
 {
@@ -163,6 +165,7 @@ public class UserService(
         {
             if (af.Id != 1 && af.Name != "IAmGod" /*protection for IAmGod*/) user.AccessFeatures.Remove(af);
         }
+
         await repository.UpdateAsync(user);
     }
 
@@ -182,19 +185,120 @@ public class UserService(
         await repository.UpdateAsync(user);
     }
 
-    public async Task<User> GetValidatedIncludeAccessFeaturesAsync(int id)
+    private async Task<User> GetValidatedIncludeAccessFeaturesAsync(int id)
     {
         return await repository.SnInclude(u => u.AccessFeatures).GetByIdValidatedAsync(id);
     }
 
     public async Task<bool> DeleteUserAsync(int userId)
     {
-        User? user = await GetByIdAsync(userId);
-        if (user == null)
-            throw ResponseFactory.Create<NotFoundResponse>();
-
+        User user = await GetByIdValidatedAsync(userId);
         await repository.RemoveAsync(user);
         return true;
+    }
+
+    public async Task<UserFriendRequest> SendFriendRequestAsync(int fromUserId, int toUserId)
+    {
+        if (fromUserId == toUserId)
+            throw ResponseFactory.Create<BadRequestResponse>(["Cannot send friend request to yourself."]);
+
+        User toUser = await repository.SnInclude(u => u.Settings)
+            .ThenInclude(s => s.UserPrivacy)
+            .GetByIdValidatedAsync(toUserId);
+        if (!toUser.Settings.UserPrivacy.AcceptFriendRequests)
+            throw ResponseFactory.Create<BadRequestResponse>(["This user is not accepting friend requests."]);
+
+        User fromUser = await repository.SnInclude(u => u.Friends)
+            .Include(u => u.ReceivedFriendRequests)
+            .Include(u => u.SentFriendRequests)
+            .GetByIdValidatedAsync(fromUserId);
+        if (fromUser.Friends.Any(f => f.Id == toUserId))
+            throw ResponseFactory.Create<BadRequestResponse>(["You are already friends with this user."]);
+
+        IQueryable<UserFriendRequest> existingRequests = fromUser.SentFriendRequests.AsQueryable()
+            .Where(r => r.ToUserId == toUserId && r.ResolvedAt == null);
+        if (await existingRequests.AnyAsync())
+            throw ResponseFactory.Create<BadRequestResponse>(["Friend request already sent."]);
+
+        IQueryable<UserFriendRequest> reverseRequests = fromUser.ReceivedFriendRequests.AsQueryable()
+            .Where(r => r.ToUserId == toUserId && r.ResolvedAt == null);
+        if (await reverseRequests.AnyAsync())
+            throw ResponseFactory.Create<BadRequestResponse>(["This user has already sent you a friend request."]);
+
+        UserFriendRequest request = new()
+        {
+            FromUserId = fromUserId,
+            ToUserId = toUserId,
+            RequestedAt = DateTime.UtcNow
+        };
+
+        return await friendRequestService.CreateAsync(request);
+    }
+
+    public async Task<IEnumerable<UserFriendRequest>> GetPendingFriendRequestsAsync(int userId)
+    {
+        User user = await repository.SnInclude(u => u.ReceivedFriendRequests).ThenInclude(r => r.FromUser)
+            .GetByIdValidatedAsync(userId);
+        return user.ReceivedFriendRequests.Where(r => r.ResolvedAt == null);
+    }
+
+    public async Task<IEnumerable<UserFriendRequest>> GetSentFriendRequestsAsync(int userId)
+    {
+        User user = await repository.SnInclude(u => u.SentFriendRequests).ThenInclude(r => r.ToUser)
+            .GetByIdValidatedAsync(userId);
+        return user.SentFriendRequests.Where(r => r.ResolvedAt == null);
+    }
+
+    public async Task<bool> ResolveFriendRequestAsync(int userId, int requestId, bool accept)
+    {
+        UserFriendRequest request = await friendRequestService.GetByIdValidatedAsync(requestId);
+
+        if (request.ToUserId != userId)
+            throw ResponseFactory.Create<UnauthorizedResponse>([
+                "You are not authorized to resolve this friend request."
+            ]);
+
+        if (request.ResolvedAt != null)
+            throw ResponseFactory.Create<BadRequestResponse>(["Friend request has already been resolved."]);
+
+        request.ResolvedAt = DateTime.UtcNow;
+        request.IsAccepted = accept;
+
+        if (accept)
+        {
+            User fromUser = await repository.SnInclude(u => u.Friends).GetByIdValidatedAsync(request.FromUserId);
+            User toUser = await repository.SnInclude(u => u.Friends).GetByIdValidatedAsync(request.ToUserId);
+
+            fromUser.Friends.Add(toUser);
+            toUser.Friends.Add(fromUser);
+
+            await repository.UpdateAsync(fromUser);
+            await repository.UpdateAsync(toUser);
+        }
+
+        await friendRequestService.UpdateAsync(request);
+        return accept;
+    }
+
+    public async Task RemoveFriendAsync(int userId, int friendId)
+    {
+        User user = await repository.SnInclude(u => u.Friends).GetByIdValidatedAsync(userId);
+        User friend = await repository.SnInclude(u => u.Friends).GetByIdValidatedAsync(friendId);
+
+        if (user.Friends.All(f => f.Id != friendId))
+            throw ResponseFactory.Create<BadRequestResponse>(["This user is not in your friends list."]);
+
+        user.Friends.Remove(friend);
+        friend.Friends.Remove(user);
+
+        await repository.UpdateAsync(user);
+        await repository.UpdateAsync(friend);
+    }
+
+    public async Task<IEnumerable<User>> GetFriendsAsync(int userId)
+    {
+        User user = await repository.SnInclude(u => u.Friends).GetByIdValidatedAsync(userId);
+        return user.Friends;
     }
 
     private async Task<string> GenerateUniqueUserPublicIdentifierAsync()
@@ -203,7 +307,6 @@ public class UserService(
         {
             string publicIdentifier = string.Concat(StartIdentifierValue,
                 RandomNumberGenerator.GetInt32(100000, 1000000).ToString());
-
 
             if (!await repository.CheckExists(publicIdentifier)) return publicIdentifier;
         }

@@ -17,7 +17,8 @@ public class UserPrivacySettingsService(
         UserPrivacySettings userPrivacySettings = new()
         {
             WhichCanMessage = userPrivacyGroup,
-            WhichCanViewProfile = userPrivacyGroup
+            WhichCanViewProfile = userPrivacyGroup,
+            AcceptFriendRequests = true
         };
 
         return await repository.AddAsync(userPrivacySettings);

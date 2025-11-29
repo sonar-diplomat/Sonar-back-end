@@ -9,11 +9,11 @@ namespace Entities.Models.ClientSettings;
 [Table("UserPrivacySettings")]
 public class UserPrivacySettings : BaseModel
 {
-    [Required]
-    public int WhichCanViewProfileId { get; set; }
+    [Required] public int WhichCanViewProfileId { get; set; }
 
-    [Required]
-    public int WhichCanMessageId { get; set; }
+    [Required] public int WhichCanMessageId { get; set; }
+
+    [Required] public bool AcceptFriendRequests { get; set; }
 
     /// <summary>
     /// </summary>

@@ -3,6 +3,7 @@ using System;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,13 +12,15 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(SonarContext))]
-    partial class SonarContextModelSnapshot : ModelSnapshot
+    [Migration("20251124144909_Friends")]
+    partial class Friends
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.11")
+                .HasAnnotation("ProductVersion", "9.0.10")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -35,6 +38,21 @@ namespace Infrastructure.Migrations
                     b.HasIndex("UsersId");
 
                     b.ToTable("AccessFeatureUser");
+                });
+
+            modelBuilder.Entity("ArtistTrack", b =>
+                {
+                    b.Property<int>("ArtistsId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TracksId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("ArtistsId", "TracksId");
+
+                    b.HasIndex("TracksId");
+
+                    b.ToTable("ArtistTrack");
                 });
 
             modelBuilder.Entity("ChatUser", b =>
@@ -1092,34 +1110,6 @@ namespace Infrastructure.Migrations
                     b.HasIndex("VisibilityStateId");
 
                     b.ToTable("Track");
-                });
-
-            modelBuilder.Entity("Entities.Models.Music.TrackArtist", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int?>("ArtistId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Pseudonym")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<int>("TrackId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ArtistId");
-
-                    b.HasIndex("TrackId");
-
-                    b.ToTable("TrackArtists");
                 });
 
             modelBuilder.Entity("Entities.Models.Report.Report", b =>
@@ -2288,6 +2278,21 @@ namespace Infrastructure.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("ArtistTrack", b =>
+                {
+                    b.HasOne("Entities.Models.Music.Artist", null)
+                        .WithMany()
+                        .HasForeignKey("ArtistsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Entities.Models.Music.Track", null)
+                        .WithMany()
+                        .HasForeignKey("TracksId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("ChatUser", b =>
                 {
                     b.HasOne("Entities.Models.UserCore.User", null)
@@ -2741,23 +2746,6 @@ namespace Infrastructure.Migrations
                     b.Navigation("MediumQualityAudioFile");
 
                     b.Navigation("VisibilityState");
-                });
-
-            modelBuilder.Entity("Entities.Models.Music.TrackArtist", b =>
-                {
-                    b.HasOne("Entities.Models.Music.Artist", "Artist")
-                        .WithMany("TrackArtists")
-                        .HasForeignKey("ArtistId");
-
-                    b.HasOne("Entities.Models.Music.Track", "Track")
-                        .WithMany("TrackArtists")
-                        .HasForeignKey("TrackId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Artist");
-
-                    b.Navigation("Track");
                 });
 
             modelBuilder.Entity("Entities.Models.Report.Report", b =>
@@ -3265,15 +3253,11 @@ namespace Infrastructure.Migrations
                     b.Navigation("AlbumArtists");
 
                     b.Navigation("Posts");
-
-                    b.Navigation("TrackArtists");
                 });
 
             modelBuilder.Entity("Entities.Models.Music.Track", b =>
                 {
                     b.Navigation("QueuesWherePrimary");
-
-                    b.Navigation("TrackArtists");
                 });
 
             modelBuilder.Entity("Entities.Models.Report.Report", b =>
