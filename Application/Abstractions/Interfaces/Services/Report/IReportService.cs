@@ -10,4 +10,5 @@ public interface IReportService : IGenericService<Report>
     Task<IEnumerable<Report>> GetReportsFilteredAsync(ReportFilterDTO dto);
     Task<IEnumerable<Report>> GetReportsByReporterAsync(int reporterId);
     Task<IEnumerable<Report>> GetOpenReportsAsync();
+    Task<Report> GetByIdValidatedFullAsync(int id);
 }

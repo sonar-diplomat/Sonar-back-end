@@ -108,6 +108,7 @@ public class UserController(
     [HttpPut("update")]
     [Authorize]
     [ProducesResponseType(typeof(OkResponse<UserResponseDTO>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(BadRequestResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> UpdateUser(UserUpdateDTO request)
     {
