@@ -26,4 +26,11 @@ public class MessageReadRepository(SonarContext dbContext)
         await context.MessageReads.AddRangeAsync(messageReads);
         await context.SaveChangesAsync();
     }
+
+    public async Task<IEnumerable<MessageRead>> GetByMessageIdsAsync(List<int> messageIds)
+    {
+        return await context.MessageReads
+            .Where(mr => messageIds.Contains(mr.MessageId))
+            .ToListAsync();
+    }
 }

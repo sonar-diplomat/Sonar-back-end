@@ -44,8 +44,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
 using Logging;
 using Microsoft.IdentityModel.Tokens;
@@ -63,7 +61,6 @@ using Sonar.Infrastructure.Repository.UserCore;
 using Sonar.Infrastructure.Repository.UserExperience;
 using Sonar.Middleware;
 using System.Text;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Sonar.HealthChecks;
 using Flac = Application.Services.File.Flac;
 
