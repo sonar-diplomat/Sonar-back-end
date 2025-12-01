@@ -20,6 +20,7 @@ using Application.Services.File;
 using Application.Services.Library;
 using Application.Services.Music;
 using Application.Services.Report;
+using Application.Services.Search;
 using Application.Services.UserCore;
 using Application.Services.UserExperience;
 using Application.Services.Utilities;
@@ -355,6 +356,9 @@ builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepositor
 builder.Services.AddScoped<IReportableEntityTypeService, ReportableEntityTypeService>();
 builder.Services.AddScoped<IReportReasonTypeService, ReportReasonTypeService>();
 builder.Services.AddScoped<IReportService, ReportService>();
+
+// Search Services
+builder.Services.AddScoped<ISearchService, SearchService>();
 
 // User Services
 builder.Services.AddScoped<IUserPrivacyGroupService, UserPrivacyGroupService>();

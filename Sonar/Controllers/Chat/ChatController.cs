@@ -229,7 +229,7 @@ public class ChatController(
     [ProducesResponseType(typeof(OkResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> UpdateChatName(int chatId, string newName)
+    public async Task<IActionResult> UpdateChatName(int chatId, [FromQuery] string newName)
     {
         User user = await CheckAccessFeatures([]);
         await chatService.UpdateChatNameAsync(user.Id, chatId, newName);

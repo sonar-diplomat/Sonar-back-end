@@ -6,6 +6,7 @@ using Application.Extensions;
 using Application.Response;
 using Entities.Models.Music;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Application.Services.Music;
 
@@ -16,7 +17,8 @@ public class AlbumService(
     IAlbumArtistService albumArtistService,
     IArtistService artistService,
     ILibraryService libraryService,
-    IFolderService folderService
+    IFolderService folderService,
+    IServiceProvider serviceProvider
 ) : CollectionService<Album>(repository, libraryService, folderService), IAlbumService
 {
     public async Task<Album> UploadAsync(UploadAlbumDTO dto, int distributorId)
@@ -134,5 +136,29 @@ public class AlbumService(
     {
         await GetByIdValidatedAsync(albumId);
         return await repository.GetTracksFromAlbumAsync(albumId);
+    }
+
+    /// <summary>
+    /// Удаляет альбом и все его треки каскадно.
+    /// </summary>
+    public override async Task DeleteAsync(int id)
+    {
+        Album album = await GetValidatedIncludeTracksAsync(id);
+        
+        // Удаляем все треки альбома перед удалением альбома
+        if (album.Tracks != null && album.Tracks.Any())
+        {
+            // Используем IServiceProvider для ленивой загрузки ITrackService,
+            // чтобы избежать циклической зависимости при создании объектов
+            ITrackService trackService = serviceProvider.GetRequiredService<ITrackService>();
+            
+            foreach (Track track in album.Tracks.ToList())
+            {
+                await trackService.DeleteAsync(track);
+            }
+        }
+        
+        // Удаляем сам альбом
+        await base.DeleteAsync(id);
     }
 }

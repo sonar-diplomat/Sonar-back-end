@@ -4,6 +4,7 @@ using Application.Response;
 using Entities.Models.File;
 using FileSignatures;
 using Microsoft.AspNetCore.Http;
+
 using TagLib;
 
 namespace Application.Services.File;
@@ -118,6 +119,10 @@ public class AudioFileService(
         catch (IOException ex)
         {
             throw ResponseFactory.Create<InternalServerErrorResponse>([$"IO error while accessing file: {ex.Message}"]);
+        }
+        catch (Application.Response.Response ex)
+        {
+            throw ex;
         }
         catch (Exception ex)
         {
