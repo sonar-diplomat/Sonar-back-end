@@ -82,13 +82,20 @@ public class AudioFileService(
 
         try
         {
-            if (!System.IO.File.Exists(file.Url))
+            // Преобразуем относительный путь в полный физический путь
+            string baseFolder = Path.Combine("wwwroot", "uploads");
+            string normalizedPath = file.Url.Replace('/', Path.DirectorySeparatorChar)
+                                           .Replace('\\', Path.DirectorySeparatorChar)
+                                           .TrimStart('/', '\\');
+            string physicalPath = Path.Combine(Directory.GetCurrentDirectory(), baseFolder, normalizedPath);
+
+            if (!System.IO.File.Exists(physicalPath))
             {
                 throw ResponseFactory.Create<NotFoundResponse>([$"Audio file with ID {fileId} not found"]);
             }
 
             FileStream fileStream = new(
-                file.Url,
+                physicalPath,
                 FileMode.Open,
                 FileAccess.Read,
                 FileShare.Read, // Позволяет другим процессам читать файл
@@ -99,7 +106,7 @@ public class AudioFileService(
             if (startPosition.HasValue)
             {
                 // Convert TimeSpan to byte position using TagLib
-                long startByte = await ConvertTimeSpanToBytePositionAsync(file.Url, startPosition.Value);
+                long startByte = await ConvertTimeSpanToBytePositionAsync(physicalPath, startPosition.Value);
 
                 if (startByte < 0 || startByte >= fileStream.Length)
                 {
