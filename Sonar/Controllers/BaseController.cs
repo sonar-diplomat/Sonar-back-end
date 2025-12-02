@@ -16,11 +16,14 @@ public abstract class BaseController(
     protected async Task<User> GetUserByJwt()
     {
         User? user = await userManager.GetUserAsync(User);
-        user = user == null ?
-            throw ResponseFactory.Create<UnauthorizedResponse>()
-            :
-            userManager.Users.Include(u => u.AccessFeatures).FirstOrDefault(u => u.Id == user.Id);
-        return user;
+        if (user == null)
+            throw ResponseFactory.Create<UnauthorizedResponse>();
+        
+        user = await userManager.Users
+            .Include(u => u.AccessFeatures)
+            .FirstOrDefaultAsync(u => u.Id == user.Id);
+        
+        return user ?? throw ResponseFactory.Create<UnauthorizedResponse>();
     }
 
     [Authorize]

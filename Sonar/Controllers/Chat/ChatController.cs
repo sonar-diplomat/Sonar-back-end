@@ -41,8 +41,8 @@ public class ChatController(
     [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> SendMessage(int chatId, [FromBody] MessageDTO message)
     {
-        int userId = (await CheckAccessFeatures([])).Id;
-        await chatService.SendMessageAsync(userId, chatId, message);
+        User user = await CheckAccessFeatures([]);
+        await chatService.SendMessageAsync(user.Id, chatId, message);
         throw ResponseFactory.Create<OkResponse>(["Message sent successfully"]);
     }
 

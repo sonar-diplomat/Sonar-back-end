@@ -3,13 +3,15 @@ using Application.Abstractions.Interfaces.Repository.Chat;
 using Application.Abstractions.Interfaces.Services;
 using Application.DTOs;
 using Application.DTOs.Chat;
+using Application.Response;
 using Entities.Models.Chat;
 using Microsoft.EntityFrameworkCore;
 
 namespace Application.Services.Chat;
 
 public class MessageService(
-    IMessageRepository repository
+    IMessageRepository repository,
+    IMessageReadService messageReadService
 ) : GenericService<Message>(repository), IMessageService
 {
     public async Task<Message> CreateAsync(int chatId, int userId, MessageDTO dto)
@@ -19,14 +21,18 @@ public class MessageService(
             ChatId = chatId,
             SenderId = userId,
             TextContent = dto.TextContent,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            ReplyMessageId = null
         };
-        if (dto.ReplyMessageId == null)
-            return await repository.AddAsync(message);
-        Message reply = await GetByIdValidatedAsync((int)dto.ReplyMessageId);
-        if (reply.ChatId != chatId)
-            throw new Exception("Reply message does not belong to the same chat");
-        message.ReplyMessageId = reply.Id;
+        
+        if (dto.ReplyMessageId.HasValue)
+        {
+            Message reply = await GetByIdValidatedAsync(dto.ReplyMessageId.Value);
+            if (reply.ChatId != chatId)
+                throw ResponseFactory.Create<BadRequestResponse>("Reply message does not belong to the same chat");
+            message.ReplyMessageId = reply.Id;
+        }
+        
         return await repository.AddAsync(message);
     }
 
@@ -70,14 +76,9 @@ public class MessageService(
             {
                 m.Id,
                 m.CreatedAt,
-                DTO = new MessageDTO
-                {
-                    Id = m.Id,
-                    CreatedAt = m.CreatedAt,
-                    SenderId = m.SenderId,
-                    TextContent = m.TextContent,
-                    ReplyMessageId = m.ReplyMessageId
-                }
+                m.SenderId,
+                m.TextContent,
+                m.ReplyMessageId
             })
             .ToListAsync();
 
@@ -90,9 +91,29 @@ public class MessageService(
         if (hasMore && raw.Count > 0)
             nextCursor = raw.First().Id.ToString(CultureInfo.InvariantCulture);
 
+        // Load all MessageRead records for these messages
+        List<int> messageIds = raw.Select(x => x.Id).ToList();
+        var messageReads = await messageReadService.GetReadRecordsByMessageIdsAsync(messageIds);
+
+        // Group reads by message ID
+        var readsByMessageId = messageReads
+            .GroupBy(mr => mr.MessageId)
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        // Map to DTOs with read records
+        var dtos = raw.Select(x => new MessageDTO
+        {
+            Id = x.Id,
+            CreatedAt = x.CreatedAt,
+            SenderId = x.SenderId,
+            TextContent = x.TextContent,
+            ReplyMessageId = x.ReplyMessageId,
+            ReadBy = readsByMessageId.GetValueOrDefault(x.Id)
+        }).ToList();
+
         return new CursorPageDTO<MessageDTO>
         {
-            Items = raw.Select(x => x.DTO),
+            Items = dtos,
             NextCursor = nextCursor
         };
     }
