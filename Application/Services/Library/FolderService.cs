@@ -5,12 +5,13 @@ using Application.Extensions;
 using Application.Response;
 using Entities.Models.Library;
 using Microsoft.EntityFrameworkCore;
+using LibraryModel = Entities.Models.Library.Library;
 
 namespace Application.Services.Library;
 
 public class FolderService(
     IFolderRepository repository,
-    ILibraryService libraryService
+    ILibraryRepository libraryRepository
 ) : GenericService<Folder>(repository), IFolderService
 {
     public async Task<Folder> CreateFolderAsync(int libraryId, CreateFolderDTO dto)
@@ -20,7 +21,15 @@ public class FolderService(
         // Если parentFolderId == null || 0, используем root папку библиотеки
         if (parentFolderId == null || parentFolderId == 0)
         {
-            Folder rootFolder = await libraryService.GetRootFolderByLibraryIdValidatedAsync(libraryId);
+            // Получаем библиотеку и её RootFolderId напрямую через репозиторий
+            LibraryModel? library = await libraryRepository.GetByIdAsync(libraryId);
+            if (library == null)
+                throw ResponseFactory.Create<NotFoundResponse>(["Library not found"]);
+            if (library.RootFolderId == null)
+                throw ResponseFactory.Create<NotFoundResponse>(["Root folder not found for this library"]);
+            
+            // Получаем root папку через свой метод
+            Folder rootFolder = await GetFolderByIdIncludeCollectionsValidatedAsync(library.RootFolderId.Value);
             parentFolderId = rootFolder.Id;
         }
         else
