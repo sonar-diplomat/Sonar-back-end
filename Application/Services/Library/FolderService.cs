@@ -8,16 +8,32 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Application.Services.Library;
 
-public class FolderService(IFolderRepository repository) : GenericService<Folder>(repository), IFolderService
+public class FolderService(
+    IFolderRepository repository,
+    ILibraryService libraryService
+) : GenericService<Folder>(repository), IFolderService
 {
     public async Task<Folder> CreateFolderAsync(int libraryId, CreateFolderDTO dto)
     {
-        if (dto.ParentFolderId != null)
-            await CheckFolderBelongsToLibrary(libraryId, dto.ParentFolderId.Value);
+        int? parentFolderId = dto.ParentFolderId;
+        
+        // Если parentFolderId == null || 0, используем root папку библиотеки
+        if (parentFolderId == null || parentFolderId == 0)
+        {
+            Folder rootFolder = await libraryService.GetRootFolderByLibraryIdValidatedAsync(libraryId);
+            parentFolderId = rootFolder.Id;
+        }
+        else
+        {
+            // Проверяем, что указанная папка принадлежит библиотеке
+            await CheckFolderBelongsToLibrary(libraryId, parentFolderId.Value);
+        }
+        
         Folder newFolder = new()
         {
             Name = dto.Name,
-            ParentFolderId = dto.ParentFolderId
+            LibraryId = libraryId,
+            ParentFolderId = parentFolderId
         };
         return await repository.AddAsync(newFolder);
     }
