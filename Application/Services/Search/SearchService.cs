@@ -117,7 +117,7 @@ public class SearchService(
     {
         IQueryable<Album> albums = await albumRepository.GetAllAsync();
 
-        string searchPattern = $"%{query}%";
+        string searchPattern = $"{query}".ToLower().Trim();
         albums = albums
             .SnInclude(a => a.VisibilityState)
             .SnThenInclude(vs => vs.Status)
@@ -125,8 +125,8 @@ public class SearchService(
             .SnInclude(a => a.Distributor)
             .SnInclude(a => a.Tracks)
             .Where(a =>
-                EF.Functions.Like(a.Name, searchPattern) ||
-                a.AlbumArtists.Any(aa => EF.Functions.Like(aa.Pseudonym, searchPattern))
+                a.Name.ToLower().Trim().Contains(searchPattern) ||
+                a.AlbumArtists.Any(aa => aa.Artist!.ArtistName.Contains(searchPattern))
             );
 
         // Фильтрация по видимости
@@ -164,7 +164,7 @@ public class SearchService(
     {
         IQueryable<Playlist> playlists = await playlistRepository.GetAllAsync();
 
-        string searchPattern = $"%{query}%";
+        string searchPattern = $"{query}".ToLower().Trim();
         playlists = playlists
             .SnInclude(p => p.VisibilityState)
             .SnThenInclude(vs => vs.Status)
@@ -172,8 +172,8 @@ public class SearchService(
             .SnInclude(p => p.Contributors)
             .SnInclude(p => p.Tracks)
             .Where(p =>
-                EF.Functions.Like(p.Name, searchPattern) ||
-                (p.Creator != null && p.Creator.UserName != null && EF.Functions.Like(p.Creator.UserName, searchPattern))
+                p.Name.ToLower().Trim().Contains(searchPattern) ||
+                (p.Creator != null && p.Creator.UserName != null && p.Creator.UserName.ToLower().Trim().Contains(searchPattern))
             );
 
         // Фильтрация по видимости
@@ -207,10 +207,10 @@ public class SearchService(
     {
         IQueryable<Artist> artists = await artistRepository.GetAllAsync();
 
-        string searchPattern = $"%{query}%";
+        string searchPattern = $"{query}".ToLower().Trim();
         artists = artists
             .SnInclude(a => a.User)
-            .Where(a => EF.Functions.Like(a.ArtistName, searchPattern));
+            .Where(a => a.ArtistName.ToLower().Trim().Contains(searchPattern));
 
         int total = await artists.CountAsync();
 
