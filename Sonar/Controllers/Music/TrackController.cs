@@ -58,8 +58,7 @@ public class TrackController(
         User user = await CheckAccessFeatures([AccessFeatureStruct.ListenContent]);
         int settingsId = user.SettingsId;
 
-        Settings setttings = await settingsService.GetByIdValidatedAsync(settingsId);
-
+        Settings settings = await settingsService.GetByIdValidatedAsync(settingsId);
 
         if (!startPosition.HasValue)
         {
@@ -70,7 +69,7 @@ public class TrackController(
             }
         }
 
-        MusicStreamResultDTO? result = await trackService.GetMusicStreamAsync(trackId, startPosition, length);
+        MusicStreamResultDTO? result = await trackService.GetMusicStreamAsync(trackId, startPosition, length, settings.PreferredPlaybackQualityId);
 
         if (result == null) throw ResponseFactory.Create<NotFoundResponse>([$"Track with ID {trackId} not found"]);
 

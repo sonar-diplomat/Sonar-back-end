@@ -27,7 +27,7 @@ public class TrackService(
         throw new NotImplementedException();
     }
 
-    public async Task<MusicStreamResultDTO?> GetMusicStreamAsync(int trackId, TimeSpan? startPosition, TimeSpan? length)
+    public async Task<MusicStreamResultDTO?> GetMusicStreamAsync(int trackId, TimeSpan? startPosition, TimeSpan? length, int preferredPlaybackQualityId)
     {
         Track track = await repository
             .SnInclude(t => t.VisibilityState)
@@ -37,8 +37,16 @@ public class TrackService(
         // Validate visibility before allowing stream access
         track.VisibilityState.ValidateVisibility("Track", trackId);
 
-        // TODO: Use settings to determine track quality (LowQualityAudioFileId, MediumQualityAudioFileId, HighQualityAudioFileId)
-        int audioFileId = track.LowQualityAudioFileId;
+        // Select audio file based on preferred playback quality with fallback
+        int audioFileId = preferredPlaybackQualityId switch
+        {
+            // High quality (Id = 3)
+            3 => track.HighQualityAudioFileId ?? track.MediumQualityAudioFileId ?? track.LowQualityAudioFileId,
+            // Medium quality (Id = 2)
+            2 => track.MediumQualityAudioFileId ?? track.LowQualityAudioFileId,
+            // Low quality (Id = 1) or default
+            _ => track.LowQualityAudioFileId
+        };
 
         FileStream? finalStream = await audioFileService.GetMusicStreamAsync(audioFileId, startPosition, length);
         return finalStream != null

@@ -7,7 +7,7 @@ namespace Application.Abstractions.Interfaces.Services;
 
 public interface ITrackService : IGenericService<Track>
 {
-    Task<MusicStreamResultDTO?> GetMusicStreamAsync(int songId, TimeSpan? startPosition, TimeSpan? length);
+    Task<MusicStreamResultDTO?> GetMusicStreamAsync(int songId, TimeSpan? startPosition, TimeSpan? length, int preferredPlaybackQualityId);
     Task<MusicStreamResultDTO?> GetDemoMusicStreamAsync(int songId);
     Task<TrackDTO> GetTrackDtoAsync(int trackId);
     Task<Track> GetTrackWithVisibilityStateAsync(int trackId);

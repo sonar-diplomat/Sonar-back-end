@@ -37,7 +37,8 @@ public class TestController(
     IVisibilityStateService visibilityStateService,
     IImageFileService imageFileService,
     ITrackRepository trackRepository,
-    SonarContext dbContext
+    SonarContext dbContext,
+    IFileStorageService fileStorageService
 ) : BaseController(userManager)
 {
     #region dist
@@ -619,6 +620,196 @@ public class TestController(
                                            .Replace('\\', Path.DirectorySeparatorChar)
                                            .TrimStart('/', '\\');
         return Path.Combine(baseFolder, normalizedPath);
+    }
+
+    /// <summary>
+    /// [TEST] Deletes orphaned files from database and disk.
+    /// </summary>
+    /// <returns>Information about deleted files.</returns>
+    /// <response code="200">Files deleted successfully.</response>
+    /// <remarks>
+    /// This endpoint checks all files (AudioFile, ImageFile, VideoFile) for references.
+    /// If a file is not referenced anywhere, it will be deleted from the database
+    /// and an attempt will be made to delete it from disk.
+    /// </remarks>
+    [HttpPost("files/cleanup")]
+    [ProducesResponseType(typeof(OkResponse<object>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> CleanupOrphanedFiles()
+    {
+        // Get all referenced file IDs
+        var referencedAudioFileIds = new HashSet<int>();
+        var referencedImageFileIds = new HashSet<int>();
+        var referencedVideoFileIds = new HashSet<int>();
+
+        // Get AudioFile references from Tracks
+        var lowQualityIds = await dbContext.Tracks
+            .Select(t => t.LowQualityAudioFileId)
+            .ToListAsync();
+        
+        var mediumQualityIds = await dbContext.Tracks
+            .Where(t => t.MediumQualityAudioFileId != null)
+            .Select(t => t.MediumQualityAudioFileId!.Value)
+            .ToListAsync();
+        
+        var highQualityIds = await dbContext.Tracks
+            .Where(t => t.HighQualityAudioFileId != null)
+            .Select(t => t.HighQualityAudioFileId!.Value)
+            .ToListAsync();
+
+        referencedAudioFileIds.UnionWith(lowQualityIds);
+        referencedAudioFileIds.UnionWith(mediumQualityIds);
+        referencedAudioFileIds.UnionWith(highQualityIds);
+
+        // Get ImageFile references
+        var trackImageIds = await dbContext.Tracks.Select(t => t.CoverId).ToListAsync();
+        var albumImageIds = await dbContext.Albums.Select(a => a.CoverId).ToListAsync();
+        var distributorImageIds = await dbContext.Distributors.Select(d => d.CoverId).ToListAsync();
+        var userImageIds = await dbContext.Users.Select(u => u.AvatarImageId).ToListAsync();
+        var chatImageIds = await dbContext.Chats.Select(c => c.CoverId).ToListAsync();
+
+        referencedImageFileIds.UnionWith(trackImageIds);
+        referencedImageFileIds.UnionWith(albumImageIds);
+        referencedImageFileIds.UnionWith(distributorImageIds);
+        referencedImageFileIds.UnionWith(userImageIds);
+        referencedImageFileIds.UnionWith(chatImageIds);
+
+        // Find orphaned files
+        var orphanedAudioFiles = await dbContext.AudioFiles
+            .Where(f => !referencedAudioFileIds.Contains(f.Id))
+            .ToListAsync();
+
+        var orphanedImageFiles = await dbContext.ImageFiles
+            .Where(f => !referencedImageFileIds.Contains(f.Id))
+            .ToListAsync();
+
+        var orphanedVideoFiles = await dbContext.VideoFiles
+            .Where(f => !referencedVideoFileIds.Contains(f.Id))
+            .ToListAsync();
+
+        var deletedFiles = new List<object>();
+        var deletionErrors = new List<object>();
+
+        // Delete orphaned AudioFiles
+        foreach (var audioFile in orphanedAudioFiles)
+        {
+            try
+            {
+                // Try to delete from disk
+                bool diskDeleted = await fileStorageService.DeleteFile(audioFile.Url);
+
+                // Delete from database
+                dbContext.AudioFiles.Remove(audioFile);
+
+                deletedFiles.Add(new
+                {
+                    Type = "AudioFile",
+                    FileId = audioFile.Id,
+                    FileName = audioFile.ItemName,
+                    Url = audioFile.Url,
+                    DeletedFromDatabase = true,
+                    DeletedFromDisk = diskDeleted
+                });
+            }
+            catch (Exception ex)
+            {
+                deletionErrors.Add(new
+                {
+                    Type = "AudioFile",
+                    FileId = audioFile.Id,
+                    FileName = audioFile.ItemName,
+                    Url = audioFile.Url,
+                    Error = ex.Message
+                });
+            }
+        }
+
+        // Delete orphaned ImageFiles
+        foreach (var imageFile in orphanedImageFiles)
+        {
+            try
+            {
+                // Try to delete from disk
+                bool diskDeleted = await fileStorageService.DeleteFile(imageFile.Url);
+
+                // Delete from database
+                dbContext.ImageFiles.Remove(imageFile);
+
+                deletedFiles.Add(new
+                {
+                    Type = "ImageFile",
+                    FileId = imageFile.Id,
+                    FileName = imageFile.ItemName,
+                    Url = imageFile.Url,
+                    DeletedFromDatabase = true,
+                    DeletedFromDisk = diskDeleted
+                });
+            }
+            catch (Exception ex)
+            {
+                deletionErrors.Add(new
+                {
+                    Type = "ImageFile",
+                    FileId = imageFile.Id,
+                    FileName = imageFile.ItemName,
+                    Url = imageFile.Url,
+                    Error = ex.Message
+                });
+            }
+        }
+
+        // Delete orphaned VideoFiles
+        foreach (var videoFile in orphanedVideoFiles)
+        {
+            try
+            {
+                // Try to delete from disk
+                bool diskDeleted = await fileStorageService.DeleteFile(videoFile.Url);
+
+                // Delete from database
+                dbContext.VideoFiles.Remove(videoFile);
+
+                deletedFiles.Add(new
+                {
+                    Type = "VideoFile",
+                    FileId = videoFile.Id,
+                    FileName = videoFile.ItemName,
+                    Url = videoFile.Url,
+                    DeletedFromDatabase = true,
+                    DeletedFromDisk = diskDeleted
+                });
+            }
+            catch (Exception ex)
+            {
+                deletionErrors.Add(new
+                {
+                    Type = "VideoFile",
+                    FileId = videoFile.Id,
+                    FileName = videoFile.ItemName,
+                    Url = videoFile.Url,
+                    Error = ex.Message
+                });
+            }
+        }
+
+        // Save changes to database
+        int deletedCount = await dbContext.SaveChangesAsync();
+
+        var result = new
+        {
+            DeletedFiles = deletedFiles,
+            DeletionErrors = deletionErrors,
+            Summary = new
+            {
+                TotalOrphanedAudioFiles = orphanedAudioFiles.Count,
+                TotalOrphanedImageFiles = orphanedImageFiles.Count,
+                TotalOrphanedVideoFiles = orphanedVideoFiles.Count,
+                SuccessfullyDeleted = deletedFiles.Count,
+                DeletionErrorsCount = deletionErrors.Count,
+                DatabaseRecordsDeleted = deletedCount
+            }
+        };
+
+        throw ResponseFactory.Create<OkResponse<object>>(result, ["File cleanup completed"]);
     }
 
     # endregion
