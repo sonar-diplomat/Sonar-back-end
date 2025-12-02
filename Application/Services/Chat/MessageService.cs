@@ -91,16 +91,13 @@ public class MessageService(
         if (hasMore && raw.Count > 0)
             nextCursor = raw.First().Id.ToString(CultureInfo.InvariantCulture);
 
-        // Load all MessageRead records for these messages
         List<int> messageIds = raw.Select(x => x.Id).ToList();
         var messageReads = await messageReadService.GetReadRecordsByMessageIdsAsync(messageIds);
 
-        // Group reads by message ID
         var readsByMessageId = messageReads
             .GroupBy(mr => mr.MessageId)
             .ToDictionary(g => g.Key, g => g.ToList());
 
-        // Map to DTOs with read records
         var dtos = raw.Select(x => new MessageDTO
         {
             Id = x.Id,

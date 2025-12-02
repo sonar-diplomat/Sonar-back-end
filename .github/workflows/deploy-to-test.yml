@@ -52,12 +52,14 @@ jobs:
           key: ${{ secrets.TEST_SERVER_SSH_KEY }}
           script: |
             cd ${{ secrets.SERVER_PATH }}
+            mkdir -p uploads
             docker stop sonar-app || true
             docker rm sonar-app || true
             docker rmi sonar:latest || true
             docker load < sonar-app.tar
             docker run -d --name sonar-app \
               -p 8080:8080 -p 8081:8081 \
+              -v "$PWD/uploads:/app/wwwroot/uploads" \
               -e Jwt__Key="${{ secrets.JWT_KEY }}" \
               -e Jwt__Issuer="${{ secrets.JWT_ISSUER }}" \
               -e Jwt__Audience="${{ secrets.JWT_AUDIENCE }}" \
