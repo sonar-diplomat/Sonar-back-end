@@ -79,7 +79,7 @@ public class ChatService(
     }
 
     // TODO: Create some service for cleaning up old reads
-    public async Task ReadMessagesAsync(int userId, int chatId, IEnumerable<int> messageIds)
+    public async Task ReadMessagesAsync(int chatId, int userId, IEnumerable<int> messageIds)
     {
         await CheckUserIsMemberAsync(userId, chatId);
 
@@ -94,8 +94,10 @@ public class ChatService(
         DateTime now = DateTime.UtcNow;
 
         List<MessageRead> newReads = [];
+        List<MessageRead> updatedReads = [];
 
         foreach (int messageId in validMessageIds)
+        {
             if (!existingReadSet.Contains(messageId))
             {
                 newReads.Add(new MessageRead
@@ -108,18 +110,30 @@ public class ChatService(
             else
             {
                 MessageRead? existing = await messageReadService.GetReadRecordAsync(userId, messageId);
-                if (existing?.ReadAt == null)
-                    existing!.ReadAt = now;
+                if (existing != null && existing.ReadAt == null)
+                {
+                    existing.ReadAt = now;
+                    updatedReads.Add(existing);
+                }
             }
+        }
 
         if (newReads.Count > 0)
         {
             await messageReadService.AddRangeAsync(newReads);
+        }
 
+        foreach (MessageRead updatedRead in updatedReads)
+        {
+            await messageReadService.UpdateAsync(updatedRead);
+        }
+
+        if (newReads.Count > 0 || updatedReads.Count > 0)
+        {
             await notifier.MessagesRead(new MessagesReadEvent(
                 chatId,
                 userId,
-                newReads.Select(mr => mr.Id).ToList(),
+                validMessageIds,
                 now
             ));
         }
@@ -129,17 +143,62 @@ public class ChatService(
     {
         await CheckUserIsMemberAsync(userId, chatId);
         ChatModel chat = await repository.SnInclude(c => c.Messages).GetByIdValidatedAsync(chatId);
+        
+        if (chat.Messages.Count == 0)
+            return;
+
+        List<int> messageIds = chat.Messages.Select(m => m.Id).ToList();
+        IEnumerable<int> existingReadIds = await messageReadService.GetReadMessageIdsAsync(userId, messageIds);
+        HashSet<int> existingReadSet = new(existingReadIds);
+
+        DateTime now = DateTime.UtcNow;
+        List<MessageRead> newReads = [];
+        List<MessageRead> updatedReads = [];
+
         foreach (Message message in chat.Messages)
         {
-            if (message.MessagesReads.FirstOrDefault(mr => mr.MessageId == message.Id && mr.UserId == userId) != null)
-                continue;
-            MessageRead messageRead = new()
+            if (!existingReadSet.Contains(message.Id))
             {
-                MessageId = message.Id,
-                UserId = userId,
-                ReadAt = DateTime.UtcNow
-            };
-            await messageReadService.CreateAsync(messageRead);
+                newReads.Add(new MessageRead
+                {
+                    MessageId = message.Id,
+                    UserId = userId,
+                    ReadAt = now
+                });
+            }
+            else
+            {
+                MessageRead? existingRead = await messageReadService.GetReadRecordAsync(userId, message.Id);
+                if (existingRead != null && existingRead.ReadAt == null)
+                {
+                    existingRead.ReadAt = now;
+                    updatedReads.Add(existingRead);
+                }
+            }
+        }
+
+        if (newReads.Count > 0)
+        {
+            await messageReadService.AddRangeAsync(newReads);
+        }
+
+        foreach (MessageRead updatedRead in updatedReads)
+        {
+            await messageReadService.UpdateAsync(updatedRead);
+        }
+
+        if (newReads.Count > 0 || updatedReads.Count > 0)
+        {
+            List<int> readMessageIds = newReads.Select(mr => mr.MessageId)
+                .Concat(updatedReads.Select(mr => mr.MessageId))
+                .ToList();
+            
+            await notifier.MessagesRead(new MessagesReadEvent(
+                chatId,
+                userId,
+                readMessageIds,
+                now
+            ));
         }
     }
 
@@ -198,26 +257,35 @@ public class ChatService(
 
     public async Task<ChatModel> CreateChatAsync(int userId, CreateChatDTO dto)
     {
+        User creator = await userService.GetByIdValidatedAsync(userId);
         ChatModel chat = new()
         {
             Name = dto.Name,
             IsGroup = dto.IsGroup,
             CoverId = dto.CoverId,
-            CreatorId = userId
+            CreatorId = userId,
+            Members = new List<User> { creator }
         };
         await repository.AddAsync(chat);
+        
         if (chat.IsGroup)
             return await repository.UpdateAsync(chat);
+        
         if (dto.UserId == null)
             throw ResponseFactory.Create<ForbiddenResponse>(["Personal chat requires another user"]);
-        chat.Members.Add(await userService.GetByIdValidatedAsync((int)dto.UserId));
+        
+        if (dto.UserId == userId)
+            throw ResponseFactory.Create<BadRequestResponse>(["Cannot create personal chat with yourself"]);
+        
+        User otherUser = await userService.GetByIdValidatedAsync((int)dto.UserId);
+        chat.Members.Add(otherUser);
         return await repository.UpdateAsync(chat);
     }
 
     public async Task<Message> SendMessageAsync(int userId, int chatId, MessageDTO message)
     {
         await CheckUserIsMemberAsync(userId, chatId);
-        Message created = await messageService.CreateAsync(userId, chatId, message);
+        Message created = await messageService.CreateAsync(chatId, userId, message);
 
         await notifier.MessageCreated(new MessageCreatedEvent(
             created.Id,
