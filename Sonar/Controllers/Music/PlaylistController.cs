@@ -20,7 +20,7 @@ public class PlaylistController(
     IPlaylistService playlistService,
     ICollectionService<Playlist> collectionService,
     IShareService shareService)
-    : CollectionController<Playlist>(userManager, collectionService)
+    : CollectionController<Playlist>(userManager, collectionService, shareService)
 {
     /// <summary>
     /// Creates a new playlist for the authenticated user.
