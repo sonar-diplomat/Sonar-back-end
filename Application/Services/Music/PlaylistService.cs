@@ -5,7 +5,9 @@ using Application.DTOs;
 using Application.DTOs.Music;
 using Application.Extensions;
 using Application.Response;
+using Entities.Models.Library;
 using Entities.Models.Music;
+using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Http;
 using System.Text;
 
@@ -37,7 +39,15 @@ public class PlaylistService(
                 : await imageFileService.GetDefaultAsync(),
             VisibilityState = await visibilityStateService.CreateDefaultAsync()
         };
-        return await repository.AddAsync(playlist);
+        playlist = await repository.AddAsync(playlist);
+
+        // Добавляем плейлист в root папку библиотеки пользователя
+        User user = await userService.GetByIdValidatedAsync(creatorId);
+        Folder rootFolder = await libraryService.GetRootFolderByLibraryIdValidatedAsync(user.LibraryId);
+        rootFolder.Collections.Add(playlist);
+        await folderService.UpdateAsync(rootFolder);
+
+        return playlist;
     }
 
     public async Task DeleteAsync(int playlistId, int userId)
@@ -112,7 +122,7 @@ public class PlaylistService(
             .SnInclude(p => p.VisibilityState)
             .SnThenInclude(vs => vs.Status)
             .GetByIdValidatedAsync(playlistId);
-        
+
         // Validate playlist visibility before returning tracks
         playlist.VisibilityState.ValidateVisibility("Playlist", playlistId);
 
@@ -129,20 +139,20 @@ public class PlaylistService(
         List<TrackDTO> items = tracks
             .Where(t => t.VisibilityState?.IsAccessible() ?? false)
             .Select(t => new TrackDTO
-        {
-            Id = t.Id,
-            Title = t.Title,
-            DurationInSeconds = (int)(t.Duration?.TotalSeconds ?? 0),
-            IsExplicit = t.IsExplicit,
-            DrivingDisturbingNoises = t.DrivingDisturbingNoises,
-            CoverId = t.CoverId,
-            AudioFileId = t.LowQualityAudioFileId,
-            Artists = t.TrackArtists?.Select(ta => new AuthorDTO
             {
-                Pseudonym = ta.Pseudonym,
-                ArtistId = ta.ArtistId
-            }).ToList() ?? new List<AuthorDTO>()
-        }).ToList();
+                Id = t.Id,
+                Title = t.Title,
+                DurationInSeconds = (int)(t.Duration?.TotalSeconds ?? 0),
+                IsExplicit = t.IsExplicit,
+                DrivingDisturbingNoises = t.DrivingDisturbingNoises,
+                CoverId = t.CoverId,
+                AudioFileId = t.LowQualityAudioFileId,
+                Artists = t.TrackArtists?.Select(ta => new AuthorDTO
+                {
+                    Pseudonym = ta.Pseudonym,
+                    ArtistId = ta.ArtistId
+                }).ToList() ?? new List<AuthorDTO>()
+            }).ToList();
 
         string? nextCursor = null;
         if (items.Count != limit)

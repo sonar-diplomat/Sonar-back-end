@@ -812,5 +812,52 @@ public class TestController(
         throw ResponseFactory.Create<OkResponse<object>>(result, ["File cleanup completed"]);
     }
 
+    /// <summary>
+    /// [TEST] Updates the default image file (file with ID 1).
+    /// </summary>
+    /// <param name="file">The new image file to replace the default image.</param>
+    /// <returns>Success response upon default image update.</returns>
+    /// <response code="200">Default image updated successfully.</response>
+    /// <response code="404">Default image file not found.</response>
+    /// <remarks>
+    /// This is a test endpoint for development/testing purposes.
+    /// Replaces the default image file (ID = 1) with a new uploaded image.
+    /// </remarks>
+    [HttpPut("default-image")]
+    [Consumes("multipart/form-data")]
+    [ProducesResponseType(typeof(OkResponse<ImageFile>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpdateDefaultImage([FromForm] IFormFile file)
+    {
+        // Get the default image file (ID = 1)
+        ImageFile? defaultImage = await dbContext.ImageFiles.FirstOrDefaultAsync(f => f.Id == 1);
+        if (defaultImage == null)
+        {
+            throw ResponseFactory.Create<NotFoundResponse>(["Default image file (ID = 1) not found"]);
+        }
+
+        // Save the old URL before updating
+        string oldUrl = defaultImage.Url;
+
+        // Upload the new image file
+        ImageFile newImage = await imageFileService.UploadFileAsync(file);
+
+        // Update the default image file with new URL and filename
+        defaultImage.Url = newImage.Url;
+        defaultImage.ItemName = newImage.ItemName;
+
+        // Save changes to database
+        await dbContext.SaveChangesAsync();
+
+        // Delete the old file from disk
+        await fileStorageService.DeleteFile(oldUrl);
+
+        // Delete the newly created image file record (we only needed its URL)
+        dbContext.ImageFiles.Remove(newImage);
+        await dbContext.SaveChangesAsync();
+
+        throw ResponseFactory.Create<OkResponse<ImageFile>>(defaultImage, ["Default image updated successfully"]);
+    }
+
     # endregion
 }

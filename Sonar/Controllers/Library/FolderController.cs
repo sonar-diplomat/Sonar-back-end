@@ -26,15 +26,16 @@ public class FolderController(
     /// <returns>Folder DTO with subfolders and collection summaries.</returns>
     /// <response code="200">Folder retrieved successfully.</response>
     /// <response code="404">Folder not found.</response>
-    /// <remarks>
-    /// TODO: Make it work only with a user from JWT for authorization.
-    /// </remarks>
+    /// <response code="401">User not authenticated.</response>
     [HttpGet("{folderId:int}")]
+    [Authorize]
     [ProducesResponseType(typeof(OkResponse<FolderDTO>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetFolder(int folderId)
     {
-        Folder folder = await folderService.GetFolderByIdIncludeCollectionsValidatedAsync(folderId);
+        int libraryId = (await CheckAccessFeatures([])).LibraryId;
+        Folder folder = await folderService.GetFolderByIdIncludeCollectionsValidatedAsync(folderId, libraryId);
         FolderDTO dto = new()
         {
             Id = folder.Id,
@@ -51,7 +52,10 @@ public class FolderController(
                 CollectionCount = sf.Collections?.Count ?? 0
             }).ToList() ?? new List<SubFolderDTO>(),
             Collections = folder.Collections?
-                .Where(c => c.VisibilityState?.IsAccessible() ?? false)
+                .Where(c =>
+                    // Для root папки (IsProtected = true) показываем все коллекции (включая Favorites)
+                    // Для остальных папок применяем фильтр по видимости
+                    folder.IsProtected || (c.VisibilityState?.IsAccessible() ?? false))
                 .Select(c => new CollectionSummaryDTO
                 {
                     Id = c.Id,
@@ -64,15 +68,19 @@ public class FolderController(
     }
 
     /// <summary>
-    /// Retrieves all folders in the system with their subfolders and collections.
+    /// Retrieves all folders in the user's library with their subfolders and collections.
     /// </summary>
     /// <returns>Collection of folder DTOs with subfolder and collection summaries.</returns>
     /// <response code="200">All folders retrieved successfully.</response>
+    /// <response code="401">User not authenticated.</response>
     [HttpGet]
+    [Authorize]
     [ProducesResponseType(typeof(OkResponse<IEnumerable<FolderDTO>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetAllFolders()
     {
-        IEnumerable<Folder> folders = await folderService.GetAllFoldersWithCollectionsAsync();
+        int libraryId = (await CheckAccessFeatures([])).LibraryId;
+        IEnumerable<Folder> folders = await folderService.GetAllFoldersWithCollectionsByLibraryIdAsync(libraryId);
         IEnumerable<FolderDTO> dtos = folders.Select(folder => new FolderDTO
         {
             Id = folder.Id,
@@ -89,7 +97,10 @@ public class FolderController(
                 CollectionCount = sf.Collections?.Count ?? 0
             }).ToList() ?? new List<SubFolderDTO>(),
             Collections = folder.Collections?
-                .Where(c => c.VisibilityState?.IsAccessible() ?? false)
+                .Where(c =>
+                    // Для root папки (IsProtected = true) показываем все коллекции (включая Favorites)
+                    // Для остальных папок применяем фильтр по видимости
+                    folder.IsProtected || (c.VisibilityState?.IsAccessible() ?? false))
                 .Select(c => new CollectionSummaryDTO
                 {
                     Id = c.Id,
@@ -167,7 +178,10 @@ public class FolderController(
                 CollectionCount = sf.Collections?.Count ?? 0
             }).ToList() ?? new List<SubFolderDTO>(),
             Collections = folder.Collections?
-                .Where(c => c.VisibilityState?.IsAccessible() ?? false)
+                .Where(c =>
+                    // Для root папки (IsProtected = true) показываем все коллекции (включая Favorites)
+                    // Для остальных папок применяем фильтр по видимости
+                    folder.IsProtected || (c.VisibilityState?.IsAccessible() ?? false))
                 .Select(c => new CollectionSummaryDTO
                 {
                     Id = c.Id,

@@ -5,31 +5,28 @@ using Application.Extensions;
 using Application.Response;
 using Entities.Models.Library;
 using Microsoft.EntityFrameworkCore;
-using LibraryModel = Entities.Models.Library.Library;
 
 namespace Application.Services.Library;
 
 public class FolderService(
-    IFolderRepository repository,
-    ILibraryRepository libraryRepository
+    IFolderRepository repository
 ) : GenericService<Folder>(repository), IFolderService
 {
     public async Task<Folder> CreateFolderAsync(int libraryId, CreateFolderDTO dto)
     {
         int? parentFolderId = dto.ParentFolderId;
-        
+
         // Если parentFolderId == null || 0, используем root папку библиотеки
-        if (parentFolderId == null || parentFolderId == 0)
+        if (parentFolderId is null or 0)
         {
-            // Получаем библиотеку и её RootFolderId напрямую через репозиторий
-            LibraryModel? library = await libraryRepository.GetByIdAsync(libraryId);
-            if (library == null)
-                throw ResponseFactory.Create<NotFoundResponse>(["Library not found"]);
-            if (library.RootFolderId == null)
-                throw ResponseFactory.Create<NotFoundResponse>(["Root folder not found for this library"]);
+            // Получаем RootFolderId напрямую через репозиторий
+            int? rootFolderId = await repository.GetRootFolderIdByLibraryIdAsync(libraryId);
             
+            if (rootFolderId == null)
+                throw ResponseFactory.Create<NotFoundResponse>(["Root folder not found for this library"]);
+
             // Получаем root папку через свой метод
-            Folder rootFolder = await GetFolderByIdIncludeCollectionsValidatedAsync(library.RootFolderId.Value);
+            Folder rootFolder = await GetFolderByIdIncludeCollectionsValidatedAsync(rootFolderId.Value);
             parentFolderId = rootFolder.Id;
         }
         else
@@ -37,7 +34,7 @@ public class FolderService(
             // Проверяем, что указанная папка принадлежит библиотеке
             await CheckFolderBelongsToLibrary(libraryId, parentFolderId.Value);
         }
-        
+
         Folder newFolder = new()
         {
             Name = dto.Name,
@@ -79,10 +76,38 @@ public class FolderService(
             .GetByIdValidatedAsync(folderId);
     }
 
+    public async Task<Folder> GetFolderByIdIncludeCollectionsValidatedAsync(int folderId, int libraryId)
+    {
+        Folder folder = await repository
+            .SnInclude(f => f.Library)
+            .SnInclude(f => f.Collections)
+            .ThenInclude(c => c.VisibilityState)
+            .ThenInclude(vs => vs.Status)
+            .GetByIdValidatedAsync(folderId);
+        
+        if (folder.Library.Id != libraryId)
+            throw ResponseFactory.Create<NotFoundResponse>(["Folder not found"]);
+        
+        return folder;
+    }
+
     public async Task<IEnumerable<Folder>> GetAllFoldersWithCollectionsAsync()
     {
         IQueryable<Folder> query = await repository.GetAllAsync();
         return query
+            .Include(f => f.Collections)
+            .ThenInclude(c => c.VisibilityState)
+            .ThenInclude(vs => vs.Status)
+            .Include(f => f.SubFolders)
+            .Include(f => f.ParentFolder)
+            .ToList();
+    }
+
+    public async Task<IEnumerable<Folder>> GetAllFoldersWithCollectionsByLibraryIdAsync(int libraryId)
+    {
+        IQueryable<Folder> query = await repository.GetAllAsync();
+        return query
+            .Where(f => f.LibraryId == libraryId)
             .Include(f => f.Collections)
             .ThenInclude(c => c.VisibilityState)
             .ThenInclude(vs => vs.Status)

@@ -10,5 +10,7 @@ public interface IFolderService : IGenericService<Folder>
     Task DeleteFolderAsync(int libraryId, int folderId);
     Task MoveFolder(int libraryId, int folderId, int newParentFolderId);
     Task<Folder> GetFolderByIdIncludeCollectionsValidatedAsync(int folderId);
+    Task<Folder> GetFolderByIdIncludeCollectionsValidatedAsync(int folderId, int libraryId);
     Task<IEnumerable<Folder>> GetAllFoldersWithCollectionsAsync();
+    Task<IEnumerable<Folder>> GetAllFoldersWithCollectionsByLibraryIdAsync(int libraryId);
 }
