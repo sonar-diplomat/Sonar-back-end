@@ -35,22 +35,24 @@ public class ExceptionMiddleware(RequestDelegate next, IHostEnvironment environm
     {
         if (ex is not Response appResponse)
         {
-            if (environment.IsDevelopment())
-            {
 
-                ExceptionDispatchInfo.Capture(ex).Throw();
-                return;
-            }
+            //if (environment.IsDevelopment())
+            //{
 
-            context.Response.ContentType = "application/json";
-            context.Response.StatusCode = 500;
-            var genericError = new
-            {
-                StatusCode = 500,
-                Message = "An internal server error occurred."
-            };
-            string json = JsonSerializer.Serialize(genericError, SerializerOptions);
-            await context.Response.WriteAsync(json);
+            //    ExceptionDispatchInfo.Capture(ex).Throw();
+            //    return;
+            //}
+
+            //context.Response.ContentType = "application/json";
+            //context.Response.StatusCode = 500;
+            //var genericError = new
+            //{
+            //    StatusCode = 500,
+            //    Message = "An internal server error occurred."
+            //};
+            //string json = JsonSerializer.Serialize(genericError, SerializerOptions);
+            //await context.Response.WriteAsync(json);
+            ExceptionDispatchInfo.Capture(ex).Throw();
             return;
         }
 
