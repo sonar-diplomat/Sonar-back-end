@@ -14,7 +14,6 @@ namespace Application.Services.Music;
 public class TrackService(
     ITrackRepository repository,
     IAudioFileService audioFileService,
-    IAlbumService albumService,
     IVisibilityStateService visibilityStateService,
     ILibraryService libraryService,
     IArtistService artistService,
@@ -27,15 +26,31 @@ public class TrackService(
         throw new NotImplementedException();
     }
 
-    public async Task<MusicStreamResultDTO?> GetMusicStreamAsync(int trackId, TimeSpan? startPosition, TimeSpan? length, int preferredPlaybackQualityId)
+    public async Task<MusicStreamResultDTO?> GetMusicStreamAsync(int trackId, TimeSpan? startPosition, TimeSpan? length, int preferredPlaybackQualityId, int? userId = null)
     {
         Track track = await repository
             .SnInclude(t => t.VisibilityState)
             .SnThenInclude(vs => vs.Status)
             .GetByIdValidatedAsync(trackId);
 
-        // Validate visibility before allowing stream access
-        track.VisibilityState.ValidateVisibility("Track", trackId);
+        // Load TrackArtists with Artist.UserId to check if user is an author
+        if (userId.HasValue)
+        {
+            track = await repository
+                .Query()
+                .Include(t => t.TrackArtists)
+                .ThenInclude(ta => ta.Artist)
+                .FirstOrDefaultAsync(t => t.Id == trackId) ?? track;
+        }
+
+        // Get author user IDs from TrackArtists
+        IEnumerable<int>? authorIds = track.TrackArtists?
+            .Where(ta => ta.Artist != null)
+            .Select(ta => ta.Artist!.UserId)
+            .ToList();
+
+        // Validate visibility before allowing stream access (ignore if user is author)
+        VisibilityStateValidator.IsAccessible(track.VisibilityState, userId, authorIds, "Track", trackId);
 
         // Select audio file based on preferred playback quality with fallback
         int audioFileId = preferredPlaybackQualityId switch
@@ -54,7 +69,7 @@ public class TrackService(
             : throw ResponseFactory.Create<UnprocessableContentResponse>(["Unable to process audio stream"]);
     }
 
-    public async Task<TrackDTO> GetTrackDtoAsync(int trackId)
+    public async Task<TrackDTO> GetTrackDtoAsync(int trackId, int? userId = null)
     {
         Track track = await repository
             .SnInclude(t => t.Cover)
@@ -70,8 +85,14 @@ public class TrackService(
             .ThenInclude(ta => ta.Artist)
             .FirstOrDefaultAsync(t => t.Id == trackId) ?? track;
 
-        // Validate visibility before returning track data
-        track.VisibilityState.ValidateVisibility("Track", trackId);
+        // Get author user IDs from TrackArtists
+        IEnumerable<int>? authorIds = track.TrackArtists?
+            .Where(ta => ta.Artist != null)
+            .Select(ta => ta.Artist!.UserId)
+            .ToList();
+
+        // Validate visibility before returning track data (ignore if user is author)
+        VisibilityStateValidator.IsAccessible(track.VisibilityState, userId, authorIds, "Track", trackId);
 
         return new TrackDTO
         {
@@ -96,113 +117,6 @@ public class TrackService(
             .SnInclude(t => t.VisibilityState)
             .SnThenInclude(vs => vs.Status)
             .GetByIdValidatedAsync(trackId);
-    }
-
-    public async Task<Track> CreateTrackAsync(int albumId, UploadTrackDTO dto)
-    {
-        Album album = await albumService.GetValidatedIncludeTracksAsync(albumId);
-        Album albumWithDistributor = await albumService.GetValidatedIncludeDistributorAsync(albumId);
-        Album albumWithArtists = await albumService.GetValidatedIncludeAlbumArtistsAsync(albumId);
-
-        Track track = new()
-        {
-            Title = dto.Title,
-            IsExplicit = dto.IsExplicit,
-            DrivingDisturbingNoises = dto.DrivingDisturbingNoises,
-            VisibilityStateId = (await visibilityStateService.CreateDefaultAsync()).Id,
-            LowQualityAudioFileId = (await audioFileService.UploadFileAsync(dto.LowQualityAudioFile)).Id,
-            MediumQualityAudioFileId = dto.MediumQualityAudioFile != null
-                ? (await audioFileService.UploadFileAsync(dto.MediumQualityAudioFile)).Id
-                : null,
-            HighQualityAudioFileId = dto.HighQualityAudioFile != null
-                ? (await audioFileService.UploadFileAsync(dto.HighQualityAudioFile)).Id
-                : null,
-            CoverId = albumWithDistributor.CoverId,
-            Duration = await audioFileService.GetDurationAsync(dto.LowQualityAudioFile)
-        };
-
-        album.Tracks.Add(track);
-        track = await repository.AddAsync(track);
-
-        // Добавляем артистов-авторов альбома в авторы трека
-        HashSet<int> addedArtistIds = new();
-        HashSet<string> addedPseudonyms = new();
-        if (albumWithArtists.AlbumArtists != null)
-        {
-            foreach (AlbumArtist albumArtist in albumWithArtists.AlbumArtists)
-            {
-                // Пропускаем, если псевдоним уже добавлен
-                if (addedPseudonyms.Contains(albumArtist.Pseudonym))
-                    continue;
-
-                // Проверяем, не добавлен ли уже этот артист по ID
-                if (albumArtist.ArtistId.HasValue && !addedArtistIds.Contains(albumArtist.ArtistId.Value))
-                {
-                    TrackArtist trackArtist = new()
-                    {
-                        Pseudonym = albumArtist.Pseudonym,
-                        TrackId = track.Id,
-                        ArtistId = albumArtist.ArtistId
-                    };
-                    await trackArtistService.CreateAsync(trackArtist);
-                    addedArtistIds.Add(albumArtist.ArtistId.Value);
-                    addedPseudonyms.Add(albumArtist.Pseudonym);
-                }
-                else if (!albumArtist.ArtistId.HasValue)
-                {
-                    // Если ArtistId не указан, создаем TrackArtist только с Pseudonym
-                    TrackArtist trackArtist = new()
-                    {
-                        Pseudonym = albumArtist.Pseudonym,
-                        TrackId = track.Id,
-                        ArtistId = null
-                    };
-                    await trackArtistService.CreateAsync(trackArtist);
-                    addedPseudonyms.Add(albumArtist.Pseudonym);
-                }
-            }
-        }
-
-        // Добавляем дополнительных авторов из DTO
-        if (dto.AdditionalArtists != null)
-        {
-            foreach (AuthorDTO authorDto in dto.AdditionalArtists)
-            {
-                // Пропускаем, если псевдоним уже добавлен
-                if (addedPseudonyms.Contains(authorDto.Pseudonym))
-                    continue;
-
-                int? artistId = authorDto.ArtistId;
-                
-                // Если ArtistId указан в DTO, используем его
-                if (artistId.HasValue && !addedArtistIds.Contains(artistId.Value))
-                {
-                    TrackArtist trackArtist = new()
-                    {
-                        Pseudonym = authorDto.Pseudonym,
-                        TrackId = track.Id,
-                        ArtistId = artistId
-                    };
-                    await trackArtistService.CreateAsync(trackArtist);
-                    addedArtistIds.Add(artistId.Value);
-                    addedPseudonyms.Add(authorDto.Pseudonym);
-                }
-                // Если ArtistId не указан, создаем TrackArtist только с Pseudonym
-                else if (!artistId.HasValue)
-                {
-                    TrackArtist trackArtist = new()
-                    {
-                        Pseudonym = authorDto.Pseudonym,
-                        TrackId = track.Id,
-                        ArtistId = null
-                    };
-                    await trackArtistService.CreateAsync(trackArtist);
-                    addedPseudonyms.Add(authorDto.Pseudonym);
-                }
-            }
-        }
-
-        return track;
     }
 
     public async Task<AudioFile> UpdateTrackFileAsync(int trackId, int playbackQualityId, IFormFile file)
@@ -259,7 +173,7 @@ public class TrackService(
 
         // Проверяем, не добавлен ли уже этот артист
         bool alreadyExists = await trackArtistService.GetAllAsync() is IEnumerable<TrackArtist> existing &&
-                             existing.Any(ta => ta.TrackId == trackId && 
+                             existing.Any(ta => ta.TrackId == trackId &&
                                  (authorDto.ArtistId.HasValue && ta.ArtistId == authorDto.ArtistId.Value ||
                                   ta.Pseudonym == authorDto.Pseudonym));
 

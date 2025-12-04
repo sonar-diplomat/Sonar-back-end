@@ -4,6 +4,7 @@ using Application.DTOs;
 using Application.Extensions;
 using Application.Response;
 using Entities.Models.Library;
+using Entities.Models.Music;
 using Microsoft.EntityFrameworkCore;
 
 namespace Application.Services.Library;
@@ -21,7 +22,7 @@ public class FolderService(
         {
             // Получаем RootFolderId напрямую через репозиторий
             int? rootFolderId = await repository.GetRootFolderIdByLibraryIdAsync(libraryId);
-            
+
             if (rootFolderId == null)
                 throw ResponseFactory.Create<NotFoundResponse>(["Root folder not found for this library"]);
 
@@ -73,6 +74,8 @@ public class FolderService(
             .SnInclude(f => f.Collections)
             .ThenInclude(c => c.VisibilityState)
             .ThenInclude(vs => vs.Status)
+            .SnInclude(f => f.SubFolders)
+            .SnInclude(f => f.ParentFolder)
             .GetByIdValidatedAsync(folderId);
     }
 
@@ -83,11 +86,18 @@ public class FolderService(
             .SnInclude(f => f.Collections)
             .ThenInclude(c => c.VisibilityState)
             .ThenInclude(vs => vs.Status)
+            .SnInclude(f => f.Collections)
+            .ThenInclude(c => (c as Playlist).Creator)
+            .SnInclude(f => f.Collections)
+            .ThenInclude(c => (c as Album).AlbumArtists)
+            .ThenInclude(aa => aa.Artist)
+            .SnInclude(f => f.SubFolders)
+            .SnInclude(f => f.ParentFolder)
             .GetByIdValidatedAsync(folderId);
-        
+
         if (folder.Library.Id != libraryId)
             throw ResponseFactory.Create<NotFoundResponse>(["Folder not found"]);
-        
+
         return folder;
     }
 
@@ -111,6 +121,11 @@ public class FolderService(
             .Include(f => f.Collections)
             .ThenInclude(c => c.VisibilityState)
             .ThenInclude(vs => vs.Status)
+            .Include(f => f.Collections)
+            .ThenInclude(c => (c as Playlist).Creator)
+            .Include(f => f.Collections)
+            .ThenInclude(c => (c as Album).AlbumArtists)
+            .ThenInclude(aa => aa.Artist)
             .Include(f => f.SubFolders)
             .Include(f => f.ParentFolder)
             .ToList();

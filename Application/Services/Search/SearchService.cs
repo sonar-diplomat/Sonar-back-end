@@ -71,14 +71,15 @@ public class SearchService(
             .SnInclude(t => t.VisibilityState)
             .SnThenInclude(vs => vs.Status)
             .SnInclude(t => t.TrackArtists)
+            .ThenInclude(ta => ta.Artist)
             .SnInclude(t => t.Collections)
             .Where(t =>
                 t.Title.ToLower().Trim().Contains(searchPattern) ||
                 t.TrackArtists.Any(ta => ta.Artist!.ArtistName.Contains(searchPattern))
             );
 
-        // Фильтрация по видимости для треков
-        tracks = FilterTracksByVisibility(tracks, userId);
+        // Фильтрация по видимости для треков (учитывая авторов)
+        tracks = VisibilityStateValidator.FilterTracksByVisibility(tracks, userId);
         var names = tracks.ToList();
         int total = await tracks.CountAsync();
 
@@ -125,14 +126,15 @@ public class SearchService(
             .SnInclude(a => a.Distributor)
             .SnInclude(a => a.Tracks)
             .Where(a =>
-                a.Name.ToLower().Trim().Contains(searchPattern) ||
-                a.AlbumArtists.Any(aa => aa.Artist!.ArtistName.Contains(searchPattern))
+                a.Name.ToLower().Trim().Contains(searchPattern)/* ||
+                a.AlbumArtists.Any(aa => aa.Artist!.ArtistName.Contains(searchPattern))*/
             );
-
-        // Фильтрация по видимости
-        albums = FilterByVisibility(albums, userId);
-
         int total = await albums.CountAsync();
+        // Фильтрация по видимости с учетом авторов
+        albums = VisibilityStateValidator.FilterAlbumsByVisibility(albums, userId);
+
+        /*int */
+        total = await albums.CountAsync();
 
         List<Album> albumList = await albums
             .Skip(offset)
@@ -176,8 +178,8 @@ public class SearchService(
                 (p.Creator != null && p.Creator.UserName != null && p.Creator.UserName.ToLower().Trim().Contains(searchPattern))
             );
 
-        // Фильтрация по видимости
-        playlists = FilterByVisibility(playlists, userId);
+        // Фильтрация по видимости с учетом авторов
+        playlists = VisibilityStateValidator.FilterPlaylistsByVisibility(playlists, userId);
 
         int total = await playlists.CountAsync();
 
@@ -287,24 +289,5 @@ public class SearchService(
         return await Task.FromResult(Enumerable.Empty<string>());
     }
 
-    private IQueryable<T> FilterByVisibility<T>(IQueryable<T> query, int? userId) where T : Collection
-    {
-        // Используем ShouldAppearInSearch для фильтрации результатов поиска
-        // Для поиска показываем только Visible и Restricted контент, который уже публичен
-        return query.Where(c =>
-            c.VisibilityState.StatusId != 4 && // Hidden
-            c.VisibilityState.SetPublicOn <= DateTime.UtcNow &&
-            (c.VisibilityState.StatusId == 1 || c.VisibilityState.StatusId == 3) // Visible or Restricted
-        );
-    }
-
-    private IQueryable<Track> FilterTracksByVisibility(IQueryable<Track> query, int? userId)
-    {
-        // Фильтрация треков по видимости (Track не наследуется от Collection)
-        return query.Where(t =>
-            t.VisibilityState.StatusId != 4 && // Hidden
-            (t.VisibilityState.StatusId == 1 || t.VisibilityState.StatusId == 3) // Visible or Restricted
-        );
-    }
 }
 

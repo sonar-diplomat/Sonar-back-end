@@ -69,7 +69,7 @@ public class TrackController(
             }
         }
 
-        MusicStreamResultDTO? result = await trackService.GetMusicStreamAsync(trackId, startPosition, length, settings.PreferredPlaybackQualityId);
+        MusicStreamResultDTO? result = await trackService.GetMusicStreamAsync(trackId, startPosition, length, settings.PreferredPlaybackQualityId, user.Id);
 
         if (result == null) throw ResponseFactory.Create<NotFoundResponse>([$"Track with ID {trackId} not found"]);
 
@@ -161,7 +161,19 @@ public class TrackController(
     [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetTrackById(int trackId)
     {
-        TrackDTO trackDto = await trackService.GetTrackDtoAsync(trackId);
+        // Try to get userId if user is authenticated, but don't require authentication
+        int? userId = null;
+        try
+        {
+            User? user = await GetUserByJwt();
+            userId = user?.Id;
+        }
+        catch
+        {
+            // User is not authenticated, userId remains null
+        }
+
+        TrackDTO trackDto = await trackService.GetTrackDtoAsync(trackId, userId);
         throw ResponseFactory.Create<OkResponse<TrackDTO>>(trackDto, ["Track successfully retrieved"]);
     }
 

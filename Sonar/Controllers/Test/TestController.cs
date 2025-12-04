@@ -8,6 +8,7 @@ using Application.Response;
 using Entities.Enums;
 using Entities.Models.Chat;
 using Entities.Models.Distribution;
+using Entities.Models.File;
 using Entities.Models.Library;
 using Entities.Models.UserCore;
 using Infrastructure.Data;
@@ -15,11 +16,9 @@ using Logging;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using Settings = Entities.Models.ClientSettings.Settings;
 using SysFile = System.IO.File;
-using File = Entities.Models.File;
 
 namespace Sonar.Controllers.Test;
 
@@ -425,7 +424,7 @@ public class TestController(
     public async Task<IActionResult> ValidateTrackFiles()
     {
         string baseFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
-        
+
         // Get all tracks with their files
         IQueryable<Entities.Models.Music.Track> tracksQuery = await trackRepository.GetAllAsync();
         List<Entities.Models.Music.Track> tracks = await tracksQuery
@@ -549,18 +548,18 @@ public class TestController(
 
         // Find orphaned files on disk
         var orphanedDiskFiles = new List<object>();
-        
+
         if (Directory.Exists(baseFolder))
         {
             var allDiskFiles = Directory.GetFiles(baseFolder, "*", SearchOption.AllDirectories);
             var allReferencedUrls = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            
+
             // Get all referenced URLs from database
             var allReferencedAudioUrls = await dbContext.AudioFiles
                 .Where(f => referencedAudioFileIds.Contains(f.Id))
                 .Select(f => f.Url)
                 .ToListAsync();
-            
+
             var allReferencedImageUrls = await dbContext.ImageFiles
                 .Where(f => referencedImageFileIds.Contains(f.Id))
                 .Select(f => f.Url)
@@ -573,10 +572,10 @@ public class TestController(
             {
                 string relativePath = Path.GetRelativePath(baseFolder, diskFile)
                     .Replace('\\', '/');
-                
+
                 // Check if this file is referenced
                 bool isReferenced = allReferencedUrls.Contains(relativePath);
-                
+
                 if (!isReferenced)
                 {
                     var fileInfo = new FileInfo(diskFile);
@@ -645,12 +644,12 @@ public class TestController(
         var lowQualityIds = await dbContext.Tracks
             .Select(t => t.LowQualityAudioFileId)
             .ToListAsync();
-        
+
         var mediumQualityIds = await dbContext.Tracks
             .Where(t => t.MediumQualityAudioFileId != null)
             .Select(t => t.MediumQualityAudioFileId!.Value)
             .ToListAsync();
-        
+
         var highQualityIds = await dbContext.Tracks
             .Where(t => t.HighQualityAudioFileId != null)
             .Select(t => t.HighQualityAudioFileId!.Value)

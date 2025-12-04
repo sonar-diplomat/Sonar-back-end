@@ -115,7 +115,7 @@ public class PlaylistService(
         await repository.UpdateAsync(playlist);
     }
 
-    public async Task<CursorPageDTO<TrackDTO>> GetPlaylistTracksAsync(int playlistId, string? afterCursor, int limit)
+    public async Task<CursorPageDTO<TrackDTO>> GetPlaylistTracksAsync(int playlistId, string? afterCursor, int limit, int? userId = null)
     {
         int? afterId = null;
         Playlist playlist = await repository
@@ -123,8 +123,8 @@ public class PlaylistService(
             .SnThenInclude(vs => vs.Status)
             .GetByIdValidatedAsync(playlistId);
 
-        // Validate playlist visibility before returning tracks
-        playlist.VisibilityState.ValidateVisibility("Playlist", playlistId);
+        // Validate playlist visibility before returning tracks (ignore if user is creator)
+        VisibilityStateValidator.IsAccessible(playlist.VisibilityState, userId, userId.HasValue && playlist.CreatorId == userId.Value ? [userId.Value] : null, "Playlist", playlistId);
 
         if (!string.IsNullOrEmpty(afterCursor))
         {
@@ -135,9 +135,21 @@ public class PlaylistService(
 
         List<Track> tracks = await repository.GetTracksFromPlaylistAfterAsync(playlistId, afterId, limit);
 
-        // Filter out tracks that are not accessible (Hidden or not yet public)
+        // Filter out tracks that are not accessible (Hidden or not yet public), but allow if user is author
         List<TrackDTO> items = tracks
-            .Where(t => t.VisibilityState?.IsAccessible() ?? false)
+            .Where(t =>
+            {
+                if (t.VisibilityState == null)
+                    return false;
+
+                // Get author user IDs from TrackArtists
+                IEnumerable<int>? trackAuthorIds = t.TrackArtists?
+                    .Where(ta => ta.Artist?.UserId != null)
+                    .Select(ta => ta.Artist!.UserId!)
+                    .ToList();
+
+                return VisibilityStateValidator.IsAccessible(t.VisibilityState, userId, trackAuthorIds);
+            })
             .Select(t => new TrackDTO
             {
                 Id = t.Id,

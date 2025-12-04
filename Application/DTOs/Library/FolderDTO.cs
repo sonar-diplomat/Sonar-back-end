@@ -11,7 +11,7 @@ public class FolderDTO
     public string? ParentFolderName { get; set; }
     
     // Collections
-    public List<SubFolderDTO> SubFolders { get; set; }
+    public List<FolderDTO> SubFolders { get; set; }
     public List<CollectionSummaryDTO> Collections { get; set; }
 }
 

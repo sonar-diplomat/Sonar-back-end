@@ -173,7 +173,7 @@ public class AlbumController(
     {
         await MatchAlbumAndDistributor(albumId);
         // TODO: create DTO
-        Track track = await trackService.CreateTrackAsync(albumId, dto);
+        Track track = await albumService.CreateTrackAsync(albumId, dto);
         throw ResponseFactory.Create<OkResponse<Track>>(track, ["Track was added successfully"]);
     }
 
@@ -195,8 +195,23 @@ public class AlbumController(
     [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetAlbumTracks(int albumId)
     {
+        Distributor distributor = await this.CheckDistributorAsync();
         await MatchAlbumAndDistributor(albumId);
-        IEnumerable<TrackDTO> tracks = await albumService.GetAlbumTracksAsync(albumId);
+        
+        // Get userId from distributor account if available
+        int? userId = null;
+        // Note: Distributor doesn't have direct userId, but we can get it from the authenticated user
+        try
+        {
+            User? user = await GetUserByJwt();
+            userId = user?.Id;
+        }
+        catch
+        {
+            // User is not authenticated, userId remains null
+        }
+        
+        IEnumerable<TrackDTO> tracks = await albumService.GetAlbumTracksAsync(albumId, userId);
         throw ResponseFactory.Create<OkResponse<IEnumerable<TrackDTO>>>(tracks, ["Album tracks retrieved successfully"]);
     }
 

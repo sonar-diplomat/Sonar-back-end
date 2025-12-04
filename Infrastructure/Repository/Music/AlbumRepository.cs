@@ -29,6 +29,7 @@ public class AlbumRepository(SonarContext dbContext) : GenericRepository<Album>(
             .Include(t => t.LowQualityAudioFile)
             .Include(t => t.TrackArtists)
             .ThenInclude(ta => ta.Artist)
+            .ThenInclude(a => a.User)
             .Include(t => t.VisibilityState)
             .ThenInclude(vs => vs.Status)
             .AsQueryable();

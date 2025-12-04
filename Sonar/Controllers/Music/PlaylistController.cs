@@ -1,8 +1,8 @@
+using Application;
 using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.Utilities;
 using Application.DTOs;
 using Application.DTOs.Music;
-using Application.Extensions;
 using Application.Response;
 using Entities.Enums;
 using Entities.Models.Music;
@@ -237,10 +237,22 @@ public class PlaylistController(
     [HttpGet("{playlistId}/tracks")]
     [ProducesResponseType(typeof(OkResponse<CursorPageDTO<TrackDTO>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetPlaylistWithCursor(int playlistId, [FromQuery] string? after,
+    public async Task<IActionResult> GetPlaylistTracks(int playlistId, [FromQuery] string? after,
         [FromQuery] int limit = 20)
     {
-        CursorPageDTO<TrackDTO> result = await playlistService.GetPlaylistTracksAsync(playlistId, after, limit);
+        // Try to get userId if user is authenticated, but don't require authentication
+        int? userId = null;
+        try
+        {
+            User? user = await GetUserByJwt();
+            userId = user?.Id;
+        }
+        catch
+        {
+            // User is not authenticated, userId remains null
+        }
+
+        CursorPageDTO<TrackDTO> result = await playlistService.GetPlaylistTracksAsync(playlistId, after, limit, userId);
         throw ResponseFactory.Create<OkResponse<CursorPageDTO<TrackDTO>>>(result,
             ["Playlist tracks retrieved successfully"]);
     }
@@ -260,8 +272,21 @@ public class PlaylistController(
         // Get playlist with VisibilityState included for validation
         Playlist playlist = await playlistService.GetByIdWithVisibilityStateAsync(playlistId);
 
-        // Validate visibility before returning playlist data
-        playlist.VisibilityState.ValidateVisibility("Playlist", playlistId);
+        // Try to get userId if user is authenticated, but don't require authentication
+        int? userId = null;
+        try
+        {
+            User? user = await GetUserByJwt();
+            userId = user?.Id;
+        }
+        catch
+        {
+            // User is not authenticated, userId remains null
+        }
+
+        // Validate visibility before returning playlist data (ignore if user is creator)
+        IEnumerable<int>? authorIds = userId.HasValue && playlist.CreatorId == userId.Value ? [userId.Value] : null;
+        VisibilityStateValidator.IsAccessible(playlist.VisibilityState, userId, authorIds, "Playlist", playlistId);
 
         PlaylistResponseDTO responseDto = new()
         {
