@@ -7,7 +7,7 @@ on:
 
 env:
   AWS_REGION: ${{ secrets.AWS_REGION }}
-  ECR_REPOSITORY: sonar                 # имя репозитория в ECR
+  ECR_REPOSITORY: sonar/backend                 # имя репозитория в ECR
   IMAGE_TAG: ${{ github.sha }}
 
 jobs:
