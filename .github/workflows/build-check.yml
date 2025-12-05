@@ -37,7 +37,7 @@ jobs:
             ${{ runner.os }}-nuget-
 
       - name: Restore
-        run: dotnet restore --nologo
+        run: dotnet restore Sonar.sln --nologo
 
       - name: Build
         run: dotnet build Sonar/Sonar.csproj --configuration Release --no-restore --nologo /m
