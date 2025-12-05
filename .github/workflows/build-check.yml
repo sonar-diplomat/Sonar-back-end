@@ -32,14 +32,12 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
-          key: ${{ runner.os }}-nuget-${{ hashFiles('Sonar-back-end/**/*.csproj', 'Sonar-back-end/**/*.props', 'Sonar-back-end/**/*.targets') }}
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/*.props', '**/*.targets') }}
           restore-keys: |
             ${{ runner.os }}-nuget-
 
       - name: Restore
-        working-directory: Sonar-back-end
         run: dotnet restore --nologo
 
       - name: Build
-        working-directory: Sonar-back-end
         run: dotnet build Sonar/Sonar.csproj --configuration Release --no-restore --nologo /m
