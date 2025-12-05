@@ -62,6 +62,7 @@ using Sonar.Infrastructure.Repository.UserCore;
 using Sonar.Infrastructure.Repository.UserExperience;
 using Sonar.Middleware;
 using System.Text;
+using Application.Abstractions.Interfaces.Services.Chat;
 using Sonar.HealthChecks;
 using Flac = Application.Services.File.Flac;
 
@@ -232,6 +233,7 @@ builder.Services.AddScoped<IChatRepository, ChatRepository>();
 builder.Services.AddScoped<IMessageReadRepository, MessageReadRepository>();
 builder.Services.AddScoped<IMessageRepository, MessageRepository>();
 builder.Services.AddScoped<IPostRepository, PostRepository>();
+builder.Services.AddScoped<IChatStickerRepository, ChatStickerRepository>();
 
 // Client Settings Repositories
 builder.Services.AddScoped<ILanguageRepository, LanguageRepository>();
@@ -310,6 +312,7 @@ builder.Services.AddScoped<IChatService, ChatService>();
 builder.Services.AddScoped<IMessageReadService, MessageReadService>();
 builder.Services.AddScoped<IMessageService, MessageService>();
 builder.Services.AddScoped<IPostService, PostService>();
+builder.Services.AddScoped<IChatStickerService, ChatStickerService>();
 
 // Client Settings Services
 builder.Services.AddScoped<ILanguageService, LanguageService>();

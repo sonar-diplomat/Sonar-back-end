@@ -9,7 +9,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class Initial : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -53,6 +53,19 @@ namespace Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_AspNetRoles", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ChatStickerCategory",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ChatStickerCategory", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -555,6 +568,31 @@ namespace Infrastructure.Migrations
                         name: "FK_File_Post_PostId",
                         column: x => x.PostId,
                         principalTable: "Post",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ChatSticker",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    ImageFileId = table.Column<int>(type: "integer", nullable: false),
+                    CategoryId = table.Column<int>(type: "integer", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ChatSticker", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ChatSticker_ChatStickerCategory_CategoryId",
+                        column: x => x.CategoryId,
+                        principalTable: "ChatStickerCategory",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_ChatSticker_File_ImageFileId",
+                        column: x => x.ImageFileId,
+                        principalTable: "File",
                         principalColumn: "Id");
                 });
 
@@ -1904,6 +1942,16 @@ namespace Infrastructure.Migrations
                 column: "MembersId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ChatSticker_CategoryId",
+                table: "ChatSticker",
+                column: "CategoryId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ChatSticker_ImageFileId",
+                table: "ChatSticker",
+                column: "ImageFileId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Collection_CoverId",
                 table: "Collection",
                 column: "CoverId");
@@ -2416,6 +2464,9 @@ namespace Infrastructure.Migrations
                 name: "ChatMembers");
 
             migrationBuilder.DropTable(
+                name: "ChatSticker");
+
+            migrationBuilder.DropTable(
                 name: "CollectionFolder");
 
             migrationBuilder.DropTable(
@@ -2477,6 +2528,9 @@ namespace Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");
+
+            migrationBuilder.DropTable(
+                name: "ChatStickerCategory");
 
             migrationBuilder.DropTable(
                 name: "CosmeticItem");
