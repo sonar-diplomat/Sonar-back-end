@@ -1,6 +1,7 @@
 using Application;
 using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.File;
+using Application.Abstractions.Interfaces.Services.Utilities;
 using Application.DTOs.Music;
 using Application.Response;
 using Entities.Models.Distribution;
@@ -18,14 +19,13 @@ namespace Sonar.Controllers.Music;
 [ApiController]
 public class AlbumController(
     UserManager<User> userManager,
-    IDistributorAccountService accountService,
-    IDistributorService distributorService,
     IAlbumService albumService,
     IImageFileService imageFileService,
     ITrackService trackService,
-    ICollectionService<Album> collectionService
+    ICollectionService<Album> collectionService,
+    IShareService shareService
 )
-    : CollectionController<Album>(userManager, collectionService)
+    : CollectionController<Album>(userManager, collectionService, shareService)
 {
 
     /// <summary>
