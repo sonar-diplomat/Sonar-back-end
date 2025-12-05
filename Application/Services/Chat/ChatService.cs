@@ -9,6 +9,7 @@ using Entities.Models.Chat;
 using Entities.Models.File;
 using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using ChatModel = Entities.Models.Chat.Chat;
 
 namespace Application.Services.Chat;
@@ -53,6 +54,10 @@ public class ChatService(
         Message message = await messageService.GetByIdValidatedAsync(messageId);
         if (message.SenderId != userId)
             throw ResponseFactory.Create<ForbiddenResponse>(["User is not the sender of the message"]);
+        
+        await messageReadService.DeleteByMessageIdAsync(messageId);
+        
+        // Now delete the message
         await messageService.DeleteAsync(messageId);
 
         await notifier.MessageDeleted(new MessageDeletedEvent(
@@ -60,6 +65,26 @@ public class ChatService(
             message.Id,
             userId
         ));
+    }
+
+    public async Task<Message> EditMessageAsync(int userId, int messageId, EditMessageDTO dto)
+    {
+        Message message = await messageService.GetByIdValidatedAsync(messageId);
+        if (message.SenderId != userId)
+            throw ResponseFactory.Create<ForbiddenResponse>(["User is not the sender of the message"]);
+        
+        message.TextContent = dto.TextContent;
+        Message updated = await messageService.UpdateAsync(message);
+
+        await notifier.MessageUpdated(new MessageUpdatedEvent(
+            message.ChatId,
+            message.Id,
+            userId,
+            dto.TextContent,
+            DateTime.UtcNow
+        ));
+
+        return updated;
     }
 
     public async Task<ChatDTO> GetChatInfoAsync(int userId, int chatId)
@@ -304,6 +329,33 @@ public class ChatService(
     {
         await CheckUserIsMemberAsync(userId, chatId);
         return await messageService.GetMessagesWithCursorAsync(chatId, cursor, take);
+    }
+
+    public async Task<IEnumerable<ChatListItemDTO>> GetUserChatsAsync(int userId)
+    {
+        var chats = await repository
+            .Query()
+            .Where(c => c.Members.Any(m => m.Id == userId))
+            .Include(c => c.Members)
+            .OrderByDescending(c => c.Id)
+            .ToListAsync();
+
+        List<int> chatIds = chats.Select(c => c.Id).ToList();
+
+        // Get last message for each chat using MessageService
+        Dictionary<int, LastMessageDTO?> lastMessagesDict = await messageService.GetLastMessagesForChatsAsync(chatIds);
+
+        // Map to DTOs
+        return chats.Select(chat => new ChatListItemDTO
+        {
+            Id = chat.Id,
+            Name = chat.Name,
+            IsGroup = chat.IsGroup,
+            CoverId = chat.CoverId,
+            CreatorId = chat.CreatorId,
+            UserIds = chat.Members.Select(m => m.Id).ToArray(),
+            LastMessage = lastMessagesDict.GetValueOrDefault(chat.Id)
+        });
     }
 
     private async Task<ChatModel> CheckUserCanManageChatAsync(int userId, int chatId)

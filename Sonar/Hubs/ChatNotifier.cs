@@ -40,6 +40,11 @@ public sealed class ChatNotifier(IHubContext<ChatHub> hub) : IChatNotifier
         return hub.Clients.Group(G(payload.ChatId)).SendAsync("message.deleted", payload);
     }
 
+    public Task MessageUpdated(MessageUpdatedEvent payload)
+    {
+        return hub.Clients.Group(G(payload.ChatId)).SendAsync("message.updated", payload);
+    }
+
     private static string G(int chatId)
     {
         return $"chat:{chatId}";

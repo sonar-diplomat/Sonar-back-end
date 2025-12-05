@@ -1,3 +1,4 @@
+using Application;
 using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.File;
 using Application.DTOs.Music;
@@ -175,6 +176,50 @@ public class AlbumController(
         // TODO: create DTO
         Track track = await albumService.CreateTrackAsync(albumId, dto);
         throw ResponseFactory.Create<OkResponse<Track>>(track, ["Track was added successfully"]);
+    }
+
+    /// <summary>
+    /// Retrieves a specific album by its ID with basic information.
+    /// </summary>
+    /// <param name="albumId">The ID of the album to retrieve.</param>
+    /// <returns>Album response DTO with album details.</returns>
+    /// <response code="200">Album retrieved successfully.</response>
+    /// <response code="404">Album not found.</response>
+    [HttpGet("{albumId:int}")]
+    [ProducesResponseType(typeof(OkResponse<AlbumResponseDTO>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetAlbumById(int albumId)
+    {
+
+        User user = await CheckAccessFeatures([]);
+        int userId = user.Id;
+
+
+        Album album = await albumService.GetValidatedIncludeVisibilityStateAsync(albumId, userId);
+
+        IEnumerable<int>? authorIds = album.AlbumArtists?
+            .Where(aa => aa.Artist?.UserId != null)
+            .Select(aa => aa.Artist!.UserId!)
+            .ToList();
+
+        VisibilityStateValidator.IsAccessible(album.VisibilityState, userId, authorIds, "Album", albumId);
+
+        Album albumWithDistributor = await albumService.GetValidatedIncludeDistributorAsync(albumId);
+
+        AlbumResponseDTO responseDto = new()
+        {
+            Id = album.Id,
+            Name = album.Name,
+            CoverId = album.CoverId,
+            DistributorName = albumWithDistributor.Distributor?.Name ?? string.Empty,
+            TrackCount = album.Tracks?.Count ?? 0,
+            Authors = album.AlbumArtists?.Select(aa => new AuthorDTO
+            {
+                Pseudonym = aa.Pseudonym,
+                ArtistId = aa.ArtistId
+            }).ToList() ?? new List<AuthorDTO>()
+        };
+        throw ResponseFactory.Create<OkResponse<AlbumResponseDTO>>(responseDto, ["Album retrieved successfully"]);
     }
 
     /// <summary>

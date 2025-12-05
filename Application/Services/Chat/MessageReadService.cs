@@ -33,4 +33,9 @@ public class MessageReadService(IMessageReadRepository repository)
             UserId = mr.UserId
         });
     }
+
+    public Task DeleteByMessageIdAsync(int messageId)
+    {
+        return repository.DeleteByMessageIdAsync(messageId);
+    }
 }
