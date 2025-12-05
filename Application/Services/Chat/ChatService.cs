@@ -342,10 +342,8 @@ public class ChatService(
 
         List<int> chatIds = chats.Select(c => c.Id).ToList();
 
-        // Get last message for each chat using MessageService
         Dictionary<int, LastMessageDTO?> lastMessagesDict = await messageService.GetLastMessagesForChatsAsync(chatIds);
 
-        // Map to DTOs
         return chats.Select(chat => new ChatListItemDTO
         {
             Id = chat.Id,
