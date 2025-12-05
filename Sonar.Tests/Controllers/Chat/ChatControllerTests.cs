@@ -5,14 +5,15 @@ using Application.Response;
 using Entities.Models.Access;
 using Entities.Models.UserCore;
 using FluentAssertions;
+using Infrastructure.Data;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Moq;
 using Sonar.Controllers.Chat;
-using System.Linq;
 using System.Security.Claims;
 using Xunit;
 using ChatModel = Entities.Models.Chat.Chat;
@@ -20,75 +21,35 @@ using MessageModel = Entities.Models.Chat.Message;
 
 namespace Sonar.Tests.Controllers.Chat;
 
-public class ChatControllerTests
+public class ChatControllerTests : ChatControllerTestsBase, IDisposable
 {
-    private readonly Mock<UserManager<User>> _userManagerMock;
+    private readonly UserManager<User> _userManager;
     private readonly Mock<IChatService> _chatServiceMock;
     private readonly ChatController _controller;
     private readonly User _testUser;
     private readonly ClaimsPrincipal _claimsPrincipal;
+    private readonly SonarContext _context;
 
     public ChatControllerTests()
     {
+        // Создаем InMemory базу данных
+        _context = CreateInMemoryContext();
+        
+        // Создаем реальный UserManager с InMemory базой
+        _userManager = CreateUserManager(_context);
+        
         // Настройка тестового пользователя
-        _testUser = new User
-        {
-            Id = 1,
-            UserName = "testuser",
-            Email = "test@example.com",
-            AccessFeatures = new List<AccessFeature>
-            {
-                new() { Id = 1, Name = Entities.Enums.AccessFeatureStruct.UserLogin }
-            }
-        };
+        _testUser = CreateTestUser(1);
+        
+        // Добавляем пользователя в базу данных
+        _context.Users.Add(_testUser);
+        _context.SaveChanges();
         
         // Настройка ClaimsPrincipal
-        var claims = new List<Claim>
-        {
-            new Claim(ClaimTypes.NameIdentifier, _testUser.Id.ToString()),
-            new Claim(ClaimTypes.Name, _testUser.UserName)
-        };
-        _claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity(claims, "Test"));
-        
-        // Настройка мока UserManager
-        var store = new Mock<IUserStore<User>>();
-        var options = Microsoft.Extensions.Options.Options.Create(new IdentityOptions());
-        var passwordHasher = new PasswordHasher<User>();
-        var userValidators = new List<IUserValidator<User>>();
-        var passwordValidators = new List<IPasswordValidator<User>>();
-        var keyNormalizer = new UpperInvariantLookupNormalizer();
-        var errors = new IdentityErrorDescriber();
-        var services = new ServiceCollection().BuildServiceProvider();
-        var logger = Microsoft.Extensions.Logging.Abstractions.NullLogger<UserManager<User>>.Instance;
-        
-        _userManagerMock = new Mock<UserManager<User>>(
-            store.Object, 
-            options, 
-            passwordHasher, 
-            userValidators, 
-            passwordValidators, 
-            keyNormalizer, 
-            errors, 
-            services, 
-            logger);
-        
-        // Настройка GetUserAsync
-        _userManagerMock
-            .Setup(x => x.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
-            .ReturnsAsync(_testUser);
-        
-        // Настройка Users - возвращаем пользователя с AccessFeatures
-        // Проблема: Include() не работает с простым IQueryable
-        // Решение: мокаем так, чтобы Include() возвращал пользователя с AccessFeatures
-        var usersList = new List<User> { _testUser };
-        var usersQueryable = usersList.AsQueryable();
-        
-        _userManagerMock
-            .Setup(x => x.Users)
-            .Returns(usersQueryable);
+        _claimsPrincipal = CreateClaimsPrincipal(_testUser);
         
         _chatServiceMock = new Mock<IChatService>();
-        _controller = new ChatController(_userManagerMock.Object, _chatServiceMock.Object);
+        _controller = new ChatController(_userManager, _chatServiceMock.Object);
         
         // Настройка HttpContext для контроллера с ClaimsPrincipal
         var httpContext = new DefaultHttpContext
@@ -593,6 +554,12 @@ public class ChatControllerTests
     }
 
     #endregion
+
+    public void Dispose()
+    {
+        _context?.Dispose();
+        _userManager?.Dispose();
+    }
 }
 
 

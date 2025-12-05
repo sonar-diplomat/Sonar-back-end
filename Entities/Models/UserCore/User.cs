@@ -124,4 +124,8 @@ public class User : IdentityUser<int>
     [JsonIgnore] public virtual ICollection<User> Friends { get; set; }
 
     [JsonIgnore] public virtual ICollection<User> FriendOf { get; set; }
+
+    [JsonIgnore] public virtual ICollection<UserFollow> Followers { get; set; }
+
+    [JsonIgnore] public virtual ICollection<UserFollow> Following { get; set; }
 }

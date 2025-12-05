@@ -1100,6 +1100,31 @@ namespace Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "UserFollows",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    FollowerId = table.Column<int>(type: "integer", nullable: false),
+                    FollowingId = table.Column<int>(type: "integer", nullable: false),
+                    FollowedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserFollows", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_UserFollows_AspNetUsers_FollowerId",
+                        column: x => x.FollowerId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_UserFollows_AspNetUsers_FollowingId",
+                        column: x => x.FollowingId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
                 name: "UserFriendRequests",
                 columns: table => new
                 {
@@ -1664,9 +1689,31 @@ namespace Infrastructure.Migrations
                 });
 
             migrationBuilder.InsertData(
+                table: "ChatStickerCategory",
+                columns: new[] { "Id", "Name" },
+                values: new object[,]
+                {
+                    { 1, "Emotions" },
+                    { 2, "Reactions" },
+                    { 3, "Fun" }
+                });
+
+            migrationBuilder.InsertData(
                 table: "File",
                 columns: new[] { "Id", "Discriminator", "ItemName", "PostId", "Url" },
-                values: new object[] { 1, "ImageFile", "Default avatar", null, "" });
+                values: new object[,]
+                {
+                    { 1, "ImageFile", "Default avatar", null, "" },
+                    { 100, "ImageFile", "Happy Face Sticker", null, "image/stickers/happy.png" },
+                    { 101, "ImageFile", "Sad Face Sticker", null, "image/stickers/sad.png" },
+                    { 102, "ImageFile", "Angry Face Sticker", null, "image/stickers/angry.png" },
+                    { 103, "ImageFile", "Love Sticker", null, "image/stickers/love.png" },
+                    { 104, "ImageFile", "Like Sticker", null, "image/stickers/like.png" },
+                    { 105, "ImageFile", "Dislike Sticker", null, "image/stickers/dislike.png" },
+                    { 106, "ImageFile", "Thumbs Up Sticker", null, "image/stickers/thumbs_up.png" },
+                    { 107, "ImageFile", "Party Sticker", null, "image/stickers/party.png" },
+                    { 108, "ImageFile", "Celebrate Sticker", null, "image/stickers/celebrate.png" }
+                });
 
             migrationBuilder.InsertData(
                 table: "GiftStyle",
@@ -1783,6 +1830,22 @@ namespace Infrastructure.Migrations
                     { 2, "Unlisted" },
                     { 3, "Restricted" },
                     { 4, "Hidden" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "ChatSticker",
+                columns: new[] { "Id", "CategoryId", "ImageFileId", "Name" },
+                values: new object[,]
+                {
+                    { 1, 1, 100, "Happy" },
+                    { 2, 1, 101, "Sad" },
+                    { 3, 1, 102, "Angry" },
+                    { 4, 1, 103, "Love" },
+                    { 5, 2, 104, "Like" },
+                    { 6, 2, 105, "Dislike" },
+                    { 7, 2, 106, "Thumbs Up" },
+                    { 8, 3, 107, "Party" },
+                    { 9, 3, 108, "Celebrate" }
                 });
 
             migrationBuilder.CreateIndex(
@@ -2222,6 +2285,17 @@ namespace Infrastructure.Migrations
                 column: "TrackId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_UserFollows_FollowerId_FollowingId",
+                table: "UserFollows",
+                columns: new[] { "FollowerId", "FollowingId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserFollows_FollowingId",
+                table: "UserFollows",
+                column: "FollowingId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_UserFriendRequests_FromUserId",
                 table: "UserFriendRequests",
                 column: "FromUserId");
@@ -2510,6 +2584,9 @@ namespace Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "TrackArtists");
+
+            migrationBuilder.DropTable(
+                name: "UserFollows");
 
             migrationBuilder.DropTable(
                 name: "UserFriendRequests");

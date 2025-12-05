@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(SonarContext))]
-    [Migration("20251205194822_Initial")]
+    [Migration("20251205220658_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -354,6 +354,71 @@ namespace Infrastructure.Migrations
                     b.HasIndex("ImageFileId");
 
                     b.ToTable("ChatSticker");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CategoryId = 1,
+                            ImageFileId = 100,
+                            Name = "Happy"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            CategoryId = 1,
+                            ImageFileId = 101,
+                            Name = "Sad"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            CategoryId = 1,
+                            ImageFileId = 102,
+                            Name = "Angry"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            CategoryId = 1,
+                            ImageFileId = 103,
+                            Name = "Love"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            CategoryId = 2,
+                            ImageFileId = 104,
+                            Name = "Like"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            CategoryId = 2,
+                            ImageFileId = 105,
+                            Name = "Dislike"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            CategoryId = 2,
+                            ImageFileId = 106,
+                            Name = "Thumbs Up"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            CategoryId = 3,
+                            ImageFileId = 107,
+                            Name = "Party"
+                        },
+                        new
+                        {
+                            Id = 9,
+                            CategoryId = 3,
+                            ImageFileId = 108,
+                            Name = "Celebrate"
+                        });
                 });
 
             modelBuilder.Entity("Entities.Models.Chat.ChatStickerCategory", b =>
@@ -372,6 +437,23 @@ namespace Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("ChatStickerCategory");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "Emotions"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Reactions"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "Fun"
+                        });
                 });
 
             modelBuilder.Entity("Entities.Models.Chat.Message", b =>
@@ -1465,6 +1547,33 @@ namespace Infrastructure.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("Entities.Models.UserCore.UserFollow", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("FollowedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("FollowerId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("FollowingId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FollowingId");
+
+                    b.HasIndex("FollowerId", "FollowingId")
+                        .IsUnique();
+
+                    b.ToTable("UserFollows");
+                });
+
             modelBuilder.Entity("Entities.Models.UserCore.UserFriendRequest", b =>
                 {
                     b.Property<int>("Id")
@@ -2281,6 +2390,60 @@ namespace Infrastructure.Migrations
                             Id = 1,
                             ItemName = "Default avatar",
                             Url = ""
+                        },
+                        new
+                        {
+                            Id = 100,
+                            ItemName = "Happy Face Sticker",
+                            Url = "image/stickers/happy.png"
+                        },
+                        new
+                        {
+                            Id = 101,
+                            ItemName = "Sad Face Sticker",
+                            Url = "image/stickers/sad.png"
+                        },
+                        new
+                        {
+                            Id = 102,
+                            ItemName = "Angry Face Sticker",
+                            Url = "image/stickers/angry.png"
+                        },
+                        new
+                        {
+                            Id = 103,
+                            ItemName = "Love Sticker",
+                            Url = "image/stickers/love.png"
+                        },
+                        new
+                        {
+                            Id = 104,
+                            ItemName = "Like Sticker",
+                            Url = "image/stickers/like.png"
+                        },
+                        new
+                        {
+                            Id = 105,
+                            ItemName = "Dislike Sticker",
+                            Url = "image/stickers/dislike.png"
+                        },
+                        new
+                        {
+                            Id = 106,
+                            ItemName = "Thumbs Up Sticker",
+                            Url = "image/stickers/thumbs_up.png"
+                        },
+                        new
+                        {
+                            Id = 107,
+                            ItemName = "Party Sticker",
+                            Url = "image/stickers/party.png"
+                        },
+                        new
+                        {
+                            Id = 108,
+                            ItemName = "Celebrate Sticker",
+                            Url = "image/stickers/celebrate.png"
                         });
                 });
 
@@ -2924,6 +3087,25 @@ namespace Infrastructure.Migrations
                     b.Navigation("VisibilityState");
                 });
 
+            modelBuilder.Entity("Entities.Models.UserCore.UserFollow", b =>
+                {
+                    b.HasOne("Entities.Models.UserCore.User", "Follower")
+                        .WithMany("Following")
+                        .HasForeignKey("FollowerId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("Entities.Models.UserCore.User", "Following")
+                        .WithMany("Followers")
+                        .HasForeignKey("FollowingId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Follower");
+
+                    b.Navigation("Following");
+                });
+
             modelBuilder.Entity("Entities.Models.UserCore.UserFriendRequest", b =>
                 {
                     b.HasOne("Entities.Models.UserCore.User", "FromUser")
@@ -3374,6 +3556,10 @@ namespace Infrastructure.Migrations
                     b.Navigation("ArtistRegistrationRequests");
 
                     b.Navigation("ChatsWhereCreator");
+
+                    b.Navigation("Followers");
+
+                    b.Navigation("Following");
 
                     b.Navigation("Licenses");
 

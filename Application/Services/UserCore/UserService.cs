@@ -1,6 +1,7 @@
 ﻿using Application.Abstractions.Interfaces.Repository.UserCore;
 using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.File;
+using Application.Abstractions.Interfaces.Services.UserCore;
 using Application.DTOs.Auth;
 using Application.DTOs.User;
 using Application.Extensions;
@@ -24,7 +25,8 @@ public class UserService(
     IUserStateService stateService,
     IImageFileService imageFileService,
     ILibraryService libraryService,
-    IUserFriendRequestService friendRequestService
+    IUserFriendRequestService friendRequestService,
+    IUserFollowService userFollowService
 )
     : IUserService
 {
@@ -301,8 +303,7 @@ public class UserService(
 
     public async Task<IEnumerable<User>> GetFriendsAsync(int userId)
     {
-        User user = await repository.SnInclude(u => u.Friends).GetByIdValidatedAsync(userId);
-        return user.Friends;
+        return await userFollowService.GetMutualFollowsAsync(userId);
     }
 
     private async Task<string> GenerateUniqueUserPublicIdentifierAsync()

@@ -6,9 +6,6 @@ on:
       - main
       - master
       - dev
-    paths:
-      - 'Sonar-back-end/**'
-      - '.github/workflows/build-check.yml'
 
 concurrency:
   group: backend-build-${{ github.ref }}
