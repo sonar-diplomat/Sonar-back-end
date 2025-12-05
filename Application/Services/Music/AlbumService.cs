@@ -11,12 +11,16 @@ namespace Application.Services.Music;
 
 public class AlbumService(
     IAlbumRepository repository,
+    ITrackRepository trackRepository,
     IVisibilityStateService visibilityStateService,
     IImageFileService imageFileService,
+    IAudioFileService audioFileService,
     IAlbumArtistService albumArtistService,
+    ITrackArtistService trackArtistService,
     IArtistService artistService,
     ILibraryService libraryService,
-    IFolderService folderService
+    IFolderService folderService,
+    ITrackService trackService
 ) : CollectionService<Album>(repository, libraryService, folderService), IAlbumService
 {
     public async Task<Album> UploadAsync(UploadAlbumDTO dto, int distributorId)
@@ -64,12 +68,24 @@ public class AlbumService(
         return await repository.SnInclude(a => a.Tracks).GetByIdValidatedAsync(id);
     }
 
-    public async Task<Album> GetValidatedIncludeVisibilityStateAsync(int id)
+    public async Task<Album> GetValidatedIncludeVisibilityStateAsync(int id, int? userId = null)
     {
-        return await repository
+        Album album = await repository
             .SnInclude(a => a.VisibilityState)
             .SnThenInclude(vs => vs.Status)
             .GetByIdValidatedAsync(id);
+
+        // Load AlbumArtists with Artist.UserId if userId is provided to check authors
+        if (userId.HasValue)
+        {
+            album = await repository
+                .Query()
+                .Include(a => a.AlbumArtists)
+                .ThenInclude(aa => aa.Artist)
+                .FirstOrDefaultAsync(a => a.Id == id) ?? album;
+        }
+
+        return album;
     }
 
     public async Task<Album> GetValidatedIncludeDistributorAsync(int id)
@@ -83,7 +99,7 @@ public class AlbumService(
             .Query()
             .Include(a => a.AlbumArtists)
             .ThenInclude(aa => aa.Artist)
-            .FirstOrDefaultAsync(a => a.Id == id) 
+            .FirstOrDefaultAsync(a => a.Id == id)
             ?? throw ResponseFactory.Create<NotFoundResponse>([$"{nameof(Album)} not found"]);
     }
 
@@ -102,14 +118,27 @@ public class AlbumService(
         return await repository.GetByDistributorIdAsync(distributorId);
     }
 
-    public async Task<IEnumerable<TrackDTO>> GetAlbumTracksAsync(int albumId)
+    public async Task<IEnumerable<TrackDTO>> GetAlbumTracksAsync(int albumId, int? userId = null)
     {
         await GetByIdValidatedAsync(albumId);
-        
+
         List<Track> tracks = await repository.GetTracksFromAlbumAsync(albumId);
 
-        // Convert to DTOs
+        // Convert to DTOs, filtering by visibility (but allow if user is author)
         List<TrackDTO> trackDTOs = tracks
+            .Where(t =>
+            {
+                if (t.VisibilityState == null)
+                    return false;
+
+                // Get author user IDs from TrackArtists
+                IEnumerable<int>? trackAuthorIds = t.TrackArtists?
+                    .Where(ta => ta.Artist?.UserId != null)
+                    .Select(ta => ta.Artist!.UserId!)
+                    .ToList();
+
+                return VisibilityStateValidator.IsAccessible(t.VisibilityState, userId, trackAuthorIds);
+            })
             .Select(t => new TrackDTO
             {
                 Id = t.Id,
@@ -134,5 +163,132 @@ public class AlbumService(
     {
         await GetByIdValidatedAsync(albumId);
         return await repository.GetTracksFromAlbumAsync(albumId);
+    }
+
+    /// <summary>
+    /// Удаляет альбом и все его треки каскадно.
+    /// </summary>
+    public override async Task DeleteAsync(int id)
+    {
+        Album album = await GetValidatedIncludeTracksAsync(id);
+
+        // Удаляем все треки альбома перед удалением альбома
+        if (album.Tracks != null && album.Tracks.Any())
+        {
+            foreach (Track track in album.Tracks.ToList())
+            {
+                await trackService.DeleteAsync(track);
+            }
+        }
+
+        // Удаляем сам альбом
+        await base.DeleteAsync(id);
+    }
+
+    public async Task<Track> CreateTrackAsync(int albumId, UploadTrackDTO dto)
+    {
+        Album album = await GetValidatedIncludeTracksAsync(albumId);
+        Album albumWithDistributor = await GetValidatedIncludeDistributorAsync(albumId);
+        Album albumWithArtists = await GetValidatedIncludeAlbumArtistsAsync(albumId);
+
+        Track track = new()
+        {
+            Title = dto.Title,
+            IsExplicit = dto.IsExplicit,
+            DrivingDisturbingNoises = dto.DrivingDisturbingNoises,
+            VisibilityStateId = (await visibilityStateService.CreateDefaultAsync()).Id,
+            LowQualityAudioFileId = (await audioFileService.UploadFileAsync(dto.LowQualityAudioFile)).Id,
+            MediumQualityAudioFileId = dto.MediumQualityAudioFile != null
+                ? (await audioFileService.UploadFileAsync(dto.MediumQualityAudioFile)).Id
+                : null,
+            HighQualityAudioFileId = dto.HighQualityAudioFile != null
+                ? (await audioFileService.UploadFileAsync(dto.HighQualityAudioFile)).Id
+                : null,
+            CoverId = albumWithDistributor.CoverId,
+            Duration = await audioFileService.GetDurationAsync(dto.LowQualityAudioFile)
+        };
+
+        album.Tracks.Add(track);
+        track = await trackRepository.AddAsync(track);
+
+        // Добавляем артистов-авторов альбома в авторы трека
+        HashSet<int> addedArtistIds = new();
+        HashSet<string> addedPseudonyms = new();
+        if (albumWithArtists.AlbumArtists != null)
+        {
+            foreach (AlbumArtist albumArtist in albumWithArtists.AlbumArtists)
+            {
+                // Пропускаем, если псевдоним уже добавлен
+                if (addedPseudonyms.Contains(albumArtist.Pseudonym))
+                    continue;
+
+                // Проверяем, не добавлен ли уже этот артист по ID
+                if (albumArtist.ArtistId.HasValue && !addedArtistIds.Contains(albumArtist.ArtistId.Value))
+                {
+                    TrackArtist trackArtist = new()
+                    {
+                        Pseudonym = albumArtist.Pseudonym,
+                        TrackId = track.Id,
+                        ArtistId = albumArtist.ArtistId
+                    };
+                    await trackArtistService.CreateAsync(trackArtist);
+                    addedArtistIds.Add(albumArtist.ArtistId.Value);
+                    addedPseudonyms.Add(albumArtist.Pseudonym);
+                }
+                else if (!albumArtist.ArtistId.HasValue)
+                {
+                    // Если ArtistId не указан, создаем TrackArtist только с Pseudonym
+                    TrackArtist trackArtist = new()
+                    {
+                        Pseudonym = albumArtist.Pseudonym,
+                        TrackId = track.Id,
+                        ArtistId = null
+                    };
+                    await trackArtistService.CreateAsync(trackArtist);
+                    addedPseudonyms.Add(albumArtist.Pseudonym);
+                }
+            }
+        }
+
+        // Добавляем дополнительных авторов из DTO
+        if (dto.AdditionalArtists != null)
+        {
+            foreach (AuthorDTO authorDto in dto.AdditionalArtists)
+            {
+                // Пропускаем, если псевдоним уже добавлен
+                if (addedPseudonyms.Contains(authorDto.Pseudonym))
+                    continue;
+
+                int? artistId = authorDto.ArtistId;
+
+                // Если ArtistId указан в DTO, используем его
+                if (artistId.HasValue && !addedArtistIds.Contains(artistId.Value))
+                {
+                    TrackArtist trackArtist = new()
+                    {
+                        Pseudonym = authorDto.Pseudonym,
+                        TrackId = track.Id,
+                        ArtistId = artistId
+                    };
+                    await trackArtistService.CreateAsync(trackArtist);
+                    addedArtistIds.Add(artistId.Value);
+                    addedPseudonyms.Add(authorDto.Pseudonym);
+                }
+                // Если ArtistId не указан, создаем TrackArtist только с Pseudonym
+                else if (!artistId.HasValue)
+                {
+                    TrackArtist trackArtist = new()
+                    {
+                        Pseudonym = authorDto.Pseudonym,
+                        TrackId = track.Id,
+                        ArtistId = null
+                    };
+                    await trackArtistService.CreateAsync(trackArtist);
+                    addedPseudonyms.Add(authorDto.Pseudonym);
+                }
+            }
+        }
+
+        return track;
     }
 }

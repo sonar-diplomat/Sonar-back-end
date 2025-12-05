@@ -1,4 +1,5 @@
 ﻿using Application.Abstractions.Interfaces.Repository.Distribution;
+using Application.Abstractions.Interfaces.Repository.Music;
 using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.File;
 using Application.Abstractions.Interfaces.Services.Utilities;
@@ -7,12 +8,14 @@ using Application.Response;
 using Entities.Enums;
 using Entities.Models.Chat;
 using Entities.Models.Distribution;
+using Entities.Models.File;
 using Entities.Models.Library;
 using Entities.Models.UserCore;
+using Infrastructure.Data;
 using Logging;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 using Settings = Entities.Models.ClientSettings.Settings;
 using SysFile = System.IO.File;
@@ -31,7 +34,10 @@ public class TestController(
     IFolderService folderService,
     ILibraryService libraryService,
     IVisibilityStateService visibilityStateService,
-    IImageFileService imageFileService
+    IImageFileService imageFileService,
+    ITrackRepository trackRepository,
+    SonarContext dbContext,
+    IFileStorageService fileStorageService
 ) : BaseController(userManager)
 {
     #region dist
@@ -398,6 +404,458 @@ public class TestController(
             limit);
 
         throw ResponseFactory.Create<OkResponse<List<LogEntry>>>(logs, ["Guild logs retrieved successfully"]);
+    }
+
+    # endregion
+
+    # region file validation tests
+
+    /// <summary>
+    /// [TEST] Validates all track files and finds orphaned files.
+    /// </summary>
+    /// <returns>Information about track files and orphaned files.</returns>
+    /// <response code="200">File validation completed successfully.</response>
+    /// <remarks>
+    /// This endpoint iterates through all tracks, checks if their files exist,
+    /// and also returns files that are not referenced by any track or image.
+    /// </remarks>
+    [HttpGet("files/validate")]
+    [ProducesResponseType(typeof(OkResponse<object>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> ValidateTrackFiles()
+    {
+        string baseFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+
+        // Get all tracks with their files
+        IQueryable<Entities.Models.Music.Track> tracksQuery = await trackRepository.GetAllAsync();
+        List<Entities.Models.Music.Track> tracks = await tracksQuery
+            .Include(t => t.LowQualityAudioFile)
+            .Include(t => t.MediumQualityAudioFile)
+            .Include(t => t.HighQualityAudioFile)
+            .Include(t => t.Cover)
+            .ToListAsync();
+
+        // Get all referenced file IDs
+        HashSet<int> referencedAudioFileIds = new();
+        HashSet<int> referencedImageFileIds = new();
+
+        var trackFileInfo = new List<object>();
+
+        foreach (var track in tracks)
+        {
+            var files = new List<object>();
+
+            // Check LowQualityAudioFile
+            if (track.LowQualityAudioFile != null)
+            {
+                referencedAudioFileIds.Add(track.LowQualityAudioFile.Id);
+                string physicalPath = GetPhysicalPath(track.LowQualityAudioFile.Url, baseFolder);
+                bool exists = SysFile.Exists(physicalPath);
+                files.Add(new
+                {
+                    Type = "LowQualityAudio",
+                    FileId = track.LowQualityAudioFile.Id,
+                    FileName = track.LowQualityAudioFile.ItemName,
+                    Url = track.LowQualityAudioFile.Url,
+                    PhysicalPath = physicalPath,
+                    Exists = exists,
+                    FileSize = exists ? new FileInfo(physicalPath).Length : (long?)null
+                });
+            }
+
+            // Check MediumQualityAudioFile
+            if (track.MediumQualityAudioFile != null)
+            {
+                referencedAudioFileIds.Add(track.MediumQualityAudioFile.Id);
+                string physicalPath = GetPhysicalPath(track.MediumQualityAudioFile.Url, baseFolder);
+                bool exists = SysFile.Exists(physicalPath);
+                files.Add(new
+                {
+                    Type = "MediumQualityAudio",
+                    FileId = track.MediumQualityAudioFile.Id,
+                    FileName = track.MediumQualityAudioFile.ItemName,
+                    Url = track.MediumQualityAudioFile.Url,
+                    PhysicalPath = physicalPath,
+                    Exists = exists,
+                    FileSize = exists ? new FileInfo(physicalPath).Length : (long?)null
+                });
+            }
+
+            // Check HighQualityAudioFile
+            if (track.HighQualityAudioFile != null)
+            {
+                referencedAudioFileIds.Add(track.HighQualityAudioFile.Id);
+                string physicalPath = GetPhysicalPath(track.HighQualityAudioFile.Url, baseFolder);
+                bool exists = SysFile.Exists(physicalPath);
+                files.Add(new
+                {
+                    Type = "HighQualityAudio",
+                    FileId = track.HighQualityAudioFile.Id,
+                    FileName = track.HighQualityAudioFile.ItemName,
+                    Url = track.HighQualityAudioFile.Url,
+                    PhysicalPath = physicalPath,
+                    Exists = exists,
+                    FileSize = exists ? new FileInfo(physicalPath).Length : (long?)null
+                });
+            }
+
+            // Check Cover
+            if (track.Cover != null)
+            {
+                referencedImageFileIds.Add(track.Cover.Id);
+                string physicalPath = GetPhysicalPath(track.Cover.Url, baseFolder);
+                bool exists = SysFile.Exists(physicalPath);
+                files.Add(new
+                {
+                    Type = "Cover",
+                    FileId = track.Cover.Id,
+                    FileName = track.Cover.ItemName,
+                    Url = track.Cover.Url,
+                    PhysicalPath = physicalPath,
+                    Exists = exists,
+                    FileSize = exists ? new FileInfo(physicalPath).Length : (long?)null
+                });
+            }
+
+            trackFileInfo.Add(new
+            {
+                TrackId = track.Id,
+                TrackTitle = track.Title,
+                Files = files
+            });
+        }
+
+        // Get image files referenced by Users, Albums, Distributors, Chats
+        var userImageIds = await dbContext.Users.Select(u => u.AvatarImageId).ToListAsync();
+        var albumImageIds = await dbContext.Albums.Select(a => a.CoverId).ToListAsync();
+        var distributorImageIds = await dbContext.Distributors.Select(d => d.CoverId).ToListAsync();
+        var chatImageIds = await dbContext.Chats.Select(c => c.CoverId).ToListAsync();
+
+        referencedImageFileIds.UnionWith(userImageIds);
+        referencedImageFileIds.UnionWith(albumImageIds);
+        referencedImageFileIds.UnionWith(distributorImageIds);
+        referencedImageFileIds.UnionWith(chatImageIds);
+
+        // Find orphaned files in database
+        var orphanedAudioFiles = await dbContext.AudioFiles
+            .Where(f => !referencedAudioFileIds.Contains(f.Id))
+            .Select(f => new { f.Id, f.ItemName, f.Url })
+            .ToListAsync();
+
+        var orphanedImageFiles = await dbContext.ImageFiles
+            .Where(f => !referencedImageFileIds.Contains(f.Id))
+            .Select(f => new { f.Id, f.ItemName, f.Url })
+            .ToListAsync();
+
+        // Find orphaned files on disk
+        var orphanedDiskFiles = new List<object>();
+
+        if (Directory.Exists(baseFolder))
+        {
+            var allDiskFiles = Directory.GetFiles(baseFolder, "*", SearchOption.AllDirectories);
+            var allReferencedUrls = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            // Get all referenced URLs from database
+            var allReferencedAudioUrls = await dbContext.AudioFiles
+                .Where(f => referencedAudioFileIds.Contains(f.Id))
+                .Select(f => f.Url)
+                .ToListAsync();
+
+            var allReferencedImageUrls = await dbContext.ImageFiles
+                .Where(f => referencedImageFileIds.Contains(f.Id))
+                .Select(f => f.Url)
+                .ToListAsync();
+
+            allReferencedUrls.UnionWith(allReferencedAudioUrls);
+            allReferencedUrls.UnionWith(allReferencedImageUrls);
+
+            foreach (var diskFile in allDiskFiles)
+            {
+                string relativePath = Path.GetRelativePath(baseFolder, diskFile)
+                    .Replace('\\', '/');
+
+                // Check if this file is referenced
+                bool isReferenced = allReferencedUrls.Contains(relativePath);
+
+                if (!isReferenced)
+                {
+                    var fileInfo = new FileInfo(diskFile);
+                    orphanedDiskFiles.Add(new
+                    {
+                        RelativePath = relativePath,
+                        PhysicalPath = diskFile,
+                        FileSize = fileInfo.Length,
+                        LastModified = fileInfo.LastWriteTime
+                    });
+                }
+            }
+        }
+
+        var result = new
+        {
+            TrackFiles = trackFileInfo,
+            OrphanedDatabaseFiles = new
+            {
+                AudioFiles = orphanedAudioFiles,
+                ImageFiles = orphanedImageFiles
+            },
+            OrphanedDiskFiles = orphanedDiskFiles,
+            Summary = new
+            {
+                TotalTracks = tracks.Count,
+                TotalReferencedAudioFiles = referencedAudioFileIds.Count,
+                TotalReferencedImageFiles = referencedImageFileIds.Count,
+                OrphanedAudioFilesCount = orphanedAudioFiles.Count,
+                OrphanedImageFilesCount = orphanedImageFiles.Count,
+                OrphanedDiskFilesCount = orphanedDiskFiles.Count
+            }
+        };
+
+        throw ResponseFactory.Create<OkResponse<object>>(result, ["File validation completed successfully"]);
+    }
+
+    private string GetPhysicalPath(string relativePath, string baseFolder)
+    {
+        string normalizedPath = relativePath.Replace('/', Path.DirectorySeparatorChar)
+                                           .Replace('\\', Path.DirectorySeparatorChar)
+                                           .TrimStart('/', '\\');
+        return Path.Combine(baseFolder, normalizedPath);
+    }
+
+    /// <summary>
+    /// [TEST] Deletes orphaned files from database and disk.
+    /// </summary>
+    /// <returns>Information about deleted files.</returns>
+    /// <response code="200">Files deleted successfully.</response>
+    /// <remarks>
+    /// This endpoint checks all files (AudioFile, ImageFile, VideoFile) for references.
+    /// If a file is not referenced anywhere, it will be deleted from the database
+    /// and an attempt will be made to delete it from disk.
+    /// </remarks>
+    [HttpPost("files/cleanup")]
+    [ProducesResponseType(typeof(OkResponse<object>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> CleanupOrphanedFiles()
+    {
+        // Get all referenced file IDs
+        var referencedAudioFileIds = new HashSet<int>();
+        var referencedImageFileIds = new HashSet<int>();
+        var referencedVideoFileIds = new HashSet<int>();
+
+        // Get AudioFile references from Tracks
+        var lowQualityIds = await dbContext.Tracks
+            .Select(t => t.LowQualityAudioFileId)
+            .ToListAsync();
+
+        var mediumQualityIds = await dbContext.Tracks
+            .Where(t => t.MediumQualityAudioFileId != null)
+            .Select(t => t.MediumQualityAudioFileId!.Value)
+            .ToListAsync();
+
+        var highQualityIds = await dbContext.Tracks
+            .Where(t => t.HighQualityAudioFileId != null)
+            .Select(t => t.HighQualityAudioFileId!.Value)
+            .ToListAsync();
+
+        referencedAudioFileIds.UnionWith(lowQualityIds);
+        referencedAudioFileIds.UnionWith(mediumQualityIds);
+        referencedAudioFileIds.UnionWith(highQualityIds);
+
+        // Get ImageFile references
+        var trackImageIds = await dbContext.Tracks.Select(t => t.CoverId).ToListAsync();
+        var albumImageIds = await dbContext.Albums.Select(a => a.CoverId).ToListAsync();
+        var distributorImageIds = await dbContext.Distributors.Select(d => d.CoverId).ToListAsync();
+        var userImageIds = await dbContext.Users.Select(u => u.AvatarImageId).ToListAsync();
+        var chatImageIds = await dbContext.Chats.Select(c => c.CoverId).ToListAsync();
+
+        referencedImageFileIds.UnionWith(trackImageIds);
+        referencedImageFileIds.UnionWith(albumImageIds);
+        referencedImageFileIds.UnionWith(distributorImageIds);
+        referencedImageFileIds.UnionWith(userImageIds);
+        referencedImageFileIds.UnionWith(chatImageIds);
+
+        // Find orphaned files
+        var orphanedAudioFiles = await dbContext.AudioFiles
+            .Where(f => !referencedAudioFileIds.Contains(f.Id))
+            .ToListAsync();
+
+        var orphanedImageFiles = await dbContext.ImageFiles
+            .Where(f => !referencedImageFileIds.Contains(f.Id))
+            .ToListAsync();
+
+        var orphanedVideoFiles = await dbContext.VideoFiles
+            .Where(f => !referencedVideoFileIds.Contains(f.Id))
+            .ToListAsync();
+
+        var deletedFiles = new List<object>();
+        var deletionErrors = new List<object>();
+
+        // Delete orphaned AudioFiles
+        foreach (var audioFile in orphanedAudioFiles)
+        {
+            try
+            {
+                // Try to delete from disk
+                bool diskDeleted = await fileStorageService.DeleteFile(audioFile.Url);
+
+                // Delete from database
+                dbContext.AudioFiles.Remove(audioFile);
+
+                deletedFiles.Add(new
+                {
+                    Type = "AudioFile",
+                    FileId = audioFile.Id,
+                    FileName = audioFile.ItemName,
+                    Url = audioFile.Url,
+                    DeletedFromDatabase = true,
+                    DeletedFromDisk = diskDeleted
+                });
+            }
+            catch (Exception ex)
+            {
+                deletionErrors.Add(new
+                {
+                    Type = "AudioFile",
+                    FileId = audioFile.Id,
+                    FileName = audioFile.ItemName,
+                    Url = audioFile.Url,
+                    Error = ex.Message
+                });
+            }
+        }
+
+        // Delete orphaned ImageFiles
+        foreach (var imageFile in orphanedImageFiles)
+        {
+            try
+            {
+                // Try to delete from disk
+                bool diskDeleted = await fileStorageService.DeleteFile(imageFile.Url);
+
+                // Delete from database
+                dbContext.ImageFiles.Remove(imageFile);
+
+                deletedFiles.Add(new
+                {
+                    Type = "ImageFile",
+                    FileId = imageFile.Id,
+                    FileName = imageFile.ItemName,
+                    Url = imageFile.Url,
+                    DeletedFromDatabase = true,
+                    DeletedFromDisk = diskDeleted
+                });
+            }
+            catch (Exception ex)
+            {
+                deletionErrors.Add(new
+                {
+                    Type = "ImageFile",
+                    FileId = imageFile.Id,
+                    FileName = imageFile.ItemName,
+                    Url = imageFile.Url,
+                    Error = ex.Message
+                });
+            }
+        }
+
+        // Delete orphaned VideoFiles
+        foreach (var videoFile in orphanedVideoFiles)
+        {
+            try
+            {
+                // Try to delete from disk
+                bool diskDeleted = await fileStorageService.DeleteFile(videoFile.Url);
+
+                // Delete from database
+                dbContext.VideoFiles.Remove(videoFile);
+
+                deletedFiles.Add(new
+                {
+                    Type = "VideoFile",
+                    FileId = videoFile.Id,
+                    FileName = videoFile.ItemName,
+                    Url = videoFile.Url,
+                    DeletedFromDatabase = true,
+                    DeletedFromDisk = diskDeleted
+                });
+            }
+            catch (Exception ex)
+            {
+                deletionErrors.Add(new
+                {
+                    Type = "VideoFile",
+                    FileId = videoFile.Id,
+                    FileName = videoFile.ItemName,
+                    Url = videoFile.Url,
+                    Error = ex.Message
+                });
+            }
+        }
+
+        // Save changes to database
+        int deletedCount = await dbContext.SaveChangesAsync();
+
+        var result = new
+        {
+            DeletedFiles = deletedFiles,
+            DeletionErrors = deletionErrors,
+            Summary = new
+            {
+                TotalOrphanedAudioFiles = orphanedAudioFiles.Count,
+                TotalOrphanedImageFiles = orphanedImageFiles.Count,
+                TotalOrphanedVideoFiles = orphanedVideoFiles.Count,
+                SuccessfullyDeleted = deletedFiles.Count,
+                DeletionErrorsCount = deletionErrors.Count,
+                DatabaseRecordsDeleted = deletedCount
+            }
+        };
+
+        throw ResponseFactory.Create<OkResponse<object>>(result, ["File cleanup completed"]);
+    }
+
+    /// <summary>
+    /// [TEST] Updates the default image file (file with ID 1).
+    /// </summary>
+    /// <param name="file">The new image file to replace the default image.</param>
+    /// <returns>Success response upon default image update.</returns>
+    /// <response code="200">Default image updated successfully.</response>
+    /// <response code="404">Default image file not found.</response>
+    /// <remarks>
+    /// This is a test endpoint for development/testing purposes.
+    /// Replaces the default image file (ID = 1) with a new uploaded image.
+    /// </remarks>
+    [HttpPut("default-image")]
+    [Consumes("multipart/form-data")]
+    [ProducesResponseType(typeof(OkResponse<ImageFile>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpdateDefaultImage([FromForm] IFormFile file)
+    {
+        // Get the default image file (ID = 1)
+        ImageFile? defaultImage = await dbContext.ImageFiles.FirstOrDefaultAsync(f => f.Id == 1);
+        if (defaultImage == null)
+        {
+            throw ResponseFactory.Create<NotFoundResponse>(["Default image file (ID = 1) not found"]);
+        }
+
+        // Save the old URL before updating
+        string oldUrl = defaultImage.Url;
+
+        // Upload the new image file
+        ImageFile newImage = await imageFileService.UploadFileAsync(file);
+
+        // Update the default image file with new URL and filename
+        defaultImage.Url = newImage.Url;
+        defaultImage.ItemName = newImage.ItemName;
+
+        // Save changes to database
+        await dbContext.SaveChangesAsync();
+
+        // Delete the old file from disk
+        await fileStorageService.DeleteFile(oldUrl);
+
+        // Delete the newly created image file record (we only needed its URL)
+        dbContext.ImageFiles.Remove(newImage);
+        await dbContext.SaveChangesAsync();
+
+        throw ResponseFactory.Create<OkResponse<ImageFile>>(defaultImage, ["Default image updated successfully"]);
     }
 
     # endregion

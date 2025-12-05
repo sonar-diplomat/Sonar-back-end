@@ -58,6 +58,7 @@ jobs:
             docker load < sonar-app.tar
             docker run -d --name sonar-app \
               -p 8080:8080 -p 8081:8081 \
+              -v ./uploads:/app/wwwroot/uploads \
               -e Jwt__Key="${{ secrets.JWT_KEY }}" \
               -e Jwt__Issuer="${{ secrets.JWT_ISSUER }}" \
               -e Jwt__Audience="${{ secrets.JWT_AUDIENCE }}" \

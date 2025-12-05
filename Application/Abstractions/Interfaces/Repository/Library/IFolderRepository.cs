@@ -4,4 +4,5 @@ namespace Application.Abstractions.Interfaces.Repository.Library;
 
 public interface IFolderRepository : IGenericRepository<Folder>
 {
+    Task<int?> GetRootFolderIdByLibraryIdAsync(int libraryId);
 }

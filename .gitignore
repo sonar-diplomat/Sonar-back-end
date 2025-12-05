@@ -363,4 +363,5 @@ MigrationBackup/
 FodyWeavers.xsd
 /Documentation
 /Sonar/wwwroot/uploads
+./uploads
 ./idea/*

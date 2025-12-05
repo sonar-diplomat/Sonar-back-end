@@ -11,6 +11,7 @@ public interface IChatService : IGenericService<Chat>
     Task UpdateChatNameAsync(int userId, int chatId, string newName);
     Task<Message> GetMessageByIdAsync(int userId, int messageId);
     Task DeleteMessageAsync(int userId, int messageId);
+    Task<Message> EditMessageAsync(int userId, int messageId, EditMessageDTO dto);
     Task<Message> SendMessageAsync(int userId, int chatId, MessageDTO message);
     Task<ChatDTO> GetChatInfoAsync(int userId, int chatId);
     Task ReadMessagesAsync(int chatId, int userId, IEnumerable<int> messageIds);
@@ -20,4 +21,5 @@ public interface IChatService : IGenericService<Chat>
     Task<CursorPageDTO<MessageDTO>> GetMessagesWithCursorAsync(int userId, int chatId, int? cursor, int take = 50);
     Task LeaveChat(int userId, int chatId);
     Task<Chat> CreateChatAsync(int userId, CreateChatDTO chat);
+    Task<IEnumerable<ChatListItemDTO>> GetUserChatsAsync(int userId);
 }

@@ -18,7 +18,7 @@ public class ArtistRepository(SonarContext dbContext) : GenericRepository<Artist
     public async Task<IEnumerable<Artist>> SearchByNameAsync(string searchTerm)
     {
         return await dbContext.Artists
-            .Where(a => EF.Functions.ILike(a.ArtistName, $"%{searchTerm}%"))
+            .Where(a => EF.Functions.Like(a.ArtistName, $"%{searchTerm}%"))
             .ToListAsync();
     }
 }

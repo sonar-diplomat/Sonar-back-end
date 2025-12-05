@@ -17,6 +17,23 @@ public class ChatController(
     IChatService chatService
 ) : BaseController(userManager)
 {
+    /// <summary>
+    /// Retrieves all chats for the authenticated user.
+    /// </summary>
+    /// <returns>List of chat items with basic information and last message.</returns>
+    /// <response code="200">Chats retrieved successfully.</response>
+    /// <response code="401">User not authenticated.</response>
+    [HttpGet]
+    [Authorize]
+    [ProducesResponseType(typeof(OkResponse<IEnumerable<ChatListItemDTO>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> GetChats()
+    {
+        User user = await CheckAccessFeatures([]);
+        IEnumerable<ChatListItemDTO> chats = await chatService.GetUserChatsAsync(user.Id);
+        throw ResponseFactory.Create<OkResponse<IEnumerable<ChatListItemDTO>>>(chats, ["Chats retrieved successfully"]);
+    }
+
     [HttpPost]
     public async Task<IActionResult> CreateChat([FromBody] CreateChatDTO dto)
     {
@@ -41,8 +58,8 @@ public class ChatController(
     [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> SendMessage(int chatId, [FromBody] MessageDTO message)
     {
-        int userId = (await CheckAccessFeatures([])).Id;
-        await chatService.SendMessageAsync(userId, chatId, message);
+        User user = await CheckAccessFeatures([]);
+        await chatService.SendMessageAsync(user.Id, chatId, message);
         throw ResponseFactory.Create<OkResponse>(["Message sent successfully"]);
     }
 
@@ -63,7 +80,30 @@ public class ChatController(
     {
         User user = await CheckAccessFeatures([]);
         await chatService.DeleteMessageAsync(user.Id, messageId);
-        throw ResponseFactory.Create<OkResponse>(["Message retrieved successfully"]);
+        throw ResponseFactory.Create<OkResponse>(["Message deleted successfully"]);
+    }
+
+    /// <summary>
+    /// Edits a message in a chat.
+    /// </summary>
+    /// <param name="messageId">The ID of the message to edit.</param>
+    /// <param name="dto">The DTO containing the new message content.</param>
+    /// <returns>Success response with the updated message.</returns>
+    /// <response code="200">Message edited successfully.</response>
+    /// <response code="401">User not authenticated or not the message author.</response>
+    /// <response code="403">User is not the sender of the message.</response>
+    /// <response code="404">Message not found.</response>
+    [HttpPut("message/{messageId:int}")]
+    [Authorize]
+    [ProducesResponseType(typeof(OkResponse<Message>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ForbiddenResponse), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> EditMessage(int messageId, [FromBody] EditMessageDTO dto)
+    {
+        User user = await CheckAccessFeatures([]);
+        Message message = await chatService.EditMessageAsync(user.Id, messageId, dto);
+        throw ResponseFactory.Create<OkResponse<Message>>(message, ["Message edited successfully"]);
     }
 
     /// <summary>
@@ -229,7 +269,7 @@ public class ChatController(
     [ProducesResponseType(typeof(OkResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> UpdateChatName(int chatId, string newName)
+    public async Task<IActionResult> UpdateChatName(int chatId, [FromQuery] string newName)
     {
         User user = await CheckAccessFeatures([]);
         await chatService.UpdateChatNameAsync(user.Id, chatId, newName);

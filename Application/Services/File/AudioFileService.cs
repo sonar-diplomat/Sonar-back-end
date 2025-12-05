@@ -4,7 +4,8 @@ using Application.Response;
 using Entities.Models.File;
 using FileSignatures;
 using Microsoft.AspNetCore.Http;
-using NAudio.Wave;
+
+using TagLib;
 
 namespace Application.Services.File;
 
@@ -15,11 +16,6 @@ public class AudioFileService(
     IFileFormatInspector inspector
 ) : FileService<AudioFile>(repository, fileStorage, inspector), IAudioFileService
 {
-    //public async Task<FileStream?> GetMusicStreamAsync(int fileId, long? startByte, long? length)
-    //{
-    //    return new FileStream("C:\\Users\\timpf\\Music\\Нова папка\\Infected Mushroom - Guitarmass.aac", FileMode.Open,
-    //        FileAccess.Read);
-    //}
 
     public async Task<AudioFile> UploadFileAsync(IFormFile file)
     {
@@ -36,10 +32,9 @@ public class AudioFileService(
 
     public async Task<TimeSpan> GetDurationAsync(IFormFile file)
     {
-        string tempFilePath = Path.GetTempFileName();
+        string? tempFilePath = null;
         try
         {
-            TimeSpan duration;
             byte[] songBytes;
             using (MemoryStream ms = new())
             {
@@ -47,13 +42,21 @@ public class AudioFileService(
                 songBytes = ms.ToArray();
             }
 
-            await System.IO.File.WriteAllBytesAsync(tempFilePath, songBytes);
-            await using (AudioFileReader reader = new(tempFilePath))
+            // Создаем временный файл с правильным расширением из имени исходного файла
+            string extension = Path.GetExtension(file.FileName);
+            if (string.IsNullOrEmpty(extension))
             {
-                duration = reader.TotalTime;
+                // Если расширение не указано, пытаемся определить по содержимому
+                extension = ".mp3"; // По умолчанию MP3, так как это наиболее распространенный формат
             }
-
-            return duration;
+            
+            tempFilePath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}{extension}");
+            await System.IO.File.WriteAllBytesAsync(tempFilePath, songBytes);
+            
+            using (var tagFile = TagLib.File.Create(tempFilePath))
+            {
+                return tagFile.Properties.Duration;
+            }
         }
         catch (Exception ex)
         {
@@ -63,7 +66,7 @@ public class AudioFileService(
         {
             try
             {
-                if (System.IO.File.Exists(tempFilePath))
+                if (tempFilePath != null && System.IO.File.Exists(tempFilePath))
                     System.IO.File.Delete(tempFilePath);
             }
             catch
@@ -79,13 +82,20 @@ public class AudioFileService(
 
         try
         {
-            if (!System.IO.File.Exists(file.Url))
+            // Преобразуем относительный путь в полный физический путь
+            string baseFolder = Path.Combine("wwwroot", "uploads");
+            string normalizedPath = file.Url.Replace('/', Path.DirectorySeparatorChar)
+                                           .Replace('\\', Path.DirectorySeparatorChar)
+                                           .TrimStart('/', '\\');
+            string physicalPath = Path.Combine(Directory.GetCurrentDirectory(), baseFolder, normalizedPath);
+
+            if (!System.IO.File.Exists(physicalPath))
             {
                 throw ResponseFactory.Create<NotFoundResponse>([$"Audio file with ID {fileId} not found"]);
             }
 
             FileStream fileStream = new(
-                file.Url,
+                physicalPath,
                 FileMode.Open,
                 FileAccess.Read,
                 FileShare.Read, // Позволяет другим процессам читать файл
@@ -95,8 +105,8 @@ public class AudioFileService(
 
             if (startPosition.HasValue)
             {
-                // Convert TimeSpan to byte position using NAudio
-                long startByte = await ConvertTimeSpanToBytePositionAsync(file.Url, startPosition.Value);
+                // Convert TimeSpan to byte position using TagLib
+                long startByte = await ConvertTimeSpanToBytePositionAsync(physicalPath, startPosition.Value);
 
                 if (startByte < 0 || startByte >= fileStream.Length)
                 {
@@ -117,6 +127,10 @@ public class AudioFileService(
         {
             throw ResponseFactory.Create<InternalServerErrorResponse>([$"IO error while accessing file: {ex.Message}"]);
         }
+        catch (Application.Response.Response ex)
+        {
+            throw ex;
+        }
         catch (Exception ex)
         {
             throw ResponseFactory.Create<InternalServerErrorResponse>([$"Unexpected error in file service: {ex.Message}"]);
@@ -127,17 +141,21 @@ public class AudioFileService(
     {
         try
         {
-            await using (AudioFileReader reader = new(filePath))
+            using (var tagFile = TagLib.File.Create(filePath))
             {
-                if (position >= reader.TotalTime)
+                var totalTime = tagFile.Properties.Duration;
+                var fileInfo = new System.IO.FileInfo(filePath);
+                var fileLength = fileInfo.Length;
+
+                if (position >= totalTime)
                 {
-                    return reader.Length;
+                    return fileLength;
                 }
 
                 // Calculate byte position based on time position
                 // This is an approximation - for more accurate results, we'd need to parse the audio file format
-                double positionRatio = position.TotalSeconds / reader.TotalTime.TotalSeconds;
-                long estimatedBytePosition = (long)(reader.Length * positionRatio);
+                double positionRatio = position.TotalSeconds / totalTime.TotalSeconds;
+                long estimatedBytePosition = (long)(fileLength * positionRatio);
 
                 return estimatedBytePosition;
             }

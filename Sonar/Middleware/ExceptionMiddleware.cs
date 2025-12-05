@@ -47,7 +47,7 @@ public class ExceptionMiddleware(RequestDelegate next, IHostEnvironment environm
             var genericError = new
             {
                 StatusCode = 500,
-                Message = "An internal server error occurred."
+                Message = /*"An internal server error occurred."*/ex.Message
             };
             string json = JsonSerializer.Serialize(genericError, SerializerOptions);
             await context.Response.WriteAsync(json);

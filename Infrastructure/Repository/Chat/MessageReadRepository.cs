@@ -26,4 +26,24 @@ public class MessageReadRepository(SonarContext dbContext)
         await context.MessageReads.AddRangeAsync(messageReads);
         await context.SaveChangesAsync();
     }
+
+    public async Task<IEnumerable<MessageRead>> GetByMessageIdsAsync(List<int> messageIds)
+    {
+        return await context.MessageReads
+            .Where(mr => messageIds.Contains(mr.MessageId))
+            .ToListAsync();
+    }
+
+    public async Task DeleteByMessageIdAsync(int messageId)
+    {
+        var messageReads = await context.MessageReads
+            .Where(mr => mr.MessageId == messageId)
+            .ToListAsync();
+        
+        if (messageReads.Count > 0)
+        {
+            context.MessageReads.RemoveRange(messageReads);
+            await context.SaveChangesAsync();
+        }
+    }
 }

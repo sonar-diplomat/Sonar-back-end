@@ -20,6 +20,7 @@ using Application.Services.File;
 using Application.Services.Library;
 using Application.Services.Music;
 using Application.Services.Report;
+using Application.Services.Search;
 using Application.Services.UserCore;
 using Application.Services.UserExperience;
 using Application.Services.Utilities;
@@ -44,8 +45,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
 using Logging;
 using Microsoft.IdentityModel.Tokens;
@@ -63,7 +62,6 @@ using Sonar.Infrastructure.Repository.UserCore;
 using Sonar.Infrastructure.Repository.UserExperience;
 using Sonar.Middleware;
 using System.Text;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Sonar.HealthChecks;
 using Flac = Application.Services.File.Flac;
 
@@ -355,6 +353,9 @@ builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepositor
 builder.Services.AddScoped<IReportableEntityTypeService, ReportableEntityTypeService>();
 builder.Services.AddScoped<IReportReasonTypeService, ReportReasonTypeService>();
 builder.Services.AddScoped<IReportService, ReportService>();
+
+// Search Services
+builder.Services.AddScoped<ISearchService, SearchService>();
 
 // User Services
 builder.Services.AddScoped<IUserPrivacyGroupService, UserPrivacyGroupService>();

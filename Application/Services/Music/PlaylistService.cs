@@ -5,7 +5,9 @@ using Application.DTOs;
 using Application.DTOs.Music;
 using Application.Extensions;
 using Application.Response;
+using Entities.Models.Library;
 using Entities.Models.Music;
+using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Http;
 using System.Text;
 
@@ -37,7 +39,15 @@ public class PlaylistService(
                 : await imageFileService.GetDefaultAsync(),
             VisibilityState = await visibilityStateService.CreateDefaultAsync()
         };
-        return await repository.AddAsync(playlist);
+        playlist = await repository.AddAsync(playlist);
+
+        // Добавляем плейлист в root папку библиотеки пользователя
+        User user = await userService.GetByIdValidatedAsync(creatorId);
+        Folder rootFolder = await libraryService.GetRootFolderByLibraryIdValidatedAsync(user.LibraryId);
+        rootFolder.Collections.Add(playlist);
+        await folderService.UpdateAsync(rootFolder);
+
+        return playlist;
     }
 
     public async Task DeleteAsync(int playlistId, int userId)
@@ -105,16 +115,16 @@ public class PlaylistService(
         await repository.UpdateAsync(playlist);
     }
 
-    public async Task<CursorPageDTO<TrackDTO>> GetPlaylistTracksAsync(int playlistId, string? afterCursor, int limit)
+    public async Task<CursorPageDTO<TrackDTO>> GetPlaylistTracksAsync(int playlistId, string? afterCursor, int limit, int? userId = null)
     {
         int? afterId = null;
         Playlist playlist = await repository
             .SnInclude(p => p.VisibilityState)
             .SnThenInclude(vs => vs.Status)
             .GetByIdValidatedAsync(playlistId);
-        
-        // Validate playlist visibility before returning tracks
-        playlist.VisibilityState.ValidateVisibility("Playlist", playlistId);
+
+        // Validate playlist visibility before returning tracks (ignore if user is creator)
+        VisibilityStateValidator.IsAccessible(playlist.VisibilityState, userId, userId.HasValue && playlist.CreatorId == userId.Value ? [userId.Value] : null, "Playlist", playlistId);
 
         if (!string.IsNullOrEmpty(afterCursor))
         {
@@ -125,24 +135,36 @@ public class PlaylistService(
 
         List<Track> tracks = await repository.GetTracksFromPlaylistAfterAsync(playlistId, afterId, limit);
 
-        // Filter out tracks that are not accessible (Hidden or not yet public)
+        // Filter out tracks that are not accessible (Hidden or not yet public), but allow if user is author
         List<TrackDTO> items = tracks
-            .Where(t => t.VisibilityState?.IsAccessible() ?? false)
-            .Select(t => new TrackDTO
-        {
-            Id = t.Id,
-            Title = t.Title,
-            DurationInSeconds = (int)(t.Duration?.TotalSeconds ?? 0),
-            IsExplicit = t.IsExplicit,
-            DrivingDisturbingNoises = t.DrivingDisturbingNoises,
-            CoverId = t.CoverId,
-            AudioFileId = t.LowQualityAudioFileId,
-            Artists = t.TrackArtists?.Select(ta => new AuthorDTO
+            .Where(t =>
             {
-                Pseudonym = ta.Pseudonym,
-                ArtistId = ta.ArtistId
-            }).ToList() ?? new List<AuthorDTO>()
-        }).ToList();
+                if (t.VisibilityState == null)
+                    return false;
+
+                // Get author user IDs from TrackArtists
+                IEnumerable<int>? trackAuthorIds = t.TrackArtists?
+                    .Where(ta => ta.Artist?.UserId != null)
+                    .Select(ta => ta.Artist!.UserId!)
+                    .ToList();
+
+                return VisibilityStateValidator.IsAccessible(t.VisibilityState, userId, trackAuthorIds);
+            })
+            .Select(t => new TrackDTO
+            {
+                Id = t.Id,
+                Title = t.Title,
+                DurationInSeconds = (int)(t.Duration?.TotalSeconds ?? 0),
+                IsExplicit = t.IsExplicit,
+                DrivingDisturbingNoises = t.DrivingDisturbingNoises,
+                CoverId = t.CoverId,
+                AudioFileId = t.LowQualityAudioFileId,
+                Artists = t.TrackArtists?.Select(ta => new AuthorDTO
+                {
+                    Pseudonym = ta.Pseudonym,
+                    ArtistId = ta.ArtistId
+                }).ToList() ?? new List<AuthorDTO>()
+            }).ToList();
 
         string? nextCursor = null;
         if (items.Count != limit)

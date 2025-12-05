@@ -1,9 +1,10 @@
+using Application;
 using Application.Abstractions.Interfaces.Services;
 using Application.DTOs;
 using Application.DTOs.Library;
-using Application.Extensions;
 using Application.Response;
 using Entities.Models.Library;
+using Entities.Models.Music;
 using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -26,15 +27,18 @@ public class FolderController(
     /// <returns>Folder DTO with subfolders and collection summaries.</returns>
     /// <response code="200">Folder retrieved successfully.</response>
     /// <response code="404">Folder not found.</response>
-    /// <remarks>
-    /// TODO: Make it work only with a user from JWT for authorization.
-    /// </remarks>
+    /// <response code="401">User not authenticated.</response>
     [HttpGet("{folderId:int}")]
+    [Authorize]
     [ProducesResponseType(typeof(OkResponse<FolderDTO>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetFolder(int folderId)
     {
-        Folder folder = await folderService.GetFolderByIdIncludeCollectionsValidatedAsync(folderId);
+        User user = await CheckAccessFeatures([]);
+        int libraryId = user.LibraryId;
+        int userId = user.Id;
+        Folder folder = await folderService.GetFolderByIdIncludeCollectionsValidatedAsync(folderId, libraryId);
         FolderDTO dto = new()
         {
             Id = folder.Id,
@@ -42,16 +46,56 @@ public class FolderController(
             IsProtected = folder.IsProtected,
             ParentFolderId = folder.ParentFolderId,
             ParentFolderName = folder.ParentFolder?.Name,
-            SubFolders = folder.SubFolders?.Select(sf => new SubFolderDTO
+            SubFolders = folder.SubFolders?.Select(sf => new FolderDTO
             {
                 Id = sf.Id,
                 Name = sf.Name,
                 IsProtected = sf.IsProtected,
-                SubFolderCount = sf.SubFolders?.Count ?? 0,
-                CollectionCount = sf.Collections?.Count ?? 0
-            }).ToList() ?? new List<SubFolderDTO>(),
+                ParentFolderId = sf.ParentFolderId,
+                ParentFolderName = sf.ParentFolder?.Name,
+                SubFolders = new List<FolderDTO>(),
+                Collections = sf.Collections?
+                    .Where(c =>
+                    {
+                        if (sf.IsProtected) return true;
+                        if (c.VisibilityState == null) return false;
+                        IEnumerable<int>? authorIds = c switch
+                        {
+                            Playlist playlist => playlist.CreatorId == userId ? [playlist.CreatorId] : null,
+                            Album album => album.AlbumArtists?
+                                .Where(aa => aa.Artist?.UserId != null)
+                                .Select(aa => aa.Artist!.UserId!)
+                                .ToList(),
+                            _ => null
+                        };
+                        return VisibilityStateValidator.IsAccessible(c.VisibilityState, userId, authorIds);
+                    })
+                    .Select(c => new CollectionSummaryDTO
+                    {
+                        Id = c.Id,
+                        Name = c.Name,
+                        Type = c.GetType().Name,
+                        CoverId = c.CoverId
+                    }).ToList() ?? new List<CollectionSummaryDTO>()
+            }).ToList() ?? new List<FolderDTO>(),
             Collections = folder.Collections?
-                .Where(c => c.VisibilityState?.IsAccessible() ?? false)
+                .Where(c =>
+                {
+                    // Для root папки (IsProtected = true) показываем все коллекции (включая Favorites)
+                    // Для остальных папок применяем фильтр по видимости
+                    if (folder.IsProtected) return true;
+                    if (c.VisibilityState == null) return false;
+                    IEnumerable<int>? authorIds = c switch
+                    {
+                        Playlist playlist => playlist.CreatorId == userId ? [playlist.CreatorId] : null,
+                        Album album => album.AlbumArtists?
+                            .Where(aa => aa.Artist?.UserId != null)
+                            .Select(aa => aa.Artist!.UserId!)
+                            .ToList(),
+                        _ => null
+                    };
+                    return VisibilityStateValidator.IsAccessible(c.VisibilityState, userId, authorIds);
+                })
                 .Select(c => new CollectionSummaryDTO
                 {
                     Id = c.Id,
@@ -64,32 +108,49 @@ public class FolderController(
     }
 
     /// <summary>
-    /// Retrieves all folders in the system with their subfolders and collections.
+    /// Retrieves all folders in the user's library organized in a hierarchical structure.
     /// </summary>
-    /// <returns>Collection of folder DTOs with subfolder and collection summaries.</returns>
-    /// <response code="200">All folders retrieved successfully.</response>
+    /// <returns>Collection of root folder DTOs with nested subfolders and collections.</returns>
+    /// <response code="200">All folders retrieved successfully in hierarchical structure.</response>
+    /// <response code="401">User not authenticated.</response>
     [HttpGet]
+    [Authorize]
     [ProducesResponseType(typeof(OkResponse<IEnumerable<FolderDTO>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetAllFolders()
     {
-        IEnumerable<Folder> folders = await folderService.GetAllFoldersWithCollectionsAsync();
-        IEnumerable<FolderDTO> dtos = folders.Select(folder => new FolderDTO
+        User user = await CheckAccessFeatures([]);
+        int libraryId = user.LibraryId;
+        int userId = user.Id;
+        IEnumerable<Folder> folders = await folderService.GetAllFoldersWithCollectionsByLibraryIdAsync(libraryId);
+
+        // Convert all folders to DTOs
+        var folderDict = folders.ToDictionary(f => f.Id, f => new FolderDTO
         {
-            Id = folder.Id,
-            Name = folder.Name,
-            IsProtected = folder.IsProtected,
-            ParentFolderId = folder.ParentFolderId,
-            ParentFolderName = folder.ParentFolder?.Name,
-            SubFolders = folder.SubFolders?.Select(sf => new SubFolderDTO
-            {
-                Id = sf.Id,
-                Name = sf.Name,
-                IsProtected = sf.IsProtected,
-                SubFolderCount = sf.SubFolders?.Count ?? 0,
-                CollectionCount = sf.Collections?.Count ?? 0
-            }).ToList() ?? new List<SubFolderDTO>(),
-            Collections = folder.Collections?
-                .Where(c => c.VisibilityState?.IsAccessible() ?? false)
+            Id = f.Id,
+            Name = f.Name,
+            IsProtected = f.IsProtected,
+            ParentFolderId = f.ParentFolderId,
+            ParentFolderName = f.ParentFolder?.Name,
+            SubFolders = new List<FolderDTO>(),
+            Collections = f.Collections?
+                .Where(c =>
+                {
+                    // Для root папки (IsProtected = true) показываем все коллекции (включая Favorites)
+                    // Для остальных папок применяем фильтр по видимости
+                    if (f.IsProtected) return true;
+                    if (c.VisibilityState == null) return false;
+                    IEnumerable<int>? authorIds = c switch
+                    {
+                        Playlist playlist => playlist.CreatorId == userId ? [playlist.CreatorId] : null,
+                        Album album => album.AlbumArtists?
+                            .Where(aa => aa.Artist?.UserId != null)
+                            .Select(aa => aa.Artist!.UserId!)
+                            .ToList(),
+                        _ => null
+                    };
+                    return VisibilityStateValidator.IsAccessible(c.VisibilityState, userId, authorIds);
+                })
                 .Select(c => new CollectionSummaryDTO
                 {
                     Id = c.Id,
@@ -98,7 +159,23 @@ public class FolderController(
                     CoverId = c.CoverId
                 }).ToList() ?? new List<CollectionSummaryDTO>()
         });
-        throw ResponseFactory.Create<OkResponse<IEnumerable<FolderDTO>>>(dtos, ["Successfully retrieved all folders"]);
+
+        // Build hierarchy: add subfolders to their parents
+        foreach (var folder in folders)
+        {
+            if (folder.ParentFolderId.HasValue && folderDict.TryGetValue(folder.ParentFolderId.Value, out var parentDto))
+            {
+                if (folderDict.TryGetValue(folder.Id, out var childDto))
+                {
+                    parentDto.SubFolders.Add(childDto);
+                }
+            }
+        }
+
+        // Return only root folders (folders without parent)
+        var rootFolders = folderDict.Values.Where(f => !f.ParentFolderId.HasValue).ToList();
+
+        throw ResponseFactory.Create<OkResponse<IEnumerable<FolderDTO>>>(rootFolders, ["Successfully retrieved all folders in hierarchical structure"]);
     }
 
     /// <summary>
@@ -125,7 +202,7 @@ public class FolderController(
             IsProtected = folder.IsProtected,
             ParentFolderId = folder.ParentFolderId,
             ParentFolderName = folder.ParentFolder?.Name,
-            SubFolders = new List<SubFolderDTO>(),
+            SubFolders = new List<FolderDTO>(),
             Collections = new List<CollectionSummaryDTO>()
         };
         throw ResponseFactory.Create<OkResponse<FolderDTO>>(dto, ["Successfully created folder"]);
@@ -149,7 +226,8 @@ public class FolderController(
     [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UpdateFolderName(int folderId, [FromBody] string newName)
     {
-        int libraryId = (await CheckAccessFeatures([])).LibraryId;
+        User user = await CheckAccessFeatures([]);
+        int libraryId = user.LibraryId;
         Folder folder = await folderService.UpdateNameAsync(libraryId, folderId, newName);
         FolderDTO dto = new()
         {
@@ -158,16 +236,56 @@ public class FolderController(
             IsProtected = folder.IsProtected,
             ParentFolderId = folder.ParentFolderId,
             ParentFolderName = folder.ParentFolder?.Name,
-            SubFolders = folder.SubFolders?.Select(sf => new SubFolderDTO
+            SubFolders = folder.SubFolders?.Select(sf => new FolderDTO
             {
                 Id = sf.Id,
                 Name = sf.Name,
                 IsProtected = sf.IsProtected,
-                SubFolderCount = sf.SubFolders?.Count ?? 0,
-                CollectionCount = sf.Collections?.Count ?? 0
-            }).ToList() ?? new List<SubFolderDTO>(),
+                ParentFolderId = sf.ParentFolderId,
+                ParentFolderName = sf.ParentFolder?.Name,
+                SubFolders = new List<FolderDTO>(),
+                Collections = sf.Collections?
+                    .Where(c =>
+                    {
+                        if (sf.IsProtected) return true;
+                        if (c.VisibilityState == null) return false;
+                        IEnumerable<int>? authorIds = c switch
+                        {
+                            Playlist playlist => playlist.CreatorId == user.Id ? [playlist.CreatorId] : null,
+                            Album album => album.AlbumArtists?
+                                .Where(aa => aa.Artist?.UserId != null)
+                                .Select(aa => aa.Artist!.UserId!)
+                                .ToList(),
+                            _ => null
+                        };
+                        return VisibilityStateValidator.IsAccessible(c.VisibilityState, user.Id, authorIds);
+                    })
+                    .Select(c => new CollectionSummaryDTO
+                    {
+                        Id = c.Id,
+                        Name = c.Name,
+                        Type = c.GetType().Name,
+                        CoverId = c.CoverId
+                    }).ToList() ?? new List<CollectionSummaryDTO>()
+            }).ToList() ?? new List<FolderDTO>(),
             Collections = folder.Collections?
-                .Where(c => c.VisibilityState?.IsAccessible() ?? false)
+                .Where(c =>
+                {
+                    // Для root папки (IsProtected = true) показываем все коллекции (включая Favorites)
+                    // Для остальных папок применяем фильтр по видимости
+                    if (folder.IsProtected) return true;
+                    if (c.VisibilityState == null) return false;
+                    IEnumerable<int>? authorIds = c switch
+                    {
+                        Playlist playlist => playlist.CreatorId == user.Id ? [playlist.CreatorId] : null,
+                        Album album => album.AlbumArtists?
+                            .Where(aa => aa.Artist?.UserId != null)
+                            .Select(aa => aa.Artist!.UserId!)
+                            .ToList(),
+                        _ => null
+                    };
+                    return VisibilityStateValidator.IsAccessible(c.VisibilityState, user.Id, authorIds);
+                })
                 .Select(c => new CollectionSummaryDTO
                 {
                     Id = c.Id,
@@ -256,4 +374,5 @@ public class FolderController(
         await folderService.MoveFolder(libraryId, folderId, newParentFolderId);
         throw ResponseFactory.Create<OkResponse>(["Folder was successfully moved"]);
     }
+
 }

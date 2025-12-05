@@ -9,7 +9,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class Initial : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -299,7 +299,8 @@ namespace Infrastructure.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     WhichCanViewProfileId = table.Column<int>(type: "integer", nullable: false),
-                    WhichCanMessageId = table.Column<int>(type: "integer", nullable: false)
+                    WhichCanMessageId = table.Column<int>(type: "integer", nullable: false),
+                    AcceptFriendRequests = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -477,14 +478,15 @@ namespace Infrastructure.Migrations
                 name: "AlbumArtists",
                 columns: table => new
                 {
-                    ArtistId = table.Column<int>(type: "integer", nullable: false),
-                    AlbumId = table.Column<int>(type: "integer", nullable: false),
-                    Pseudonym = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Pseudonym = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    ArtistId = table.Column<int>(type: "integer", nullable: true),
+                    AlbumId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_AlbumArtists", x => new { x.AlbumId, x.ArtistId });
+                    table.PrimaryKey("PK_AlbumArtists", x => x.Id);
                     table.ForeignKey(
                         name: "FK_AlbumArtists_Album_AlbumId",
                         column: x => x.AlbumId,
@@ -557,26 +559,6 @@ namespace Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Chat",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Name = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: false),
-                    IsGroup = table.Column<bool>(type: "boolean", nullable: false),
-                    CoverId = table.Column<int>(type: "integer", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Chat", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Chat_File_CoverId",
-                        column: x => x.CoverId,
-                        principalTable: "File",
-                        principalColumn: "Id");
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Collection",
                 columns: table => new
                 {
@@ -627,31 +609,6 @@ namespace Infrastructure.Migrations
                         principalTable: "File",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Message",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    TextContent = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: false),
-                    ReplyMessageId = table.Column<int>(type: "integer", nullable: true),
-                    ChatId = table.Column<int>(type: "integer", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Message", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Message_Chat_ChatId",
-                        column: x => x.ChatId,
-                        principalTable: "Chat",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_Message_Message_ReplyMessageId",
-                        column: x => x.ReplyMessageId,
-                        principalTable: "Message",
-                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -731,24 +688,6 @@ namespace Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_ArtistRegistrationRequest", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "ArtistTrack",
-                columns: table => new
-                {
-                    ArtistsId = table.Column<int>(type: "integer", nullable: false),
-                    TracksId = table.Column<int>(type: "integer", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ArtistTrack", x => new { x.ArtistsId, x.TracksId });
-                    table.ForeignKey(
-                        name: "FK_ArtistTrack_Artist_ArtistsId",
-                        column: x => x.ArtistsId,
-                        principalTable: "Artist",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -892,27 +831,29 @@ namespace Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "ChatUser",
+                name: "Chat",
                 columns: table => new
                 {
-                    ChatsId = table.Column<int>(type: "integer", nullable: false),
-                    UsersId = table.Column<int>(type: "integer", nullable: false)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: false),
+                    IsGroup = table.Column<bool>(type: "boolean", nullable: false),
+                    CoverId = table.Column<int>(type: "integer", nullable: false),
+                    CreatorId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ChatUser", x => new { x.ChatsId, x.UsersId });
+                    table.PrimaryKey("PK_Chat", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_ChatUser_AspNetUsers_UsersId",
-                        column: x => x.UsersId,
+                        name: "FK_Chat_AspNetUsers_CreatorId",
+                        column: x => x.CreatorId,
                         principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                     table.ForeignKey(
-                        name: "FK_ChatUser_Chat_ChatsId",
-                        column: x => x.ChatsId,
-                        principalTable: "Chat",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        name: "FK_Chat_File_CoverId",
+                        column: x => x.CoverId,
+                        principalTable: "File",
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -962,56 +903,6 @@ namespace Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "MessageRead",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    ReadAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    MessageId = table.Column<int>(type: "integer", nullable: false),
-                    UserId = table.Column<int>(type: "integer", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_MessageRead", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_MessageRead_AspNetUsers_UserId",
-                        column: x => x.UserId,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_MessageRead_Message_MessageId",
-                        column: x => x.MessageId,
-                        principalTable: "Message",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "MessageUser",
-                columns: table => new
-                {
-                    MessagesId = table.Column<int>(type: "integer", nullable: false),
-                    usersId = table.Column<int>(type: "integer", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_MessageUser", x => new { x.MessagesId, x.usersId });
-                    table.ForeignKey(
-                        name: "FK_MessageUser_AspNetUsers_usersId",
-                        column: x => x.usersId,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_MessageUser_Message_MessagesId",
-                        column: x => x.MessagesId,
-                        principalTable: "Message",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Playlist",
                 columns: table => new
                 {
@@ -1043,7 +934,8 @@ namespace Infrastructure.Migrations
                     IsClosed = table.Column<bool>(type: "boolean", nullable: false),
                     EntityIdentifier = table.Column<int>(type: "integer", nullable: false),
                     ReportableEntityTypeId = table.Column<int>(type: "integer", nullable: false),
-                    ReporterId = table.Column<int>(type: "integer", nullable: false)
+                    ReporterId = table.Column<int>(type: "integer", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -1092,7 +984,8 @@ namespace Infrastructure.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Amount = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
                     BuyerId = table.Column<int>(type: "integer", nullable: false),
-                    SubscriptionPackId = table.Column<int>(type: "integer", nullable: false)
+                    SubscriptionPackId = table.Column<int>(type: "integer", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -1169,13 +1062,64 @@ namespace Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "UserFriendRequests",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    FromUserId = table.Column<int>(type: "integer", nullable: false),
+                    ToUserId = table.Column<int>(type: "integer", nullable: false),
+                    RequestedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    ResolvedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    IsAccepted = table.Column<bool>(type: "boolean", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserFriendRequests", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_UserFriendRequests_AspNetUsers_FromUserId",
+                        column: x => x.FromUserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_UserFriendRequests_AspNetUsers_ToUserId",
+                        column: x => x.ToUserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "UserFriends",
+                columns: table => new
+                {
+                    FriendOfId = table.Column<int>(type: "integer", nullable: false),
+                    FriendsId = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserFriends", x => new { x.FriendOfId, x.FriendsId });
+                    table.ForeignKey(
+                        name: "FK_UserFriends_AspNetUsers_FriendOfId",
+                        column: x => x.FriendOfId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_UserFriends_AspNetUsers_FriendsId",
+                        column: x => x.FriendsId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "UserSession",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    UserAgent = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: false),
-                    DeviceName = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
+                    UserAgent = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
+                    DeviceName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
                     LastActive = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UserId = table.Column<int>(type: "integer", nullable: false),
                     RefreshTokenHash = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
@@ -1190,6 +1134,86 @@ namespace Infrastructure.Migrations
                         name: "FK_UserSession_AspNetUsers_UserId",
                         column: x => x.UserId,
                         principalTable: "AspNetUsers",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ChatAdmins",
+                columns: table => new
+                {
+                    AdminsId = table.Column<int>(type: "integer", nullable: false),
+                    ChatsWhereAdminId = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ChatAdmins", x => new { x.AdminsId, x.ChatsWhereAdminId });
+                    table.ForeignKey(
+                        name: "FK_ChatAdmins_AspNetUsers_AdminsId",
+                        column: x => x.AdminsId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ChatAdmins_Chat_ChatsWhereAdminId",
+                        column: x => x.ChatsWhereAdminId,
+                        principalTable: "Chat",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ChatMembers",
+                columns: table => new
+                {
+                    ChatsWhereMemberId = table.Column<int>(type: "integer", nullable: false),
+                    MembersId = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ChatMembers", x => new { x.ChatsWhereMemberId, x.MembersId });
+                    table.ForeignKey(
+                        name: "FK_ChatMembers_AspNetUsers_MembersId",
+                        column: x => x.MembersId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ChatMembers_Chat_ChatsWhereMemberId",
+                        column: x => x.ChatsWhereMemberId,
+                        principalTable: "Chat",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Message",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    TextContent = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: false),
+                    ReplyMessageId = table.Column<int>(type: "integer", nullable: true),
+                    ChatId = table.Column<int>(type: "integer", nullable: false),
+                    SenderId = table.Column<int>(type: "integer", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Message", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Message_AspNetUsers_SenderId",
+                        column: x => x.SenderId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Message_Chat_ChatId",
+                        column: x => x.ChatId,
+                        principalTable: "Chat",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Message_Message_ReplyMessageId",
+                        column: x => x.ReplyMessageId,
+                        principalTable: "Message",
                         principalColumn: "Id");
                 });
 
@@ -1357,6 +1381,58 @@ namespace Infrastructure.Migrations
                         column: x => x.CurrentTrackId,
                         principalTable: "Track",
                         principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TrackArtists",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Pseudonym = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    ArtistId = table.Column<int>(type: "integer", nullable: true),
+                    TrackId = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TrackArtists", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_TrackArtists_Artist_ArtistId",
+                        column: x => x.ArtistId,
+                        principalTable: "Artist",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_TrackArtists_Track_TrackId",
+                        column: x => x.TrackId,
+                        principalTable: "Track",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "MessageRead",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    ReadAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    MessageId = table.Column<int>(type: "integer", nullable: false),
+                    UserId = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_MessageRead", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_MessageRead_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_MessageRead_Message_MessageId",
+                        column: x => x.MessageId,
+                        principalTable: "Message",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -1702,6 +1778,11 @@ namespace Infrastructure.Migrations
                 column: "DistributorId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_AlbumArtists_AlbumId",
+                table: "AlbumArtists",
+                column: "AlbumId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_AlbumArtists_ArtistId",
                 table: "AlbumArtists",
                 column: "ArtistId");
@@ -1721,11 +1802,6 @@ namespace Infrastructure.Migrations
                 name: "IX_ArtistRegistrationRequest_UserId",
                 table: "ArtistRegistrationRequest",
                 column: "UserId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ArtistTrack_TracksId",
-                table: "ArtistTrack",
-                column: "TracksId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
@@ -1813,9 +1889,19 @@ namespace Infrastructure.Migrations
                 column: "CoverId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ChatUser_UsersId",
-                table: "ChatUser",
-                column: "UsersId");
+                name: "IX_Chat_CreatorId",
+                table: "Chat",
+                column: "CreatorId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ChatAdmins_ChatsWhereAdminId",
+                table: "ChatAdmins",
+                column: "ChatsWhereAdminId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ChatMembers_MembersId",
+                table: "ChatMembers",
+                column: "MembersId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Collection_CoverId",
@@ -1933,6 +2019,11 @@ namespace Infrastructure.Migrations
                 column: "ReplyMessageId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Message_SenderId",
+                table: "Message",
+                column: "SenderId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_MessageRead_MessageId",
                 table: "MessageRead",
                 column: "MessageId");
@@ -1941,11 +2032,6 @@ namespace Infrastructure.Migrations
                 name: "IX_MessageRead_UserId",
                 table: "MessageRead",
                 column: "UserId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_MessageUser_usersId",
-                table: "MessageUser",
-                column: "usersId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_NotificationTypeSettings_SettingsId",
@@ -2078,6 +2164,31 @@ namespace Infrastructure.Migrations
                 column: "VisibilityStateId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_TrackArtists_ArtistId",
+                table: "TrackArtists",
+                column: "ArtistId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TrackArtists_TrackId",
+                table: "TrackArtists",
+                column: "TrackId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserFriendRequests_FromUserId",
+                table: "UserFriendRequests",
+                column: "FromUserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserFriendRequests_ToUserId",
+                table: "UserFriendRequests",
+                column: "ToUserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserFriends_FriendsId",
+                table: "UserFriends",
+                column: "FriendsId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_UserPrivacySettings_WhichCanMessageId",
                 table: "UserPrivacySettings",
                 column: "WhichCanMessageId");
@@ -2156,8 +2267,7 @@ namespace Infrastructure.Migrations
                 table: "AlbumArtists",
                 column: "ArtistId",
                 principalTable: "Artist",
-                principalColumn: "Id",
-                onDelete: ReferentialAction.Cascade);
+                principalColumn: "Id");
 
             migrationBuilder.AddForeignKey(
                 name: "FK_Artist_AspNetUsers_UserId",
@@ -2180,14 +2290,6 @@ namespace Infrastructure.Migrations
                 table: "ArtistRegistrationRequest",
                 column: "DistributorId",
                 principalTable: "Distributor",
-                principalColumn: "Id",
-                onDelete: ReferentialAction.Cascade);
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_ArtistTrack_Track_TracksId",
-                table: "ArtistTrack",
-                column: "TracksId",
-                principalTable: "Track",
                 principalColumn: "Id",
                 onDelete: ReferentialAction.Cascade);
 
@@ -2290,9 +2392,6 @@ namespace Infrastructure.Migrations
                 name: "ArtistRegistrationRequest");
 
             migrationBuilder.DropTable(
-                name: "ArtistTrack");
-
-            migrationBuilder.DropTable(
                 name: "AspNetRoleClaims");
 
             migrationBuilder.DropTable(
@@ -2311,7 +2410,10 @@ namespace Infrastructure.Migrations
                 name: "Blend");
 
             migrationBuilder.DropTable(
-                name: "ChatUser");
+                name: "ChatAdmins");
+
+            migrationBuilder.DropTable(
+                name: "ChatMembers");
 
             migrationBuilder.DropTable(
                 name: "CollectionFolder");
@@ -2338,9 +2440,6 @@ namespace Infrastructure.Migrations
                 name: "MessageRead");
 
             migrationBuilder.DropTable(
-                name: "MessageUser");
-
-            migrationBuilder.DropTable(
                 name: "NotificationTypeSettings");
 
             migrationBuilder.DropTable(
@@ -2357,6 +2456,15 @@ namespace Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "Suspension");
+
+            migrationBuilder.DropTable(
+                name: "TrackArtists");
+
+            migrationBuilder.DropTable(
+                name: "UserFriendRequests");
+
+            migrationBuilder.DropTable(
+                name: "UserFriends");
 
             migrationBuilder.DropTable(
                 name: "AccessFeature");

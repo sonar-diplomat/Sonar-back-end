@@ -15,7 +15,7 @@ public interface IPlaylistService : ICollectionService<Playlist>
     Task RemoveContributorAsync(int playlistId, int contributorId, int creatorId);
     Task AddTrackToPlaylistAsync(int playlistId, int trackId, int userId);
     Task RemoveTrackFromPlaylistAsync(int playlistId, int trackId, int userId);
-    Task<CursorPageDTO<TrackDTO>> GetPlaylistTracksAsync(int playlistId, string? after, int limit);
+    Task<CursorPageDTO<TrackDTO>> GetPlaylistTracksAsync(int playlistId, string? after, int limit, int? userId = null);
     Task ImportCollectionToPlaylistAsync<T>(int playlistId, int collectionId, int userId) where T : Collection;
     Task<Playlist> GetByIdWithVisibilityStateAsync(int playlistId);
 }
