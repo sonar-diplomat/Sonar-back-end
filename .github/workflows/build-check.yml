@@ -1,0 +1,48 @@
+name: Build Check
+
+on:
+  push:
+    branches-ignore:
+      - main
+      - master
+      - dev
+    paths:
+      - 'Sonar-back-end/**'
+      - '.github/workflows/build-check.yml'
+
+concurrency:
+  group: backend-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build Backend
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup .NET SDK 9
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('Sonar-back-end/**/*.csproj', 'Sonar-back-end/**/*.props', 'Sonar-back-end/**/*.targets') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore
+        working-directory: Sonar-back-end
+        run: dotnet restore --nologo
+
+      - name: Build
+        working-directory: Sonar-back-end
+        run: dotnet build Sonar/Sonar.csproj --configuration Release --no-restore --nologo /m
