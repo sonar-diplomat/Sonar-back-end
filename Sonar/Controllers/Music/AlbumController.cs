@@ -190,12 +190,19 @@ public class AlbumController(
     [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetAlbumById(int albumId)
     {
+        // Try to get userId if user is authenticated, but don't require authentication
+        int? userId = null;
+        try
+        {
+            User? user = await GetUserByJwt();
+            userId = user?.Id;
+        }
+        catch
+        {
+            // User is not authenticated, userId remains null
+        }
 
-        User user = await CheckAccessFeatures([]);
-        int userId = user.Id;
-
-
-        Album album = await albumService.GetValidatedIncludeVisibilityStateAsync(albumId, userId);
+        Album album = await albumService.GetValidatedIncludeVisibilityStateAsync(albumId, userId ?? 0);
 
         IEnumerable<int>? authorIds = album.AlbumArtists?
             .Where(aa => aa.Artist?.UserId != null)
@@ -223,29 +230,22 @@ public class AlbumController(
     }
 
     /// <summary>
-    /// Gets all tracks in an album.
+    /// Gets all tracks in an album (public endpoint).
     /// </summary>
     /// <param name="albumId">The ID of the album.</param>
     /// <returns>List of track DTOs.</returns>
     /// <response code="200">Album tracks retrieved successfully.</response>
-    /// <response code="401">User not authenticated or not a distributor.</response>
     /// <response code="404">Album not found.</response>
     /// <remarks>
-    /// Requires distributor authentication. Returns only tracks from albums created by the authenticated distributor.
+    /// Public endpoint. If user is authenticated, response may contain personalized information.
     /// </remarks>
     [HttpGet("{albumId:int}/tracks")]
-    [Authorize]
     [ProducesResponseType(typeof(OkResponse<IEnumerable<TrackDTO>>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetAlbumTracks(int albumId)
     {
-        Distributor distributor = await this.CheckDistributorAsync();
-        await MatchAlbumAndDistributor(albumId);
-        
-        // Get userId from distributor account if available
+        // Try to get userId if user is authenticated, but don't require authentication
         int? userId = null;
-        // Note: Distributor doesn't have direct userId, but we can get it from the authenticated user
         try
         {
             User? user = await GetUserByJwt();
@@ -255,6 +255,14 @@ public class AlbumController(
         {
             // User is not authenticated, userId remains null
         }
+
+        // Validate album visibility
+        Album album = await albumService.GetValidatedIncludeVisibilityStateAsync(albumId, userId ?? 0);
+        IEnumerable<int>? authorIds = album.AlbumArtists?
+            .Where(aa => aa.Artist?.UserId != null)
+            .Select(aa => aa.Artist!.UserId!)
+            .ToList();
+        VisibilityStateValidator.IsAccessible(album.VisibilityState, userId, authorIds, "Album", albumId);
         
         IEnumerable<TrackDTO> tracks = await albumService.GetAlbumTracksAsync(albumId, userId);
         throw ResponseFactory.Create<OkResponse<IEnumerable<TrackDTO>>>(tracks, ["Album tracks retrieved successfully"]);
