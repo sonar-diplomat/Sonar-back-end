@@ -85,5 +85,5 @@ jobs:
               -e Mailgun__ApiKey='${{ secrets.MAILGUN_API_KEY }}' \
               -e Mailgun__Domain='${{ secrets.MAILGUN_DOMAIN }}' \
               -e Mailgun__From='${{ secrets.MAILGUN_FROM }}' \
-              -e ConnectionStrings__SonarContext='${{ secrets.CONNECTION_STRING }}' \
+              -e ConnectionStrings__SonarContext='${{ secrets.CONNECTION_STRING_AWS }}' \
               $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
