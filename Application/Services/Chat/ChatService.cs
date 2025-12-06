@@ -1,4 +1,5 @@
 ﻿using Application.Abstractions.Interfaces.Repository.Chat;
+using Application.Abstractions.Interfaces.Repository.UserCore;
 using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.File;
 using Application.Abstractions.Interfaces.Services.UserCore;
@@ -22,7 +23,8 @@ public class ChatService(
     IMessageReadService messageReadService,
     IUserService userService,
     IChatNotifier notifier,
-    IUserFollowService userFollowService
+    IUserFollowService userFollowService,
+    IUserRepository userRepository
 ) : GenericService<ChatModel>(repository), IChatService
 {
     public async Task UpdateChatCoverAsync(int userId, int chatId, IFormFile file)
@@ -390,7 +392,12 @@ public class ChatService(
     {
         User recipient = await userService.GetByIdValidatedAsync(recipientId);
         
-        var recipientWithSettings = await userService.GetByIdAsync(recipientId);
+        // Загружаем пользователя с настройками приватности через Include
+        var recipientWithSettings = await userRepository
+            .SnInclude(u => u.Settings)
+            .ThenInclude(s => s.UserPrivacy)
+            .GetByIdValidatedAsync(recipientId);
+        
         if (recipientWithSettings?.Settings?.UserPrivacy == null)
             throw ResponseFactory.Create<BadRequestResponse>(["Recipient privacy settings not found"]);
 
