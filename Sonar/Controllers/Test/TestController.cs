@@ -38,7 +38,8 @@ public class TestController(
     IImageFileService imageFileService,
     ITrackRepository trackRepository,
     SonarContext dbContext,
-    IFileStorageService fileStorageService
+    IFileStorageService fileStorageService,
+    IAccessFeatureService accessFeatureService
 ) : BaseController(userManager)
 {
     #region dist
@@ -141,6 +142,26 @@ public class TestController(
     {
         await fileService.UploadFileAsync(file);
         return Ok();
+    }
+
+    /// <summary>
+    /// [TEST] Uploads an image file without binding to any specific entity.
+    /// </summary>
+    /// <param name="file">The image file to upload.</param>
+    /// <returns>Uploaded image file with its ID.</returns>
+    /// <response code="200">Image file uploaded successfully.</response>
+    /// <remarks>
+    /// This is a test endpoint for development/testing purposes.
+    /// Uploads an image file and returns the created ImageFile entity.
+    /// The file can be later bound to any entity by updating its ID reference.
+    /// </remarks>
+    [HttpPost("upload-image")]
+    [Consumes("multipart/form-data")]
+    [ProducesResponseType(typeof(OkResponse<ImageFile>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> UploadImage([FromForm] IFormFile file)
+    {
+        ImageFile uploadedImage = await imageFileService.UploadFileAsync(file);
+        throw ResponseFactory.Create<OkResponse<ImageFile>>(uploadedImage, ["Image file uploaded successfully"]);
     }
 
     # endregion
@@ -946,6 +967,89 @@ public class TestController(
         await dbContext.SaveChangesAsync();
 
         throw ResponseFactory.Create<OkResponse<ImageFile>>(defaultImage, ["Default image updated successfully"]);
+    }
+
+    /// <summary>
+    /// [TEST] Updates an existing image file by ID with a new uploaded image.
+    /// </summary>
+    /// <param name="imageId">The ID of the image file to update.</param>
+    /// <param name="url">The new URL for the image file.</param>
+    /// <param name="itemName">The new item name for the image file.</param>
+    /// <returns>Updated image file.</returns>
+    /// <response code="200">Image file updated successfully.</response>
+    /// <response code="404">Image file not found.</response>
+    /// <remarks>
+    /// This is a test endpoint for development/testing purposes.
+    /// Updates an existing image file record with new URL and item name.
+    /// The actual file should be uploaded first using upload-image endpoint.
+    /// </remarks>
+    [HttpPut("image/{imageId}")]
+    [ProducesResponseType(typeof(OkResponse<ImageFile>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpdateImageById(int imageId, [FromBody] UpdateImageRequest request)
+    {
+        ImageFile? imageFile = await dbContext.ImageFiles.FirstOrDefaultAsync(f => f.Id == imageId);
+        if (imageFile == null)
+        {
+            throw ResponseFactory.Create<NotFoundResponse>([$"Image file with ID {imageId} not found"]);
+        }
+
+        string oldUrl = imageFile.Url;
+        imageFile.Url = request.Url;
+        imageFile.ItemName = request.ItemName;
+
+        await dbContext.SaveChangesAsync();
+
+        if (!string.IsNullOrEmpty(oldUrl) && oldUrl != request.Url)
+        {
+            await fileStorageService.DeleteFile(oldUrl);
+        }
+
+        throw ResponseFactory.Create<OkResponse<ImageFile>>(imageFile, ["Image file updated successfully"]);
+    }
+
+    public class UpdateImageRequest
+    {
+        public string Url { get; set; } = string.Empty;
+        public string ItemName { get; set; } = string.Empty;
+    }
+
+    /// <summary>
+    /// [TEST] Assigns IamAGod access feature to a user (bypasses normal protection).
+    /// </summary>
+    /// <param name="userId">The ID of the user to assign IamAGod to.</param>
+    /// <returns>Success response upon assignment.</returns>
+    /// <response code="200">IamAGod assigned successfully.</response>
+    /// <response code="404">User or IamAGod feature not found.</response>
+    /// <remarks>
+    /// This is a test endpoint for development/testing purposes.
+    /// Bypasses the normal protection that prevents assigning IamAGod through regular methods.
+    /// </remarks>
+    [HttpPost("assign-iamagod/{userId}")]
+    [ProducesResponseType(typeof(OkResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> AssignIamAGod(int userId)
+    {
+        User? user = await dbContext.Users
+            .Include(u => u.AccessFeatures)
+            .FirstOrDefaultAsync(u => u.Id == userId);
+        
+        if (user == null)
+        {
+            throw ResponseFactory.Create<NotFoundResponse>([$"User with ID {userId} not found"]);
+        }
+
+        Entities.Models.Access.AccessFeature? iamAGod = await accessFeatureService.GetByNameValidatedAsync("IamAGod");
+        
+        if (user.AccessFeatures.Any(af => af.Id == iamAGod.Id))
+        {
+            throw ResponseFactory.Create<OkResponse>(["User already has IamAGod access feature"]);
+        }
+
+        user.AccessFeatures.Add(iamAGod);
+        await dbContext.SaveChangesAsync();
+
+        throw ResponseFactory.Create<OkResponse>(["IamAGod access feature assigned successfully"]);
     }
 
     # endregion
