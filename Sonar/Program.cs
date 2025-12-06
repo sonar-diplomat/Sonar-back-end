@@ -334,6 +334,7 @@ builder.Services.AddScoped<IVideoFileService, VideoFileService>();
 
 // Library Services
 builder.Services.AddScoped<IFolderService, FolderService>();
+builder.Services.AddScoped<IFolderCollectionService, FolderCollectionService>();
 builder.Services.AddScoped<ILibraryService, LibraryService>();
 
 // Music Services

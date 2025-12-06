@@ -17,6 +17,7 @@ namespace Sonar.Controllers.Library;
 public class FolderController(
     UserManager<User> userManager,
     IFolderService folderService,
+    IFolderCollectionService folderCollectionService,
     ILibraryService libraryService
 ) : BaseController(userManager)
 {
@@ -338,7 +339,7 @@ public class FolderController(
     public async Task<IActionResult> AddCollectionToFolder(int folderId, int collectionId)
     {
         int libraryId = (await CheckAccessFeatures([])).LibraryId;
-        await folderService.AddCollectionToFolderAsync(libraryId, folderId, collectionId);
+        await folderCollectionService.AddCollectionToFolderAsync(libraryId, folderId, collectionId);
         throw ResponseFactory.Create<OkResponse>(["Collection was added to folder successfully"]);
     }
 
@@ -361,7 +362,7 @@ public class FolderController(
     public async Task<IActionResult> RemoveCollectionFromFolder(int folderId, int collectionId)
     {
         int libraryId = (await CheckAccessFeatures([])).LibraryId;
-        await folderService.RemoveCollectionFromFolderAsync(libraryId, folderId, collectionId);
+        await folderCollectionService.RemoveCollectionFromFolderAsync(libraryId, folderId, collectionId);
         throw ResponseFactory.Create<OkResponse>(["Collection was removed from folder successfully"]);
     }
 
@@ -382,7 +383,7 @@ public class FolderController(
     public async Task<IActionResult> MoveCollectionToFolder(int collectionId, int targetFolderId)
     {
         int libraryId = (await CheckAccessFeatures([])).LibraryId;
-        await folderService.MoveCollectionToFolderAsync(libraryId, collectionId, targetFolderId);
+        await folderCollectionService.MoveCollectionToFolderAsync(libraryId, collectionId, targetFolderId);
         throw ResponseFactory.Create<OkResponse>(["Collection was moved to folder successfully"]);
     }
 
