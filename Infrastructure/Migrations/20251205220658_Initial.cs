@@ -9,7 +9,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class Initial : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -53,6 +53,19 @@ namespace Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_AspNetRoles", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ChatStickerCategory",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ChatStickerCategory", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -559,6 +572,31 @@ namespace Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "ChatSticker",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    ImageFileId = table.Column<int>(type: "integer", nullable: false),
+                    CategoryId = table.Column<int>(type: "integer", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ChatSticker", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ChatSticker_ChatStickerCategory_CategoryId",
+                        column: x => x.CategoryId,
+                        principalTable: "ChatStickerCategory",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_ChatSticker_File_ImageFileId",
+                        column: x => x.ImageFileId,
+                        principalTable: "File",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Collection",
                 columns: table => new
                 {
@@ -1059,6 +1097,31 @@ namespace Infrastructure.Migrations
                         principalTable: "VisibilityState",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "UserFollows",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    FollowerId = table.Column<int>(type: "integer", nullable: false),
+                    FollowingId = table.Column<int>(type: "integer", nullable: false),
+                    FollowedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserFollows", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_UserFollows_AspNetUsers_FollowerId",
+                        column: x => x.FollowerId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_UserFollows_AspNetUsers_FollowingId",
+                        column: x => x.FollowingId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -1626,9 +1689,31 @@ namespace Infrastructure.Migrations
                 });
 
             migrationBuilder.InsertData(
+                table: "ChatStickerCategory",
+                columns: new[] { "Id", "Name" },
+                values: new object[,]
+                {
+                    { 1, "Emotions" },
+                    { 2, "Reactions" },
+                    { 3, "Fun" }
+                });
+
+            migrationBuilder.InsertData(
                 table: "File",
                 columns: new[] { "Id", "Discriminator", "ItemName", "PostId", "Url" },
-                values: new object[] { 1, "ImageFile", "Default avatar", null, "" });
+                values: new object[,]
+                {
+                    { 1, "ImageFile", "Default avatar", null, "" },
+                    { 100, "ImageFile", "Happy Face Sticker", null, "image/stickers/happy.png" },
+                    { 101, "ImageFile", "Sad Face Sticker", null, "image/stickers/sad.png" },
+                    { 102, "ImageFile", "Angry Face Sticker", null, "image/stickers/angry.png" },
+                    { 103, "ImageFile", "Love Sticker", null, "image/stickers/love.png" },
+                    { 104, "ImageFile", "Like Sticker", null, "image/stickers/like.png" },
+                    { 105, "ImageFile", "Dislike Sticker", null, "image/stickers/dislike.png" },
+                    { 106, "ImageFile", "Thumbs Up Sticker", null, "image/stickers/thumbs_up.png" },
+                    { 107, "ImageFile", "Party Sticker", null, "image/stickers/party.png" },
+                    { 108, "ImageFile", "Celebrate Sticker", null, "image/stickers/celebrate.png" }
+                });
 
             migrationBuilder.InsertData(
                 table: "GiftStyle",
@@ -1745,6 +1830,22 @@ namespace Infrastructure.Migrations
                     { 2, "Unlisted" },
                     { 3, "Restricted" },
                     { 4, "Hidden" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "ChatSticker",
+                columns: new[] { "Id", "CategoryId", "ImageFileId", "Name" },
+                values: new object[,]
+                {
+                    { 1, 1, 100, "Happy" },
+                    { 2, 1, 101, "Sad" },
+                    { 3, 1, 102, "Angry" },
+                    { 4, 1, 103, "Love" },
+                    { 5, 2, 104, "Like" },
+                    { 6, 2, 105, "Dislike" },
+                    { 7, 2, 106, "Thumbs Up" },
+                    { 8, 3, 107, "Party" },
+                    { 9, 3, 108, "Celebrate" }
                 });
 
             migrationBuilder.CreateIndex(
@@ -1902,6 +2003,16 @@ namespace Infrastructure.Migrations
                 name: "IX_ChatMembers_MembersId",
                 table: "ChatMembers",
                 column: "MembersId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ChatSticker_CategoryId",
+                table: "ChatSticker",
+                column: "CategoryId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ChatSticker_ImageFileId",
+                table: "ChatSticker",
+                column: "ImageFileId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Collection_CoverId",
@@ -2174,6 +2285,17 @@ namespace Infrastructure.Migrations
                 column: "TrackId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_UserFollows_FollowerId_FollowingId",
+                table: "UserFollows",
+                columns: new[] { "FollowerId", "FollowingId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserFollows_FollowingId",
+                table: "UserFollows",
+                column: "FollowingId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_UserFriendRequests_FromUserId",
                 table: "UserFriendRequests",
                 column: "FromUserId");
@@ -2416,6 +2538,9 @@ namespace Infrastructure.Migrations
                 name: "ChatMembers");
 
             migrationBuilder.DropTable(
+                name: "ChatSticker");
+
+            migrationBuilder.DropTable(
                 name: "CollectionFolder");
 
             migrationBuilder.DropTable(
@@ -2461,6 +2586,9 @@ namespace Infrastructure.Migrations
                 name: "TrackArtists");
 
             migrationBuilder.DropTable(
+                name: "UserFollows");
+
+            migrationBuilder.DropTable(
                 name: "UserFriendRequests");
 
             migrationBuilder.DropTable(
@@ -2477,6 +2605,9 @@ namespace Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");
+
+            migrationBuilder.DropTable(
+                name: "ChatStickerCategory");
 
             migrationBuilder.DropTable(
                 name: "CosmeticItem");

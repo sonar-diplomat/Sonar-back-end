@@ -16,6 +16,7 @@ using Logging;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using System.Text.Json;
 using Settings = Entities.Models.ClientSettings.Settings;
 using SysFile = System.IO.File;
@@ -687,6 +688,27 @@ public class TestController(
 
         var deletedFiles = new List<object>();
         var deletionErrors = new List<object>();
+        var skippedDueToForeignKey = new List<object>();
+        int deletedCount = 0;
+
+        // Helper method to check if exception is a foreign key constraint violation
+        static bool IsForeignKeyConstraintError(Exception ex)
+        {
+            if (ex is DbUpdateException dbEx)
+            {
+                // Check for PostgreSQL foreign key error (code 23503)
+                if (dbEx.InnerException is Npgsql.PostgresException pgEx && pgEx.SqlState == "23503")
+                    return true;
+
+                // Check error message for foreign key references
+                string errorMessage = dbEx.InnerException?.Message ?? dbEx.Message;
+                if (errorMessage.Contains("foreign key", StringComparison.OrdinalIgnoreCase) ||
+                    errorMessage.Contains("violates foreign key constraint", StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+
+            return false;
+        }
 
         // Delete orphaned AudioFiles
         foreach (var audioFile in orphanedAudioFiles)
@@ -699,6 +721,10 @@ public class TestController(
                 // Delete from database
                 dbContext.AudioFiles.Remove(audioFile);
 
+                // Save changes immediately for this file
+                await dbContext.SaveChangesAsync();
+                deletedCount++;
+
                 deletedFiles.Add(new
                 {
                     Type = "AudioFile",
@@ -709,8 +735,27 @@ public class TestController(
                     DeletedFromDisk = diskDeleted
                 });
             }
+            catch (DbUpdateException dbEx) when (IsForeignKeyConstraintError(dbEx))
+            {
+                // Rollback the removal from context
+                dbContext.Entry(audioFile).State = EntityState.Unchanged;
+
+                skippedDueToForeignKey.Add(new
+                {
+                    Type = "AudioFile",
+                    FileId = audioFile.Id,
+                    FileName = audioFile.ItemName,
+                    Url = audioFile.Url,
+                    Reason = "File is referenced by foreign key constraint"
+                });
+            }
             catch (Exception ex)
             {
+                // Rollback the removal from context if it was added
+                var entry = dbContext.Entry(audioFile);
+                if (entry.State == EntityState.Deleted)
+                    entry.State = EntityState.Unchanged;
+
                 deletionErrors.Add(new
                 {
                     Type = "AudioFile",
@@ -733,6 +778,10 @@ public class TestController(
                 // Delete from database
                 dbContext.ImageFiles.Remove(imageFile);
 
+                // Save changes immediately for this file
+                await dbContext.SaveChangesAsync();
+                deletedCount++;
+
                 deletedFiles.Add(new
                 {
                     Type = "ImageFile",
@@ -743,8 +792,27 @@ public class TestController(
                     DeletedFromDisk = diskDeleted
                 });
             }
+            catch (DbUpdateException dbEx) when (IsForeignKeyConstraintError(dbEx))
+            {
+                // Rollback the removal from context
+                dbContext.Entry(imageFile).State = EntityState.Unchanged;
+
+                skippedDueToForeignKey.Add(new
+                {
+                    Type = "ImageFile",
+                    FileId = imageFile.Id,
+                    FileName = imageFile.ItemName,
+                    Url = imageFile.Url,
+                    Reason = "File is referenced by foreign key constraint"
+                });
+            }
             catch (Exception ex)
             {
+                // Rollback the removal from context if it was added
+                var entry = dbContext.Entry(imageFile);
+                if (entry.State == EntityState.Deleted)
+                    entry.State = EntityState.Unchanged;
+
                 deletionErrors.Add(new
                 {
                     Type = "ImageFile",
@@ -767,6 +835,10 @@ public class TestController(
                 // Delete from database
                 dbContext.VideoFiles.Remove(videoFile);
 
+                // Save changes immediately for this file
+                await dbContext.SaveChangesAsync();
+                deletedCount++;
+
                 deletedFiles.Add(new
                 {
                     Type = "VideoFile",
@@ -777,8 +849,27 @@ public class TestController(
                     DeletedFromDisk = diskDeleted
                 });
             }
+            catch (DbUpdateException dbEx) when (IsForeignKeyConstraintError(dbEx))
+            {
+                // Rollback the removal from context
+                dbContext.Entry(videoFile).State = EntityState.Unchanged;
+
+                skippedDueToForeignKey.Add(new
+                {
+                    Type = "VideoFile",
+                    FileId = videoFile.Id,
+                    FileName = videoFile.ItemName,
+                    Url = videoFile.Url,
+                    Reason = "File is referenced by foreign key constraint"
+                });
+            }
             catch (Exception ex)
             {
+                // Rollback the removal from context if it was added
+                var entry = dbContext.Entry(videoFile);
+                if (entry.State == EntityState.Deleted)
+                    entry.State = EntityState.Unchanged;
+
                 deletionErrors.Add(new
                 {
                     Type = "VideoFile",
@@ -790,13 +881,11 @@ public class TestController(
             }
         }
 
-        // Save changes to database
-        int deletedCount = await dbContext.SaveChangesAsync();
-
         var result = new
         {
             DeletedFiles = deletedFiles,
             DeletionErrors = deletionErrors,
+            SkippedDueToForeignKey = skippedDueToForeignKey,
             Summary = new
             {
                 TotalOrphanedAudioFiles = orphanedAudioFiles.Count,
@@ -804,6 +893,7 @@ public class TestController(
                 TotalOrphanedVideoFiles = orphanedVideoFiles.Count,
                 SuccessfullyDeleted = deletedFiles.Count,
                 DeletionErrorsCount = deletionErrors.Count,
+                SkippedDueToForeignKeyCount = skippedDueToForeignKey.Count,
                 DatabaseRecordsDeleted = deletedCount
             }
         };

@@ -1,6 +1,7 @@
 ﻿using Application.Abstractions.Interfaces.Repository.Chat;
 using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.File;
+using Application.Abstractions.Interfaces.Services.UserCore;
 using Application.DTOs;
 using Application.DTOs.Chat;
 using Application.Extensions;
@@ -20,7 +21,8 @@ public class ChatService(
     IMessageService messageService,
     IMessageReadService messageReadService,
     IUserService userService,
-    IChatNotifier notifier
+    IChatNotifier notifier,
+    IUserFollowService userFollowService
 ) : GenericService<ChatModel>(repository), IChatService
 {
     public async Task UpdateChatCoverAsync(int userId, int chatId, IFormFile file)
@@ -303,6 +305,9 @@ public class ChatService(
             throw ResponseFactory.Create<BadRequestResponse>(["Cannot create personal chat with yourself"]);
         
         User otherUser = await userService.GetByIdValidatedAsync((int)dto.UserId);
+        
+        await CheckCanMessageUserAsync(userId, (int)dto.UserId);
+        
         chat.Members.Add(otherUser);
         return await repository.UpdateAsync(chat);
     }
@@ -379,5 +384,30 @@ public class ChatService(
         return userIds.Contains(userId)
             ? chat
             : throw ResponseFactory.Create<ForbiddenResponse>(["User is not a member of the chat"]);
+    }
+
+    private async Task CheckCanMessageUserAsync(int senderId, int recipientId)
+    {
+        User recipient = await userService.GetByIdValidatedAsync(recipientId);
+        
+        var recipientWithSettings = await userService.GetByIdAsync(recipientId);
+        if (recipientWithSettings?.Settings?.UserPrivacy == null)
+            throw ResponseFactory.Create<BadRequestResponse>(["Recipient privacy settings not found"]);
+
+        int whichCanMessageId = recipientWithSettings.Settings.UserPrivacy.WhichCanMessageId;
+
+        if (whichCanMessageId == 1) 
+            return;
+
+        if (whichCanMessageId == 3)
+            throw ResponseFactory.Create<ForbiddenResponse>(["This user does not accept messages"]);
+
+        if (whichCanMessageId == 2) 
+        {
+            IEnumerable<User> mutualFollows = await userFollowService.GetMutualFollowsAsync(recipientId);
+            bool isMutualFollow = mutualFollows.Any(u => u.Id == senderId);
+            if (!isMutualFollow)
+                throw ResponseFactory.Create<ForbiddenResponse>(["You can only message users who follow you back"]);
+        }
     }
 }

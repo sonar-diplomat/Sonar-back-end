@@ -2,10 +2,11 @@
 using Application.DTOs.Chat;
 using Entities.Models.Chat;
 using Microsoft.AspNetCore.Http;
+using ChatModel = Entities.Models.Chat.Chat;
 
 namespace Application.Abstractions.Interfaces.Services;
 
-public interface IChatService : IGenericService<Chat>
+public interface IChatService : IGenericService<ChatModel>
 {
     Task UpdateChatCoverAsync(int userId, int chatId, IFormFile file);
     Task UpdateChatNameAsync(int userId, int chatId, string newName);
@@ -20,6 +21,6 @@ public interface IChatService : IGenericService<Chat>
     Task RemoveUserFromChat(int initiatorId, int userId, int chatId);
     Task<CursorPageDTO<MessageDTO>> GetMessagesWithCursorAsync(int userId, int chatId, int? cursor, int take = 50);
     Task LeaveChat(int userId, int chatId);
-    Task<Chat> CreateChatAsync(int userId, CreateChatDTO chat);
+    Task<ChatModel> CreateChatAsync(int userId, CreateChatDTO chat);
     Task<IEnumerable<ChatListItemDTO>> GetUserChatsAsync(int userId);
 }
