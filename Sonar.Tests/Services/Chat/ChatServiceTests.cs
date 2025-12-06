@@ -1,4 +1,5 @@
 using Application.Abstractions.Interfaces.Repository.Chat;
+using Application.Abstractions.Interfaces.Repository.UserCore;
 using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.File;
 using Application.Abstractions.Interfaces.Services.UserCore;
@@ -24,6 +25,7 @@ public class ChatServiceTests
     private readonly Mock<IUserService> _userServiceMock;
     private readonly Mock<IChatNotifier> _chatNotifierMock;
     private readonly Mock<IUserFollowService> _userFollowServiceMock;
+    private readonly Mock<IUserRepository> _userRepositoryMock;
     private readonly ChatService _service;
 
     public ChatServiceTests()
@@ -35,6 +37,7 @@ public class ChatServiceTests
         _userServiceMock = new Mock<IUserService>();
         _chatNotifierMock = new Mock<IChatNotifier>();
         _userFollowServiceMock = new Mock<IUserFollowService>();
+        _userRepositoryMock = new Mock<IUserRepository>();
         
         _service = new ChatService(
             _chatRepositoryMock.Object,
@@ -43,7 +46,8 @@ public class ChatServiceTests
             _messageReadServiceMock.Object,
             _userServiceMock.Object,
             _chatNotifierMock.Object,
-            _userFollowServiceMock.Object
+            _userFollowServiceMock.Object,
+            _userRepositoryMock.Object
         );
     }
 

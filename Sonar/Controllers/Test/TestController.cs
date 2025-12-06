@@ -1,7 +1,6 @@
 ﻿using Application.Abstractions.Interfaces.Repository.Distribution;
 using Application.Abstractions.Interfaces.Repository.Music;
 using Application.Abstractions.Interfaces.Services;
-using Application.Abstractions.Interfaces.Services.Access;
 using Application.Abstractions.Interfaces.Services.File;
 using Application.Abstractions.Interfaces.Services.Utilities;
 using Application.Extensions;
@@ -1009,7 +1008,7 @@ public class TestController(
         throw ResponseFactory.Create<OkResponse<ImageFile>>(imageFile, ["Image file updated successfully"]);
     }
 
-    private class UpdateImageRequest
+    public class UpdateImageRequest
     {
         public string Url { get; set; } = string.Empty;
         public string ItemName { get; set; } = string.Empty;
