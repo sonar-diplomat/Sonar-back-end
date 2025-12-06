@@ -8,4 +8,5 @@ public interface IMessageReadRepository : IGenericRepository<MessageRead>
     Task<MessageRead?> GetAsync(int userId, int messageId);
     Task AddRangeAsync(IEnumerable<MessageRead> messageReads);
     Task<IEnumerable<MessageRead>> GetByMessageIdsAsync(List<int> messageIds);
+    Task DeleteByMessageIdAsync(int messageId);
 }

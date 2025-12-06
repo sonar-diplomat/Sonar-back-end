@@ -117,4 +117,45 @@ public class MessageService(
             NextCursor = nextCursor
         };
     }
+
+    public async Task<Dictionary<int, LastMessageDTO?>> GetLastMessagesForChatsAsync(IEnumerable<int> chatIds)
+    {
+        List<int> chatIdsList = chatIds.ToList();
+        if (chatIdsList.Count == 0)
+            return new Dictionary<int, LastMessageDTO?>();
+
+        var lastMessages = await repository
+            .Query()
+            .Where(m => chatIdsList.Contains(m.ChatId))
+            .GroupBy(m => m.ChatId)
+            .Select(g => new
+            {
+                ChatId = g.Key,
+                LastMessage = g.OrderByDescending(m => m.CreatedAt)
+                    .ThenByDescending(m => m.Id)
+                    .Select(m => new
+                    {
+                        m.TextContent,
+                        m.CreatedAt
+                    })
+                    .FirstOrDefault()
+            })
+            .ToListAsync();
+
+        var result = new Dictionary<int, LastMessageDTO?>();
+        
+        foreach (int chatId in chatIdsList)
+        {
+            var lastMsg = lastMessages.FirstOrDefault(lm => lm.ChatId == chatId);
+            result[chatId] = lastMsg?.LastMessage != null
+                ? new LastMessageDTO
+                {
+                    TextContent = lastMsg.LastMessage.TextContent,
+                    CreatedAt = lastMsg.LastMessage.CreatedAt
+                }
+                : null;
+        }
+
+        return result;
+    }
 }

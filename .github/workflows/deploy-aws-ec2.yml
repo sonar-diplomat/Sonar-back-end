@@ -1,0 +1,90 @@
+name: Deploy to Test Server (AWS EC2 + ECR)
+
+on:
+  push:
+    branches:
+      - dev
+
+env:
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  ECR_REPOSITORY: sonar/backend                 # имя репозитория в ECR
+  IMAGE_TAG: ${{ github.sha }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push Docker image to ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          docker build \
+            -f Sonar/Dockerfile \
+            -t $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }} \
+            .
+
+          docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
+
+          docker tag \
+            $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }} \
+            $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:latest
+
+          docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:latest
+
+      - name: Deploy on EC2 via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.EC2_HOST }}        # ← здесь твой DNS
+          username: ${{ secrets.EC2_USER }}    # ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}      # .pem
+          script: |
+            set -e
+
+            AWS_REGION=${{ env.AWS_REGION }}
+            ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }}
+            ECR_REPOSITORY=${{ env.ECR_REPOSITORY }}
+            IMAGE_TAG=${{ env.IMAGE_TAG }}
+
+            # логин в ECR (на EC2 должен быть awscli)
+            docker login \
+              --username AWS \
+              --password $(aws ecr get-login-password --region $AWS_REGION) \
+              $ECR_REGISTRY
+
+            # подтягиваем образ
+            docker pull $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+            # создаём директорию для аплоадов и даём права
+            sudo mkdir -p /opt/sonar/uploads
+            sudo chmod 777 /opt/sonar/uploads
+
+            docker stop sonar-app || true
+            docker rm sonar-app || true
+
+            docker run -d --name sonar-app \
+              --network sonar-network \
+              -p 8080:8080 -p 8081:8081 \
+              -v /opt/sonar/uploads:/app/wwwroot/uploads \
+              -e Jwt__Key='${{ secrets.JWT_KEY }}' \
+              -e Jwt__Issuer='${{ secrets.JWT_ISSUER }}' \
+              -e Jwt__Audience='${{ secrets.JWT_AUDIENCE }}' \
+              -e Mailgun__ApiKey='${{ secrets.MAILGUN_API_KEY }}' \
+              -e Mailgun__Domain='${{ secrets.MAILGUN_DOMAIN }}' \
+              -e Mailgun__From='${{ secrets.MAILGUN_FROM }}' \
+              -e ConnectionStrings__SonarContext='${{ secrets.CONNECTION_STRING_AWS }}' \
+              $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG

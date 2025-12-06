@@ -9,4 +9,5 @@ public interface IMessageReadService : IGenericService<MessageRead>
     Task<MessageRead?> GetReadRecordAsync(int userId, int messageId);
     Task AddRangeAsync(IEnumerable<MessageRead> messageReads);
     Task<IEnumerable<MessageReadDTO>> GetReadRecordsByMessageIdsAsync(List<int> messageIds);
+    Task DeleteByMessageIdAsync(int messageId);
 }

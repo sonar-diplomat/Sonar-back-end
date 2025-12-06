@@ -1,4 +1,5 @@
-﻿using Application.Abstractions.Interfaces.Repository.File;
+﻿using System.IO;
+using Application.Abstractions.Interfaces.Repository.File;
 using Application.Abstractions.Interfaces.Services.File;
 using Application.Response;
 using Entities.Models.File;
@@ -22,9 +23,12 @@ public class ImageFileService(
 
         if (url == null) throw ResponseFactory.Create<InternalServerErrorResponse>(["Can`t save image"]);
 
+        string extension = Path.GetExtension(file.FileName);
+        string itemName = $"{Guid.NewGuid()}{extension}";
+
         ImageFile fileModel = new()
         {
-            ItemName = file.FileName,
+            ItemName = itemName,
             Url = url
         };
         return await CreateAsync(fileModel);
