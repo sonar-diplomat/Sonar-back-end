@@ -77,6 +77,7 @@ jobs:
             docker rm sonar-app || true
 
             docker run -d --name sonar-app \
+              --network sonar-network \
               -p 8080:8080 -p 8081:8081 \
               -v /opt/sonar/uploads:/app/wwwroot/uploads \
               -e Jwt__Key='${{ secrets.JWT_KEY }}' \
