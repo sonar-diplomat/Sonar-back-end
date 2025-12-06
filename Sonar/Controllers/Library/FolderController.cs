@@ -325,15 +325,21 @@ public class FolderController(
     /// <param name="folderId">The ID of the folder.</param>
     /// <param name="collectionId">The ID of the collection to add.</param>
     /// <returns>Success response upon addition.</returns>
-    /// <response code="501">Not yet implemented.</response>
-    /// <remarks>
-    /// TODO: Implement adding/removing collections to/from folders when collections have been tested.
-    /// </remarks>
+    /// <response code="200">Collection added to folder successfully.</response>
+    /// <response code="401">User not authenticated.</response>
+    /// <response code="404">Folder or collection not found.</response>
+    /// <response code="409">Collection is already in this folder.</response>
     [HttpPost("{folderId:int}/add-collection/{collectionId:int}")]
-    [ProducesResponseType(StatusCodes.Status501NotImplemented)]
+    [Authorize]
+    [ProducesResponseType(typeof(OkResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ConflictResponse), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> AddCollectionToFolder(int folderId, int collectionId)
     {
-        throw new NotImplementedException();
+        int libraryId = (await CheckAccessFeatures([])).LibraryId;
+        await folderService.AddCollectionToFolderAsync(libraryId, folderId, collectionId);
+        throw ResponseFactory.Create<OkResponse>(["Collection was added to folder successfully"]);
     }
 
     /// <summary>
@@ -342,12 +348,42 @@ public class FolderController(
     /// <param name="folderId">The ID of the folder.</param>
     /// <param name="collectionId">The ID of the collection to remove.</param>
     /// <returns>Success response upon removal.</returns>
-    /// <response code="501">Not yet implemented.</response>
+    /// <response code="200">Collection removed from folder successfully.</response>
+    /// <response code="401">User not authenticated.</response>
+    /// <response code="403">Cannot remove collections from protected system folders.</response>
+    /// <response code="404">Folder or collection not found in this folder.</response>
     [HttpDelete("{folderId:int}/remove-collection/{collectionId:int}")]
-    [ProducesResponseType(StatusCodes.Status501NotImplemented)]
+    [Authorize]
+    [ProducesResponseType(typeof(OkResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ForbiddenResponse), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> RemoveCollectionFromFolder(int folderId, int collectionId)
     {
-        throw new NotImplementedException();
+        int libraryId = (await CheckAccessFeatures([])).LibraryId;
+        await folderService.RemoveCollectionFromFolderAsync(libraryId, folderId, collectionId);
+        throw ResponseFactory.Create<OkResponse>(["Collection was removed from folder successfully"]);
+    }
+
+    /// <summary>
+    /// Moves a collection to a target folder, removing it from all other folders in the library (except protected folders).
+    /// </summary>
+    /// <param name="collectionId">The ID of the collection to move.</param>
+    /// <param name="targetFolderId">The ID of the target folder.</param>
+    /// <returns>Success response upon moving collection.</returns>
+    /// <response code="200">Collection moved to folder successfully.</response>
+    /// <response code="401">User not authenticated.</response>
+    /// <response code="404">Collection or target folder not found.</response>
+    [HttpPut("move-collection/{collectionId:int}/to-folder/{targetFolderId:int}")]
+    [Authorize]
+    [ProducesResponseType(typeof(OkResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> MoveCollectionToFolder(int collectionId, int targetFolderId)
+    {
+        int libraryId = (await CheckAccessFeatures([])).LibraryId;
+        await folderService.MoveCollectionToFolderAsync(libraryId, collectionId, targetFolderId);
+        throw ResponseFactory.Create<OkResponse>(["Collection was moved to folder successfully"]);
     }
 
     /// <summary>
