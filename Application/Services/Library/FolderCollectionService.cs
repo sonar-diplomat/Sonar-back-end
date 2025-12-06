@@ -57,12 +57,17 @@ public class FolderCollectionService(
         if (collection == null)
             throw ResponseFactory.Create<NotFoundResponse>(["Collection not found"]);
         
-        // Находим все папки библиотеки, содержащие эту коллекцию
+        // Находим все папки библиотеки с коллекциями
         IQueryable<Folder> allFolders = await folderRepository.GetAllAsync();
-        List<Folder> foldersWithCollection = await allFolders
-            .Where(f => f.LibraryId == libraryId && f.Collections != null && f.Collections.Any(c => c.Id == collectionId))
+        List<Folder> allLibraryFolders = await allFolders
+            .Where(f => f.LibraryId == libraryId)
             .Include(f => f.Collections)
             .ToListAsync();
+        
+        // Фильтруем папки, содержащие эту коллекцию (в памяти)
+        List<Folder> foldersWithCollection = allLibraryFolders
+            .Where(f => f.Collections != null && f.Collections.Any(c => c.Id == collectionId))
+            .ToList();
         
         // Удаляем коллекцию из всех текущих папок
         foreach (Folder folder in foldersWithCollection)
