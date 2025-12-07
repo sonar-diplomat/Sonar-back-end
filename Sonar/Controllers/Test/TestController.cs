@@ -16,7 +16,6 @@ using Logging;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Npgsql;
 using System.Text.Json;
 using Settings = Entities.Models.ClientSettings.Settings;
 using SysFile = System.IO.File;
@@ -40,6 +39,7 @@ public class TestController(
     SonarContext dbContext,
     IFileStorageService fileStorageService,
     IAccessFeatureService accessFeatureService
+    IEmailSenderService emailSenderService
 ) : BaseController(userManager)
 {
     #region dist
@@ -1050,6 +1050,54 @@ public class TestController(
         await dbContext.SaveChangesAsync();
 
         throw ResponseFactory.Create<OkResponse>(["IamAGod access feature assigned successfully"]);
+    }
+
+    # endregion
+
+    # region email tests
+
+    /// <summary>
+    /// [TEST] Sends a test email using the specified template.
+    /// </summary>
+    /// <param name="template">Template name (2fa, confirm-email, recovery-password).</param>
+    /// <param name="email">Email address to send the test email to.</param>
+    /// <param name="variables">Optional variables for template replacement (e.g., {"code": "123456", "link": "https://example.com"}).</param>
+    /// <returns>Success response upon email send.</returns>
+    /// <response code="200">Test email sent successfully.</response>
+    /// <response code="400">Invalid template name or email address.</response>
+    /// <remarks>
+    /// This is a test endpoint for development/testing purposes to verify email sending functionality.
+    /// Available templates: "2fa", "confirm-email", "recovery-password"
+    /// </remarks>
+    [HttpPost("send-email")]
+    [ProducesResponseType(typeof(OkResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(BadRequestResponse), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> SendTestEmail(
+        [FromQuery] string template,
+        [FromQuery] string email,
+        [FromBody] Dictionary<string, string>? variables = null)
+    {
+        if (string.IsNullOrWhiteSpace(template))
+            throw ResponseFactory.Create<BadRequestResponse>(["Template name is required"]);
+
+        if (string.IsNullOrWhiteSpace(email))
+            throw ResponseFactory.Create<BadRequestResponse>(["Email address is required"]);
+
+        // Если переменные не переданы, создаем тестовые значения
+        if (variables == null || variables.Count == 0)
+        {
+            variables = template switch
+            {
+                "2fa" => new Dictionary<string, string> { { "code", "123456" } },
+                "confirm-email" => new Dictionary<string, string> { { "link", "https://example.com/confirm-email?email=test@example.com&token=test-token-123" } },
+                "recovery-password" => new Dictionary<string, string> { { "link", "https://example.com/reset-password?email=test@example.com&token=test-token-456" } },
+                _ => new Dictionary<string, string>()
+            };
+        }
+
+        await emailSenderService.SendEmailAsync(email, template, variables);
+
+        throw ResponseFactory.Create<OkResponse>([$"Test email sent successfully to {email} using template '{template}'"]);
     }
 
     # endregion

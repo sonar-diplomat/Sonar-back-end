@@ -397,11 +397,41 @@ builder.Services.AddScoped<MailgunSettings>(_ =>
     }
 );
 
+builder.Services.AddScoped<SmtpSettings>(_ =>
+    new SmtpSettings
+    {
+        // Gmail SMTP: smtp.gmail.com, Port 587 (TLS) or 465 (SSL)
+        Host = builder.Configuration["Smtp:Host"] ?? string.Empty,
+        Port = builder.Configuration.GetValue<int>("Smtp:Port", 587),
+        Username = builder.Configuration["Smtp:Username"] ?? string.Empty,
+        Password = builder.Configuration["Smtp:Password"] ?? string.Empty,
+        From = builder.Configuration["Smtp:From"] ?? string.Empty,
+        FromName = builder.Configuration["Smtp:FromName"],
+        EnableSsl = builder.Configuration.GetValue<bool>("Smtp:EnableSsl", true), // Required for Gmail
+        UseDefaultCredentials = builder.Configuration.GetValue<bool>("Smtp:UseDefaultCredentials", false)
+    }
+);
+
 builder.Services.AddSingleton<IChatNotifier, ChatNotifier>();
 
 
 // Utility Services
-builder.Services.AddScoped<IEmailSenderService, MailgunEmailService>();
+// Switch between MailgunEmailService and SmtpEmailService based on configuration
+// Default to MailgunEmailService if Smtp:Host is not configured
+bool useSmtp = !string.IsNullOrEmpty(builder.Configuration["Smtp:Host"]);
+if (useSmtp)
+{
+    builder.Services.AddScoped<IEmailSenderService>(sp => 
+        new SmtpEmailService(sp.GetRequiredService<SmtpSettings>(), builder.Configuration));
+}
+else
+{
+    builder.Services.AddScoped<IEmailSenderService>(sp => 
+        new MailgunEmailService(
+            sp.GetRequiredService<MailgunSettings>(), 
+            sp.GetRequiredService<HttpClient>(), 
+            builder.Configuration));
+}
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddSingleton<QRCodeGenerator>();
 builder.Services.AddSingleton<IShareService, ShareService>();

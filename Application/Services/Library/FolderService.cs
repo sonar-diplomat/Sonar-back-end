@@ -64,18 +64,14 @@ public class FolderService(
     {
         Folder folder = await CheckFolderBelongsToLibrary(libraryId, folderId);
         
-        // Нельзя переместить папку в саму себя
         if (folderId == newParentFolderId)
             throw ResponseFactory.Create<BadRequestResponse>(["Cannot move folder into itself"]);
         
-        // Нельзя переместить защищенную папку
         if (folder.IsProtected)
             throw ResponseFactory.Create<ForbiddenResponse>(["Cannot move protected system folders"]);
         
         Folder parentFolder = await CheckFolderBelongsToLibrary(libraryId, newParentFolderId);
         
-        // Проверка на циклические ссылки: нельзя переместить папку в её потомка
-        // Проверяем, является ли newParentFolderId потомком folderId
         if (await IsDescendantOfAsync(folderId, newParentFolderId))
             throw ResponseFactory.Create<BadRequestResponse>(["Cannot move folder into its descendant"]);
         
