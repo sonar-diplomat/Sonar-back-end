@@ -73,4 +73,12 @@ public class UserRepository(SonarContext context) : IUserRepository
     {
         return Task.FromResult(context.Set<User>().Any(u => u.PublicIdentifier == publicIdentifier));
     }
+
+    public async Task<User?> GetByPublicIdentifierAsync(string publicIdentifier)
+    {
+        return await context.Set<User>()
+            .Include(u => u.AccessFeatures)
+            .Include(u => u.AvatarImage)
+            .FirstOrDefaultAsync(u => u.PublicIdentifier == publicIdentifier);
+    }
 }

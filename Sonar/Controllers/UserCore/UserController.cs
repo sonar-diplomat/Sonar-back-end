@@ -1,4 +1,5 @@
 using Application.Abstractions.Interfaces.Services;
+using Application.Abstractions.Interfaces.Services.UserCore;
 using Application.Abstractions.Interfaces.Services.Utilities;
 using Application.DTOs.User;
 using Application.Response;
@@ -15,7 +16,8 @@ namespace Sonar.Controllers.UserCore;
 public class UserController(
     IUserService userService,
     UserManager<User> userManager,
-    IShareService shareService
+    IShareService shareService,
+    IUserFollowService userFollowService
 )
     : ShareController<User>(userManager, shareService)
 {
@@ -99,6 +101,86 @@ public class UserController(
     }
 
     /// <summary>
+    /// Retrieves profile information for a specific user by their ID.
+    /// Returns only the data needed for displaying the user profile.
+    /// </summary>
+    /// <param name="userId">The ID of the user to retrieve.</param>
+    /// <returns>User profile DTO with profile information and statistics.</returns>
+    /// <response code="200">User profile retrieved successfully.</response>
+    /// <response code="404">User not found.</response>
+    [HttpGet("{userId:int}/profile")]
+    [ProducesResponseType(typeof(OkResponse<UserProfileDTO>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<UserProfileDTO>> GetUserProfile(int userId)
+    {
+        User user = await userService.GetByIdValidatedAsync(userId);
+        
+        // Get followers and following counts
+        var followers = await userFollowService.GetFollowersAsync(userId);
+        var following = await userFollowService.GetFollowingAsync(userId);
+        
+        UserProfileDTO profileDto = new()
+        {
+            Id = user.Id,
+            UserName = user.UserName ?? string.Empty,
+            PublicIdentifier = user.PublicIdentifier,
+            Biography = user.Biography,
+            AvatarImageId = user.AvatarImageId,
+            ImageUrl = null, // Will be generated on frontend using AvatarImageId
+            RegistrationDate = user.RegistrationDate,
+            FollowersCount = followers.Count(),
+            FollowingCount = following.Count(),
+            AccessFeatures = user.AccessFeatures.Select(af => new Application.DTOs.Access.AccessFeatureDTO
+            {
+                Id = af.Id,
+                Name = af.Name
+            }).ToList()
+        };
+        
+        throw ResponseFactory.Create<OkResponse<UserProfileDTO>>(profileDto, ["User profile retrieved successfully"]);
+    }
+
+    /// <summary>
+    /// Retrieves profile information for a specific user by their public identifier.
+    /// Returns only the data needed for displaying the user profile.
+    /// </summary>
+    /// <param name="publicIdentifier">The public identifier of the user to retrieve.</param>
+    /// <returns>User profile DTO with profile information and statistics.</returns>
+    /// <response code="200">User profile retrieved successfully.</response>
+    /// <response code="404">User not found.</response>
+    [HttpGet("profile/{publicIdentifier}")]
+    [ProducesResponseType(typeof(OkResponse<UserProfileDTO>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<UserProfileDTO>> GetUserProfileByIdentifier(string publicIdentifier)
+    {
+        User user = await userService.GetByPublicIdentifierValidatedAsync(publicIdentifier);
+        
+        // Get followers and following counts
+        var followers = await userFollowService.GetFollowersAsync(user.Id);
+        var following = await userFollowService.GetFollowingAsync(user.Id);
+        
+        UserProfileDTO profileDto = new()
+        {
+            Id = user.Id,
+            UserName = user.UserName ?? string.Empty,
+            PublicIdentifier = user.PublicIdentifier,
+            Biography = user.Biography,
+            AvatarImageId = user.AvatarImageId,
+            ImageUrl = null, // Will be generated on frontend using AvatarImageId
+            RegistrationDate = user.RegistrationDate,
+            FollowersCount = followers.Count(),
+            FollowingCount = following.Count(),
+            AccessFeatures = user.AccessFeatures.Select(af => new Application.DTOs.Access.AccessFeatureDTO
+            {
+                Id = af.Id,
+                Name = af.Name
+            }).ToList()
+        };
+        
+        throw ResponseFactory.Create<OkResponse<UserProfileDTO>>(profileDto, ["User profile retrieved successfully"]);
+    }
+
+    /// <summary>
     /// Updates the authenticated user's profile information.
     /// </summary>
     /// <param name="request">User update DTO containing the new profile information.</param>
@@ -176,111 +258,6 @@ public class UserController(
         throw ResponseFactory.Create<OkResponse>(["User visibility status was changed successfully"]);
     }
 
-    /// <summary>
-    /// Sends a friend request to another user.
-    /// </summary>
-    /// <param name="toUserId">The ID of the user to send the friend request to.</param>
-    /// <returns>Success response upon sending friend request.</returns>
-    /// <response code="200">Friend request sent successfully.</response>
-    /// <response code="400">Invalid request (already friends, request already sent, user not accepting requests, etc.).</response>
-    /// <response code="401">User not authenticated.</response>
-    /// <response code="404">Target user not found.</response>
-    [HttpPost("friend-request/{toUserId:int}")]
-    [Authorize]
-    [ProducesResponseType(typeof(OkResponse<UserFriendRequestDTO>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(BadRequestResponse), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> SendFriendRequest(int toUserId)
-    {
-        User user = await CheckAccessFeatures([]);
-        UserFriendRequest request = await userService.SendFriendRequestAsync(user.Id, toUserId);
-        User toUser = await userService.GetByIdValidatedAsync(toUserId);
-        UserFriendRequestDTO dto = new()
-        {
-            Id = request.Id,
-            RequestedAt = request.RequestedAt,
-            FromUserId = user.Id,
-            FromUserName = user.UserName ?? string.Empty,
-            ToUserId = request.ToUserId,
-            ToUserName = toUser.UserName ?? string.Empty
-        };
-        throw ResponseFactory.Create<OkResponse<UserFriendRequestDTO>>(dto, ["Friend request sent successfully"]);
-    }
-
-    /// <summary>
-    /// Retrieves all pending friend requests received by the authenticated user.
-    /// </summary>
-    /// <returns>List of pending friend request DTOs.</returns>
-    /// <response code="200">Friend requests retrieved successfully.</response>
-    /// <response code="401">User not authenticated.</response>
-    [HttpGet("friend-requests/pending")]
-    [Authorize]
-    [ProducesResponseType(typeof(OkResponse<IEnumerable<UserReceivedFriendRequestDTO>>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> GetPendingFriendRequests()
-    {
-        User user = await CheckAccessFeatures([]);
-        IEnumerable<UserFriendRequest> requests = await userService.GetPendingFriendRequestsAsync(user.Id);
-        IEnumerable<UserReceivedFriendRequestDTO> dtos = requests.Select(r => new UserReceivedFriendRequestDTO
-        {
-            Id = r.Id,
-            RequestedAt = r.RequestedAt,
-            FromUserId = r.FromUserId,
-            FromUserName = r.FromUser.UserName ?? string.Empty
-        });
-        throw ResponseFactory.Create<OkResponse<IEnumerable<UserReceivedFriendRequestDTO>>>(dtos,
-            ["Pending friend requests retrieved successfully"]);
-    }
-
-    /// <summary>
-    /// Retrieves all sent friend requests by the authenticated user that are still pending.
-    /// </summary>
-    /// <returns>List of sent friend request DTOs.</returns>
-    /// <response code="200">Sent friend requests retrieved successfully.</response>
-    /// <response code="401">User not authenticated.</response>
-    [HttpGet("friend-requests/sent")]
-    [Authorize]
-    [ProducesResponseType(typeof(OkResponse<IEnumerable<UserSentFriendRequestDTO>>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> GetSentFriendRequests()
-    {
-        User user = await CheckAccessFeatures([]);
-        IEnumerable<UserFriendRequest> requests = await userService.GetSentFriendRequestsAsync(user.Id);
-        IEnumerable<UserSentFriendRequestDTO> dtos = requests.Select(r => new UserSentFriendRequestDTO
-        {
-            Id = r.Id,
-            ToUserId = r.ToUserId,
-            ToUserName = r.ToUser.UserName ?? string.Empty,
-            RequestedAt = r.RequestedAt,
-        });
-        throw ResponseFactory.Create<OkResponse<IEnumerable<UserSentFriendRequestDTO>>>(dtos,
-            ["Sent friend requests retrieved successfully"]);
-    }
-
-    /// <summary>
-    /// Resolves a friend request (accept or decline).
-    /// </summary>
-    /// <param name="requestId">The ID of the friend request to resolve.</param>
-    /// <param name="accept">True to accept the request, false to decline.</param>
-    /// <returns>Success response upon resolution.</returns>
-    /// <response code="200">Friend request resolved successfully.</response>
-    /// <response code="400">Request already resolved or other validation error.</response>
-    /// <response code="401">User not authenticated or not authorized to resolve this request.</response>
-    /// <response code="404">Friend request not found.</response>
-    [HttpPut("friend-request/{requestId:int}/resolve")]
-    [Authorize]
-    [ProducesResponseType(typeof(OkResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(BadRequestResponse), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> ResolveFriendRequest(int requestId, [FromQuery] bool accept)
-    {
-        User user = await CheckAccessFeatures([]);
-        bool accepted = await userService.ResolveFriendRequestAsync(user.Id, requestId, accept);
-        string message = accepted ? "Friend request accepted successfully" : "Friend request declined successfully";
-        throw ResponseFactory.Create<OkResponse>([message]);
-    }
 
     /// <summary>
     /// Removes a friend from the authenticated user's friends list.

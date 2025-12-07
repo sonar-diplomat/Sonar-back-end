@@ -95,6 +95,7 @@ public class ChatService(
     {
         await CheckUserIsMemberAsync(userId, chatId);
         ChatModel chat = await repository.SnInclude(c => c.Members)
+            .SnInclude(c => c.Admins)
             .SnInclude(c => c.Cover).GetByIdValidatedAsync(chatId);
         ChatDTO dto = new()
         {
@@ -102,7 +103,8 @@ public class ChatService(
             IsGroup = chat.IsGroup,
             CoverId = chat.CoverId,
             CreatorId = chat.CreatorId,
-            UserIds = chat.Members.Select(u => u.Id).ToArray()
+            UserIds = chat.Members.Select(u => u.Id).ToArray(),
+            AdminIds = chat.Admins.Select(a => a.Id).ToArray()
         };
         return dto;
     }
@@ -287,18 +289,20 @@ public class ChatService(
     public async Task<ChatModel> CreateChatAsync(int userId, CreateChatDTO dto)
     {
         User creator = await userService.GetByIdValidatedAsync(userId);
-        ChatModel chat = new()
-        {
-            Name = dto.Name,
-            IsGroup = dto.IsGroup,
-            CoverId = dto.CoverId,
-            CreatorId = userId,
-            Members = new List<User> { creator }
-        };
-        await repository.AddAsync(chat);
         
-        if (chat.IsGroup)
-            return await repository.UpdateAsync(chat);
+        if (dto.IsGroup)
+        {
+            ChatModel groupChat = new()
+            {
+                Name = dto.Name,
+                IsGroup = dto.IsGroup,
+                CoverId = dto.CoverId,
+                CreatorId = userId,
+                Members = new List<User> { creator }
+            };
+            await repository.AddAsync(groupChat);
+            return await repository.UpdateAsync(groupChat);
+        }
         
         if (dto.UserId == null)
             throw ResponseFactory.Create<ForbiddenResponse>(["Personal chat requires another user"]);
@@ -308,10 +312,22 @@ public class ChatService(
         
         User otherUser = await userService.GetByIdValidatedAsync((int)dto.UserId);
         
+        ChatModel? existingChat = await repository.FindPersonalChatBetweenUsersAsync(userId, (int)dto.UserId);
+        if (existingChat != null)
+            throw ResponseFactory.Create<BadRequestResponse>(["Personal chat between these users already exists"]);
+        
         await CheckCanMessageUserAsync(userId, (int)dto.UserId);
         
-        chat.Members.Add(otherUser);
-        return await repository.UpdateAsync(chat);
+        ChatModel personalChat = new()
+        {
+            Name = dto.Name,
+            IsGroup = dto.IsGroup,
+            CoverId = dto.CoverId,
+            CreatorId = userId,
+            Members = new List<User> { creator, otherUser }
+        };
+        await repository.AddAsync(personalChat);
+        return await repository.UpdateAsync(personalChat);
     }
 
     public async Task<Message> SendMessageAsync(int userId, int chatId, MessageDTO message)
@@ -392,7 +408,6 @@ public class ChatService(
     {
         User recipient = await userService.GetByIdValidatedAsync(recipientId);
         
-        // Загружаем пользователя с настройками приватности через Include
         var recipientWithSettings = await userRepository
             .SnInclude(u => u.Settings)
             .ThenInclude(s => s.UserPrivacy)

@@ -1,7 +1,10 @@
 ﻿using Application.Abstractions.Interfaces.Repository.Client;
+using Application.Abstractions.Interfaces.Repository.UserCore;
 using Application.Abstractions.Interfaces.Services;
 using Application.Extensions;
+using Application.Response;
 using Entities.Models.ClientSettings;
+using Entities.Models.UserCore;
 using System.Text.Json;
 
 namespace Application.Services.ClientSettings;
@@ -12,7 +15,8 @@ public class SettingsService(
     ILanguageService languageService,
     IThemeService themeService,
     IUserPrivacySettingsService userPrivacySettingsService,
-    IUserPrivacyGroupService userPrivacyGroupService
+    IUserPrivacyGroupService userPrivacyGroupService,
+    IUserRepository userRepository
 ) : GenericService<Settings>(repository), ISettingsService
 {
     public async Task<Settings> GetByIdValidatedFullAsync(int userSettingsId)
@@ -48,7 +52,37 @@ public class SettingsService(
     public async Task<Settings> PatchAsync(int settingsId, JsonElement updates)
     {
         Settings settings = await GetByIdValidatedFullAsync(settingsId);
+        
+        // Handle blockedUserIds separately (many-to-many relationship)
+        JsonElement? blockedIdsJson = null;
+        if (updates.TryGetProperty("blockedUserIds", out var blockedIdsElement))
+        {
+            blockedIdsJson = blockedIdsElement;
+        }
+        
+        // Apply other patches normally (excluding blockedUserIds)
         settings.ApplyJsonPatch(updates);
+        
+        // Handle blockedUserIds after other patches
+        if (blockedIdsJson.HasValue)
+        {
+            var blockedIds = blockedIdsJson.Value.Deserialize<List<int>>();
+            if (blockedIds != null)
+            {
+                // Clear current blocked users
+                settings.BlockedUsers.Clear();
+                
+                // Add new blocked users
+                foreach (int userId in blockedIds)
+                {
+                    var user = await userRepository.GetByIdAsync(userId);
+                    if (user == null)
+                        throw ResponseFactory.Create<NotFoundResponse>([$"User with ID {userId} not found"]);
+                    settings.BlockedUsers.Add(user);
+                }
+            }
+        }
+        
         await ValidateRelatedEntitiesAsync(settings);
         await repository.SaveChangesAsync();
         return settings;
