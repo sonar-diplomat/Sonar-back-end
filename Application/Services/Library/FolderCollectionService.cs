@@ -51,45 +51,54 @@ public class FolderCollectionService(
 
     public async Task MoveCollectionToFolderAsync(int libraryId, int collectionId, int targetFolderId)
     {
-        Folder targetFolder = await folderService.GetFolderByIdIncludeCollectionsValidatedAsync(targetFolderId, libraryId);
-        
         Collection? collection = await GetCollectionByIdAsync(collectionId);
         if (collection == null)
             throw ResponseFactory.Create<NotFoundResponse>(["Collection not found"]);
         
-        // Находим все папки библиотеки с коллекциями
+        // Находим все папки библиотеки с коллекциями (включая целевую)
         IQueryable<Folder> allFolders = await folderRepository.GetAllAsync();
         List<Folder> allLibraryFolders = await allFolders
             .Where(f => f.LibraryId == libraryId)
             .Include(f => f.Collections)
             .ToListAsync();
         
+        // Проверяем, что целевая папка существует и принадлежит библиотеке
+        Folder? targetFolder = allLibraryFolders.FirstOrDefault(f => f.Id == targetFolderId);
+        if (targetFolder == null)
+            throw ResponseFactory.Create<NotFoundResponse>(["Target folder not found"]);
+        
         // Фильтруем папки, содержащие эту коллекцию (в памяти)
         List<Folder> foldersWithCollection = allLibraryFolders
             .Where(f => f.Collections != null && f.Collections.Any(c => c.Id == collectionId))
             .ToList();
         
-        // Удаляем коллекцию из всех текущих папок
+        // Удаляем коллекцию из всех текущих папок (кроме защищенных и целевой)
         foreach (Folder folder in foldersWithCollection)
         {
+            // Пропускаем защищенные папки
             if (folder.IsProtected)
-                continue; // Не удаляем из защищенных папок
+                continue;
             
+            // Пропускаем целевую папку (если коллекция уже там, она останется)
+            if (folder.Id == targetFolderId)
+                continue;
+            
+            // Удаляем коллекцию из папки
             Collection? col = folder.Collections?.FirstOrDefault(c => c.Id == collectionId);
             if (col != null)
+            {
                 folder.Collections!.Remove(col);
+                await folderRepository.UpdateAsync(folder);
+            }
         }
         
-        // Добавляем коллекцию в целевую папку
+        // Добавляем коллекцию в целевую папку, если её там еще нет
         targetFolder.Collections ??= new List<Collection>();
         if (!targetFolder.Collections.Any(c => c.Id == collectionId))
+        {
             targetFolder.Collections.Add(collection);
-        
-        // Сохраняем изменения
-        foreach (Folder folder in foldersWithCollection)
-            await folderRepository.UpdateAsync(folder);
-        
-        await folderRepository.UpdateAsync(targetFolder);
+            await folderRepository.UpdateAsync(targetFolder);
+        }
     }
 
     /// <summary>
