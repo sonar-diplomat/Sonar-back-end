@@ -117,10 +117,6 @@ public class User : IdentityUser<int>
 
     [JsonIgnore] public virtual ICollection<ArtistRegistrationRequest> ArtistRegistrationRequests { get; set; }
 
-    [JsonIgnore] public virtual ICollection<UserFriendRequest> SentFriendRequests { get; set; }
-
-    [JsonIgnore] public virtual ICollection<UserFriendRequest> ReceivedFriendRequests { get; set; }
-
     [JsonIgnore] public virtual ICollection<User> Friends { get; set; }
 
     [JsonIgnore] public virtual ICollection<User> FriendOf { get; set; }

@@ -138,6 +138,7 @@ builder.Services.AddControllers(options =>
         options.JsonSerializerOptions.MaxDepth = 64;
         options.JsonSerializerOptions.DefaultIgnoreCondition =
             System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
+        options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
     });
 
 // CORS policy configuration
@@ -278,7 +279,6 @@ builder.Services.AddScoped<IReportRepository, ReportRepository>();
 // User Repositories
 builder.Services.AddScoped<IUserPrivacyGroupRepository, UserPrivacyGroupRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
-builder.Services.AddScoped<IUserFriendRequestRepository, UserFriendRequestRepository>();
 builder.Services.AddScoped<IUserFollowRepository, UserFollowRepository>();
 builder.Services.AddScoped<IUserSessionRepository, UserSessionRepository>();
 builder.Services.AddScoped<IUserStateRepository, UserStateRepository>();
@@ -365,7 +365,6 @@ builder.Services.AddScoped<ISearchService, SearchService>();
 // User Services
 builder.Services.AddScoped<IUserPrivacyGroupService, UserPrivacyGroupService>();
 builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddScoped<IUserFriendRequestService, UserFriendRequestService>();
 builder.Services.AddScoped<IUserFollowService, UserFollowService>();
 builder.Services.AddScoped<IUserSessionService, UserSessionService>();
 builder.Services.AddScoped<IUserStateService, UserStateService>();
