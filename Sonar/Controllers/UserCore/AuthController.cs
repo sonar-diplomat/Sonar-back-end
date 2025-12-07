@@ -299,7 +299,7 @@ public class AuthController(
             new Dictionary<string, string>
             {
                 { "route", "confirm-email-change" },
-                { "linkParam_userId", user.Id },
+                { "linkParam_userId", user.Id.ToString() },
                 { "linkParam_email", newEmail },
                 { "linkParam_token", token }
             }

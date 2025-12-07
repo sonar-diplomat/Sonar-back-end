@@ -35,25 +35,25 @@ public class SearchService(
             result.TotalResults += result.Tracks.Total;
         }
 
-        if (normalizedCategory is "all" or "albums")
+        if (normalizedCategory is "all" or "album")
         {
             result.Albums = await SearchAlbumsAsync(query, limit, offset, userId);
             result.TotalResults += result.Albums.Total;
         }
 
-        if (normalizedCategory is "all" or "playlists")
+        if (normalizedCategory is "all" or "playlist")
         {
             result.Playlists = await SearchPlaylistsAsync(query, limit, offset, userId);
             result.TotalResults += result.Playlists.Total;
         }
 
-        if (normalizedCategory is "all" or "artists" or "creators")
+        if (normalizedCategory is "all" or "artist")
         {
             result.Artists = await SearchArtistsAsync(query, limit, offset, userId);
             result.TotalResults += result.Artists.Total;
         }
 
-        if (normalizedCategory is "all" or "users" or "creators")
+        if (normalizedCategory is "all" or "users")
         {
             result.Users = await SearchUsersAsync(query, limit, offset, userId);
             result.TotalResults += result.Users.Total;
@@ -243,12 +243,27 @@ public class SearchService(
     {
         IQueryable<User> users = await userRepository.GetAllAsync();
 
-        string searchPattern = $"%{query}%";
+        // Нормализуем поисковый запрос для сравнения с Normalized полями
+        string normalizedQuery = query.ToUpperInvariant().Trim();
+        string searchPattern = $"%{normalizedQuery}%";
+        
+        // Используем NORMALIZED поля Identity для поиска по публичным данным
+        // PublicIdentifier - всегда публичное поле
+        // NormalizedUserName - публичное, если пользователь публичный
         users = users
             .Include(u => u.Artist)
+            .Include(u => u.VisibilityState)
+            .ThenInclude(vs => vs.Status)
             .Where(u =>
-                (u.UserName != null && EF.Functions.Like(u.UserName, searchPattern)) ||
-                EF.Functions.Like(u.PublicIdentifier, searchPattern)
+                // Поиск по NormalizedUserName (публичное поле)
+                (u.NormalizedUserName != null && EF.Functions.Like(u.NormalizedUserName, searchPattern)) ||
+                // Поиск по PublicIdentifier (всегда публичное поле)
+                EF.Functions.Like(u.PublicIdentifier.ToUpper(), searchPattern)
+            )
+            // Фильтруем только публичных пользователей (Visible или Restricted, не Hidden, и SetPublicOn <= сейчас)
+            .Where(u =>
+                u.VisibilityState.StatusId != 4 ||
+                u.VisibilityState.SetPublicOn <= DateTime.UtcNow
             );
 
         int total = await users.CountAsync();
