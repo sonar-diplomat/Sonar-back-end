@@ -38,7 +38,7 @@ public class TestController(
     ITrackRepository trackRepository,
     SonarContext dbContext,
     IFileStorageService fileStorageService,
-    IAccessFeatureService accessFeatureService
+    IAccessFeatureService accessFeatureService,
     IEmailSenderService emailSenderService
 ) : BaseController(userManager)
 {
@@ -1033,14 +1033,14 @@ public class TestController(
         User? user = await dbContext.Users
             .Include(u => u.AccessFeatures)
             .FirstOrDefaultAsync(u => u.Id == userId);
-        
+
         if (user == null)
         {
             throw ResponseFactory.Create<NotFoundResponse>([$"User with ID {userId} not found"]);
         }
 
         Entities.Models.Access.AccessFeature? iamAGod = await accessFeatureService.GetByNameValidatedAsync("IamAGod");
-        
+
         if (user.AccessFeatures.Any(af => af.Id == iamAGod.Id))
         {
             throw ResponseFactory.Create<OkResponse>(["User already has IamAGod access feature"]);
