@@ -37,7 +37,9 @@ public class TestController(
     IImageFileService imageFileService,
     ITrackRepository trackRepository,
     SonarContext dbContext,
-    IFileStorageService fileStorageService
+    IFileStorageService fileStorageService,
+    IAccessFeatureService accessFeatureService,
+    IEmailSenderService emailSenderService
 ) : BaseController(userManager)
 {
     #region dist
@@ -140,6 +142,26 @@ public class TestController(
     {
         await fileService.UploadFileAsync(file);
         return Ok();
+    }
+
+    /// <summary>
+    /// [TEST] Uploads an image file without binding to any specific entity.
+    /// </summary>
+    /// <param name="file">The image file to upload.</param>
+    /// <returns>Uploaded image file with its ID.</returns>
+    /// <response code="200">Image file uploaded successfully.</response>
+    /// <remarks>
+    /// This is a test endpoint for development/testing purposes.
+    /// Uploads an image file and returns the created ImageFile entity.
+    /// The file can be later bound to any entity by updating its ID reference.
+    /// </remarks>
+    [HttpPost("upload-image")]
+    [Consumes("multipart/form-data")]
+    [ProducesResponseType(typeof(OkResponse<ImageFile>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> UploadImage([FromForm] IFormFile file)
+    {
+        ImageFile uploadedImage = await imageFileService.UploadFileAsync(file);
+        throw ResponseFactory.Create<OkResponse<ImageFile>>(uploadedImage, ["Image file uploaded successfully"]);
     }
 
     # endregion
@@ -687,6 +709,27 @@ public class TestController(
 
         var deletedFiles = new List<object>();
         var deletionErrors = new List<object>();
+        var skippedDueToForeignKey = new List<object>();
+        int deletedCount = 0;
+
+        // Helper method to check if exception is a foreign key constraint violation
+        static bool IsForeignKeyConstraintError(Exception ex)
+        {
+            if (ex is DbUpdateException dbEx)
+            {
+                // Check for PostgreSQL foreign key error (code 23503)
+                if (dbEx.InnerException is Npgsql.PostgresException pgEx && pgEx.SqlState == "23503")
+                    return true;
+
+                // Check error message for foreign key references
+                string errorMessage = dbEx.InnerException?.Message ?? dbEx.Message;
+                if (errorMessage.Contains("foreign key", StringComparison.OrdinalIgnoreCase) ||
+                    errorMessage.Contains("violates foreign key constraint", StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+
+            return false;
+        }
 
         // Delete orphaned AudioFiles
         foreach (var audioFile in orphanedAudioFiles)
@@ -699,6 +742,10 @@ public class TestController(
                 // Delete from database
                 dbContext.AudioFiles.Remove(audioFile);
 
+                // Save changes immediately for this file
+                await dbContext.SaveChangesAsync();
+                deletedCount++;
+
                 deletedFiles.Add(new
                 {
                     Type = "AudioFile",
@@ -709,8 +756,27 @@ public class TestController(
                     DeletedFromDisk = diskDeleted
                 });
             }
+            catch (DbUpdateException dbEx) when (IsForeignKeyConstraintError(dbEx))
+            {
+                // Rollback the removal from context
+                dbContext.Entry(audioFile).State = EntityState.Unchanged;
+
+                skippedDueToForeignKey.Add(new
+                {
+                    Type = "AudioFile",
+                    FileId = audioFile.Id,
+                    FileName = audioFile.ItemName,
+                    Url = audioFile.Url,
+                    Reason = "File is referenced by foreign key constraint"
+                });
+            }
             catch (Exception ex)
             {
+                // Rollback the removal from context if it was added
+                var entry = dbContext.Entry(audioFile);
+                if (entry.State == EntityState.Deleted)
+                    entry.State = EntityState.Unchanged;
+
                 deletionErrors.Add(new
                 {
                     Type = "AudioFile",
@@ -733,6 +799,10 @@ public class TestController(
                 // Delete from database
                 dbContext.ImageFiles.Remove(imageFile);
 
+                // Save changes immediately for this file
+                await dbContext.SaveChangesAsync();
+                deletedCount++;
+
                 deletedFiles.Add(new
                 {
                     Type = "ImageFile",
@@ -743,8 +813,27 @@ public class TestController(
                     DeletedFromDisk = diskDeleted
                 });
             }
+            catch (DbUpdateException dbEx) when (IsForeignKeyConstraintError(dbEx))
+            {
+                // Rollback the removal from context
+                dbContext.Entry(imageFile).State = EntityState.Unchanged;
+
+                skippedDueToForeignKey.Add(new
+                {
+                    Type = "ImageFile",
+                    FileId = imageFile.Id,
+                    FileName = imageFile.ItemName,
+                    Url = imageFile.Url,
+                    Reason = "File is referenced by foreign key constraint"
+                });
+            }
             catch (Exception ex)
             {
+                // Rollback the removal from context if it was added
+                var entry = dbContext.Entry(imageFile);
+                if (entry.State == EntityState.Deleted)
+                    entry.State = EntityState.Unchanged;
+
                 deletionErrors.Add(new
                 {
                     Type = "ImageFile",
@@ -767,6 +856,10 @@ public class TestController(
                 // Delete from database
                 dbContext.VideoFiles.Remove(videoFile);
 
+                // Save changes immediately for this file
+                await dbContext.SaveChangesAsync();
+                deletedCount++;
+
                 deletedFiles.Add(new
                 {
                     Type = "VideoFile",
@@ -777,8 +870,27 @@ public class TestController(
                     DeletedFromDisk = diskDeleted
                 });
             }
+            catch (DbUpdateException dbEx) when (IsForeignKeyConstraintError(dbEx))
+            {
+                // Rollback the removal from context
+                dbContext.Entry(videoFile).State = EntityState.Unchanged;
+
+                skippedDueToForeignKey.Add(new
+                {
+                    Type = "VideoFile",
+                    FileId = videoFile.Id,
+                    FileName = videoFile.ItemName,
+                    Url = videoFile.Url,
+                    Reason = "File is referenced by foreign key constraint"
+                });
+            }
             catch (Exception ex)
             {
+                // Rollback the removal from context if it was added
+                var entry = dbContext.Entry(videoFile);
+                if (entry.State == EntityState.Deleted)
+                    entry.State = EntityState.Unchanged;
+
                 deletionErrors.Add(new
                 {
                     Type = "VideoFile",
@@ -790,13 +902,11 @@ public class TestController(
             }
         }
 
-        // Save changes to database
-        int deletedCount = await dbContext.SaveChangesAsync();
-
         var result = new
         {
             DeletedFiles = deletedFiles,
             DeletionErrors = deletionErrors,
+            SkippedDueToForeignKey = skippedDueToForeignKey,
             Summary = new
             {
                 TotalOrphanedAudioFiles = orphanedAudioFiles.Count,
@@ -804,6 +914,7 @@ public class TestController(
                 TotalOrphanedVideoFiles = orphanedVideoFiles.Count,
                 SuccessfullyDeleted = deletedFiles.Count,
                 DeletionErrorsCount = deletionErrors.Count,
+                SkippedDueToForeignKeyCount = skippedDueToForeignKey.Count,
                 DatabaseRecordsDeleted = deletedCount
             }
         };
@@ -856,6 +967,137 @@ public class TestController(
         await dbContext.SaveChangesAsync();
 
         throw ResponseFactory.Create<OkResponse<ImageFile>>(defaultImage, ["Default image updated successfully"]);
+    }
+
+    /// <summary>
+    /// [TEST] Updates an existing image file by ID with a new uploaded image.
+    /// </summary>
+    /// <param name="imageId">The ID of the image file to update.</param>
+    /// <param name="url">The new URL for the image file.</param>
+    /// <param name="itemName">The new item name for the image file.</param>
+    /// <returns>Updated image file.</returns>
+    /// <response code="200">Image file updated successfully.</response>
+    /// <response code="404">Image file not found.</response>
+    /// <remarks>
+    /// This is a test endpoint for development/testing purposes.
+    /// Updates an existing image file record with new URL and item name.
+    /// The actual file should be uploaded first using upload-image endpoint.
+    /// </remarks>
+    [HttpPut("image/{imageId}")]
+    [ProducesResponseType(typeof(OkResponse<ImageFile>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpdateImageById(int imageId, [FromBody] UpdateImageRequest request)
+    {
+        ImageFile? imageFile = await dbContext.ImageFiles.FirstOrDefaultAsync(f => f.Id == imageId);
+        if (imageFile == null)
+        {
+            throw ResponseFactory.Create<NotFoundResponse>([$"Image file with ID {imageId} not found"]);
+        }
+
+        string oldUrl = imageFile.Url;
+        imageFile.Url = request.Url;
+        imageFile.ItemName = request.ItemName;
+
+        await dbContext.SaveChangesAsync();
+
+        if (!string.IsNullOrEmpty(oldUrl) && oldUrl != request.Url)
+        {
+            await fileStorageService.DeleteFile(oldUrl);
+        }
+
+        throw ResponseFactory.Create<OkResponse<ImageFile>>(imageFile, ["Image file updated successfully"]);
+    }
+
+    public class UpdateImageRequest
+    {
+        public string Url { get; set; } = string.Empty;
+        public string ItemName { get; set; } = string.Empty;
+    }
+
+    /// <summary>
+    /// [TEST] Assigns IamAGod access feature to a user (bypasses normal protection).
+    /// </summary>
+    /// <param name="userId">The ID of the user to assign IamAGod to.</param>
+    /// <returns>Success response upon assignment.</returns>
+    /// <response code="200">IamAGod assigned successfully.</response>
+    /// <response code="404">User or IamAGod feature not found.</response>
+    /// <remarks>
+    /// This is a test endpoint for development/testing purposes.
+    /// Bypasses the normal protection that prevents assigning IamAGod through regular methods.
+    /// </remarks>
+    [HttpPost("assign-iamagod/{userId}")]
+    [ProducesResponseType(typeof(OkResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> AssignIamAGod(int userId)
+    {
+        User? user = await dbContext.Users
+            .Include(u => u.AccessFeatures)
+            .FirstOrDefaultAsync(u => u.Id == userId);
+
+        if (user == null)
+        {
+            throw ResponseFactory.Create<NotFoundResponse>([$"User with ID {userId} not found"]);
+        }
+
+        Entities.Models.Access.AccessFeature? iamAGod = await accessFeatureService.GetByNameValidatedAsync("IamAGod");
+
+        if (user.AccessFeatures.Any(af => af.Id == iamAGod.Id))
+        {
+            throw ResponseFactory.Create<OkResponse>(["User already has IamAGod access feature"]);
+        }
+
+        user.AccessFeatures.Add(iamAGod);
+        await dbContext.SaveChangesAsync();
+
+        throw ResponseFactory.Create<OkResponse>(["IamAGod access feature assigned successfully"]);
+    }
+
+    # endregion
+
+    # region email tests
+
+    /// <summary>
+    /// [TEST] Sends a test email using the specified template.
+    /// </summary>
+    /// <param name="template">Template name (2fa, confirm-email, recovery-password).</param>
+    /// <param name="email">Email address to send the test email to.</param>
+    /// <param name="variables">Optional variables for template replacement (e.g., {"code": "123456", "link": "https://example.com"}).</param>
+    /// <returns>Success response upon email send.</returns>
+    /// <response code="200">Test email sent successfully.</response>
+    /// <response code="400">Invalid template name or email address.</response>
+    /// <remarks>
+    /// This is a test endpoint for development/testing purposes to verify email sending functionality.
+    /// Available templates: "2fa", "confirm-email", "recovery-password"
+    /// </remarks>
+    [HttpPost("send-email")]
+    [ProducesResponseType(typeof(OkResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(BadRequestResponse), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> SendTestEmail(
+        [FromQuery] string template,
+        [FromQuery] string email,
+        [FromBody] Dictionary<string, string>? variables = null)
+    {
+        if (string.IsNullOrWhiteSpace(template))
+            throw ResponseFactory.Create<BadRequestResponse>(["Template name is required"]);
+
+        if (string.IsNullOrWhiteSpace(email))
+            throw ResponseFactory.Create<BadRequestResponse>(["Email address is required"]);
+
+        // Если переменные не переданы, создаем тестовые значения
+        if (variables == null || variables.Count == 0)
+        {
+            variables = template switch
+            {
+                "2fa" => new Dictionary<string, string> { { "code", "123456" } },
+                "confirm-email" => new Dictionary<string, string> { { "link", "https://example.com/confirm-email?email=test@example.com&token=test-token-123" } },
+                "recovery-password" => new Dictionary<string, string> { { "link", "https://example.com/reset-password?email=test@example.com&token=test-token-456" } },
+                _ => new Dictionary<string, string>()
+            };
+        }
+
+        await emailSenderService.SendEmailAsync(email, template, variables);
+
+        throw ResponseFactory.Create<OkResponse>([$"Test email sent successfully to {email} using template '{template}'"]);
     }
 
     # endregion

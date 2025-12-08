@@ -52,8 +52,9 @@ WORKDIR /app
 # Switch to root temporarily to copy files and set permissions
 USER root
 COPY --from=publish /app/publish .
-# Ensure data directory exists and has correct permissions
-RUN mkdir -p /app/data && chown -R appuser:appuser /app
+# Ensure data directory and uploads directory exist and have correct permissions
+RUN mkdir -p /app/data /app/wwwroot/uploads && \
+    chown -R appuser:appuser /app
 # Switch back to appuser
 USER appuser
 VOLUME ["/app/data"]

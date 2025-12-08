@@ -29,6 +29,9 @@ public class SonarContext(DbContextOptions<SonarContext> options)
     public DbSet<Message> Messages { get; set; } = null!;
     public DbSet<MessageRead> MessageReads { get; set; } = null!;
     public DbSet<Post> Posts { get; set; } = null!;
+    public DbSet<ChatSticker> ChatStickers { get; set; } = null!;
+    public DbSet<ChatStickerCategory> ChatStickerCategories { get; set; } = null!;
+    public DbSet<UserFollow> UserFollows { get; set; } = null!;
 
     // ClientSettings
     public DbSet<Language> Languages { get; set; } = null!;
@@ -70,7 +73,6 @@ public class SonarContext(DbContextOptions<SonarContext> options)
 
     // User
     public DbSet<User> Users { get; set; } = null!;
-    public DbSet<UserFriendRequest> UserFriendRequests { get; set; } = null!;
     public DbSet<UserPrivacyGroup> UserPrivacyGroups { get; set; } = null!;
     public DbSet<UserSession> UserSessions { get; set; } = null!;
     public DbSet<UserState> UserStates { get; set; } = null!;
@@ -141,22 +143,22 @@ public class SonarContext(DbContextOptions<SonarContext> options)
         builder.Entity<Chat>().HasMany(c => c.Members).WithMany(u => u.ChatsWhereMember)
             .UsingEntity(j => j.ToTable("ChatMembers"));
 
-        builder.Entity<UserFriendRequest>()
-            .HasOne(ufr => ufr.FromUser)
-            .WithMany(u => u.SentFriendRequests)
-            .HasForeignKey(ufr => ufr.FromUserId)
-            .OnDelete(DeleteBehavior.NoAction);
-
-        builder.Entity<UserFriendRequest>()
-            .HasOne(ufr => ufr.ToUser)
-            .WithMany(u => u.ReceivedFriendRequests)
-            .HasForeignKey(ufr => ufr.ToUserId)
-            .OnDelete(DeleteBehavior.NoAction);
-
         builder.Entity<User>()
             .HasMany(u => u.Friends)
             .WithMany(u => u.FriendOf)
             .UsingEntity(j => j.ToTable("UserFriends"));
+
+        builder.Entity<UserFollow>()
+            .HasOne(uf => uf.Follower)
+            .WithMany(u => u.Following)
+            .HasForeignKey(uf => uf.FollowerId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        builder.Entity<UserFollow>()
+            .HasOne(uf => uf.Following)
+            .WithMany(u => u.Followers)
+            .HasForeignKey(uf => uf.FollowingId)
+            .OnDelete(DeleteBehavior.NoAction);
 
         builder.Entity<NotificationType>()
             .HasData(NotificationTypeSeedFactory.CreateSeedData());
@@ -186,6 +188,10 @@ public class SonarContext(DbContextOptions<SonarContext> options)
             .HasData(UserStatusSeedFactory.CreateSeedData());
         builder.Entity<SubscriptionFeature>()
             .HasData(SubscribtionFeatureSeedFactory.CreateSeedData());
+        builder.Entity<ChatStickerCategory>()
+            .HasData(ChatStickerCategorySeedFactory.CreateSeedData());
+        builder.Entity<ChatSticker>()
+            .HasData(ChatStickerSeedFactory.CreateSeedData());
         base.OnModelCreating(builder);
     }
 }

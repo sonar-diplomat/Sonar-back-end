@@ -1,6 +1,8 @@
 ﻿using Application.Abstractions.Interfaces.Repository.Chat;
+using Application.Abstractions.Interfaces.Repository.UserCore;
 using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.File;
+using Application.Abstractions.Interfaces.Services.UserCore;
 using Application.DTOs;
 using Application.DTOs.Chat;
 using Application.Extensions;
@@ -20,7 +22,9 @@ public class ChatService(
     IMessageService messageService,
     IMessageReadService messageReadService,
     IUserService userService,
-    IChatNotifier notifier
+    IChatNotifier notifier,
+    IUserFollowService userFollowService,
+    IUserRepository userRepository
 ) : GenericService<ChatModel>(repository), IChatService
 {
     public async Task UpdateChatCoverAsync(int userId, int chatId, IFormFile file)
@@ -91,6 +95,7 @@ public class ChatService(
     {
         await CheckUserIsMemberAsync(userId, chatId);
         ChatModel chat = await repository.SnInclude(c => c.Members)
+            .SnInclude(c => c.Admins)
             .SnInclude(c => c.Cover).GetByIdValidatedAsync(chatId);
         ChatDTO dto = new()
         {
@@ -98,7 +103,8 @@ public class ChatService(
             IsGroup = chat.IsGroup,
             CoverId = chat.CoverId,
             CreatorId = chat.CreatorId,
-            UserIds = chat.Members.Select(u => u.Id).ToArray()
+            UserIds = chat.Members.Select(u => u.Id).ToArray(),
+            AdminIds = chat.Admins.Select(a => a.Id).ToArray()
         };
         return dto;
     }
@@ -283,18 +289,20 @@ public class ChatService(
     public async Task<ChatModel> CreateChatAsync(int userId, CreateChatDTO dto)
     {
         User creator = await userService.GetByIdValidatedAsync(userId);
-        ChatModel chat = new()
-        {
-            Name = dto.Name,
-            IsGroup = dto.IsGroup,
-            CoverId = dto.CoverId,
-            CreatorId = userId,
-            Members = new List<User> { creator }
-        };
-        await repository.AddAsync(chat);
         
-        if (chat.IsGroup)
-            return await repository.UpdateAsync(chat);
+        if (dto.IsGroup)
+        {
+            ChatModel groupChat = new()
+            {
+                Name = dto.Name,
+                IsGroup = dto.IsGroup,
+                CoverId = dto.CoverId,
+                CreatorId = userId,
+                Members = new List<User> { creator }
+            };
+            await repository.AddAsync(groupChat);
+            return await repository.UpdateAsync(groupChat);
+        }
         
         if (dto.UserId == null)
             throw ResponseFactory.Create<ForbiddenResponse>(["Personal chat requires another user"]);
@@ -303,8 +311,23 @@ public class ChatService(
             throw ResponseFactory.Create<BadRequestResponse>(["Cannot create personal chat with yourself"]);
         
         User otherUser = await userService.GetByIdValidatedAsync((int)dto.UserId);
-        chat.Members.Add(otherUser);
-        return await repository.UpdateAsync(chat);
+        
+        ChatModel? existingChat = await repository.FindPersonalChatBetweenUsersAsync(userId, (int)dto.UserId);
+        if (existingChat != null)
+            throw ResponseFactory.Create<BadRequestResponse>(["Personal chat between these users already exists"]);
+        
+        await CheckCanMessageUserAsync(userId, (int)dto.UserId);
+        
+        ChatModel personalChat = new()
+        {
+            Name = dto.Name,
+            IsGroup = dto.IsGroup,
+            CoverId = dto.CoverId,
+            CreatorId = userId,
+            Members = new List<User> { creator, otherUser }
+        };
+        await repository.AddAsync(personalChat);
+        return await repository.UpdateAsync(personalChat);
     }
 
     public async Task<Message> SendMessageAsync(int userId, int chatId, MessageDTO message)
@@ -379,5 +402,34 @@ public class ChatService(
         return userIds.Contains(userId)
             ? chat
             : throw ResponseFactory.Create<ForbiddenResponse>(["User is not a member of the chat"]);
+    }
+
+    private async Task CheckCanMessageUserAsync(int senderId, int recipientId)
+    {
+        User recipient = await userService.GetByIdValidatedAsync(recipientId);
+        
+        var recipientWithSettings = await userRepository
+            .SnInclude(u => u.Settings)
+            .ThenInclude(s => s.UserPrivacy)
+            .GetByIdValidatedAsync(recipientId);
+        
+        if (recipientWithSettings?.Settings?.UserPrivacy == null)
+            throw ResponseFactory.Create<BadRequestResponse>(["Recipient privacy settings not found"]);
+
+        int whichCanMessageId = recipientWithSettings.Settings.UserPrivacy.WhichCanMessageId;
+
+        if (whichCanMessageId == 1) 
+            return;
+
+        if (whichCanMessageId == 3)
+            throw ResponseFactory.Create<ForbiddenResponse>(["This user does not accept messages"]);
+
+        if (whichCanMessageId == 2) 
+        {
+            IEnumerable<User> mutualFollows = await userFollowService.GetMutualFollowsAsync(recipientId);
+            bool isMutualFollow = mutualFollows.Any(u => u.Id == senderId);
+            if (!isMutualFollow)
+                throw ResponseFactory.Create<ForbiddenResponse>(["You can only message users who follow you back"]);
+        }
     }
 }

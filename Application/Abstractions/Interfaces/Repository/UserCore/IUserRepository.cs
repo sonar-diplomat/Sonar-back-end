@@ -15,4 +15,5 @@ public interface IUserRepository
     IQueryable<User> Query();
     Task SaveChangesAsync();
     Task<bool> CheckExists(string publicIdentifier);
+    Task<User?> GetByPublicIdentifierAsync(string publicIdentifier);
 }

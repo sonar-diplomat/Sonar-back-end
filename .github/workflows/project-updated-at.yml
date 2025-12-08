@@ -1,0 +1,91 @@
+name: Update UpdatedAt in GitHub Project
+
+on:
+  issues:
+    types: [opened, edited, reopened, closed]
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+  projects: write
+
+jobs:
+  update-updated-at:
+    if: ${{ !github.event.issue.pull_request }}
+    runs-on: ubuntu-latest
+
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      PROJECT_ID: PVT_kwDODkGGcc4BKIcZ
+      UPDATED_AT_FIELD_ID: PVTF_lADODkGGcc4BKIcZzg6F82g
+
+    steps:
+      - name: Set UpdatedAt date in project item
+        shell: bash
+        run: |
+          set -e
+
+          OWNER="${GITHUB_REPOSITORY_OWNER}"
+          REPO="${GITHUB_REPOSITORY#*/}"
+          ISSUE_NUMBER="${{ github.event.issue.number }}"
+          TODAY="$(date -u +%Y-%m-%d)"
+
+          echo "Owner: $OWNER"
+          echo "Repo:  $REPO"
+          echo "Issue: $ISSUE_NUMBER"
+          echo "Today: $TODAY"
+
+          QUERY_ITEM='
+          query($owner:String!, $name:String!, $number:Int!) {
+            repository(owner:$owner, name:$name) {
+              issue(number:$number) {
+                id
+                projectItems(first: 20) {
+                  nodes {
+                    id
+                    project { id }
+                  }
+                }
+              }
+            }
+          }'
+
+          ITEM_JSON=$(gh api graphql -f query="$QUERY_ITEM" \
+            -f owner="$OWNER" \
+            -f name="$REPO" \
+            -F number="$ISSUE_NUMBER")
+
+          ITEM_ID=$(echo "$ITEM_JSON" \
+            | jq -r --arg PID "$PROJECT_ID" '.data.repository.issue.projectItems.nodes[]? | select(.project.id == $PID) | .id')
+
+          if [ -z "$ITEM_ID" ] || [ "$ITEM_ID" = "null" ]; then
+            echo "Issue ещё не добавлен в проект '${PROJECT_ID}' — обновлять нечего, выходим."
+            exit 0
+          fi
+
+          echo "Project item id: $ITEM_ID"
+
+          MUTATION='
+          mutation($projectId:ID!, $itemId:ID!, $fieldId:ID!, $value:Date!) {
+            updateProjectV2ItemFieldValue(
+              input: {
+                projectId: $projectId,
+                itemId: $itemId,
+                fieldId: $fieldId,
+                value: { date: $value }
+              }
+            ) {
+              projectV2Item { id }
+            }
+          }'
+
+          gh api graphql -f query="$MUTATION" \
+            -F projectId="$PROJECT_ID" \
+            -F itemId="$ITEM_ID" \
+            -F fieldId="$UPDATED_AT_FIELD_ID" \
+            -F value="$TODAY"
+
+          echo "UpdatedAt успешно обновлён."

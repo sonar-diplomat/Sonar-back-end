@@ -1,12 +1,19 @@
 ﻿using Application.Abstractions.Interfaces.Repository.Music;
 using Application.Abstractions.Interfaces.Services;
 using Application.DTOs;
+using Application.Extensions;
 using Entities.Models.Chat;
 using Entities.Models.Music;
+using ISettingsService = Application.Abstractions.Interfaces.Services.ISettingsService;
+using IUserPrivacySettingsService = Application.Abstractions.Interfaces.Services.IUserPrivacySettingsService;
 
 namespace Application.Services.Music;
 
-public class ArtistService(IArtistRepository repository, IPostService postService)
+public class ArtistService(
+    IArtistRepository repository,
+    IPostService postService,
+    ISettingsService settingsService,
+    IUserPrivacySettingsService userPrivacySettingsService)
     : GenericService<Artist>(repository), IArtistService
 {
     public async Task<Artist?> GetByNameAsync(string name)
@@ -53,6 +60,19 @@ public class ArtistService(IArtistRepository repository, IPostService postServic
             UserId = userId,
             ArtistName = artistName
         };
-        return await repository.AddAsync(artist);
+        Artist createdArtist = await repository.AddAsync(artist);
+
+        var settings = await settingsService.GetByIdValidatedFullAsync(userId);
+        if (settings?.UserPrivacy != null)
+        {
+            var privacySettings = await userPrivacySettingsService.GetByIdAsync(settings.UserPrivacy.Id);
+            if (privacySettings != null)
+            {
+                privacySettings.WhichCanMessageId = 2; // friends
+                await userPrivacySettingsService.UpdateAsync(privacySettings);
+            }
+        }
+
+        return createdArtist;
     }
 }

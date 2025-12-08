@@ -190,7 +190,6 @@ public class AlbumController(
     [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetAlbumById(int albumId)
     {
-        // Try to get userId if user is authenticated, but don't require authentication
         int? userId = null;
         try
         {
@@ -199,7 +198,7 @@ public class AlbumController(
         }
         catch
         {
-            // User is not authenticated, userId remains null
+            
         }
 
         Album album = await albumService.GetValidatedIncludeVisibilityStateAsync(albumId, userId ?? 0);

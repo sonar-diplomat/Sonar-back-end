@@ -25,7 +25,6 @@ public class AuthController(
 )
     : BaseController(userManager)
 {
-    private readonly string frontEndUrl = configuration["FrontEnd-Url"]!;
     private readonly UserManager<User> userManager = userManager;
 
     /// <summary>
@@ -59,7 +58,26 @@ public class AuthController(
             IdentityResult result = await userManager.CreateAsync(user, model.Password);
             
             if (result.Succeeded)
-                throw ResponseFactory.Create<OkResponse>(["Registration successful"]);
+            {
+                // Отправляем письмо подтверждения email
+                if (!string.IsNullOrEmpty(user.Email))
+                {
+                    string token = await userManager.GenerateEmailConfirmationTokenAsync(user);
+                    
+                    await emailSenderService.SendEmailAsync(
+                        user.Email,
+                        MailGunTemplates.confirmEmail,
+                        new Dictionary<string, string>
+                        {
+                            { "route", "confirm-email" },
+                            { "linkParam_email", user.Email },
+                            { "linkParam_token", token }
+                        }
+                    );
+                }
+                
+                throw ResponseFactory.Create<OkResponse>(["Registration successful. Please check your email to confirm your account."]);
+            }
             
             List<string> conflictErrors = new();
             List<string> identityValidationErrors = new();
@@ -119,11 +137,11 @@ public class AuthController(
     /// <param name="password">User password.</param>
     /// <returns>Login response containing access token, refresh token, and session ID. If 2FA is enabled, returns confirmation message.</returns>
     /// <response code="200">Login successful or 2FA code sent.</response>
-    /// <response code="400">User not found.</response>
+    /// <response code="400">User not found or email not confirmed.</response>
     /// <response code="417">Invalid credentials.</response>
     /// <remarks>
     /// Requires X-Device-Name header for session tracking.
-    /// If 2FA is enabled, a verification code will be sent to the user's email.
+    /// Email must be confirmed before login. If 2FA is enabled, a verification code will be sent to the user's email.
     /// </remarks>
     [HttpPost("login")]
     [ProducesResponseType(typeof(OkResponse<LoginResponseDTO>), StatusCodes.Status200OK)]
@@ -135,6 +153,10 @@ public class AuthController(
             .FirstOrDefaultAsync(u => u.UserName == userIdentifier || u.Email == userIdentifier);
 
         if (user == null) throw ResponseFactory.Create<BadRequestResponse>([$"User {userIdentifier} not found"]);
+
+        // Проверяем, подтвержден ли email
+        if (!user.EmailConfirmed)
+            throw ResponseFactory.Create<BadRequestResponse>(["Please confirm your email address before logging in. Check your email for the confirmation link."]);
 
         SignInResult result = await signInManager.CheckPasswordSignInAsync(
             user!, password, false);
@@ -184,8 +206,11 @@ public class AuthController(
     /// <param name="dto">Verification DTO containing the 2FA code.</param>
     /// <returns>Access and refresh tokens upon successful verification.</returns>
     /// <response code="200">2FA verification successful.</response>
-    /// <response code="400">Invalid or expired code.</response>
+    /// <response code="400">Invalid or expired code, or email not confirmed.</response>
     /// <response code="401">User not authenticated.</response>
+    /// <remarks>
+    /// Email must be confirmed before completing 2FA verification.
+    /// </remarks>
     [HttpPost("verify-2fa")]
     [Authorize]
     [ProducesResponseType(typeof(OkResponse<RefreshTokenResponse>), StatusCodes.Status200OK)]
@@ -194,6 +219,10 @@ public class AuthController(
     public async Task<IActionResult> Verify2Fa([FromBody] Verify2FaDTO dto)
     {
         User user = await CheckAccessFeatures([]);
+
+        // Проверяем, подтвержден ли email
+        if (!user.EmailConfirmed)
+            throw ResponseFactory.Create<BadRequestResponse>(["Please confirm your email address before logging in. Check your email for the confirmation link."]);
 
         bool isValid = await userManager.VerifyTwoFactorTokenAsync(
             user,
@@ -264,15 +293,15 @@ public class AuthController(
 
         string token = await userManager.GenerateChangeEmailTokenAsync(user, newEmail);
 
-        string confirmationLink =
-            $"{frontEndUrl}/confirm-email-change?userId={user.Id}&email={newEmail}&token={Uri.EscapeDataString(token)}";
-
         await emailSenderService.SendEmailAsync(
             newEmail,
             MailGunTemplates.confirmEmail,
             new Dictionary<string, string>
             {
-                { "link", confirmationLink }
+                { "route", "confirm-email-change" },
+                { "linkParam_userId", user.Id.ToString() },
+                { "linkParam_email", newEmail },
+                { "linkParam_token", token }
             }
         );
 
@@ -304,6 +333,36 @@ public class AuthController(
         await userManager.SetUserNameAsync(user, changeDTO.email);
 
         throw ResponseFactory.Create<OkResponse>(["Email successfully changed"]);
+    }
+
+    /// <summary>
+    /// Confirms email address during registration using the token sent to the user's email.
+    /// </summary>
+    /// <param name="email">The user's email address.</param>
+    /// <param name="token">The email confirmation token.</param>
+    /// <returns>Success response upon email confirmation.</returns>
+    /// <response code="200">Email successfully confirmed.</response>
+    /// <response code="400">Invalid token or email.</response>
+    /// <response code="404">User not found.</response>
+    [HttpPost("confirm-email")]
+    [ProducesResponseType(typeof(OkResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(BadRequestResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ConfirmEmail([FromQuery] string email, [FromQuery] string token)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            throw ResponseFactory.Create<BadRequestResponse>(["Email is required"]);
+
+        User? user = await userManager.FindByEmailAsync(email);
+        if (user == null)
+            throw ResponseFactory.Create<NotFoundResponse>(["User not found"]);
+
+        IdentityResult result = await userManager.ConfirmEmailAsync(user, token);
+
+        if (!result.Succeeded)
+            throw ResponseFactory.Create<BadRequestResponse>(result.Errors.Select(e => e.Description).ToArray());
+
+        throw ResponseFactory.Create<OkResponse>(["Email successfully confirmed"]);
     }
 
     /// <summary>
@@ -364,16 +423,91 @@ public class AuthController(
             throw ResponseFactory.Create<OkResponse>(["Password reset link sent to your email."]);
 
         string resetToken = await userManager.GeneratePasswordResetTokenAsync(user);
-        string resetLink = $"{frontEndUrl}/approve-change/{resetToken}";
         await emailSenderService.SendEmailAsync(
             user.Email,
             MailGunTemplates.passwordRecovery,
             new Dictionary<string, string>
             {
-                { "link", resetLink }
+                { "route", $"approve-change/{resetToken}" }
             }
         );
         throw ResponseFactory.Create<OkResponse>(["2FA is enabled. Please verify the token before changing password."]);
+    }
+
+    /// <summary>
+    /// Initiates a password reset request by sending a reset token to the user's email.
+    /// </summary>
+    /// <param name="dto">Forgot password DTO containing the user's email address.</param>
+    /// <returns>Success response indicating reset instructions were sent.</returns>
+    /// <response code="200">Password reset link sent to email (if user exists).</response>
+    /// <response code="400">Invalid email format.</response>
+    /// <remarks>
+    /// This endpoint does not reveal whether the email exists in the system for security reasons.
+    /// Always returns success message even if email is not found.
+    /// </remarks>
+    [HttpPost("forgot-password")]
+    [ProducesResponseType(typeof(OkResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(BadRequestResponse), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDTO dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.Email))
+            throw ResponseFactory.Create<BadRequestResponse>(["Email is required"]);
+
+        User? user = await userManager.FindByEmailAsync(dto.Email);
+        
+        // Для безопасности всегда возвращаем успешный ответ, даже если пользователь не найден
+        if (user == null || !user.EmailConfirmed)
+        {
+            // Не раскрываем информацию о существовании пользователя
+            throw ResponseFactory.Create<OkResponse>(["If the email exists and is confirmed, a password reset link has been sent."]);
+        }
+
+        string resetToken = await userManager.GeneratePasswordResetTokenAsync(user);
+        
+        await emailSenderService.SendEmailAsync(
+            user.Email!,
+            MailGunTemplates.passwordRecovery,
+            new Dictionary<string, string>
+            {
+                { "route", "reset-password" },
+                { "linkParam_email", user.Email! },
+                { "linkParam_token", resetToken }
+            }
+        );
+
+        throw ResponseFactory.Create<OkResponse>(["If the email exists and is confirmed, a password reset link has been sent."]);
+    }
+
+    /// <summary>
+    /// Resets the user's password using the token sent to their email.
+    /// </summary>
+    /// <param name="dto">Reset password DTO containing email, token, and new password.</param>
+    /// <returns>Success response upon password reset.</returns>
+    /// <response code="200">Password successfully reset.</response>
+    /// <response code="400">Invalid token, email, or password requirements not met.</response>
+    /// <response code="404">User not found.</response>
+    [HttpPost("reset-password")]
+    [ProducesResponseType(typeof(OkResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(BadRequestResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDTO dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.Email) || string.IsNullOrWhiteSpace(dto.Token) || string.IsNullOrWhiteSpace(dto.NewPassword))
+            throw ResponseFactory.Create<BadRequestResponse>(["Email, token, and new password are required"]);
+
+        User? user = await userManager.FindByEmailAsync(dto.Email);
+        if (user == null)
+            throw ResponseFactory.Create<NotFoundResponse>(["User not found"]);
+
+        if (!user.EmailConfirmed)
+            throw ResponseFactory.Create<BadRequestResponse>(["Email address must be confirmed before resetting password"]);
+
+        IdentityResult result = await userManager.ResetPasswordAsync(user, dto.Token, dto.NewPassword);
+
+        if (!result.Succeeded)
+            throw ResponseFactory.Create<BadRequestResponse>(result.Errors.Select(e => e.Description).ToArray());
+
+        throw ResponseFactory.Create<OkResponse>(["Password successfully reset"]);
     }
 
     /// <summary>

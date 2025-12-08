@@ -15,16 +15,13 @@ public interface IUserService
     Task<User?> GetByIdAsync(int id);
     Task<IEnumerable<User>> GetAllAsync();
     Task<User> GetByIdValidatedAsync(int id);
+    Task<User> GetByPublicIdentifierValidatedAsync(string publicIdentifier);
     Task UpdateAvatar(int userId, IFormFile file);
     Task UpdateVisibilityStatusAsync(int collectionId, int newVisibilityStatusId);
     Task AssignAccessFeaturesAsync(int userId, int[] accessFeatureIds);
     Task AssignAccessFeaturesByNameAsync(int userId, string[] accessFeatures);
     Task RevokeAccessFeaturesAsync(int userId, int[] accessFeatureIds);
     Task RevokeAccessFeaturesByNameAsync(int userId, string[] accessFeatures);
-    Task<UserFriendRequest> SendFriendRequestAsync(int fromUserId, int toUserId);
-    Task<IEnumerable<UserFriendRequest>> GetPendingFriendRequestsAsync(int userId);
-    Task<IEnumerable<UserFriendRequest>> GetSentFriendRequestsAsync(int userId);
-    Task<bool> ResolveFriendRequestAsync(int userId, int requestId, bool accept);
     Task RemoveFriendAsync(int userId, int friendId);
     Task<IEnumerable<User>> GetFriendsAsync(int userId);
 }

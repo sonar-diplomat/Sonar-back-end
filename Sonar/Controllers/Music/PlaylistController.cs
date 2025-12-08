@@ -314,7 +314,7 @@ public class PlaylistController(
     /// <response code="404">Playlist or source collection not found.</response>
     /// <remarks>
     /// Valid collection types: 'album', 'playlist', 'blend'.
-    /// TODO: 😭😭😿😭😭 (requires refactoring/cleanup)
+    /// Duplicate tracks are automatically skipped.
     /// </remarks>
     [HttpPost("{playlistId:int}/import-collection/{collection}/{collectionId:int}")]
     [Authorize]

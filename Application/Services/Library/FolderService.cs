@@ -63,7 +63,18 @@ public class FolderService(
     public async Task MoveFolder(int libraryId, int folderId, int newParentFolderId)
     {
         Folder folder = await CheckFolderBelongsToLibrary(libraryId, folderId);
+        
+        if (folderId == newParentFolderId)
+            throw ResponseFactory.Create<BadRequestResponse>(["Cannot move folder into itself"]);
+        
+        if (folder.IsProtected)
+            throw ResponseFactory.Create<ForbiddenResponse>(["Cannot move protected system folders"]);
+        
         Folder parentFolder = await CheckFolderBelongsToLibrary(libraryId, newParentFolderId);
+        
+        if (await IsDescendantOfAsync(folderId, newParentFolderId))
+            throw ResponseFactory.Create<BadRequestResponse>(["Cannot move folder into its descendant"]);
+        
         folder.ParentFolderId = parentFolder.Id;
         await repository.UpdateAsync(folder);
     }
@@ -138,5 +149,49 @@ public class FolderService(
         return folder.Library.Id != libraryId
             ? throw ResponseFactory.Create<BadRequestResponse>(["Folder does not belong to the specified library"])
             : folder;
+    }
+
+    /// <summary>
+    /// Проверяет, является ли descendantId потомком ancestorId (прямым или косвенным)
+    /// </summary>
+    private async Task<bool> IsDescendantOfAsync(int ancestorId, int descendantId)
+    {
+        if (ancestorId == descendantId)
+            return true;
+        
+        IQueryable<Folder> allFolders = await repository.GetAllAsync();
+        List<Folder> folders = await allFolders
+            .Include(f => f.SubFolders)
+            .ToListAsync();
+        
+        Dictionary<int, Folder> folderDict = folders.ToDictionary(f => f.Id);
+        
+        // Рекурсивно проверяем всех потомков ancestorId
+        HashSet<int> visited = new();
+        Queue<int> queue = new();
+        queue.Enqueue(ancestorId);
+        
+        while (queue.Count > 0)
+        {
+            int currentId = queue.Dequeue();
+            if (visited.Contains(currentId))
+                continue;
+            
+            visited.Add(currentId);
+            
+            if (currentId == descendantId)
+                return true;
+            
+            if (folderDict.TryGetValue(currentId, out Folder? currentFolder) && currentFolder.SubFolders != null)
+            {
+                foreach (Folder subFolder in currentFolder.SubFolders)
+                {
+                    if (!visited.Contains(subFolder.Id))
+                        queue.Enqueue(subFolder.Id);
+                }
+            }
+        }
+        
+        return false;
     }
 }

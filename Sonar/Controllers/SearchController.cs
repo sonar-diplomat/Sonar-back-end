@@ -18,7 +18,7 @@ public class SearchController(
     /// Универсальный поиск по всем типам контента.
     /// </summary>
     /// <param name="query">Поисковый запрос.</param>
-    /// <param name="category">Категория поиска: "All" | "Tracks" | "Albums" | "Playlists" | "Artists" | "Users" | "Creators".</param>
+    /// <param name="category">Категория поиска: "all" | "tracks" | "album" | "playlist" | "artist" | "users".</param>
     /// <param name="limit">Количество результатов на категорию (по умолчанию: 20).</param>
     /// <param name="offset">Смещение для пагинации (по умолчанию: 0).</param>
     /// <returns>SearchResultDTO с результатами по всем категориям.</returns>
