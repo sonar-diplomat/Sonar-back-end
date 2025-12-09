@@ -1,5 +1,7 @@
 using System.Security.Claims;
 using Application.Abstractions.Interfaces.Services;
+using Application.DTOs.Music;
+using Application.DTOs.User;
 using Application.Response;
 using Entities.Enums;
 using Entities.Models.UserCore;
@@ -62,34 +64,92 @@ public class UserStateController(
     }
 
     /// <summary>
-    /// Adds tracks or collections to the user's playback queue.
+    /// Adds tracks to the user's playback queue.
     /// </summary>
+    /// <param name="trackIds">List of track IDs to add to the queue.</param>
     /// <returns>Success response upon adding to queue.</returns>
-    /// <response code="501">Not yet implemented.</response>
+    /// <response code="200">Tracks added to queue successfully.</response>
+    /// <response code="401">User not authenticated.</response>
+    /// <response code="404">One or more tracks not found.</response>
     /// <remarks>
-    /// This endpoint is currently under development.
-    /// Will support adding individual tracks or entire collections to the queue.
+    /// Adds the specified tracks to the end of the user's playback queue.
+    /// Duplicate tracks will be ignored.
     /// </remarks>
     [HttpPost("queue")]
-    [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-    public async Task<IActionResult> AddToQueue()
+    [Authorize]
+    [ProducesResponseType(typeof(OkResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> AddToQueue([FromBody] IEnumerable<int> trackIds)
     {
-        throw new NotImplementedException();
+        User user = await CheckAccessFeatures([AccessFeatureStruct.ListenContent]);
+        await userStateService.AddTracksToUserQueueAsync(user.Id, trackIds);
+        throw ResponseFactory.Create<OkResponse>(["Tracks added to queue successfully."]);
     }
 
     /// <summary>
-    /// Removes tracks or collections from the user's playback queue.
+    /// Removes tracks from the user's playback queue.
     /// </summary>
+    /// <param name="trackIds">List of track IDs to remove from the queue.</param>
     /// <returns>Success response upon removal from queue.</returns>
-    /// <response code="501">Not yet implemented.</response>
+    /// <response code="200">Tracks removed from queue successfully.</response>
+    /// <response code="401">User not authenticated.</response>
+    /// <response code="404">Queue not found.</response>
     /// <remarks>
-    /// This endpoint is currently under development.
+    /// Removes the specified tracks from the user's playback queue.
+    /// Non-existent tracks in the queue are silently ignored.
     /// </remarks>
     [HttpDelete("queue")]
-    [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-    public async Task<IActionResult> DeleteFromQueue()
+    [Authorize]
+    [ProducesResponseType(typeof(OkResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteFromQueue([FromBody] IEnumerable<int> trackIds)
     {
-        throw new NotImplementedException();
+        User user = await CheckAccessFeatures([AccessFeatureStruct.ListenContent]);
+        await userStateService.RemoveTracksFromUserQueueAsync(user.Id, trackIds);
+        throw ResponseFactory.Create<OkResponse>(["Tracks removed from queue successfully."]);
+    }
+
+    /// <summary>
+    /// Retrieves the current user's playback queue including all tracks.
+    /// </summary>
+    /// <returns>Queue DTO with position, current track, collection, and all queued tracks.</returns>
+    /// <response code="200">Queue retrieved successfully.</response>
+    /// <response code="401">User not authenticated.</response>
+    /// <response code="404">Queue not found.</response>
+    [HttpGet("queue")]
+    [Authorize]
+    [ProducesResponseType(typeof(OkResponse<QueueDTO>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetUserQueue()
+    {
+        User user = await CheckAccessFeatures([]);
+        Queue queue = await userStateService.GetUserQueueAsync(user.Id);
+        QueueDTO dto = new()
+        {
+            Id = queue.Id,
+            Position = queue.Position,
+            CollectionId = queue.CollectionId,
+            CurrentTrackId = queue.CurrentTrackId,
+            Tracks = queue.Tracks.Select(t => new TrackDTO
+            {
+                Id = t.Id,
+                Title = t.Title,
+                DurationInSeconds = (int)(t.Duration?.TotalSeconds ?? 0),
+                IsExplicit = t.IsExplicit,
+                DrivingDisturbingNoises = t.DrivingDisturbingNoises,
+                CoverId = t.CoverId,
+                AudioFileId = t.LowQualityAudioFileId,
+                Artists = t.TrackArtists.Select(ta => new AuthorDTO
+                {
+                    Pseudonym = ta.Pseudonym,
+                    ArtistId = ta.ArtistId
+                }).ToList()
+            }).ToList()
+        };
+        throw ResponseFactory.Create<OkResponse<QueueDTO>>(dto, ["Queue retrieved successfully."]);
     }
 
     /// <summary>
