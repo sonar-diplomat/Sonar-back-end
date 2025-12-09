@@ -1,13 +1,17 @@
+using Application;
 using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.UserCore;
 using Application.Abstractions.Interfaces.Services.Utilities;
+using Application.Abstractions.Interfaces.Repository.Music;
 using Application.DTOs.User;
 using Application.Response;
+using Application.Extensions;
 using Entities.Enums;
 using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Sonar.Controllers.UserCore;
 
@@ -17,7 +21,8 @@ public class UserController(
     IUserService userService,
     UserManager<User> userManager,
     IShareService shareService,
-    IUserFollowService userFollowService
+    IUserFollowService userFollowService,
+    IPlaylistRepository playlistRepository
 )
     : ShareController<User>(userManager, shareService)
 {
@@ -119,6 +124,24 @@ public class UserController(
         var followers = await userFollowService.GetFollowersAsync(userId);
         var following = await userFollowService.GetFollowingAsync(userId);
         
+        // Get public playlists
+        var allPlaylists = await playlistRepository.GetAllAsync();
+        var userPlaylists = allPlaylists
+            .Where(p => p.CreatorId == userId)
+            .SnInclude(p => p.VisibilityState)
+            .SnThenInclude(vs => vs.Status)
+            .SnInclude(p => p.Tracks);
+        
+        var publicPlaylists = VisibilityStateValidator.FilterPlaylistsByVisibility(userPlaylists, null)
+            .Select(p => new UserPlaylistDTO
+            {
+                Id = p.Id,
+                Name = p.Name,
+                CoverId = p.CoverId,
+                TrackCount = p.Tracks != null ? p.Tracks.Count : 0
+            })
+            .ToList();
+        
         UserProfileDTO profileDto = new()
         {
             Id = user.Id,
@@ -134,7 +157,8 @@ public class UserController(
             {
                 Id = af.Id,
                 Name = af.Name
-            }).ToList()
+            }).ToList(),
+            PublicPlaylists = publicPlaylists
         };
         
         throw ResponseFactory.Create<OkResponse<UserProfileDTO>>(profileDto, ["User profile retrieved successfully"]);
@@ -159,6 +183,24 @@ public class UserController(
         var followers = await userFollowService.GetFollowersAsync(user.Id);
         var following = await userFollowService.GetFollowingAsync(user.Id);
         
+        // Get public playlists
+        var allPlaylists = await playlistRepository.GetAllAsync();
+        var userPlaylists = allPlaylists
+            .Where(p => p.CreatorId == user.Id)
+            .SnInclude(p => p.VisibilityState)
+            .SnThenInclude(vs => vs.Status)
+            .SnInclude(p => p.Tracks);
+        
+        var publicPlaylists = VisibilityStateValidator.FilterPlaylistsByVisibility(userPlaylists, null)
+            .Select(p => new UserPlaylistDTO
+            {
+                Id = p.Id,
+                Name = p.Name,
+                CoverId = p.CoverId,
+                TrackCount = p.Tracks != null ? p.Tracks.Count : 0
+            })
+            .ToList();
+        
         UserProfileDTO profileDto = new()
         {
             Id = user.Id,
@@ -174,7 +216,8 @@ public class UserController(
             {
                 Id = af.Id,
                 Name = af.Name
-            }).ToList()
+            }).ToList(),
+            PublicPlaylists = publicPlaylists
         };
         
         throw ResponseFactory.Create<OkResponse<UserProfileDTO>>(profileDto, ["User profile retrieved successfully"]);
