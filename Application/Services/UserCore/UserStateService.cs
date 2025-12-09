@@ -79,4 +79,22 @@ public class UserStateService(
         return userState ??
                throw ResponseFactory.Create<BadRequestResponse>([$"UserState for User with Id {userId} not found."]);
     }
+
+    public async Task AddTracksToUserQueueAsync(int userId, IEnumerable<int> trackIds)
+    {
+        UserState userState = await GetByUserIdValidatedAsync(userId);
+        await queueService.AddTracksToQueueAsync(userState.QueueId, trackIds);
+    }
+
+    public async Task RemoveTracksFromUserQueueAsync(int userId, IEnumerable<int> trackIds)
+    {
+        UserState userState = await GetByUserIdValidatedAsync(userId);
+        await queueService.RemoveTracksFromQueueAsync(userState.QueueId, trackIds);
+    }
+
+    public async Task<Queue> GetUserQueueAsync(int userId)
+    {
+        UserState userState = await GetByUserIdValidatedAsync(userId);
+        return await queueService.GetQueueWithTracksAsync(userState.QueueId);
+    }
 }
