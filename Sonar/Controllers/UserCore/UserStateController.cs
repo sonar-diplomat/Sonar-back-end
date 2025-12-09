@@ -153,6 +153,30 @@ public class UserStateController(
     }
 
     /// <summary>
+    /// Completely replaces the user's playback queue with a new list of tracks.
+    /// </summary>
+    /// <param name="trackIds">List of track IDs to set as the new queue.</param>
+    /// <returns>Success response upon queue replacement.</returns>
+    /// <response code="200">Queue saved successfully.</response>
+    /// <response code="401">User not authenticated.</response>
+    /// <response code="404">One or more tracks not found.</response>
+    /// <remarks>
+    /// This endpoint overwrites the entire queue. Use POST and DELETE for smaller adjustments.
+    /// The order of tracks in the input list will be preserved in the queue.
+    /// </remarks>
+    [HttpPut("queue")]
+    [Authorize]
+    [ProducesResponseType(typeof(OkResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> SaveQueue([FromBody] IEnumerable<int> trackIds)
+    {
+        User user = await CheckAccessFeatures([AccessFeatureStruct.ListenContent]);
+        await userStateService.SaveUserQueueAsync(user.Id, trackIds);
+        throw ResponseFactory.Create<OkResponse>(["Queue saved successfully."]);
+    }
+
+    /// <summary>
     /// Updates the user's status (e.g., online, away, do not disturb).
     /// </summary>
     /// <param name="statusId">The ID of the new user status.</param>

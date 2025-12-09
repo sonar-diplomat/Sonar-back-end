@@ -55,4 +55,27 @@ public class QueueService(
             .Include(q => q.Collection)
             .GetByIdValidatedAsync(queueId);
     }
+
+    public async Task SaveQueueAsync(int queueId, IEnumerable<int> trackIds)
+    {
+        Queue queue = await GetQueueWithTracksAsync(queueId);
+        
+        // Clear existing tracks
+        queue.Tracks.Clear();
+        
+        // Add all new tracks
+        List<Track> tracksToAdd = new();
+        foreach (int trackId in trackIds)
+        {
+            Track track = await trackService.GetByIdValidatedAsync(trackId);
+            tracksToAdd.Add(track);
+        }
+
+        foreach (Track track in tracksToAdd)
+        {
+            queue.Tracks.Add(track);
+        }
+
+        await repository.UpdateAsync(queue);
+    }
 }
