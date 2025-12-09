@@ -59,11 +59,7 @@ public class QueueService(
     public async Task SaveQueueAsync(int queueId, IEnumerable<int> trackIds)
     {
         Queue queue = await GetQueueWithTracksAsync(queueId);
-        
-        // Clear existing tracks
         queue.Tracks.Clear();
-        
-        // Add all new tracks
         List<Track> tracksToAdd = new();
         foreach (int trackId in trackIds)
         {

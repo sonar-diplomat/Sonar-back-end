@@ -45,7 +45,6 @@ public class UserStateService(
     {
         UserState userState = await repository.SnInclude(q => q.Queue).GetByIdValidatedAsync(stateId);;
         userState.Queue.Position = position;
-        Console.WriteLine(userState.Queue.Position);
         await repository.UpdateAsync(userState);
     }
 
