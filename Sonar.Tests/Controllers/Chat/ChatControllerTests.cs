@@ -274,7 +274,8 @@ public class ChatControllerTests : ChatControllerTestsBase, IDisposable
             IsGroup = true,
             CoverId = 1,
             CreatorId = _testUser.Id,
-            UserIds = new[] { _testUser.Id, 2, 3 }
+            UserIds = new[] { _testUser.Id, 2, 3 },
+            AdminIds = new[] { _testUser.Id }
         };
         
         _chatServiceMock

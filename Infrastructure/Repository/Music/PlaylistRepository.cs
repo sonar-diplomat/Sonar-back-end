@@ -19,6 +19,9 @@ public class PlaylistRepository(SonarContext dbContext) : GenericRepository<Play
             .ThenInclude(a => a.User)
             .Include(t => t.VisibilityState)
             .ThenInclude(vs => vs.Status)
+            .Include(t => t.Genre)
+            .Include(t => t.TrackMoodTags)
+            .ThenInclude(tmt => tmt.MoodTag)
             .AsQueryable();
 
         if (afterId.HasValue)

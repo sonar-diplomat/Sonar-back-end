@@ -135,14 +135,12 @@ public class PlaylistService(
 
         List<Track> tracks = await repository.GetTracksFromPlaylistAfterAsync(playlistId, afterId, limit);
 
-        // Filter out tracks that are not accessible (Hidden or not yet public), but allow if user is author
         List<TrackDTO> items = tracks
             .Where(t =>
             {
                 if (t.VisibilityState == null)
                     return false;
 
-                // Get author user IDs from TrackArtists
                 IEnumerable<int>? trackAuthorIds = t.TrackArtists?
                     .Where(ta => ta.Artist?.UserId != null)
                     .Select(ta => ta.Artist!.UserId!)
@@ -163,7 +161,17 @@ public class PlaylistService(
                 {
                     Pseudonym = ta.Pseudonym,
                     ArtistId = ta.ArtistId
-                }).ToList() ?? new List<AuthorDTO>()
+                }).ToList() ?? new List<AuthorDTO>(),
+                Genre = t.Genre != null ? new GenreDTO
+                {
+                    Id = t.Genre.Id,
+                    Name = t.Genre.Name
+                } : throw ResponseFactory.Create<BadRequestResponse>(["Track must have a genre"]),
+                MoodTags = t.TrackMoodTags?.Select(tmt => new MoodTagDTO
+                {
+                    Id = tmt.MoodTag.Id,
+                    Name = tmt.MoodTag.Name
+                }).ToList() ?? new List<MoodTagDTO>()
             }).ToList();
 
         string? nextCursor = null;

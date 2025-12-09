@@ -123,6 +123,25 @@ public class TrackController(
         track.Title = dto.Title ?? track.Title;
         track.IsExplicit = dto.IsExplicit ?? track.IsExplicit;
         track.DrivingDisturbingNoises = dto.DrivingDisturbingNoises ?? track.DrivingDisturbingNoises;
+        
+        // Update Genre if provided
+        if (dto.GenreId.HasValue)
+        {
+            track.GenreId = dto.GenreId.Value;
+        }
+        
+        // Update MoodTags if provided
+        if (dto.MoodTagIds != null)
+        {
+            // Validate mood tag count (0-3)
+            if (dto.MoodTagIds.Count() > 3)
+            {
+                throw ResponseFactory.Create<BadRequestResponse>(["Mood tags cannot exceed 3"]);
+            }
+            
+            await trackService.UpdateMoodTagsAsync(trackId, dto.MoodTagIds);
+        }
+        
         // TODO: create DTO
         track = await trackService.UpdateAsync(track);
         throw ResponseFactory.Create<OkResponse<Track>>(track, ["Track updated successfully"]);

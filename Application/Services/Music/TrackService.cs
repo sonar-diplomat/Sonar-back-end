@@ -17,7 +17,9 @@ public class TrackService(
     IVisibilityStateService visibilityStateService,
     ILibraryService libraryService,
     IArtistService artistService,
-    ITrackArtistService trackArtistService
+    ITrackArtistService trackArtistService,
+    IMoodTagRepository moodTagRepository,
+    ITrackMoodTagRepository trackMoodTagRepository
 )
     : GenericService<Track>(repository), ITrackService
 {
@@ -94,6 +96,13 @@ public class TrackService(
         // Validate visibility before returning track data (ignore if user is author)
         VisibilityStateValidator.IsAccessible(track.VisibilityState, userId, authorIds, "Track", trackId);
 
+        track = await repository
+            .Query()
+            .Include(t => t.Genre)
+            .Include(t => t.TrackMoodTags)
+            .ThenInclude(tmt => tmt.MoodTag)
+            .FirstOrDefaultAsync(t => t.Id == trackId) ?? track;
+
         return new TrackDTO
         {
             Id = track.Id,
@@ -107,7 +116,17 @@ public class TrackService(
             {
                 Pseudonym = ta.Pseudonym,
                 ArtistId = ta.ArtistId
-            }).ToList() ?? new List<AuthorDTO>()
+            }).ToList() ?? new List<AuthorDTO>(),
+            Genre = track.Genre != null ? new GenreDTO
+            {
+                Id = track.Genre.Id,
+                Name = track.Genre.Name
+            } : throw ResponseFactory.Create<BadRequestResponse>(["Track must have a genre"]),
+            MoodTags = track.TrackMoodTags?.Select(tmt => new MoodTagDTO
+            {
+                Id = tmt.MoodTag.Id,
+                Name = tmt.MoodTag.Name
+            }).ToList() ?? new List<MoodTagDTO>()
         };
     }
 
@@ -188,5 +207,44 @@ public class TrackService(
         };
 
         await trackArtistService.CreateAsync(trackArtist);
+    }
+
+    public async Task UpdateMoodTagsAsync(int trackId, IEnumerable<int> moodTagIds)
+    {
+        if (moodTagIds.Count() > 3)
+        {
+            throw ResponseFactory.Create<BadRequestResponse>(["Mood tags cannot exceed 3"]);
+        }
+
+        var allMoodTags = await moodTagRepository.GetAllAsync();
+        var validMoodTagIds = allMoodTags
+            .Where(mt => moodTagIds.Contains(mt.Id))
+            .Select(mt => mt.Id)
+            .ToList();
+
+        if (validMoodTagIds.Count != moodTagIds.Count())
+        {
+            throw ResponseFactory.Create<BadRequestResponse>(["One or more mood tags are invalid"]);
+        }
+
+        var allTrackMoodTags = await trackMoodTagRepository.GetAllAsync();
+        var existingMoodTags = allTrackMoodTags
+            .Where(tmt => tmt.TrackId == trackId)
+            .ToList();
+
+        foreach (var existing in existingMoodTags)
+        {
+            await trackMoodTagRepository.RemoveAsync(existing);
+        }
+
+        foreach (int moodTagId in validMoodTagIds)
+        {
+            TrackMoodTag trackMoodTag = new()
+            {
+                TrackId = trackId,
+                MoodTagId = moodTagId
+            };
+            await trackMoodTagRepository.AddAsync(trackMoodTag);
+        }
     }
 }

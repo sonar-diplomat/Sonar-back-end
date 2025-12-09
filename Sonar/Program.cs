@@ -270,6 +270,10 @@ builder.Services.AddScoped<IPlaylistRepository, PlaylistRepository>();
 builder.Services.AddScoped<ITrackRepository, TrackRepository>();
 builder.Services.AddScoped<IAlbumArtistRepository, AlbumArtistRepository>();
 builder.Services.AddScoped<ITrackArtistRepository, TrackArtistRepository>();
+builder.Services.AddScoped<ITrackMoodTagRepository, TrackMoodTagRepository>();
+builder.Services.AddScoped<IAlbumMoodTagRepository, AlbumMoodTagRepository>();
+builder.Services.AddScoped<IGenreRepository, GenreRepository>();
+builder.Services.AddScoped<IMoodTagRepository, MoodTagRepository>();
 
 // Report Repositories
 builder.Services.AddScoped<IReportableEntityTypeRepository, ReportableEntityTypeRepository>();

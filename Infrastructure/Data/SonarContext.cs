@@ -65,6 +65,10 @@ public class SonarContext(DbContextOptions<SonarContext> options)
     public DbSet<Track> Tracks { get; set; } = null!;
     public DbSet<AlbumArtist> AlbumArtists { get; set; }
     public DbSet<TrackArtist> TrackArtists { get; set; }
+    public DbSet<Genre> Genres { get; set; } = null!;
+    public DbSet<MoodTag> MoodTags { get; set; } = null!;
+    public DbSet<TrackMoodTag> TrackMoodTags { get; set; } = null!;
+    public DbSet<AlbumMoodTag> AlbumMoodTags { get; set; } = null!;
 
     // Report
     public DbSet<Report> Reports { get; set; } = null!;
@@ -121,6 +125,38 @@ public class SonarContext(DbContextOptions<SonarContext> options)
             .HasOne(ta => ta.Artist)
             .WithMany(a => a.TrackArtists)/*.IsRequired(false)*/
             .HasForeignKey(ta => ta.ArtistId)/*.IsRequired(false)*/;
+
+        builder.Entity<Track>()
+            .HasOne(t => t.Genre)
+            .WithMany(g => g.Tracks)
+            .HasForeignKey(t => t.GenreId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        builder.Entity<Album>()
+            .HasOne(a => a.Genre)
+            .WithMany(g => g.Albums)
+            .HasForeignKey(a => a.GenreId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        builder.Entity<TrackMoodTag>()
+            .HasOne(tmt => tmt.Track)
+            .WithMany(t => t.TrackMoodTags)
+            .HasForeignKey(tmt => tmt.TrackId);
+
+        builder.Entity<TrackMoodTag>()
+            .HasOne(tmt => tmt.MoodTag)
+            .WithMany(mt => mt.TrackMoodTags)
+            .HasForeignKey(tmt => tmt.MoodTagId);
+
+        builder.Entity<AlbumMoodTag>()
+            .HasOne(amt => amt.Album)
+            .WithMany(a => a.AlbumMoodTags)
+            .HasForeignKey(amt => amt.AlbumId);
+
+        builder.Entity<AlbumMoodTag>()
+            .HasOne(amt => amt.MoodTag)
+            .WithMany(mt => mt.AlbumMoodTags)
+            .HasForeignKey(amt => amt.MoodTagId);
 
         builder.Entity<User>().HasOne(u => u.Settings).WithOne(s => s.User).HasForeignKey<User>(s => s.SettingsId);
         builder.Entity<Settings>().HasMany(s => s.BlockedUsers).WithMany(s => s.SettingsBlockedUsers);
@@ -192,6 +228,10 @@ public class SonarContext(DbContextOptions<SonarContext> options)
             .HasData(ChatStickerCategorySeedFactory.CreateSeedData());
         builder.Entity<ChatSticker>()
             .HasData(ChatStickerSeedFactory.CreateSeedData());
+        builder.Entity<Genre>()
+            .HasData(GenreSeedFactory.CreateSeedData());
+        builder.Entity<MoodTag>()
+            .HasData(MoodTagSeedFactory.CreateSeedData());
         base.OnModelCreating(builder);
     }
 }

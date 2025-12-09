@@ -15,4 +15,5 @@ public interface ITrackService : IGenericService<Track>
     Task UpdateVisibilityStatusAsync(int trackId, int newVisibilityStatusId);
     Task<bool> ToggleFavoriteAsync(int trackId, int libraryId);
     Task AssignArtistToTrackAsync(int trackId, AuthorDTO authorDto);
+    Task UpdateMoodTagsAsync(int trackId, IEnumerable<int> moodTagIds);
 }

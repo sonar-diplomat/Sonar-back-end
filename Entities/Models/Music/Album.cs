@@ -12,6 +12,8 @@ public class Album : Collection
     [Required]
     public int DistributorId { get; set; }
 
+    public int? GenreId { get; set; }
+
     /// <summary>
     /// </summary>
     [JsonIgnore]
@@ -20,5 +22,13 @@ public class Album : Collection
     public virtual Distributor Distributor { get; set; }
 
     [JsonIgnore]
+    [ForeignKey("GenreId")]
+    [DeleteBehavior(DeleteBehavior.NoAction)]
+    public virtual Genre? Genre { get; set; }
+
+    [JsonIgnore]
     public virtual ICollection<AlbumArtist> AlbumArtists { get; set; }
+
+    [JsonIgnore]
+    public virtual ICollection<AlbumMoodTag> AlbumMoodTags { get; set; }
 }
