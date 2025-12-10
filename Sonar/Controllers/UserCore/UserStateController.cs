@@ -64,15 +64,15 @@ public class UserStateController(
     }
 
     /// <summary>
-    /// Adds tracks to the user's playback queue.
+    /// Adds a track to the user's playback queue.
     /// </summary>
-    /// <param name="trackIds">List of track IDs to add to the queue.</param>
+    /// <param name="trackId">The track ID to add to the queue.</param>
     /// <returns>Success response upon adding to queue.</returns>
-    /// <response code="200">Tracks added to queue successfully.</response>
+    /// <response code="200">Track added to queue successfully.</response>
     /// <response code="401">User not authenticated.</response>
-    /// <response code="404">One or more tracks not found.</response>
+    /// <response code="404">Track not found.</response>
     /// <remarks>
-    /// Adds the specified tracks to the end of the user's playback queue.
+    /// Adds the specified track to the end of the user's playback queue.
     /// Duplicate tracks will be ignored.
     /// </remarks>
     [HttpPost("queue")]
@@ -80,23 +80,23 @@ public class UserStateController(
     [ProducesResponseType(typeof(OkResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> AddToQueue([FromBody] IEnumerable<int> trackIds)
+    public async Task<IActionResult> AddToQueue([FromBody] int trackId)
     {
         User user = await CheckAccessFeatures([AccessFeatureStruct.ListenContent]);
-        await userStateService.AddTracksToUserQueueAsync(user.Id, trackIds);
-        throw ResponseFactory.Create<OkResponse>(["Tracks added to queue successfully."]);
+        await userStateService.AddTracksToUserQueueAsync(user.Id, [trackId]);
+        throw ResponseFactory.Create<OkResponse>(["Track added to queue successfully."]);
     }
 
     /// <summary>
-    /// Removes tracks from the user's playback queue.
+    /// Removes a track from the user's playback queue.
     /// </summary>
-    /// <param name="trackIds">List of track IDs to remove from the queue.</param>
+    /// <param name="trackId">The track ID to remove from the queue.</param>
     /// <returns>Success response upon removal from queue.</returns>
-    /// <response code="200">Tracks removed from queue successfully.</response>
+    /// <response code="200">Track removed from queue successfully.</response>
     /// <response code="401">User not authenticated.</response>
     /// <response code="404">Queue not found.</response>
     /// <remarks>
-    /// Removes the specified tracks from the user's playback queue.
+    /// Removes the specified track from the user's playback queue.
     /// Non-existent tracks in the queue are silently ignored.
     /// </remarks>
     [HttpDelete("queue")]
@@ -104,11 +104,11 @@ public class UserStateController(
     [ProducesResponseType(typeof(OkResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> DeleteFromQueue([FromBody] IEnumerable<int> trackIds)
+    public async Task<IActionResult> DeleteFromQueue([FromBody] int trackId)
     {
         User user = await CheckAccessFeatures([AccessFeatureStruct.ListenContent]);
-        await userStateService.RemoveTracksFromUserQueueAsync(user.Id, trackIds);
-        throw ResponseFactory.Create<OkResponse>(["Tracks removed from queue successfully."]);
+        await userStateService.RemoveTracksFromUserQueueAsync(user.Id, [trackId]);
+        throw ResponseFactory.Create<OkResponse>(["Track removed from queue successfully."]);
     }
 
     /// <summary>
