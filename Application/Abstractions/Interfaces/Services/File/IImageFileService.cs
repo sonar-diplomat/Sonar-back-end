@@ -8,4 +8,5 @@ public interface IImageFileService : IFileService<ImageFile>
     Task<ImageFile> UploadFileAsync(IFormFile file);
     Task<ImageFile> GetDefaultAsync();
     Task<ImageFile> GetFavoriteDefaultAsync();
+    Task<ImageFile> GetPlaylistDefaultAsync();
 }

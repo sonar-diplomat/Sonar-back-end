@@ -9,6 +9,7 @@ using Entities.Models.Library;
 using Entities.Models.Music;
 using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using System.Text;
 
 namespace Application.Services.Music;
@@ -36,7 +37,7 @@ public class PlaylistService(
             CreatorId = creatorId,
             Cover = dto.Cover != null
                 ? await imageFileService.UploadFileAsync(dto.Cover)
-                : await imageFileService.GetDefaultAsync(),
+                : await imageFileService.GetPlaylistDefaultAsync(),
             VisibilityState = await visibilityStateService.CreateDefaultAsync()
         };
         playlist = await repository.AddAsync(playlist);
@@ -103,7 +104,19 @@ public class PlaylistService(
         CheckForFavorites(playlist.Name);
         if (playlist.Tracks.Any(t => t.Id == trackId))
             throw ResponseFactory.Create<ConflictResponse>(["Track is already in the playlist."]);
-        playlist.Tracks.Add(await trackService.GetByIdValidatedAsync(trackId));
+        
+        Track track = await trackService.GetByIdValidatedAsync(trackId);
+        
+        // Если плейлист пустой, обложка трека становится обложкой плейлиста
+        bool isPlaylistEmpty = !playlist.Tracks.Any();
+        if (isPlaylistEmpty)
+        {
+            // Загружаем обложку трека
+            ImageFile trackCover = await imageFileService.GetByIdAsync(track.CoverId);
+            playlist.Cover = trackCover;
+        }
+        
+        playlist.Tracks.Add(track);
         await repository.UpdateAsync(playlist);
     }
 
@@ -205,10 +218,30 @@ public class PlaylistService(
             _ => throw ResponseFactory.Create<BadRequestResponse>(["Collection failed to import"])
         });
 
+        bool isPlaylistEmpty = !playlist.Tracks.Any();
+        Track? firstTrack = null;
+        
         HashSet<int> existingIds = new(playlist.Tracks.Select(t => t.Id));
         foreach (Track track in tracks)
+        {
             if (existingIds.Add(track.Id))
+            {
+                // Если плейлист пустой и это первый трек, сохраняем его для установки обложки
+                if (isPlaylistEmpty && firstTrack == null)
+                {
+                    firstTrack = track;
+                }
                 playlist.Tracks.Add(track);
+            }
+        }
+        
+        // Если плейлист был пустой и мы добавили треки, устанавливаем обложку первого трека
+        if (isPlaylistEmpty && firstTrack != null)
+        {
+            ImageFile trackCover = await imageFileService.GetByIdAsync(firstTrack.CoverId);
+            playlist.Cover = trackCover;
+        }
+        
         await repository.UpdateAsync(playlist);
     }
 

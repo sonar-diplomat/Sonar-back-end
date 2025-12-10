@@ -18,4 +18,9 @@ public class ImageFileRepository(SonarContext dbContext)
     {
         return (await context.ImageFiles.FirstOrDefaultAsync(f => f.Id == 2))!;
     }
+
+    public async Task<ImageFile> GetPlaylistDefaultAsync()
+    {
+        return (await context.ImageFiles.FirstOrDefaultAsync(f => f.Id == 2))!;
+    }
 }

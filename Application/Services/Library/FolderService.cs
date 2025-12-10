@@ -57,7 +57,82 @@ public class FolderService(
         Folder folder = await CheckFolderBelongsToLibrary(libraryId, folderId);
         if (folder.IsProtected)
             throw ResponseFactory.Create<ForbiddenResponse>(["This folder is protected and cannot be deleted"]);
-        await repository.RemoveAsync(folder);
+        
+        // Собираем все ID дочерних папок для удаления (рекурсивно)
+        HashSet<int> subFolderIds = await GetAllSubFolderIdsRecursivelyAsync(folderId);
+        
+        // Если есть дочерние папки, загружаем их со связями с коллекциями и удаляем
+        if (subFolderIds.Any())
+        {
+            IQueryable<Folder> allFoldersQuery = await repository.GetAllAsync();
+            List<Folder> foldersToDelete = await allFoldersQuery
+                .Where(f => subFolderIds.Contains(f.Id))
+                .Include(f => f.Collections)
+                .ToListAsync();
+            
+            // Очищаем связи с коллекциями для всех дочерних папок
+            foreach (Folder folderToDelete in foldersToDelete)
+            {
+                if (folderToDelete.Collections != null && folderToDelete.Collections.Any())
+                {
+                    folderToDelete.Collections.Clear();
+                }
+            }
+            
+            // Удаляем все дочерние папки
+            await repository.RemoveRangeAsync(foldersToDelete);
+        }
+        
+        // Загружаем саму папку со связями с коллекциями
+        Folder folderToRemove = await repository
+            .SnInclude(f => f.Collections)
+            .GetByIdValidatedAsync(folderId);
+        
+        // Очищаем связи с коллекциями для самой папки
+        if (folderToRemove.Collections != null && folderToRemove.Collections.Any())
+        {
+            folderToRemove.Collections.Clear();
+        }
+        
+        // Удаляем саму папку
+        await repository.RemoveAsync(folderToRemove);
+    }
+    
+    /// <summary>
+    /// Рекурсивно получает все ID дочерних папок для удаления
+    /// </summary>
+    private async Task<HashSet<int>> GetAllSubFolderIdsRecursivelyAsync(int folderId)
+    {
+        HashSet<int> allSubFolderIds = new();
+        HashSet<int> processedIds = new();
+        Queue<int> queue = new();
+        queue.Enqueue(folderId);
+        
+        while (queue.Count > 0)
+        {
+            int currentFolderId = queue.Dequeue();
+            if (processedIds.Contains(currentFolderId))
+                continue;
+            
+            processedIds.Add(currentFolderId);
+            
+            // Получаем все дочерние папки текущей папки (только незащищенные)
+            IQueryable<Folder> allFoldersQuery = await repository.GetAllAsync();
+            List<Folder> subFolders = await allFoldersQuery
+                .Where(f => f.ParentFolderId == currentFolderId && !f.IsProtected)
+                .ToListAsync();
+            
+            foreach (Folder subFolder in subFolders)
+            {
+                if (!processedIds.Contains(subFolder.Id))
+                {
+                    allSubFolderIds.Add(subFolder.Id);
+                    queue.Enqueue(subFolder.Id);
+                }
+            }
+        }
+        
+        return allSubFolderIds;
     }
 
     public async Task MoveFolder(int libraryId, int folderId, int newParentFolderId)

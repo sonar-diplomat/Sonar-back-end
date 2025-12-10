@@ -43,4 +43,9 @@ public class ImageFileService(
     {
         return repository.GetFavoriteDefaultAsync();
     }
+
+    public Task<ImageFile> GetPlaylistDefaultAsync()
+    {
+        return repository.GetPlaylistDefaultAsync();
+    }
 }
