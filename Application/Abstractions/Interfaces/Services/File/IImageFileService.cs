@@ -9,4 +9,6 @@ public interface IImageFileService : IFileService<ImageFile>
     Task<ImageFile> GetDefaultAsync();
     Task<ImageFile> GetFavoriteDefaultAsync();
     Task<ImageFile> GetPlaylistDefaultAsync();
+    Task<ImageFile?> GetByIdAsync(int id);
+    Task<ImageFile> GetByIdValidatedAsync(int id);
 }

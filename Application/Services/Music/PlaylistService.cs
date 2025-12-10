@@ -5,6 +5,7 @@ using Application.DTOs;
 using Application.DTOs.Music;
 using Application.Extensions;
 using Application.Response;
+using Entities.Models.File;
 using Entities.Models.Library;
 using Entities.Models.Music;
 using Entities.Models.UserCore;
@@ -112,7 +113,7 @@ public class PlaylistService(
         if (isPlaylistEmpty)
         {
             // Загружаем обложку трека
-            ImageFile trackCover = await imageFileService.GetByIdAsync(track.CoverId);
+            ImageFile trackCover = await imageFileService.GetByIdValidatedAsync(track.CoverId);
             playlist.Cover = trackCover;
         }
         
@@ -238,7 +239,7 @@ public class PlaylistService(
         // Если плейлист был пустой и мы добавили треки, устанавливаем обложку первого трека
         if (isPlaylistEmpty && firstTrack != null)
         {
-            ImageFile trackCover = await imageFileService.GetByIdAsync(firstTrack.CoverId);
+            ImageFile trackCover = await imageFileService.GetByIdValidatedAsync(firstTrack.CoverId);
             playlist.Cover = trackCover;
         }
         

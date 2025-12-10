@@ -4,6 +4,7 @@ using Application.Abstractions.Interfaces.Services;
 using Application.DTOs.Music;
 using Application.DTOs.Search;
 using Application.Extensions;
+using Application.Response;
 using Entities.Models.Music;
 using Entities.Models.UserCore;
 using Microsoft.EntityFrameworkCore;
@@ -73,6 +74,10 @@ public class SearchService(
             .SnInclude(t => t.TrackArtists)
             .ThenInclude(ta => ta.Artist)
             .SnInclude(t => t.Collections)
+            .SnInclude(t => t.Genre)
+            .SnInclude(t => t.TrackMoodTags)
+            .ThenInclude(tmt => tmt.MoodTag)
+            .SnInclude(t => t.LowQualityAudioFile)
             .Where(t =>
                 t.Title.ToLower().Trim().Contains(searchPattern) ||
                 t.TrackArtists.Any(ta => ta.Artist!.ArtistName.Contains(searchPattern))
@@ -96,12 +101,23 @@ public class SearchService(
                 Id = t.Id,
                 Title = t.Title,
                 DurationInSeconds = (int)(t.Duration?.TotalSeconds ?? 0),
+                IsExplicit = t.IsExplicit,
+                DrivingDisturbingNoises = t.DrivingDisturbingNoises,
                 CoverId = t.CoverId,
+                AudioFileId = t.LowQualityAudioFileId,
                 Artists = t.TrackArtists?.Select(ta => new AuthorDTO
                 {
                     Pseudonym = ta.Pseudonym,
                     ArtistId = ta.ArtistId
                 }) ?? new List<AuthorDTO>(),
+                Genre = t.Genre != null
+                    ? new GenreDTO { Id = t.Genre.Id, Name = t.Genre.Name }
+                    : throw ResponseFactory.Create<BadRequestResponse>(["Track must have a genre"]),
+                MoodTags = t.TrackMoodTags?.Select(tmt => new MoodTagDTO
+                {
+                    Id = tmt.MoodTag.Id,
+                    Name = tmt.MoodTag.Name
+                }) ?? new List<MoodTagDTO>(),
                 AlbumId = album?.Id,
                 AlbumName = album?.Name
             };
