@@ -66,6 +66,7 @@ using System.Text;
 using Application.Abstractions.Interfaces.Services.Chat;
 using Sonar.HealthChecks;
 using Flac = Application.Services.File.Flac;
+using Microsoft.Extensions.DependencyInjection;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -445,6 +446,13 @@ builder.Services.AddSingleton<IFileFormatInspector>(new FileFormatInspector(
 builder.Services.AddSingleton<IFileStorageService, FileStorageService>();
 builder.Services.AddHttpClient();
 builder.Services.AddHttpContextAccessor();
+
+// Add gRPC client for Analytics Service
+builder.Services.AddGrpcClient<Analytics.API.Analytics.AnalyticsClient>(o =>
+{
+    o.Address = new Uri(builder.Configuration["Analytics:GrpcUrl"] 
+        ?? throw new InvalidOperationException("Analytics:GrpcUrl not configured"));
+});
 
 #endregion
 

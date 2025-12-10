@@ -1111,6 +1111,29 @@ namespace Infrastructure.Migrations
                     b.ToTable("AlbumArtists");
                 });
 
+            modelBuilder.Entity("Entities.Models.Music.AlbumMoodTag", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AlbumId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("MoodTagId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AlbumId");
+
+                    b.HasIndex("MoodTagId");
+
+                    b.ToTable("AlbumMoodTag");
+                });
+
             modelBuilder.Entity("Entities.Models.Music.Artist", b =>
                 {
                     b.Property<int>("Id")
@@ -1165,6 +1188,146 @@ namespace Infrastructure.Migrations
                     b.UseTptMappingStrategy();
                 });
 
+            modelBuilder.Entity("Entities.Models.Music.Genre", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Genre");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "Rock"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Pop"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "Hip-Hop"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Name = "Electronic"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Name = "Jazz"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Name = "Classical"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Name = "Country"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Name = "R&B"
+                        },
+                        new
+                        {
+                            Id = 9,
+                            Name = "Metal"
+                        },
+                        new
+                        {
+                            Id = 10,
+                            Name = "Folk"
+                        });
+                });
+
+            modelBuilder.Entity("Entities.Models.Music.MoodTag", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("MoodTag");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "Happy"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Sad"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "Energetic"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Name = "Relaxed"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Name = "Melancholic"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Name = "Upbeat"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Name = "Calm"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Name = "Aggressive"
+                        },
+                        new
+                        {
+                            Id = 9,
+                            Name = "Romantic"
+                        },
+                        new
+                        {
+                            Id = 10,
+                            Name = "Nostalgic"
+                        });
+                });
+
             modelBuilder.Entity("Entities.Models.Music.Track", b =>
                 {
                     b.Property<int>("Id")
@@ -1181,6 +1344,9 @@ namespace Infrastructure.Migrations
 
                     b.Property<TimeSpan?>("Duration")
                         .HasColumnType("interval");
+
+                    b.Property<int>("GenreId")
+                        .HasColumnType("integer");
 
                     b.Property<int?>("HighQualityAudioFileId")
                         .HasColumnType("integer");
@@ -1208,6 +1374,8 @@ namespace Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CoverId");
+
+                    b.HasIndex("GenreId");
 
                     b.HasIndex("HighQualityAudioFileId");
 
@@ -1248,6 +1416,29 @@ namespace Infrastructure.Migrations
                     b.HasIndex("TrackId");
 
                     b.ToTable("TrackArtists");
+                });
+
+            modelBuilder.Entity("Entities.Models.Music.TrackMoodTag", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("MoodTagId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TrackId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MoodTagId");
+
+                    b.HasIndex("TrackId");
+
+                    b.ToTable("TrackMoodTag");
                 });
 
             modelBuilder.Entity("Entities.Models.Report.Report", b =>
@@ -1569,38 +1760,6 @@ namespace Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("UserFollows");
-                });
-
-            modelBuilder.Entity("Entities.Models.UserCore.UserFriendRequest", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("FromUserId")
-                        .HasColumnType("integer");
-
-                    b.Property<bool?>("IsAccepted")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTime>("RequestedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("ResolvedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("ToUserId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("FromUserId");
-
-                    b.HasIndex("ToUserId");
-
-                    b.ToTable("UserFriendRequests");
                 });
 
             modelBuilder.Entity("Entities.Models.UserCore.UserPrivacyGroup", b =>
@@ -2458,7 +2617,12 @@ namespace Infrastructure.Migrations
                     b.Property<int>("DistributorId")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("GenreId")
+                        .HasColumnType("integer");
+
                     b.HasIndex("DistributorId");
+
+                    b.HasIndex("GenreId");
 
                     b.ToTable("Album");
                 });
@@ -2895,6 +3059,25 @@ namespace Infrastructure.Migrations
                     b.Navigation("Artist");
                 });
 
+            modelBuilder.Entity("Entities.Models.Music.AlbumMoodTag", b =>
+                {
+                    b.HasOne("Entities.Models.Music.Album", "Album")
+                        .WithMany("AlbumMoodTags")
+                        .HasForeignKey("AlbumId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Entities.Models.Music.MoodTag", "MoodTag")
+                        .WithMany("AlbumMoodTags")
+                        .HasForeignKey("MoodTagId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Album");
+
+                    b.Navigation("MoodTag");
+                });
+
             modelBuilder.Entity("Entities.Models.Music.Artist", b =>
                 {
                     b.HasOne("Entities.Models.UserCore.User", "User")
@@ -2933,6 +3116,12 @@ namespace Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Entities.Models.Music.Genre", "Genre")
+                        .WithMany("Tracks")
+                        .HasForeignKey("GenreId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
                     b.HasOne("Entities.Models.File.AudioFile", "HighQualityAudioFile")
                         .WithMany()
                         .HasForeignKey("HighQualityAudioFileId")
@@ -2961,6 +3150,8 @@ namespace Infrastructure.Migrations
 
                     b.Navigation("Cover");
 
+                    b.Navigation("Genre");
+
                     b.Navigation("HighQualityAudioFile");
 
                     b.Navigation("LowQualityAudioFile");
@@ -2983,6 +3174,25 @@ namespace Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Artist");
+
+                    b.Navigation("Track");
+                });
+
+            modelBuilder.Entity("Entities.Models.Music.TrackMoodTag", b =>
+                {
+                    b.HasOne("Entities.Models.Music.MoodTag", "MoodTag")
+                        .WithMany("TrackMoodTags")
+                        .HasForeignKey("MoodTagId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Entities.Models.Music.Track", "Track")
+                        .WithMany("TrackMoodTags")
+                        .HasForeignKey("TrackId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("MoodTag");
 
                     b.Navigation("Track");
                 });
@@ -3101,25 +3311,6 @@ namespace Infrastructure.Migrations
                     b.Navigation("Follower");
 
                     b.Navigation("Following");
-                });
-
-            modelBuilder.Entity("Entities.Models.UserCore.UserFriendRequest", b =>
-                {
-                    b.HasOne("Entities.Models.UserCore.User", "FromUser")
-                        .WithMany("SentFriendRequests")
-                        .HasForeignKey("FromUserId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.HasOne("Entities.Models.UserCore.User", "ToUser")
-                        .WithMany("ReceivedFriendRequests")
-                        .HasForeignKey("ToUserId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.Navigation("FromUser");
-
-                    b.Navigation("ToUser");
                 });
 
             modelBuilder.Entity("Entities.Models.UserCore.UserSession", b =>
@@ -3418,6 +3609,11 @@ namespace Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
+                    b.HasOne("Entities.Models.Music.Genre", "Genre")
+                        .WithMany("Albums")
+                        .HasForeignKey("GenreId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.HasOne("Entities.Models.Music.Collection", null)
                         .WithOne()
                         .HasForeignKey("Entities.Models.Music.Album", "Id")
@@ -3425,6 +3621,8 @@ namespace Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Distributor");
+
+                    b.Navigation("Genre");
                 });
 
             modelBuilder.Entity("Entities.Models.Music.Blend", b =>
@@ -3520,11 +3718,27 @@ namespace Infrastructure.Migrations
                     b.Navigation("TrackArtists");
                 });
 
+            modelBuilder.Entity("Entities.Models.Music.Genre", b =>
+                {
+                    b.Navigation("Albums");
+
+                    b.Navigation("Tracks");
+                });
+
+            modelBuilder.Entity("Entities.Models.Music.MoodTag", b =>
+                {
+                    b.Navigation("AlbumMoodTags");
+
+                    b.Navigation("TrackMoodTags");
+                });
+
             modelBuilder.Entity("Entities.Models.Music.Track", b =>
                 {
                     b.Navigation("QueuesWherePrimary");
 
                     b.Navigation("TrackArtists");
+
+                    b.Navigation("TrackMoodTags");
                 });
 
             modelBuilder.Entity("Entities.Models.Report.Report", b =>
@@ -3564,10 +3778,6 @@ namespace Infrastructure.Migrations
 
                     b.Navigation("MessagesReads");
 
-                    b.Navigation("ReceivedFriendRequests");
-
-                    b.Navigation("SentFriendRequests");
-
                     b.Navigation("Tracks");
 
                     b.Navigation("UserSessions");
@@ -3582,6 +3792,8 @@ namespace Infrastructure.Migrations
             modelBuilder.Entity("Entities.Models.Music.Album", b =>
                 {
                     b.Navigation("AlbumArtists");
+
+                    b.Navigation("AlbumMoodTags");
                 });
 
             modelBuilder.Entity("Entities.Models.Music.Playlist", b =>

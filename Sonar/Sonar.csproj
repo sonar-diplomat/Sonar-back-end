@@ -19,6 +19,10 @@
         <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="9.0.0" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
         <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.6" />
+        <PackageReference Include="Grpc.Net.Client" Version="2.64.0" />
+        <PackageReference Include="Grpc.Net.ClientFactory" Version="2.64.0" />
+        <PackageReference Include="Google.Protobuf" Version="3.27.0" />
+        <PackageReference Include="Grpc.Tools" Version="2.64.0" PrivateAssets="All" />
     </ItemGroup>
 
     <ItemGroup>
@@ -26,6 +30,10 @@
         <ProjectReference Include="..\Entities\Entities.csproj" />
         <ProjectReference Include="..\Infrastructure\Infrastructure.csproj" />
         <ProjectReference Include="..\Logging\Logging.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Protobuf Include="Protos\analytics.proto" GrpcServices="Client" />
     </ItemGroup>
 
     <ItemGroup>

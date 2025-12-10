@@ -4,6 +4,9 @@ using Application.Response;
 using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Analytics.API;
+using Google.Protobuf.WellKnownTypes;
+using System.Text.Json;
 
 namespace Sonar.Controllers;
 
@@ -11,7 +14,9 @@ namespace Sonar.Controllers;
 [ApiController]
 public class SearchController(
     UserManager<User> userManager,
-    ISearchService searchService)
+    ISearchService searchService,
+    Analytics.API.Analytics.AnalyticsClient analyticsClient,
+    ILogger<SearchController> logger)
     : BaseController(userManager)
 {
     /// <summary>
@@ -50,6 +55,27 @@ public class SearchController(
         }
 
         SearchResultDTO result = await searchService.SearchAsync(query, category, limit, offset, userId);
+        
+        // Отправка события Search в Analytics (асинхронно, без ожидания)
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await analyticsClient.AddUserEventAsync(new UserEventRequest
+                {
+                    UserId = userId?.ToString() ?? string.Empty,
+                    EventType = EventType.Search,
+                    ContextType = ContextType.ContextSearch,
+                    Payload = JsonSerializer.Serialize(new { query, category }),
+                    Timestamp = Timestamp.FromDateTime(DateTime.UtcNow)
+                });
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to send Search event to Analytics");
+            }
+        });
+        
         throw ResponseFactory.Create<OkResponse<SearchResultDTO>>(result, ["Search completed successfully"]);
     }
 

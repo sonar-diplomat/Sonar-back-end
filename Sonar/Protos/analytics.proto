@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+option csharp_namespace = "Analytics.API";
+
+import "google/protobuf/timestamp.proto";
+
+service Analytics {
+  rpc AddUserEvent (UserEventRequest) returns (AddUserEventResponse);
+}
+
+message UserEventRequest {
+  string user_id = 1;
+  string track_id = 2; // optional for search
+  EventType event_type = 3;
+  ContextType context_type = 4;
+  string context_id = 5; // playlist/album id when available
+  int64 position_ms = 6;
+  int64 duration_ms = 7;
+  google.protobuf.Timestamp timestamp = 8;
+  string payload = 9;
+}
+
+message AddUserEventResponse {
+  bool success = 1;
+}
+
+enum EventType {
+  EVENT_UNKNOWN = 0;
+  PLAY_START = 1;
+  PLAY_FINISH = 2;
+  SKIP = 3;
+  LIKE = 4;
+  ADD_TO_PLAYLIST = 5;
+  SEARCH = 6;
+}
+
+enum ContextType {
+  CONTEXT_UNKNOWN = 0;
+  CONTEXT_TRACK = 1;
+  CONTEXT_PLAYLIST = 2;
+  CONTEXT_ALBUM = 3;
+  CONTEXT_RADIO = 4;
+  CONTEXT_SEARCH = 5;
+}
+

@@ -10,6 +10,8 @@ using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Analytics.API;
+using Google.Protobuf.WellKnownTypes;
 
 namespace Sonar.Controllers.Music;
 
@@ -19,7 +21,9 @@ public class PlaylistController(
     UserManager<User> userManager,
     IPlaylistService playlistService,
     ICollectionService<Playlist> collectionService,
-    IShareService shareService)
+    IShareService shareService,
+    Analytics.API.Analytics.AnalyticsClient analyticsClient,
+    ILogger<PlaylistController> logger)
     : CollectionController<Playlist>(userManager, collectionService, shareService)
 {
     /// <summary>
@@ -199,6 +203,27 @@ public class PlaylistController(
     {
         User user = await CheckAccessFeatures([]);
         await playlistService.AddTrackToPlaylistAsync(playlistId, trackId, user.Id);
+        
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await analyticsClient.AddUserEventAsync(new UserEventRequest
+                {
+                    UserId = user.Id.ToString(),
+                    TrackId = trackId.ToString(),
+                    EventType = EventType.AddToPlaylist,
+                    ContextType = ContextType.ContextPlaylist,
+                    ContextId = playlistId.ToString(),
+                    Timestamp = Timestamp.FromDateTime(DateTime.UtcNow)
+                });
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to send AddToPlaylist event to Analytics");
+            }
+        });
+        
         throw ResponseFactory.Create<OkResponse>(["Track was added to playlist successfully"]);
     }
 
@@ -325,7 +350,7 @@ public class PlaylistController(
     [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ImportCollection(int playlistId, string collection, int collectionId)
     {
-        Type? T = CollectionStruct.IsValid(collection);
+        System.Type? T = CollectionStruct.IsValid(collection);
         if (T == null)
             throw ResponseFactory.Create<BadRequestResponse>(["Invalid collection type"]);
         if (T == typeof(Album))

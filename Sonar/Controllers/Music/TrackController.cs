@@ -12,6 +12,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
 using Sonar.Extensions;
+using Analytics.API;
+using Google.Protobuf.WellKnownTypes;
 
 namespace Sonar.Controllers.Music;
 
@@ -23,7 +25,9 @@ public class TrackController(
     IAlbumService albumService,
     ISettingsService settingsService,
     IShareService shareService,
-    IUserStateService userStateService) : ShareController<Track>(userManager, shareService)
+    IUserStateService userStateService,
+    Analytics.API.Analytics.AnalyticsClient analyticsClient,
+    ILogger<TrackController> logger) : ShareController<Track>(userManager, shareService)
 {
 
     /// <summary>
@@ -78,6 +82,26 @@ public class TrackController(
         if (download)
             // TODO: Validate User pack
             Response.Headers.Append("Content-Disposition", "attachment; filename=random-track.mp3");
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await analyticsClient.AddUserEventAsync(new UserEventRequest
+                {
+                    UserId = user.Id.ToString(),
+                    TrackId = trackId.ToString(),
+                    EventType = EventType.PlayStart,
+                    ContextType = ContextType.ContextTrack,
+                    PositionMs = (long)(startPosition?.TotalMilliseconds ?? 0),
+                    Timestamp = Timestamp.FromDateTime(DateTime.UtcNow)
+                });
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to send PlayStart event to Analytics");
+            }
+        });
 
         return File(stream, contentType, enableRangeProcessing);
     }
@@ -235,6 +259,26 @@ public class TrackController(
         User user = await CheckAccessFeatures([]);
         bool isFavorite = await trackService.ToggleFavoriteAsync(trackId, user.LibraryId);
         string message = isFavorite ? "Track added to favorites" : "Track removed from favorites";
+        
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await analyticsClient.AddUserEventAsync(new UserEventRequest
+                {
+                    UserId = user.Id.ToString(),
+                    TrackId = trackId.ToString(),
+                    EventType = EventType.Like,
+                    ContextType = ContextType.ContextTrack,
+                    Timestamp = Timestamp.FromDateTime(DateTime.UtcNow)
+                });
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to send Like event to Analytics");
+            }
+        });
+        
         throw ResponseFactory.Create<OkResponse>([message]);
     }
 
