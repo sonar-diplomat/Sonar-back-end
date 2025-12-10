@@ -3,6 +3,7 @@ using System;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(SonarContext))]
-    partial class SonarContextModelSnapshot : ModelSnapshot
+    [Migration("20251210133041_Genres")]
+    partial class Genres
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1209,56 +1212,51 @@ namespace Infrastructure.Migrations
                         new
                         {
                             Id = 1,
-                            Name = "Undefined"
-                        },
-                        new
-                        {
-                            Id = 2,
                             Name = "Rock"
                         },
                         new
                         {
-                            Id = 3,
+                            Id = 2,
                             Name = "Pop"
                         },
                         new
                         {
-                            Id = 4,
+                            Id = 3,
                             Name = "Hip-Hop"
                         },
                         new
                         {
-                            Id = 5,
+                            Id = 4,
                             Name = "Electronic"
                         },
                         new
                         {
-                            Id = 6,
+                            Id = 5,
                             Name = "Jazz"
                         },
                         new
                         {
-                            Id = 7,
+                            Id = 6,
                             Name = "Classical"
                         },
                         new
                         {
-                            Id = 8,
+                            Id = 7,
                             Name = "Country"
                         },
                         new
                         {
-                            Id = 9,
+                            Id = 8,
                             Name = "R&B"
                         },
                         new
                         {
-                            Id = 10,
+                            Id = 9,
                             Name = "Metal"
                         },
                         new
                         {
-                            Id = 11,
+                            Id = 10,
                             Name = "Folk"
                         });
                 });
