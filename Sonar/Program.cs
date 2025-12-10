@@ -343,6 +343,7 @@ builder.Services.AddScoped<IFolderCollectionService, FolderCollectionService>();
 builder.Services.AddScoped<ILibraryService, LibraryService>();
 
 // Music Services
+builder.Services.AddScoped<ITrackAlbumService, TrackAlbumService>();
 builder.Services.AddScoped<IAlbumService, AlbumService>();
 builder.Services.AddScoped<IBlendService, BlendService>();
 builder.Services.AddScoped<IPlaylistService, PlaylistService>();

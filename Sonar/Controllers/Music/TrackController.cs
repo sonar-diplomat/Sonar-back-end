@@ -272,4 +272,79 @@ public class TrackController(
         await trackService.AssignArtistToTrackAsync(trackId, authorDto);
         throw ResponseFactory.Create<OkResponse>(["Artist assigned to track successfully"]);
     }
+
+    /// <summary>
+    /// Streams a track's audio content for distributors, ignoring visibility state.
+    /// </summary>
+    /// <param name="trackId">The ID of the track to stream.</param>
+    /// <param name="startPosition">Optional. The start position as TimeSpan (e.g., "00:01:30" for 1 minute 30 seconds).</param>
+    /// <param name="length">Optional. The length to stream as TimeSpan. If not provided, streams from startPosition to end.</param>
+    /// <param name="download">Optional. If true, sets Content-Disposition to attachment for download.</param>
+    /// <returns>Audio file stream with appropriate content type.</returns>
+    /// <response code="200">Full audio stream returned.</response>
+    /// <response code="206">Partial content returned (range request).</response>
+    /// <response code="404">Track not found.</response>
+    /// <response code="401">User not authenticated or track does not belong to distributor.</response>
+    /// <remarks>
+    /// Requires distributor authentication. Only tracks belonging to the authenticated distributor can be streamed.
+    /// Visibility state is ignored for distributors.
+    /// </remarks>
+    [HttpGet("distributor/{trackId}/stream")]
+    [Authorize]
+    [ProducesResponseType(typeof(FileStreamResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(FileStreamResult), StatusCodes.Status206PartialContent)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> StreamMusicForDistributor(
+        int trackId,
+        [FromQuery] TimeSpan? startPosition = null,
+        [FromQuery] TimeSpan? length = null,
+        [FromQuery] bool download = false)
+    {
+        Distributor distributor = await this.CheckDistributorAsync();
+        
+        // Use default playback quality (medium quality = 2) for distributors
+        const int defaultPlaybackQualityId = 2;
+        
+        MusicStreamResultDTO? result = await trackService.GetMusicStreamForDistributorAsync(
+            trackId, 
+            startPosition, 
+            length, 
+            defaultPlaybackQualityId, 
+            distributor.Id);
+
+        if (result == null) 
+            throw ResponseFactory.Create<NotFoundResponse>([$"Track with ID {trackId} not found"]);
+
+        result.GetStreamDetails(out Stream stream, out string contentType, out bool enableRangeProcessing);
+
+        if (download)
+            Response.Headers.Append("Content-Disposition", "attachment; filename=track.mp3");
+
+        return File(stream, contentType, enableRangeProcessing);
+    }
+
+    /// <summary>
+    /// Retrieves detailed information about a specific track for distributors, ignoring visibility state.
+    /// </summary>
+    /// <param name="trackId">The ID of the track to retrieve.</param>
+    /// <returns>Track DTO with full details.</returns>
+    /// <response code="200">Track retrieved successfully.</response>
+    /// <response code="404">Track not found.</response>
+    /// <response code="401">User not authenticated or track does not belong to distributor.</response>
+    /// <remarks>
+    /// Requires distributor authentication. Only tracks belonging to the authenticated distributor can be retrieved.
+    /// Visibility state is ignored for distributors.
+    /// </remarks>
+    [HttpGet("distributor/{trackId:int}")]
+    [Authorize]
+    [ProducesResponseType(typeof(OkResponse<TrackDTO>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> GetTrackByIdForDistributor(int trackId)
+    {
+        Distributor distributor = await this.CheckDistributorAsync();
+        TrackDTO trackDto = await trackService.GetTrackDtoForDistributorAsync(trackId, distributor.Id);
+        throw ResponseFactory.Create<OkResponse<TrackDTO>>(trackDto, ["Track successfully retrieved"]);
+    }
 }

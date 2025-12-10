@@ -17,7 +17,8 @@ public class TrackService(
     IVisibilityStateService visibilityStateService,
     ILibraryService libraryService,
     IArtistService artistService,
-    ITrackArtistService trackArtistService
+    ITrackArtistService trackArtistService,
+    ITrackAlbumService trackAlbumService
 )
     : GenericService<Track>(repository), ITrackService
 {
@@ -188,5 +189,70 @@ public class TrackService(
         };
 
         await trackArtistService.CreateAsync(trackArtist);
+    }
+
+    public async Task<MusicStreamResultDTO?> GetMusicStreamForDistributorAsync(int trackId, TimeSpan? startPosition, TimeSpan? length, int preferredPlaybackQualityId, int distributorId)
+    {
+        Track track = await repository
+            .SnInclude(t => t.VisibilityState)
+            .SnThenInclude(vs => vs.Status)
+            .GetByIdValidatedAsync(trackId);
+
+        // Проверяем принадлежность трека дистрибьютору через альбом
+        await trackAlbumService.ValidateTrackBelongsToDistributorAsync(trackId, distributorId);
+
+        // Игнорируем visibility state - просто получаем stream
+        // Select audio file based on preferred playback quality with fallback
+        int audioFileId = preferredPlaybackQualityId switch
+        {
+            // High quality (Id = 3)
+            3 => track.HighQualityAudioFileId ?? track.MediumQualityAudioFileId ?? track.LowQualityAudioFileId,
+            // Medium quality (Id = 2)
+            2 => track.MediumQualityAudioFileId ?? track.LowQualityAudioFileId,
+            // Low quality (Id = 1) or default
+            _ => track.LowQualityAudioFileId
+        };
+
+        FileStream? finalStream = await audioFileService.GetMusicStreamAsync(audioFileId, startPosition, length);
+        return finalStream != null
+            ? new MusicStreamResultDTO(finalStream, "audio/mpeg", true)
+            : throw ResponseFactory.Create<UnprocessableContentResponse>(["Unable to process audio stream"]);
+    }
+
+    public async Task<TrackDTO> GetTrackDtoForDistributorAsync(int trackId, int distributorId)
+    {
+        Track track = await repository
+            .SnInclude(t => t.Cover)
+            .SnInclude(t => t.LowQualityAudioFile)
+            .SnInclude(t => t.VisibilityState)
+            .SnThenInclude(vs => vs.Status)
+            .GetByIdValidatedAsync(trackId);
+
+        // Проверяем принадлежность трека дистрибьютору через альбом
+        await trackAlbumService.ValidateTrackBelongsToDistributorAsync(trackId, distributorId);
+
+        // Загружаем TrackArtists
+        track = await repository
+            .Query()
+            .Include(t => t.TrackArtists)
+            .ThenInclude(ta => ta.Artist)
+            .FirstOrDefaultAsync(t => t.Id == trackId) ?? track;
+
+        // Игнорируем visibility state - просто возвращаем DTO
+        return new TrackDTO
+        {
+            Id = track.Id,
+            Title = track.Title,
+            DurationInSeconds = (int)(track.Duration?.TotalSeconds ?? 0),
+            IsExplicit = track.IsExplicit,
+            DrivingDisturbingNoises = track.DrivingDisturbingNoises,
+            CoverId = track.CoverId,
+            AudioFileId = track.LowQualityAudioFileId,
+            Artists = track.TrackArtists?.Select(ta => new AuthorDTO
+            {
+                Pseudonym = ta.Pseudonym,
+                ArtistId = ta.ArtistId
+            }).ToList() ?? new List<AuthorDTO>()
+        };
     }
 }
