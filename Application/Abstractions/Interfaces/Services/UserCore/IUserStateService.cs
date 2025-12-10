@@ -1,4 +1,4 @@
-﻿using Entities.Models.UserCore;
+﻿﻿using Entities.Models.UserCore;
 
 namespace Application.Abstractions.Interfaces.Services;
 
@@ -10,4 +10,8 @@ public interface IUserStateService : IGenericService<UserState>
     Task UpdatePrimarySessionAsync(int userId, string deviceId);
     Task UpdateListeningTargetAsync(int stateId, int trackId, int? collectionId);
     Task<UserState> GetByUserIdValidatedAsync(int userId);
+    Task AddTracksToUserQueueAsync(int userId, IEnumerable<int> trackIds);
+    Task RemoveTracksFromUserQueueAsync(int userId, IEnumerable<int> trackIds);
+    Task<Queue> GetUserQueueAsync(int userId);
+    Task SaveUserQueueAsync(int userId, IEnumerable<int> trackIds);
 }

@@ -222,16 +222,11 @@ public class AlbumService(
     /// </summary>
     public override async Task DeleteAsync(int id)
     {
-        Album album = await GetValidatedIncludeTracksAsync(id);
+        // Проверяем существование альбома
+        await GetByIdValidatedAsync(id);
 
         // Удаляем все треки альбома перед удалением альбома
-        if (album.Tracks != null && album.Tracks.Any())
-        {
-            foreach (Track track in album.Tracks.ToList())
-            {
-                await trackService.DeleteAsync(track);
-            }
-        }
+        await trackAlbumService.DeleteAlbumTracksAsync(id);
 
         // Удаляем сам альбом
         await base.DeleteAsync(id);
@@ -387,5 +382,68 @@ public class AlbumService(
         }
 
         return track;
+    }
+
+    public async Task<AlbumResponseDTO> GetAlbumDtoForDistributorAsync(int albumId, int distributorId)
+    {
+        Album album = await repository
+            .SnInclude(a => a.VisibilityState)
+            .SnThenInclude(vs => vs.Status)
+            .GetByIdValidatedAsync(albumId);
+
+        // Проверяем принадлежность альбома дистрибьютору
+        Album albumWithDistributor = await GetValidatedIncludeDistributorAsync(albumId);
+        if (albumWithDistributor.DistributorId != distributorId)
+            throw ResponseFactory.Create<UnauthorizedResponse>(["Album does not belong to your distributor"]);
+
+        // Загружаем AlbumArtists
+        Album albumWithArtists = await GetValidatedIncludeAlbumArtistsAsync(albumId);
+
+        // Игнорируем visibility state - просто возвращаем DTO
+        return new AlbumResponseDTO
+        {
+            Id = album.Id,
+            Name = album.Name,
+            CoverId = album.CoverId,
+            DistributorName = albumWithDistributor.Distributor?.Name ?? string.Empty,
+            TrackCount = album.Tracks?.Count ?? 0,
+            Authors = albumWithArtists.AlbumArtists?.Select(aa => new AuthorDTO
+            {
+                Pseudonym = aa.Pseudonym,
+                ArtistId = aa.ArtistId
+            }).ToList() ?? new List<AuthorDTO>()
+        };
+    }
+
+    public async Task<IEnumerable<TrackDTO>> GetAlbumTracksForDistributorAsync(int albumId, int distributorId)
+    {
+        // Проверяем принадлежность альбома дистрибьютору
+        Album albumWithDistributor = await GetValidatedIncludeDistributorAsync(albumId);
+        if (albumWithDistributor.DistributorId != distributorId)
+            throw ResponseFactory.Create<UnauthorizedResponse>(["Album does not belong to your distributor"]);
+
+        // Получаем треки альбома без фильтрации по visibility
+        List<Track> tracks = await repository.GetTracksFromAlbumAsync(albumId);
+
+        // Конвертируем в DTOs без проверки visibility state
+        List<TrackDTO> trackDTOs = tracks
+            .Select(t => new TrackDTO
+            {
+                Id = t.Id,
+                Title = t.Title,
+                DurationInSeconds = (int)(t.Duration?.TotalSeconds ?? 0),
+                IsExplicit = t.IsExplicit,
+                DrivingDisturbingNoises = t.DrivingDisturbingNoises,
+                CoverId = t.CoverId,
+                AudioFileId = t.LowQualityAudioFileId,
+                Artists = t.TrackArtists?.Select(ta => new AuthorDTO
+                {
+                    Pseudonym = ta.Pseudonym,
+                    ArtistId = ta.ArtistId
+                }).ToList() ?? new List<AuthorDTO>()
+            })
+            .ToList();
+
+        return trackDTOs;
     }
 }

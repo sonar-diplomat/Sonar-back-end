@@ -212,9 +212,7 @@ public class TrackService(
     public async Task UpdateMoodTagsAsync(int trackId, IEnumerable<int> moodTagIds)
     {
         if (moodTagIds.Count() > 3)
-        {
             throw ResponseFactory.Create<BadRequestResponse>(["Mood tags cannot exceed 3"]);
-        }
 
         var allMoodTags = await moodTagRepository.GetAllAsync();
         var validMoodTagIds = allMoodTags
@@ -223,9 +221,7 @@ public class TrackService(
             .ToList();
 
         if (validMoodTagIds.Count != moodTagIds.Count())
-        {
             throw ResponseFactory.Create<BadRequestResponse>(["One or more mood tags are invalid"]);
-        }
 
         var allTrackMoodTags = await trackMoodTagRepository.GetAllAsync();
         var existingMoodTags = allTrackMoodTags
@@ -233,18 +229,65 @@ public class TrackService(
             .ToList();
 
         foreach (var existing in existingMoodTags)
-        {
             await trackMoodTagRepository.RemoveAsync(existing);
-        }
 
         foreach (int moodTagId in validMoodTagIds)
+            await trackMoodTagRepository.AddAsync(new TrackMoodTag { TrackId = trackId, MoodTagId = moodTagId });
+    }
+
+    public async Task<MusicStreamResultDTO?> GetMusicStreamForDistributorAsync(int trackId, TimeSpan? startPosition, TimeSpan? length, int preferredPlaybackQualityId, int distributorId)
+    {
+        Track track = await repository
+            .SnInclude(t => t.VisibilityState)
+            .SnThenInclude(vs => vs.Status)
+            .GetByIdValidatedAsync(trackId);
+
+        // TODO: проверить принадлежность трека дистрибьютору через репозиторий альбомов (trackAlbumService убран)
+
+        int audioFileId = preferredPlaybackQualityId switch
         {
-            TrackMoodTag trackMoodTag = new()
+            3 => track.HighQualityAudioFileId ?? track.MediumQualityAudioFileId ?? track.LowQualityAudioFileId,
+            2 => track.MediumQualityAudioFileId ?? track.LowQualityAudioFileId,
+            _ => track.LowQualityAudioFileId
+        };
+
+        var finalStream = await audioFileService.GetMusicStreamAsync(audioFileId, startPosition, length);
+        return finalStream != null
+            ? new MusicStreamResultDTO(finalStream, "audio/mpeg", true)
+            : throw ResponseFactory.Create<UnprocessableContentResponse>(["Unable to process audio stream"]);
+    }
+
+    public async Task<TrackDTO> GetTrackDtoForDistributorAsync(int trackId, int distributorId)
+    {
+        Track track = await repository
+            .SnInclude(t => t.Cover)
+            .SnInclude(t => t.LowQualityAudioFile)
+            .SnInclude(t => t.VisibilityState)
+            .SnThenInclude(vs => vs.Status)
+            .GetByIdValidatedAsync(trackId);
+
+        // TODO: проверить принадлежность трека дистрибьютору через репозиторий альбомов (trackAlbumService убран)
+
+        track = await repository.Query()
+            .Include(t => t.TrackArtists)
+            .ThenInclude(ta => ta.Artist)
+            .FirstOrDefaultAsync(t => t.Id == trackId) ?? track;
+
+        return new TrackDTO
+        {
+            Id = track.Id,
+            Title = track.Title,
+            DurationInSeconds = (int)(track.Duration?.TotalSeconds ?? 0),
+            IsExplicit = track.IsExplicit,
+            DrivingDisturbingNoises = track.DrivingDisturbingNoises,
+            CoverId = track.CoverId,
+            AudioFileId = track.LowQualityAudioFileId,
+            Artists = track.TrackArtists?.Select(ta => new AuthorDTO
             {
-                TrackId = trackId,
-                MoodTagId = moodTagId
-            };
-            await trackMoodTagRepository.AddAsync(trackMoodTag);
-        }
+                Pseudonym = ta.Pseudonym,
+                ArtistId = ta.ArtistId
+            }).ToList() ?? new List<AuthorDTO>()
+        };
+      }
     }
 }

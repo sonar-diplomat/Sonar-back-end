@@ -17,4 +17,6 @@ public interface IAlbumService : IGenericService<Album>
     Task<IEnumerable<TrackDTO>> GetAlbumTracksAsync(int albumId, int? userId = null);
     Task<IEnumerable<Track>> GetAlbumTracksWithVisibilityStateAsync(int albumId);
     Task<Track> CreateTrackAsync(int albumId, UploadTrackDTO dto);
+    Task<AlbumResponseDTO> GetAlbumDtoForDistributorAsync(int albumId, int distributorId);
+    Task<IEnumerable<TrackDTO>> GetAlbumTracksForDistributorAsync(int albumId, int distributorId);
 }
