@@ -20,7 +20,10 @@ public class AlbumService(
     IArtistService artistService,
     ILibraryService libraryService,
     IFolderService folderService,
-    ITrackAlbumService trackAlbumService
+    ITrackService trackService,
+    IMoodTagRepository moodTagRepository,
+    IAlbumMoodTagRepository albumMoodTagRepository,
+    ITrackMoodTagRepository trackMoodTagRepository
 ) : CollectionService<Album>(repository, libraryService, folderService), IAlbumService
 {
     public async Task<Album> UploadAsync(UploadAlbumDTO dto, int distributorId)
@@ -30,7 +33,8 @@ public class AlbumService(
             Name = dto.Name,
             Cover = await imageFileService.UploadFileAsync(dto.Cover),
             VisibilityStateId = (await visibilityStateService.CreateDefaultAsync()).Id,
-            DistributorId = distributorId
+            DistributorId = distributorId,
+            GenreId = dto.GenreId
         };
 
         album = await repository.AddAsync(album);
@@ -44,6 +48,35 @@ public class AlbumService(
                 ArtistId = (await artistService.GetByNameAsync(authorPseudonym))?.Id
             };
             await albumArtistService.CreateAsync(albumArtist);
+        }
+
+        if (dto.MoodTagIds != null && dto.MoodTagIds.Any())
+        {
+            if (dto.MoodTagIds.Count() > 3)
+            {
+                throw ResponseFactory.Create<BadRequestResponse>(["Mood tags cannot exceed 3"]);
+            }
+
+            var allMoodTags = await moodTagRepository.GetAllAsync();
+            var validMoodTagIds = allMoodTags
+                .Where(mt => dto.MoodTagIds.Contains(mt.Id))
+                .Select(mt => mt.Id)
+                .ToList();
+
+            if (validMoodTagIds.Count != dto.MoodTagIds.Count())
+            {
+                throw ResponseFactory.Create<BadRequestResponse>(["One or more mood tags are invalid"]);
+            }
+
+            foreach (int moodTagId in validMoodTagIds)
+            {
+                AlbumMoodTag albumMoodTag = new()
+                {
+                    AlbumId = album.Id,
+                    MoodTagId = moodTagId
+                };
+                await albumMoodTagRepository.AddAsync(albumMoodTag);
+            }
         }
 
         return album;
@@ -75,15 +108,14 @@ public class AlbumService(
             .SnThenInclude(vs => vs.Status)
             .GetByIdValidatedAsync(id);
 
-        // Load AlbumArtists with Artist.UserId if userId is provided to check authors
-        if (userId.HasValue)
-        {
-            album = await repository
-                .Query()
-                .Include(a => a.AlbumArtists)
-                .ThenInclude(aa => aa.Artist)
-                .FirstOrDefaultAsync(a => a.Id == id) ?? album;
-        }
+        album = await repository
+            .Query()
+            .Include(a => a.AlbumArtists)
+            .ThenInclude(aa => aa.Artist)
+            .Include(a => a.Genre)
+            .Include(a => a.AlbumMoodTags)
+            .ThenInclude(amt => amt.MoodTag)
+            .FirstOrDefaultAsync(a => a.Id == id) ?? album;
 
         return album;
     }
@@ -123,15 +155,25 @@ public class AlbumService(
         await GetByIdValidatedAsync(albumId);
 
         List<Track> tracks = await repository.GetTracksFromAlbumAsync(albumId);
+        
+        tracks = await trackRepository
+            .Query()
+            .Include(t => t.TrackArtists)
+            .ThenInclude(ta => ta.Artist)
+            .Include(t => t.Genre)
+            .Include(t => t.TrackMoodTags)
+            .ThenInclude(tmt => tmt.MoodTag)
+            .Include(t => t.VisibilityState)
+            .ThenInclude(vs => vs.Status)
+            .Where(t => tracks.Select(tr => tr.Id).Contains(t.Id))
+            .ToListAsync();
 
-        // Convert to DTOs, filtering by visibility (but allow if user is author)
         List<TrackDTO> trackDTOs = tracks
             .Where(t =>
             {
                 if (t.VisibilityState == null)
                     return false;
 
-                // Get author user IDs from TrackArtists
                 IEnumerable<int>? trackAuthorIds = t.TrackArtists?
                     .Where(ta => ta.Artist?.UserId != null)
                     .Select(ta => ta.Artist!.UserId!)
@@ -152,7 +194,17 @@ public class AlbumService(
                 {
                     Pseudonym = ta.Pseudonym,
                     ArtistId = ta.ArtistId
-                }).ToList() ?? new List<AuthorDTO>()
+                }).ToList() ?? new List<AuthorDTO>(),
+                Genre = t.Genre != null ? new GenreDTO
+                {
+                    Id = t.Genre.Id,
+                    Name = t.Genre.Name
+                } : throw ResponseFactory.Create<BadRequestResponse>(["Track must have a genre"]),
+                MoodTags = t.TrackMoodTags?.Select(tmt => new MoodTagDTO
+                {
+                    Id = tmt.MoodTag.Id,
+                    Name = tmt.MoodTag.Name
+                }).ToList() ?? new List<MoodTagDTO>()
             })
             .ToList();
 
@@ -174,7 +226,11 @@ public class AlbumService(
         await GetByIdValidatedAsync(id);
 
         // Удаляем все треки альбома перед удалением альбома
-        await trackAlbumService.DeleteAlbumTracksAsync(id);
+        var tracks = await repository.GetTracksFromAlbumAsync(id);
+        foreach (var track in tracks)
+        {
+            await trackRepository.RemoveAsync(track);
+        }
 
         // Удаляем сам альбом
         await base.DeleteAsync(id);
@@ -185,6 +241,26 @@ public class AlbumService(
         Album album = await GetValidatedIncludeTracksAsync(albumId);
         Album albumWithDistributor = await GetValidatedIncludeDistributorAsync(albumId);
         Album albumWithArtists = await GetValidatedIncludeAlbumArtistsAsync(albumId);
+        
+        Album albumWithGenreAndMoodTags = await repository
+            .Query()
+            .Include(a => a.Genre)
+            .Include(a => a.AlbumMoodTags)
+            .ThenInclude(amt => amt.MoodTag)
+            .FirstOrDefaultAsync(a => a.Id == albumId)
+            ?? album;
+
+        int genreId = dto.GenreId != 0 ? dto.GenreId : 
+                     (albumWithGenreAndMoodTags.GenreId ?? throw ResponseFactory.Create<BadRequestResponse>(["Genre is required for track. Either specify GenreId in request or set GenreId on album"]));
+
+        IEnumerable<int>? moodTagIds = dto.MoodTagIds != null && dto.MoodTagIds.Any() 
+            ? dto.MoodTagIds 
+            : (albumWithGenreAndMoodTags.AlbumMoodTags?.Select(amt => amt.MoodTagId).ToList());
+
+        if (moodTagIds != null && moodTagIds.Count() > 3)
+        {
+            throw ResponseFactory.Create<BadRequestResponse>(["Mood tags cannot exceed 3"]);
+        }
 
         Track track = new()
         {
@@ -200,6 +276,7 @@ public class AlbumService(
                 ? (await audioFileService.UploadFileAsync(dto.HighQualityAudioFile)).Id
                 : null,
             CoverId = albumWithDistributor.CoverId,
+            GenreId = genreId,
             Duration = await audioFileService.GetDurationAsync(dto.LowQualityAudioFile)
         };
 
@@ -284,6 +361,30 @@ public class AlbumService(
             }
         }
 
+        if (moodTagIds != null && moodTagIds.Any())
+        {
+            var allMoodTags = await moodTagRepository.GetAllAsync();
+            var validMoodTagIds = allMoodTags
+                .Where(mt => moodTagIds.Contains(mt.Id))
+                .Select(mt => mt.Id)
+                .ToList();
+
+            if (validMoodTagIds.Count != moodTagIds.Count())
+            {
+                throw ResponseFactory.Create<BadRequestResponse>(["One or more mood tags are invalid"]);
+            }
+
+            foreach (int moodTagId in validMoodTagIds)
+            {
+                TrackMoodTag trackMoodTag = new()
+                {
+                    TrackId = track.Id,
+                    MoodTagId = moodTagId
+                };
+                await trackMoodTagRepository.AddAsync(trackMoodTag);
+            }
+        }
+
         return track;
     }
 
@@ -339,11 +440,17 @@ public class AlbumService(
                 DrivingDisturbingNoises = t.DrivingDisturbingNoises,
                 CoverId = t.CoverId,
                 AudioFileId = t.LowQualityAudioFileId,
+                Genre = t.Genre != null
+                    ? new GenreDTO { Id = t.Genre.Id, Name = t.Genre.Name }
+                    : throw ResponseFactory.Create<BadRequestResponse>(["Track must have a genre"]),
                 Artists = t.TrackArtists?.Select(ta => new AuthorDTO
                 {
                     Pseudonym = ta.Pseudonym,
                     ArtistId = ta.ArtistId
-                }).ToList() ?? new List<AuthorDTO>()
+                }).ToList() ?? new List<AuthorDTO>(),
+                MoodTags = t.TrackMoodTags?
+                    .Select(tmt => new MoodTagDTO { Id = tmt.MoodTag.Id, Name = tmt.MoodTag.Name })
+                    .ToList() ?? new List<MoodTagDTO>()
             })
             .ToList();
 

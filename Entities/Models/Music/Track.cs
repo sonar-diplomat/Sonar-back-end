@@ -30,6 +30,9 @@ public class Track : BaseModel
     public int CoverId { get; set; }
 
     [Required]
+    public int GenreId { get; set; }
+
+    [Required]
     public virtual int LowQualityAudioFileId { get; set; }
 
     public virtual int? MediumQualityAudioFileId { get; set; }
@@ -64,6 +67,11 @@ public class Track : BaseModel
     public virtual ImageFile Cover { get; set; }
 
     [JsonIgnore]
+    [ForeignKey("GenreId")]
+    [DeleteBehavior(DeleteBehavior.NoAction)]
+    public virtual Genre Genre { get; set; }
+
+    [JsonIgnore]
     public virtual ICollection<Queue> QueuesWherePrimary { get; set; }
     [JsonIgnore]
     public virtual ICollection<TrackArtist> TrackArtists { get; set; }
@@ -71,4 +79,6 @@ public class Track : BaseModel
     public virtual ICollection<Collection> Collections { get; set; }
     [JsonIgnore]
     public virtual ICollection<Queue> Queues { get; set; }
+    [JsonIgnore]
+    public virtual ICollection<TrackMoodTag> TrackMoodTags { get; set; }
 }

@@ -57,7 +57,17 @@ public class AlbumController(
             {
                 Pseudonym = aa.Pseudonym,
                 ArtistId = aa.ArtistId
-            }).ToList() ?? new List<AuthorDTO>()
+            }).ToList() ?? new List<AuthorDTO>(),
+            Genre = a.Genre != null ? new GenreDTO
+            {
+                Id = a.Genre.Id,
+                Name = a.Genre.Name
+            } : null,
+            MoodTags = a.AlbumMoodTags?.Select(amt => new MoodTagDTO
+            {
+                Id = amt.MoodTag.Id,
+                Name = amt.MoodTag.Name
+            }).ToList() ?? new List<MoodTagDTO>()
         });
 
         throw ResponseFactory.Create<OkResponse<IEnumerable<AlbumResponseDTO>>>(albumDTOs);
@@ -211,6 +221,7 @@ public class AlbumController(
         VisibilityStateValidator.IsAccessible(album.VisibilityState, userId, authorIds, "Album", albumId);
 
         Album albumWithDistributor = await albumService.GetValidatedIncludeDistributorAsync(albumId);
+        // album already has Genre and MoodTags loaded from GetValidatedIncludeVisibilityStateAsync
 
         AlbumResponseDTO responseDto = new()
         {
@@ -223,7 +234,17 @@ public class AlbumController(
             {
                 Pseudonym = aa.Pseudonym,
                 ArtistId = aa.ArtistId
-            }).ToList() ?? new List<AuthorDTO>()
+            }).ToList() ?? new List<AuthorDTO>(),
+            Genre = album.Genre != null ? new GenreDTO
+            {
+                Id = album.Genre.Id,
+                Name = album.Genre.Name
+            } : null,
+            MoodTags = album.AlbumMoodTags?.Select(amt => new MoodTagDTO
+            {
+                Id = amt.MoodTag.Id,
+                Name = amt.MoodTag.Name
+            }).ToList() ?? new List<MoodTagDTO>()
         };
         throw ResponseFactory.Create<OkResponse<AlbumResponseDTO>>(responseDto, ["Album retrieved successfully"]);
     }

@@ -15,6 +15,9 @@ public class AlbumRepository(SonarContext dbContext) : GenericRepository<Album>(
             .Include(a => a.Tracks)
             .Include(a => a.AlbumArtists)
             .ThenInclude(aa => aa.Artist)
+            .Include(a => a.Genre)
+            .Include(a => a.AlbumMoodTags)
+            .ThenInclude(amt => amt.MoodTag)
             .Where(a => a.DistributorId == distributorId)
             .OrderByDescending(a => a.Id)
             .ToListAsync();
@@ -32,6 +35,9 @@ public class AlbumRepository(SonarContext dbContext) : GenericRepository<Album>(
             .ThenInclude(a => a.User)
             .Include(t => t.VisibilityState)
             .ThenInclude(vs => vs.Status)
+            .Include(t => t.Genre)
+            .Include(t => t.TrackMoodTags)
+            .ThenInclude(tmt => tmt.MoodTag)
             .AsQueryable();
 
         return await query

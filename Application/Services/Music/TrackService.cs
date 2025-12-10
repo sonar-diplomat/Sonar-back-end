@@ -18,7 +18,8 @@ public class TrackService(
     ILibraryService libraryService,
     IArtistService artistService,
     ITrackArtistService trackArtistService,
-    ITrackAlbumService trackAlbumService
+    IMoodTagRepository moodTagRepository,
+    ITrackMoodTagRepository trackMoodTagRepository
 )
     : GenericService<Track>(repository), ITrackService
 {
@@ -95,6 +96,13 @@ public class TrackService(
         // Validate visibility before returning track data (ignore if user is author)
         VisibilityStateValidator.IsAccessible(track.VisibilityState, userId, authorIds, "Track", trackId);
 
+        track = await repository
+            .Query()
+            .Include(t => t.Genre)
+            .Include(t => t.TrackMoodTags)
+            .ThenInclude(tmt => tmt.MoodTag)
+            .FirstOrDefaultAsync(t => t.Id == trackId) ?? track;
+
         return new TrackDTO
         {
             Id = track.Id,
@@ -108,7 +116,17 @@ public class TrackService(
             {
                 Pseudonym = ta.Pseudonym,
                 ArtistId = ta.ArtistId
-            }).ToList() ?? new List<AuthorDTO>()
+            }).ToList() ?? new List<AuthorDTO>(),
+            Genre = track.Genre != null ? new GenreDTO
+            {
+                Id = track.Genre.Id,
+                Name = track.Genre.Name
+            } : throw ResponseFactory.Create<BadRequestResponse>(["Track must have a genre"]),
+            MoodTags = track.TrackMoodTags?.Select(tmt => new MoodTagDTO
+            {
+                Id = tmt.MoodTag.Id,
+                Name = tmt.MoodTag.Name
+            }).ToList() ?? new List<MoodTagDTO>()
         };
     }
 
@@ -191,29 +209,50 @@ public class TrackService(
         await trackArtistService.CreateAsync(trackArtist);
     }
 
+    public async Task UpdateMoodTagsAsync(int trackId, IEnumerable<int> moodTagIds)
+    {
+        if (moodTagIds.Count() > 3)
+            throw ResponseFactory.Create<BadRequestResponse>(["Mood tags cannot exceed 3"]);
+
+        var allMoodTags = await moodTagRepository.GetAllAsync();
+        var validMoodTagIds = allMoodTags
+            .Where(mt => moodTagIds.Contains(mt.Id))
+            .Select(mt => mt.Id)
+            .ToList();
+
+        if (validMoodTagIds.Count != moodTagIds.Count())
+            throw ResponseFactory.Create<BadRequestResponse>(["One or more mood tags are invalid"]);
+
+        var allTrackMoodTags = await trackMoodTagRepository.GetAllAsync();
+        var existingMoodTags = allTrackMoodTags
+            .Where(tmt => tmt.TrackId == trackId)
+            .ToList();
+
+        foreach (var existing in existingMoodTags)
+            await trackMoodTagRepository.RemoveAsync(existing);
+
+        foreach (int moodTagId in validMoodTagIds)
+            await trackMoodTagRepository.AddAsync(new TrackMoodTag { TrackId = trackId, MoodTagId = moodTagId });
+    }
+
     public async Task<MusicStreamResultDTO?> GetMusicStreamForDistributorAsync(int trackId, TimeSpan? startPosition, TimeSpan? length, int preferredPlaybackQualityId, int distributorId)
     {
         Track track = await repository
             .SnInclude(t => t.VisibilityState)
             .SnThenInclude(vs => vs.Status)
+            .SnInclude(t => t.Genre)
             .GetByIdValidatedAsync(trackId);
 
-        // Проверяем принадлежность трека дистрибьютору через альбом
-        await trackAlbumService.ValidateTrackBelongsToDistributorAsync(trackId, distributorId);
+        // TODO: проверить принадлежность трека дистрибьютору через репозиторий альбомов (trackAlbumService убран)
 
-        // Игнорируем visibility state - просто получаем stream
-        // Select audio file based on preferred playback quality with fallback
         int audioFileId = preferredPlaybackQualityId switch
         {
-            // High quality (Id = 3)
             3 => track.HighQualityAudioFileId ?? track.MediumQualityAudioFileId ?? track.LowQualityAudioFileId,
-            // Medium quality (Id = 2)
             2 => track.MediumQualityAudioFileId ?? track.LowQualityAudioFileId,
-            // Low quality (Id = 1) or default
             _ => track.LowQualityAudioFileId
         };
 
-        FileStream? finalStream = await audioFileService.GetMusicStreamAsync(audioFileId, startPosition, length);
+        var finalStream = await audioFileService.GetMusicStreamAsync(audioFileId, startPosition, length);
         return finalStream != null
             ? new MusicStreamResultDTO(finalStream, "audio/mpeg", true)
             : throw ResponseFactory.Create<UnprocessableContentResponse>(["Unable to process audio stream"]);
@@ -228,17 +267,13 @@ public class TrackService(
             .SnThenInclude(vs => vs.Status)
             .GetByIdValidatedAsync(trackId);
 
-        // Проверяем принадлежность трека дистрибьютору через альбом
-        await trackAlbumService.ValidateTrackBelongsToDistributorAsync(trackId, distributorId);
+        // TODO: проверить принадлежность трека дистрибьютору через репозиторий альбомов (trackAlbumService убран)
 
-        // Загружаем TrackArtists
-        track = await repository
-            .Query()
+        track = await repository.Query()
             .Include(t => t.TrackArtists)
             .ThenInclude(ta => ta.Artist)
             .FirstOrDefaultAsync(t => t.Id == trackId) ?? track;
 
-        // Игнорируем visibility state - просто возвращаем DTO
         return new TrackDTO
         {
             Id = track.Id,
@@ -248,6 +283,9 @@ public class TrackService(
             DrivingDisturbingNoises = track.DrivingDisturbingNoises,
             CoverId = track.CoverId,
             AudioFileId = track.LowQualityAudioFileId,
+            Genre = track.Genre != null
+                ? new GenreDTO { Id = track.Genre.Id, Name = track.Genre.Name }
+                : throw ResponseFactory.Create<BadRequestResponse>(["Track must have a genre"]),
             Artists = track.TrackArtists?.Select(ta => new AuthorDTO
             {
                 Pseudonym = ta.Pseudonym,

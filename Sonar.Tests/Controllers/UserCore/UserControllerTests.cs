@@ -46,15 +46,17 @@ public class UserControllerTests : ChatControllerTestsBase, IDisposable
         var stateServiceMock = new Mock<IUserStateService>();
         var imageFileServiceMock = new Mock<IImageFileService>();
         var libraryServiceMock = new Mock<ILibraryService>();
-        var friendRequestServiceMock = new Mock<IUserFriendRequestService>();
         var userFollowServiceMock = new Mock<IUserFollowService>();
         var shareServiceMock = new Mock<IShareService>();
+        var playlistRepositoryMock = new Mock<Application.Abstractions.Interfaces.Repository.Music.IPlaylistRepository>();
         
         _userServiceMock = new Mock<IUserService>();
         _controller = new UserController(
             _userServiceMock.Object,
             _userManager,
-            shareServiceMock.Object
+            shareServiceMock.Object,
+            userFollowServiceMock.Object,
+            playlistRepositoryMock.Object
         );
         
         var httpContext = new DefaultHttpContext
