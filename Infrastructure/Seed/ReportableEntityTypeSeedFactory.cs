@@ -31,6 +31,18 @@ public static class ReportableEntityTypeSeedFactory
                 Id = 4,
                 Name = "Comment",
                 Reports = new List<Report>()
+            },
+            new ReportableEntityType
+            {
+                Id = 5,
+                Name = "Playlist",
+                Reports = new List<Report>()
+            },
+            new ReportableEntityType
+            {
+                Id = 6,
+                Name = "Artist",
+                Reports = new List<Report>()
             }
         };
     }
