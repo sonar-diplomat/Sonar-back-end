@@ -288,6 +288,5 @@ public class TrackService(
                 ArtistId = ta.ArtistId
             }).ToList() ?? new List<AuthorDTO>()
         };
-      }
     }
 }
