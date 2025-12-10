@@ -43,8 +43,8 @@ public class UserStateService(
 
     public async Task UpdateCurrentPositionAsync(int stateId, TimeSpan position)
     {
-        UserState userState = await repository.SnInclude(q => q.Queue).GetByIdValidatedAsync(stateId);
-        userState.Queue!.Position = position;
+        UserState userState = await repository.SnInclude(q => q.Queue).GetByIdValidatedAsync(stateId);;
+        userState.Queue.Position = position;
         await repository.UpdateAsync(userState);
     }
 
@@ -53,6 +53,7 @@ public class UserStateService(
         UserSession userSession = await userSessionService.GetByUserIdAndDeviceIdValidatedAsync(userId, deviceId);
         UserState userState = await GetByIdValidatedAsync(userSession.UserId);
         userState.PrimarySessionId = userSession.Id;
+        await repository.UpdateAsync(userState);
     }
 
     public async Task UpdateListeningTargetAsync(int stateId, int trackId, int? collectionId)
@@ -71,6 +72,7 @@ public class UserStateService(
         if (col == null)
             throw ResponseFactory.Create<BadRequestResponse>([$"Collection with Id {id} not found."]);
         userState.Queue.CollectionId = id;
+        await repository.UpdateAsync(userState);
     }
 
     public async Task<UserState> GetByUserIdValidatedAsync(int userId)
@@ -96,5 +98,11 @@ public class UserStateService(
     {
         UserState userState = await GetByUserIdValidatedAsync(userId);
         return await queueService.GetQueueWithTracksAsync(userState.QueueId);
+    }
+
+    public async Task SaveUserQueueAsync(int userId, IEnumerable<int> trackIds)
+    {
+        UserState userState = await GetByUserIdValidatedAsync(userId);
+        await queueService.SaveQueueAsync(userState.QueueId, trackIds);
     }
 }
