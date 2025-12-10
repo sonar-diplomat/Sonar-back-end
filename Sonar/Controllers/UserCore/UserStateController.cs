@@ -142,6 +142,9 @@ public class UserStateController(
                 DrivingDisturbingNoises = t.DrivingDisturbingNoises,
                 CoverId = t.CoverId,
                 AudioFileId = t.LowQualityAudioFileId,
+                Genre = t.Genre != null
+                    ? new GenreDTO { Id = t.Genre.Id, Name = t.Genre.Name }
+                    : new GenreDTO { Id = 0, Name = string.Empty },
                 Artists = t.TrackArtists.Select(ta => new AuthorDTO
                 {
                     Pseudonym = ta.Pseudonym,

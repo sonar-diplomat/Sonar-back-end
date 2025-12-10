@@ -240,6 +240,7 @@ public class TrackService(
         Track track = await repository
             .SnInclude(t => t.VisibilityState)
             .SnThenInclude(vs => vs.Status)
+            .SnInclude(t => t.Genre)
             .GetByIdValidatedAsync(trackId);
 
         // TODO: проверить принадлежность трека дистрибьютору через репозиторий альбомов (trackAlbumService убран)
@@ -282,6 +283,9 @@ public class TrackService(
             DrivingDisturbingNoises = track.DrivingDisturbingNoises,
             CoverId = track.CoverId,
             AudioFileId = track.LowQualityAudioFileId,
+            Genre = track.Genre != null
+                ? new GenreDTO { Id = track.Genre.Id, Name = track.Genre.Name }
+                : throw ResponseFactory.Create<BadRequestResponse>(["Track must have a genre"]),
             Artists = track.TrackArtists?.Select(ta => new AuthorDTO
             {
                 Pseudonym = ta.Pseudonym,

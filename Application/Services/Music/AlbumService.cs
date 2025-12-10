@@ -226,7 +226,11 @@ public class AlbumService(
         await GetByIdValidatedAsync(id);
 
         // Удаляем все треки альбома перед удалением альбома
-        await trackAlbumService.DeleteAlbumTracksAsync(id);
+        var tracks = await repository.GetTracksFromAlbumAsync(id);
+        foreach (var track in tracks)
+        {
+            await trackRepository.RemoveAsync(track);
+        }
 
         // Удаляем сам альбом
         await base.DeleteAsync(id);
@@ -436,11 +440,17 @@ public class AlbumService(
                 DrivingDisturbingNoises = t.DrivingDisturbingNoises,
                 CoverId = t.CoverId,
                 AudioFileId = t.LowQualityAudioFileId,
+                Genre = t.Genre != null
+                    ? new GenreDTO { Id = t.Genre.Id, Name = t.Genre.Name }
+                    : throw ResponseFactory.Create<BadRequestResponse>(["Track must have a genre"]),
                 Artists = t.TrackArtists?.Select(ta => new AuthorDTO
                 {
                     Pseudonym = ta.Pseudonym,
                     ArtistId = ta.ArtistId
-                }).ToList() ?? new List<AuthorDTO>()
+                }).ToList() ?? new List<AuthorDTO>(),
+                MoodTags = t.TrackMoodTags?
+                    .Select(tmt => new MoodTagDTO { Id = tmt.MoodTag.Id, Name = tmt.MoodTag.Name })
+                    .ToList() ?? new List<MoodTagDTO>()
             })
             .ToList();
 
