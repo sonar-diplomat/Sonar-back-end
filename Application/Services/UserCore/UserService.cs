@@ -259,7 +259,7 @@ public class UserService(
                 await transaction.RollbackAsync();
                 rolledBack = true;
                 throw ResponseFactory.Create<ExpectationFailedResponse>([
-                    "Failed to send confirmation email. Please try again later."
+                    $"Failed to send confirmation email. Please try again later. Details: {ex.Message}"
                 ]);
             }
 
@@ -285,6 +285,16 @@ public class UserService(
 
             throw ResponseFactory.Create<ConflictResponse>(["User with such data already exists"]);
         }
+        catch (Exception ex) when (ex is Application.Response.Response)
+        {
+            if (!rolledBack)
+            {
+                await transaction.RollbackAsync();
+                rolledBack = true;
+            }
+            // Re-throw known response exceptions to preserve their status/message.
+            throw;
+        }
         catch (Exception ex)
         {
             if (!rolledBack)
@@ -293,8 +303,7 @@ public class UserService(
                 rolledBack = true;
             }
             throw ResponseFactory.Create<ExpectationFailedResponse>([
-                //"Registration could not be completed due to an error. Please try again later."
-                ex.Message
+                $"Registration could not be completed. Details: {ex.Message}"
             ]);
         }
     }
