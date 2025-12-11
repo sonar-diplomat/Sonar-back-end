@@ -165,15 +165,18 @@ public class SonarContext(DbContextOptions<SonarContext> options)
             .HasMany(l => l.Folders)
             .WithOne(f => f.Library)
             .HasForeignKey(f => f.LibraryId)
-            .OnDelete(DeleteBehavior.NoAction);
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder.Entity<Folder>()
             .HasOne(f => f.ParentFolder)
             .WithMany(f => f.SubFolders)
             .HasForeignKey(f => f.ParentFolderId)
-            .OnDelete(DeleteBehavior.NoAction);
+            .OnDelete(DeleteBehavior.Cascade);
 
-        builder.Entity<Chat>().HasOne(c => c.Creator).WithMany(u => u.ChatsWhereCreator);
+        builder.Entity<Chat>()
+            .HasOne(c => c.Creator)
+            .WithMany(u => u.ChatsWhereCreator)
+            .OnDelete(DeleteBehavior.Cascade);
         builder.Entity<Chat>().HasMany(c => c.Admins).WithMany(u => u.ChatsWhereAdmin)
             .UsingEntity(j => j.ToTable("ChatAdmins"));
         builder.Entity<Chat>().HasMany(c => c.Members).WithMany(u => u.ChatsWhereMember)
@@ -188,13 +191,13 @@ public class SonarContext(DbContextOptions<SonarContext> options)
             .HasOne(uf => uf.Follower)
             .WithMany(u => u.Following)
             .HasForeignKey(uf => uf.FollowerId)
-            .OnDelete(DeleteBehavior.NoAction);
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder.Entity<UserFollow>()
             .HasOne(uf => uf.Following)
             .WithMany(u => u.Followers)
             .HasForeignKey(uf => uf.FollowingId)
-            .OnDelete(DeleteBehavior.NoAction);
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder.Entity<NotificationType>()
             .HasData(NotificationTypeSeedFactory.CreateSeedData());

@@ -33,12 +33,12 @@ public class Message : BaseModel
 
     [JsonIgnore]
     [ForeignKey("ChatId")]
-    [DeleteBehavior(DeleteBehavior.NoAction)]
+    [DeleteBehavior(DeleteBehavior.Cascade)]
     public virtual Chat Chat { get; set; }
 
     [JsonIgnore]
     [ForeignKey("SenderId")]
-    [DeleteBehavior(DeleteBehavior.NoAction)]
+    [DeleteBehavior(DeleteBehavior.Cascade)]
     public virtual User Sender { get; set; }
 
     [JsonIgnore]

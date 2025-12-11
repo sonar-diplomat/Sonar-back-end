@@ -57,21 +57,24 @@ public class AuthController(
             userManager,
             async user =>
             {
-                if (string.IsNullOrEmpty(user.Email))
-                    return;
+                if (!string.IsNullOrEmpty(user.Email))
+                {
+                    string token = await userManager.GenerateEmailConfirmationTokenAsync(user);
 
-                string token = await userManager.GenerateEmailConfirmationTokenAsync(user);
+                    await emailSenderService.SendEmailAsync(
+                        user.Email,
+                        MailGunTemplates.confirmEmail,
+                        new Dictionary<string, string>
+                        {
+                            { "route", "confirm-email" },
+                            { "linkParam_email", user.Email },
+                            { "linkParam_token", token }
+                        }
+                    );
+                }
 
-                await emailSenderService.SendEmailAsync(
-                    user.Email,
-                    MailGunTemplates.confirmEmail,
-                    new Dictionary<string, string>
-                    {
-                        { "route", "confirm-email" },
-                        { "linkParam_email", user.Email },
-                        { "linkParam_token", token }
-                    }
-                );
+                // Manual handling for avatar: only delete if not default (NoAction on FK)
+                // The deletion of avatar file/record should be done explicitly in service layer when removing user.
             });
 
         throw ResponseFactory.Create<OkResponse>(["Registration successful. Please check your email to confirm your account."]);
