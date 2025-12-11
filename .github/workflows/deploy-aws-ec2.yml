@@ -93,4 +93,5 @@ jobs:
               -e Smtp__Username='${{ secrets.SMTP_USERNAME }}' \
               -e Smtp__Password='${{ secrets.SMTP_PASSWORD }}' \
               -e ConnectionStrings__SonarContext='${{ secrets.CONNECTION_STRING_AWS }}' \
+              -e AnalyticsService__BaseUrl='${{ vars.ANALYTICS_SERVICE_URL }}' \
               $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
