@@ -9,11 +9,11 @@ service Analytics {
 }
 
 message UserEventRequest {
-  string user_id = 1;
-  string track_id = 2; // optional for search
+  int32 user_id = 1;
+  int32 track_id = 2; // optional for search
   EventType event_type = 3;
   ContextType context_type = 4;
-  string context_id = 5; // playlist/album id when available
+  int32 context_id = 5; // playlist/album id when available
   int64 position_ms = 6;
   int64 duration_ms = 7;
   google.protobuf.Timestamp timestamp = 8;

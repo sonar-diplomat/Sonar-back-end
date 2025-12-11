@@ -1,3 +1,4 @@
+using Analytics.API;
 using Application;
 using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.Utilities;
@@ -7,11 +8,10 @@ using Application.Response;
 using Entities.Enums;
 using Entities.Models.Music;
 using Entities.Models.UserCore;
+using Google.Protobuf.WellKnownTypes;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Analytics.API;
-using Google.Protobuf.WellKnownTypes;
 
 namespace Sonar.Controllers.Music;
 
@@ -203,18 +203,18 @@ public class PlaylistController(
     {
         User user = await CheckAccessFeatures([]);
         await playlistService.AddTrackToPlaylistAsync(playlistId, trackId, user.Id);
-        
+
         _ = Task.Run(async () =>
         {
             try
             {
                 await analyticsClient.AddUserEventAsync(new UserEventRequest
                 {
-                    UserId = user.Id.ToString(),
-                    TrackId = trackId.ToString(),
+                    UserId = user.Id,
+                    TrackId = trackId,
                     EventType = EventType.AddToPlaylist,
                     ContextType = ContextType.ContextPlaylist,
-                    ContextId = playlistId.ToString(),
+                    ContextId = playlistId,
                     Timestamp = Timestamp.FromDateTime(DateTime.UtcNow)
                 });
             }
@@ -223,7 +223,7 @@ public class PlaylistController(
                 logger.LogError(ex, "Failed to send AddToPlaylist event to Analytics");
             }
         });
-        
+
         throw ResponseFactory.Create<OkResponse>(["Track was added to playlist successfully"]);
     }
 

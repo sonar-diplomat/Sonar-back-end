@@ -1,15 +1,15 @@
-using System.Security.Claims;
+using Analytics.API;
 using Application.Abstractions.Interfaces.Services;
 using Application.DTOs.Music;
 using Application.DTOs.User;
 using Application.Response;
 using Entities.Enums;
 using Entities.Models.UserCore;
+using Google.Protobuf.WellKnownTypes;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Analytics.API;
-using Google.Protobuf.WellKnownTypes;
+using System.Security.Claims;
 
 namespace Sonar.Controllers.UserCore;
 
@@ -65,7 +65,7 @@ public class UserStateController(
         User user = await CheckAccessFeatures([]);
         UserState userState = await userStateService.GetByUserIdValidatedAsync(user.Id);
         await userStateService.UpdateListeningTargetAsync(userState.Id, trackId, collectionId);
-        
+
         // Отправка события PlayStart в Analytics (асинхронно, без ожидания)
         _ = Task.Run(async () =>
         {
@@ -73,11 +73,11 @@ public class UserStateController(
             {
                 await analyticsClient.AddUserEventAsync(new UserEventRequest
                 {
-                    UserId = user.Id.ToString(),
-                    TrackId = trackId.ToString(),
+                    UserId = user.Id,
+                    TrackId = trackId,
                     EventType = EventType.PlayStart,
                     ContextType = collectionId.HasValue ? ContextType.ContextPlaylist : ContextType.ContextTrack,
-                    ContextId = collectionId?.ToString() ?? string.Empty,
+                    ContextId = collectionId ?? 0,
                     Timestamp = Timestamp.FromDateTime(DateTime.UtcNow)
                 });
             }
@@ -86,7 +86,7 @@ public class UserStateController(
                 logger.LogError(ex, "Failed to send PlayStart event to Analytics");
             }
         });
-        
+
         throw ResponseFactory.Create<OkResponse>(["Listening target updated successfully."]);
     }
 

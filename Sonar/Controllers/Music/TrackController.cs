@@ -1,3 +1,4 @@
+using Analytics.API;
 using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.Utilities;
 using Application.DTOs.Music;
@@ -7,13 +8,12 @@ using Entities.Models.ClientSettings;
 using Entities.Models.Distribution;
 using Entities.Models.Music;
 using Entities.Models.UserCore;
+using Google.Protobuf.WellKnownTypes;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
 using Sonar.Extensions;
-using Analytics.API;
-using Google.Protobuf.WellKnownTypes;
 
 namespace Sonar.Controllers.Music;
 
@@ -89,8 +89,8 @@ public class TrackController(
             {
                 await analyticsClient.AddUserEventAsync(new UserEventRequest
                 {
-                    UserId = user.Id.ToString(),
-                    TrackId = trackId.ToString(),
+                    UserId = user.Id,
+                    TrackId = trackId,
                     EventType = EventType.PlayStart,
                     ContextType = ContextType.ContextTrack,
                     PositionMs = (long)(startPosition?.TotalMilliseconds ?? 0),
@@ -147,13 +147,13 @@ public class TrackController(
         track.Title = dto.Title ?? track.Title;
         track.IsExplicit = dto.IsExplicit ?? track.IsExplicit;
         track.DrivingDisturbingNoises = dto.DrivingDisturbingNoises ?? track.DrivingDisturbingNoises;
-        
+
         // Update Genre if provided
         if (dto.GenreId.HasValue)
         {
             track.GenreId = dto.GenreId.Value;
         }
-        
+
         // Update MoodTags if provided
         if (dto.MoodTagIds != null)
         {
@@ -162,10 +162,10 @@ public class TrackController(
             {
                 throw ResponseFactory.Create<BadRequestResponse>(["Mood tags cannot exceed 3"]);
             }
-            
+
             await trackService.UpdateMoodTagsAsync(trackId, dto.MoodTagIds);
         }
-        
+
         // TODO: create DTO
         track = await trackService.UpdateAsync(track);
         throw ResponseFactory.Create<OkResponse<Track>>(track, ["Track updated successfully"]);
@@ -259,26 +259,27 @@ public class TrackController(
         User user = await CheckAccessFeatures([]);
         bool isFavorite = await trackService.ToggleFavoriteAsync(trackId, user.LibraryId);
         string message = isFavorite ? "Track added to favorites" : "Track removed from favorites";
-        
-        _ = Task.Run(async () =>
+
+        //_ = Task.Run(async () =>
+        //{
+        try
         {
-            try
+            await analyticsClient.AddUserEventAsync(new UserEventRequest
             {
-                await analyticsClient.AddUserEventAsync(new UserEventRequest
-                {
-                    UserId = user.Id.ToString(),
-                    TrackId = trackId.ToString(),
-                    EventType = EventType.Like,
-                    ContextType = ContextType.ContextTrack,
-                    Timestamp = Timestamp.FromDateTime(DateTime.UtcNow)
-                });
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Failed to send Like event to Analytics");
-            }
-        });
-        
+                UserId = user.Id,
+                TrackId = trackId,
+                EventType = EventType.Like,
+                ContextType = ContextType.ContextTrack,
+                Timestamp = Timestamp.FromDateTime(DateTime.UtcNow)
+            });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to send Like event to Analytics");
+        }
+        finally { logger.LogInformation("Analytics updated."); }
+        //});
+
         throw ResponseFactory.Create<OkResponse>([message]);
     }
 
@@ -365,18 +366,18 @@ public class TrackController(
         [FromQuery] bool download = false)
     {
         Distributor distributor = await this.CheckDistributorAsync();
-        
+
         // Use default playback quality (medium quality = 2) for distributors
         const int defaultPlaybackQualityId = 2;
-        
+
         MusicStreamResultDTO? result = await trackService.GetMusicStreamForDistributorAsync(
-            trackId, 
-            startPosition, 
-            length, 
-            defaultPlaybackQualityId, 
+            trackId,
+            startPosition,
+            length,
+            defaultPlaybackQualityId,
             distributor.Id);
 
-        if (result == null) 
+        if (result == null)
             throw ResponseFactory.Create<NotFoundResponse>([$"Track with ID {trackId} not found"]);
 
         result.GetStreamDetails(out Stream stream, out string contentType, out bool enableRangeProcessing);
