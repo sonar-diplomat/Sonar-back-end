@@ -3,6 +3,7 @@ using System;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(SonarContext))]
-    partial class SonarContextModelSnapshot : ModelSnapshot
+    [Migration("20251211125405_PlaylistCascadeDelete")]
+    partial class PlaylistCascadeDelete
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1463,6 +1466,12 @@ namespace Infrastructure.Migrations
                     b.Property<bool>("IsClosed")
                         .HasColumnType("boolean");
 
+                    b.Property<int>("ReportReasonTypeId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("ReportReasonTypeId1")
+                        .HasColumnType("integer");
+
                     b.Property<int>("ReportableEntityTypeId")
                         .HasColumnType("integer");
 
@@ -1470,6 +1479,10 @@ namespace Infrastructure.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ReportReasonTypeId");
+
+                    b.HasIndex("ReportReasonTypeId1");
 
                     b.HasIndex("ReportableEntityTypeId");
 
@@ -1522,6 +1535,78 @@ namespace Infrastructure.Migrations
                             Id = 4,
                             Name = "Inappropriate Content",
                             RecommendedSuspensionDuration = new TimeSpan(14, 0, 0, 0, 0)
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Name = "Copyright infringement",
+                            RecommendedSuspensionDuration = new TimeSpan(30, 0, 0, 0, 0)
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Name = "Explicit content without marking",
+                            RecommendedSuspensionDuration = new TimeSpan(7, 0, 0, 0, 0)
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Name = "Spam audio / noise",
+                            RecommendedSuspensionDuration = new TimeSpan(3, 0, 0, 0, 0)
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Name = "Incorrect tags/metadata",
+                            RecommendedSuspensionDuration = new TimeSpan(1, 0, 0, 0, 0)
+                        },
+                        new
+                        {
+                            Id = 9,
+                            Name = "Copyrighted cover without permission",
+                            RecommendedSuspensionDuration = new TimeSpan(30, 0, 0, 0, 0)
+                        },
+                        new
+                        {
+                            Id = 10,
+                            Name = "Inappropriate playlist name",
+                            RecommendedSuspensionDuration = new TimeSpan(7, 0, 0, 0, 0)
+                        },
+                        new
+                        {
+                            Id = 11,
+                            Name = "Abusive behavior",
+                            RecommendedSuspensionDuration = new TimeSpan(14, 0, 0, 0, 0)
+                        },
+                        new
+                        {
+                            Id = 12,
+                            Name = "Fake identity",
+                            RecommendedSuspensionDuration = new TimeSpan(30, 0, 0, 0, 0)
+                        },
+                        new
+                        {
+                            Id = 13,
+                            Name = "Bot account",
+                            RecommendedSuspensionDuration = new TimeSpan(90, 0, 0, 0, 0)
+                        },
+                        new
+                        {
+                            Id = 14,
+                            Name = "Inappropriate bio",
+                            RecommendedSuspensionDuration = new TimeSpan(7, 0, 0, 0, 0)
+                        },
+                        new
+                        {
+                            Id = 15,
+                            Name = "Scam attempts / phishing",
+                            RecommendedSuspensionDuration = new TimeSpan(90, 0, 0, 0, 0)
+                        },
+                        new
+                        {
+                            Id = 16,
+                            Name = "Spam messaging",
+                            RecommendedSuspensionDuration = new TimeSpan(7, 0, 0, 0, 0)
                         });
                 });
 
@@ -1562,6 +1647,16 @@ namespace Infrastructure.Migrations
                         {
                             Id = 4,
                             Name = "Comment"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Name = "Playlist"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Name = "Artist"
                         });
                 });
 
@@ -2472,19 +2567,156 @@ namespace Infrastructure.Migrations
                     b.ToTable("QueueTrack");
                 });
 
-            modelBuilder.Entity("ReportReportReasonType", b =>
+            modelBuilder.Entity("ReportReasonTypeReportableEntityType", b =>
                 {
-                    b.Property<int>("ReportReasonTypeId")
+                    b.Property<int>("ApplicableEntityTypesId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("ReportsId")
+                    b.Property<int>("ApplicableReportReasonTypesId")
                         .HasColumnType("integer");
 
-                    b.HasKey("ReportReasonTypeId", "ReportsId");
+                    b.HasKey("ApplicableEntityTypesId", "ApplicableReportReasonTypesId");
 
-                    b.HasIndex("ReportsId");
+                    b.HasIndex("ApplicableReportReasonTypesId");
 
-                    b.ToTable("ReportReportReasonType");
+                    b.ToTable("ReportReasonTypeReportableEntityType", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            ApplicableEntityTypesId = 1,
+                            ApplicableReportReasonTypesId = 1
+                        },
+                        new
+                        {
+                            ApplicableEntityTypesId = 2,
+                            ApplicableReportReasonTypesId = 1
+                        },
+                        new
+                        {
+                            ApplicableEntityTypesId = 3,
+                            ApplicableReportReasonTypesId = 1
+                        },
+                        new
+                        {
+                            ApplicableEntityTypesId = 4,
+                            ApplicableReportReasonTypesId = 1
+                        },
+                        new
+                        {
+                            ApplicableEntityTypesId = 5,
+                            ApplicableReportReasonTypesId = 1
+                        },
+                        new
+                        {
+                            ApplicableEntityTypesId = 6,
+                            ApplicableReportReasonTypesId = 1
+                        },
+                        new
+                        {
+                            ApplicableEntityTypesId = 1,
+                            ApplicableReportReasonTypesId = 2
+                        },
+                        new
+                        {
+                            ApplicableEntityTypesId = 2,
+                            ApplicableReportReasonTypesId = 3
+                        },
+                        new
+                        {
+                            ApplicableEntityTypesId = 3,
+                            ApplicableReportReasonTypesId = 3
+                        },
+                        new
+                        {
+                            ApplicableEntityTypesId = 1,
+                            ApplicableReportReasonTypesId = 4
+                        },
+                        new
+                        {
+                            ApplicableEntityTypesId = 2,
+                            ApplicableReportReasonTypesId = 4
+                        },
+                        new
+                        {
+                            ApplicableEntityTypesId = 3,
+                            ApplicableReportReasonTypesId = 4
+                        },
+                        new
+                        {
+                            ApplicableEntityTypesId = 4,
+                            ApplicableReportReasonTypesId = 4
+                        },
+                        new
+                        {
+                            ApplicableEntityTypesId = 5,
+                            ApplicableReportReasonTypesId = 4
+                        },
+                        new
+                        {
+                            ApplicableEntityTypesId = 6,
+                            ApplicableReportReasonTypesId = 4
+                        },
+                        new
+                        {
+                            ApplicableEntityTypesId = 2,
+                            ApplicableReportReasonTypesId = 5
+                        },
+                        new
+                        {
+                            ApplicableEntityTypesId = 2,
+                            ApplicableReportReasonTypesId = 6
+                        },
+                        new
+                        {
+                            ApplicableEntityTypesId = 2,
+                            ApplicableReportReasonTypesId = 7
+                        },
+                        new
+                        {
+                            ApplicableEntityTypesId = 2,
+                            ApplicableReportReasonTypesId = 8
+                        },
+                        new
+                        {
+                            ApplicableEntityTypesId = 3,
+                            ApplicableReportReasonTypesId = 9
+                        },
+                        new
+                        {
+                            ApplicableEntityTypesId = 5,
+                            ApplicableReportReasonTypesId = 10
+                        },
+                        new
+                        {
+                            ApplicableEntityTypesId = 1,
+                            ApplicableReportReasonTypesId = 11
+                        },
+                        new
+                        {
+                            ApplicableEntityTypesId = 1,
+                            ApplicableReportReasonTypesId = 12
+                        },
+                        new
+                        {
+                            ApplicableEntityTypesId = 1,
+                            ApplicableReportReasonTypesId = 13
+                        },
+                        new
+                        {
+                            ApplicableEntityTypesId = 1,
+                            ApplicableReportReasonTypesId = 14
+                        },
+                        new
+                        {
+                            ApplicableEntityTypesId = 1,
+                            ApplicableReportReasonTypesId = 15
+                        },
+                        new
+                        {
+                            ApplicableEntityTypesId = 1,
+                            ApplicableReportReasonTypesId = 16
+                        });
                 });
 
             modelBuilder.Entity("SettingsUser", b =>
@@ -3228,6 +3460,16 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Entities.Models.Report.Report", b =>
                 {
+                    b.HasOne("Entities.Models.Report.ReportReasonType", "ReportReasonType")
+                        .WithMany()
+                        .HasForeignKey("ReportReasonTypeId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("Entities.Models.Report.ReportReasonType", null)
+                        .WithMany("Reports")
+                        .HasForeignKey("ReportReasonTypeId1");
+
                     b.HasOne("Entities.Models.Report.ReportableEntityType", "ReportableEntityType")
                         .WithMany("Reports")
                         .HasForeignKey("ReportableEntityTypeId")
@@ -3239,6 +3481,8 @@ namespace Infrastructure.Migrations
                         .HasForeignKey("ReporterId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
+
+                    b.Navigation("ReportReasonType");
 
                     b.Navigation("ReportableEntityType");
 
@@ -3570,17 +3814,17 @@ namespace Infrastructure.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("ReportReportReasonType", b =>
+            modelBuilder.Entity("ReportReasonTypeReportableEntityType", b =>
                 {
-                    b.HasOne("Entities.Models.Report.ReportReasonType", null)
+                    b.HasOne("Entities.Models.Report.ReportableEntityType", null)
                         .WithMany()
-                        .HasForeignKey("ReportReasonTypeId")
+                        .HasForeignKey("ApplicableEntityTypesId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Entities.Models.Report.Report", null)
+                    b.HasOne("Entities.Models.Report.ReportReasonType", null)
                         .WithMany()
-                        .HasForeignKey("ReportsId")
+                        .HasForeignKey("ApplicableReportReasonTypesId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -3773,6 +4017,11 @@ namespace Infrastructure.Migrations
             modelBuilder.Entity("Entities.Models.Report.Report", b =>
                 {
                     b.Navigation("Suspensions");
+                });
+
+            modelBuilder.Entity("Entities.Models.Report.ReportReasonType", b =>
+                {
+                    b.Navigation("Reports");
                 });
 
             modelBuilder.Entity("Entities.Models.Report.ReportableEntityType", b =>

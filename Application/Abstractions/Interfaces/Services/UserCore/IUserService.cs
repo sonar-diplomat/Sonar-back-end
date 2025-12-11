@@ -2,6 +2,7 @@
 using Application.DTOs.User;
 using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 
 namespace Application.Abstractions.Interfaces.Services;
 
@@ -24,4 +25,8 @@ public interface IUserService
     Task RevokeAccessFeaturesByNameAsync(int userId, string[] accessFeatures);
     Task RemoveFriendAsync(int userId, int friendId);
     Task<IEnumerable<User>> GetFriendsAsync(int userId);
+    Task RegisterUserWithTransactionAsync(
+        UserRegisterDTO model,
+        UserManager<User> userManager,
+        Func<User, Task> sendConfirmationEmailAsync);
 }

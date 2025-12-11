@@ -391,17 +391,6 @@ builder.Services.AddScoped<ISubscriptionFeatureService, SubscriptionFeatureServi
 builder.Services.AddScoped<ISubscriptionPackService, SubscriptionPackService>();
 builder.Services.AddScoped<ISubscriptionPaymentService, SubscriptionPaymentService>();
 
-builder.Services.AddScoped<MailgunSettings>(_ =>
-    new MailgunSettings
-    {
-        ApiKey = builder.Configuration["Mailgun:ApiKey"] ??
-                 throw new InvalidOperationException("Mailgun ApiKey not found."),
-        Domain = builder.Configuration["Mailgun:Domain"] ??
-                 throw new InvalidOperationException("Mailgun Domain not found."),
-        From = builder.Configuration["Mailgun:From"] ?? throw new InvalidOperationException("Mailgun From not found.")
-    }
-);
-
 builder.Services.AddScoped<SmtpSettings>(_ =>
     new SmtpSettings
     {
@@ -421,22 +410,8 @@ builder.Services.AddSingleton<IChatNotifier, ChatNotifier>();
 
 
 // Utility Services
-// Switch between MailgunEmailService and SmtpEmailService based on configuration
-// Default to MailgunEmailService if Smtp:Host is not configured
-bool useSmtp = !string.IsNullOrEmpty(builder.Configuration["Smtp:Host"]);
-if (useSmtp)
-{
-    builder.Services.AddScoped<IEmailSenderService>(sp => 
-        new SmtpEmailService(sp.GetRequiredService<SmtpSettings>(), builder.Configuration));
-}
-else
-{
-    builder.Services.AddScoped<IEmailSenderService>(sp => 
-        new MailgunEmailService(
-            sp.GetRequiredService<MailgunSettings>(), 
-            sp.GetRequiredService<HttpClient>(), 
-            builder.Configuration));
-}
+builder.Services.AddScoped<IEmailSenderService>(sp =>
+    new SmtpEmailService(sp.GetRequiredService<SmtpSettings>(), builder.Configuration));
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddSingleton<QRCodeGenerator>();
 builder.Services.AddSingleton<IShareService, ShareService>();

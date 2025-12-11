@@ -1,8 +1,6 @@
 ﻿using System.IO;
-using System.Net.Http.Headers;
 using System.Net.Mail;
 using System.Text;
-using System.Text.Json;
 using Application.Abstractions.Interfaces.Services.Utilities;
 using Application.Response;
 using Entities.Enums;
@@ -10,13 +8,6 @@ using Microsoft.Extensions.Configuration;
 using SysFile = System.IO.File;
 
 namespace Application.Services.Utilities;
-
-public class MailgunSettings
-{
-    public string ApiKey { get; set; } = string.Empty;
-    public string Domain { get; set; } = string.Empty;
-    public string From { get; set; } = string.Empty;
-}
 
 public class SmtpSettings
 {
@@ -28,81 +19,6 @@ public class SmtpSettings
     public string? FromName { get; set; }
     public bool EnableSsl { get; set; } = true;
     public bool UseDefaultCredentials { get; set; } = false;
-}
-
-public class MailgunEmailService(MailgunSettings options, HttpClient httpClient, IConfiguration configuration) : IEmailSenderService
-{
-    private readonly string _baseUrl = configuration["FrontEnd-Url"] ?? throw new InvalidOperationException("FrontEnd-Url not found in configuration");
-
-    public string BuildLink(string route, Dictionary<string, string>? queryParams = null)
-    {
-        // Убираем ведущий слэш, если есть
-        route = route.TrimStart('/');
-        
-        // Формируем базовую ссылку
-        string baseUrl = _baseUrl.TrimEnd('/');
-        string fullLink = $"{baseUrl}/{route}";
-        
-        // Добавляем параметры запроса
-        if (queryParams != null && queryParams.Count > 0)
-        {
-            var queryString = string.Join("&", queryParams
-                .Where(kvp => !string.IsNullOrWhiteSpace(kvp.Value))
-                .Select(kvp => $"{Uri.EscapeDataString(kvp.Key)}={Uri.EscapeDataString(kvp.Value)}"));
-            
-            if (!string.IsNullOrEmpty(queryString))
-            {
-                fullLink += $"?{queryString}";
-            }
-        }
-        
-        return fullLink;
-    }
-
-    public async Task SendEmailAsync(string to,
-        string template,
-        Dictionary<string, string>? variables = null)
-    {
-        if (!MailGunTemplates.IsValidTemplate(template))
-            throw ResponseFactory.Create<ExpectationFailedResponse>(["Invalid email template"]);
-
-        // Если в variables есть "route" и параметры, формируем полную ссылку
-        if (variables != null && variables.ContainsKey("route"))
-        {
-            string route = variables["route"];
-            variables.Remove("route");
-            
-            // Извлекаем параметры для ссылки (все переменные, начинающиеся с "linkParam_")
-            Dictionary<string, string> linkParams = new();
-            var linkParamKeys = variables.Keys.Where(k => k.StartsWith("linkParam_")).ToList();
-            foreach (string key in linkParamKeys)
-            {
-                string paramName = key.Substring("linkParam_".Length);
-                linkParams[paramName] = variables[key];
-                variables.Remove(key);
-            }
-            
-            // Формируем полную ссылку и добавляем в variables как "link"
-            string fullLink = BuildLink(route, linkParams.Count > 0 ? linkParams : null);
-            variables["link"] = fullLink;
-        }
-
-        string base64String = Convert.ToBase64String(Encoding.ASCII.GetBytes($"api:{options.ApiKey}"));
-        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(@"Basic", base64String);
-
-        MultipartFormDataContent postData = new();
-        postData.Add(new StringContent(options.From), "from");
-        postData.Add(new StringContent(to), "to");
-        postData.Add(new StringContent(template), "template");
-
-        postData.Add(new StringContent(JsonSerializer.Serialize(variables)), "t:variables");
-
-        using HttpResponseMessage request =
-            await httpClient.PostAsync("https://api.mailgun.net/v3/" + options.Domain + "/messages", postData);
-        string response = await request.Content.ReadAsStringAsync();
-        if (!request.IsSuccessStatusCode)
-            throw ResponseFactory.Create<ExpectationFailedResponse>([$"Failed to send email: {response}"]);
-    }
 }
 
 public class SmtpEmailService : IEmailSenderService
@@ -234,7 +150,7 @@ public class SmtpEmailService : IEmailSenderService
         if (!MailGunTemplates.IsValidTemplate(template))
             throw ResponseFactory.Create<ExpectationFailedResponse>(["Invalid email template"]);
 
-        // Маппинг имен шаблонов Mailgun на имена файлов
+        // Маппинг имен шаблонов на имена файлов
         string templateFileName = template switch
         {
             MailGunTemplates.twoFA => "2fa",

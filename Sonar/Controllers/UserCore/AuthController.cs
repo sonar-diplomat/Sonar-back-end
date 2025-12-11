@@ -51,83 +51,30 @@ public class AuthController(
             
             throw ResponseFactory.Create<BadRequestResponse>(validationErrors.ToArray());
         }
-        
-        try
-        {
-            User user = await userService.CreateUserShellAsync(model);
-            IdentityResult result = await userManager.CreateAsync(user, model.Password);
-            
-            if (result.Succeeded)
+
+        await userService.RegisterUserWithTransactionAsync(
+            model,
+            userManager,
+            async user =>
             {
-                // Отправляем письмо подтверждения email
-                if (!string.IsNullOrEmpty(user.Email))
-                {
-                    string token = await userManager.GenerateEmailConfirmationTokenAsync(user);
-                    
-                    await emailSenderService.SendEmailAsync(
-                        user.Email,
-                        MailGunTemplates.confirmEmail,
-                        new Dictionary<string, string>
-                        {
-                            { "route", "confirm-email" },
-                            { "linkParam_email", user.Email },
-                            { "linkParam_token", token }
-                        }
-                    );
-                }
-                
-                throw ResponseFactory.Create<OkResponse>(["Registration successful. Please check your email to confirm your account."]);
-            }
-            
-            List<string> conflictErrors = new();
-            List<string> identityValidationErrors = new();
-            
-            foreach (IdentityError error in result.Errors)
-            {
-                string message = error.Code switch
-                {
-                    "DuplicateUserName" or "DuplicateNormalizedUserName" => "User with this username already exists",
-                    "DuplicateEmail" => "Email is already in use",
-                    "PasswordTooShort" => $"Password is too short. Minimum length: {userManager.Options.Password.RequiredLength} characters",
-                    "PasswordRequiresNonAlphanumeric" => "Password must contain at least one special character",
-                    "PasswordRequiresDigit" => "Password must contain at least one digit",
-                    "PasswordRequiresLower" => "Password must contain at least one lowercase letter",
-                    "PasswordRequiresUpper" => "Password must contain at least one uppercase letter",
-                    "InvalidEmail" => "Invalid email address",
-                    "InvalidUserName" => "Invalid username",
-                    _ => error.Description
-                };
-                
-                if (error.Code is "DuplicateUserName" or "DuplicateNormalizedUserName" or "DuplicateEmail")
-                    conflictErrors.Add(message);
-                else
-                    identityValidationErrors.Add(message);
-            }
-            
-            if (conflictErrors.Count > 0)
-                throw ResponseFactory.Create<ConflictResponse>(conflictErrors.ToArray());
-            
-            if (identityValidationErrors.Count > 0)
-                throw ResponseFactory.Create<BadRequestResponse>(identityValidationErrors.ToArray());
-            
-            throw ResponseFactory.Create<BadRequestResponse>(
-                result.Errors.Select(e => e.Description).ToArray());
-        }
-        catch (DbUpdateException dbEx) when (dbEx.InnerException?.Message.Contains("duplicate") == true ||
-                                             dbEx.InnerException?.Message.Contains("unique") == true ||
-                                             dbEx.InnerException?.Message.Contains("UserNameIndex") == true ||
-                                             dbEx.InnerException?.Message.Contains("EmailIndex") == true)
-        {
-            string errorMessage = dbEx.InnerException?.Message ?? dbEx.Message;
-            
-            if (errorMessage.Contains("UserName") || errorMessage.Contains("UserNameIndex"))
-                throw ResponseFactory.Create<ConflictResponse>(["User with this username already exists"]);
-            
-            if (errorMessage.Contains("Email") || errorMessage.Contains("EmailIndex"))
-                throw ResponseFactory.Create<ConflictResponse>(["Email is already in use"]);
-            
-            throw ResponseFactory.Create<ConflictResponse>(["User with such data already exists"]);
-        }
+                if (string.IsNullOrEmpty(user.Email))
+                    return;
+
+                string token = await userManager.GenerateEmailConfirmationTokenAsync(user);
+
+                await emailSenderService.SendEmailAsync(
+                    user.Email,
+                    MailGunTemplates.confirmEmail,
+                    new Dictionary<string, string>
+                    {
+                        { "route", "confirm-email" },
+                        { "linkParam_email", user.Email },
+                        { "linkParam_token", token }
+                    }
+                );
+            });
+
+        throw ResponseFactory.Create<OkResponse>(["Registration successful. Please check your email to confirm your account."]);
     }
 
     /// <summary>
