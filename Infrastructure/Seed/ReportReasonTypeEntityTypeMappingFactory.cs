@@ -62,7 +62,7 @@ public static class ReportReasonTypeEntityTypeMappingFactory
         {
             joinTableData.Add(new
             {
-                ReportReasonTypeId = reasonTypeId,
+                ApplicableReportReasonTypesId = reasonTypeId,
                 ApplicableEntityTypesId = entityTypeId
             });
         }
