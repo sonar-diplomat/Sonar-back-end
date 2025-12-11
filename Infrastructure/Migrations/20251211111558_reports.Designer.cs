@@ -3,6 +3,7 @@ using System;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(SonarContext))]
-    partial class SonarContextModelSnapshot : ModelSnapshot
+    [Migration("20251211111558_reports")]
+    partial class reports
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -2778,30 +2781,6 @@ namespace Infrastructure.Migrations
                         },
                         new
                         {
-                            Id = 2,
-                            ItemName = "Default playlist",
-                            Url = ""
-                        },
-                        new
-                        {
-                            Id = 3,
-                            ItemName = "Default track",
-                            Url = ""
-                        },
-                        new
-                        {
-                            Id = 4,
-                            ItemName = "Default playlist negative",
-                            Url = ""
-                        },
-                        new
-                        {
-                            Id = 5,
-                            ItemName = "Default track negative",
-                            Url = ""
-                        },
-                        new
-                        {
                             Id = 100,
                             ItemName = "Happy Face Sticker",
                             Url = "image/stickers/happy.png"
@@ -3904,7 +3883,7 @@ namespace Infrastructure.Migrations
                     b.HasOne("Entities.Models.UserCore.User", "Creator")
                         .WithMany()
                         .HasForeignKey("CreatorId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.HasOne("Entities.Models.Music.Collection", null)

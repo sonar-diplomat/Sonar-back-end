@@ -43,6 +43,8 @@ using Infrastructure.Repository.UserCore;
 using Infrastructure.Repository.UserExperience;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -63,9 +65,12 @@ using Sonar.Infrastructure.Repository.UserCore;
 using Sonar.Infrastructure.Repository.UserExperience;
 using Sonar.Middleware;
 using System.Text;
+using System.Text.Json;
 using Application.Abstractions.Interfaces.Services.Chat;
 using Sonar.HealthChecks;
 using Flac = Application.Services.File.Flac;
+using Microsoft.Extensions.DependencyInjection;
+using Application.Response;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -206,6 +211,41 @@ builder.Services.AddAuthentication(options =>
                 if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs/chat"))
                     ctx.Token = accessToken;
                 return Task.CompletedTask;
+            },
+            OnChallenge = context =>
+            {
+                // Проверяем, требует ли endpoint аутентификации
+                // Если endpoint имеет [AllowAnonymous], не обрабатываем challenge
+                var endpoint = context.HttpContext.GetEndpoint();
+                if (endpoint?.Metadata.GetMetadata<Microsoft.AspNetCore.Authorization.IAllowAnonymous>() != null)
+                {
+                    // Позволяем стандартному поведению работать для анонимных endpoints
+                    return Task.CompletedTask;
+                }
+                
+                // Предотвращаем стандартный ответ 401 от JWT Bearer
+                // HandleResponse() останавливает дальнейшую обработку запроса
+                context.HandleResponse();
+                
+                // Проверяем, что ответ еще не начат
+                if (context.Response.HasStarted)
+                {
+                    return Task.CompletedTask;
+                }
+                
+                // Устанавливаем правильный формат ответа
+                context.Response.StatusCode = 401;
+                context.Response.ContentType = "application/json";
+                
+                var unauthorizedResponse = new UnauthorizedResponse();
+                var serializerOptions = new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                    Converters = { new ResponseJsonConverter() }
+                };
+                
+                string json = JsonSerializer.Serialize(unauthorizedResponse, serializerOptions);
+                return context.Response.WriteAsync(json);
             }
         };
     });
@@ -420,6 +460,19 @@ builder.Services.AddSingleton<IFileFormatInspector>(new FileFormatInspector(
 builder.Services.AddSingleton<IFileStorageService, FileStorageService>();
 builder.Services.AddHttpClient();
 builder.Services.AddHttpContextAccessor();
+
+// Add gRPC client for Analytics Service
+builder.Services.AddGrpcClient<Analytics.API.Analytics.AnalyticsClient>(o =>
+{
+    o.Address = new Uri(builder.Configuration["Analytics:GrpcUrl"] 
+        ?? throw new InvalidOperationException("Analytics:GrpcUrl not configured"));
+});
+
+builder.Services.AddGrpcClient<Analytics.API.Recommendations.RecommendationsClient>(o =>
+{
+    o.Address = new Uri(builder.Configuration["Analytics:GrpcUrl"]
+        ?? throw new InvalidOperationException("Analytics:GrpcUrl not configured"));
+});
 
 #endregion
 

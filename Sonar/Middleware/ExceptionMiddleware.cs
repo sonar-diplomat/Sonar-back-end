@@ -27,12 +27,27 @@ public class ExceptionMiddleware(RequestDelegate next, IHostEnvironment environm
         }
         catch (Exception ex)
         {
-            await HandleExceptionAsync(context, ex);
+            // Проверяем, что ответ еще не начат (например, если OnChallenge уже установил ответ)
+            if (!context.Response.HasStarted)
+            {
+                await HandleExceptionAsync(context, ex);
+            }
+            else
+            {
+                // Если ответ уже начат, просто пробрасываем исключение дальше
+                throw;
+            }
         }
     }
 
     private async Task HandleExceptionAsync(HttpContext context, Exception ex)
     {
+        // Проверяем, что ответ еще не начат (например, если OnChallenge уже установил ответ)
+        if (context.Response.HasStarted)
+        {
+            return;
+        }
+        
         if (ex is not Response appResponse)
         {
             if (environment.IsDevelopment())

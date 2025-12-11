@@ -1,6 +1,7 @@
 using Application.Abstractions.Interfaces.Services;
 using Application.DTOs.Report;
 using Application.DTOs.User;
+using Application.Extensions;
 using Application.Response;
 using Entities.Enums;
 using Entities.Models.Report;
@@ -8,6 +9,7 @@ using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using ReportModel = Entities.Models.Report.Report;
 
 namespace Sonar.Controllers.Report;
@@ -201,18 +203,44 @@ public class ReportController(
     /// <summary>
     /// Retrieves all available report reason types (e.g., spam, harassment, inappropriate content).
     /// </summary>
-    /// <returns>List of report reason type DTOs with recommended suspension durations.</returns>
+    /// <returns>List of report reason type DTOs with recommended suspension durations and applicable entity types.</returns>
     /// <response code="200">Report reason types retrieved successfully.</response>
     [HttpGet("reason-types")]
     [ProducesResponseType(typeof(OkResponse<IEnumerable<ReportReasonTypeDTO>>), StatusCodes.Status200OK)]
     public async Task<ActionResult<IEnumerable<ReportReasonTypeDTO>>> GetReasonTypes()
     {
-        IEnumerable<ReportReasonType> reasonTypes = (await reportReasonTypeService.GetAllAsync()).ToList();
+        var allReasons = await reportReasonTypeService.GetAllQueryableAsync();
+        var reasonTypes = await allReasons
+            .SnInclude(rt => rt.ApplicableEntityTypes)
+            .ToListAsync();
         IEnumerable<ReportReasonTypeDTO> dtos = reasonTypes.Select(rt => new ReportReasonTypeDTO
         {
             Id = rt.Id,
             Name = rt.Name,
-            RecommendedSuspensionDuration = rt.RecommendedSuspensionDuration
+            RecommendedSuspensionDuration = rt.RecommendedSuspensionDuration,
+            ApplicableEntityTypeIds = rt.ApplicableEntityTypes?.Select(aet => aet.Id).ToList() ?? new List<int>()
+        });
+        throw ResponseFactory.Create<OkResponse<IEnumerable<ReportReasonTypeDTO>>>(dtos,
+            ["Reason types retrieved successfully"]);
+    }
+
+    /// <summary>
+    /// Retrieves report reason types applicable to a specific entity type.
+    /// </summary>
+    /// <param name="entityTypeId">The ID of the entity type.</param>
+    /// <returns>List of report reason type DTOs applicable to the specified entity type.</returns>
+    /// <response code="200">Report reason types retrieved successfully.</response>
+    [HttpGet("reason-types/by-entity-type/{entityTypeId}")]
+    [ProducesResponseType(typeof(OkResponse<IEnumerable<ReportReasonTypeDTO>>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IEnumerable<ReportReasonTypeDTO>>> GetReasonTypesByEntityType(int entityTypeId)
+    {
+        IEnumerable<ReportReasonType> reasonTypes = (await reportReasonTypeService.GetByEntityTypeIdAsync(entityTypeId)).ToList();
+        IEnumerable<ReportReasonTypeDTO> dtos = reasonTypes.Select(rt => new ReportReasonTypeDTO
+        {
+            Id = rt.Id,
+            Name = rt.Name,
+            RecommendedSuspensionDuration = rt.RecommendedSuspensionDuration,
+            ApplicableEntityTypeIds = rt.ApplicableEntityTypes?.Select(aet => aet.Id).ToList() ?? new List<int>()
         });
         throw ResponseFactory.Create<OkResponse<IEnumerable<ReportReasonTypeDTO>>>(dtos,
             ["Reason types retrieved successfully"]);
@@ -314,12 +342,12 @@ public class ReportController(
                 Id = report.ReportableEntityType.Id,
                 Name = report.ReportableEntityType.Name
             },
-            Reasons = report.ReportReasonType.Select(r => new ReportReasonTypeDTO
+            ReportReasonType = report.ReportReasonType != null ? new ReportReasonTypeDTO
             {
-                Id = r.Id,
-                Name = r.Name,
-                RecommendedSuspensionDuration = r.RecommendedSuspensionDuration
-            }).ToList()
+                Id = report.ReportReasonType.Id,
+                Name = report.ReportReasonType.Name,
+                RecommendedSuspensionDuration = report.ReportReasonType.RecommendedSuspensionDuration
+            } : null
         };
     }
 }

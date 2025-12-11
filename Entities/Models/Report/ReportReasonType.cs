@@ -18,4 +18,10 @@ public class ReportReasonType : BaseModel
     /// </summary>
     [JsonIgnore]
     public virtual ICollection<Report> Reports { get; set; }
+
+    /// <summary>
+    /// Entity types for which this reason is applicable
+    /// </summary>
+    [JsonIgnore]
+    public virtual ICollection<ReportableEntityType> ApplicableEntityTypes { get; set; }
 }
