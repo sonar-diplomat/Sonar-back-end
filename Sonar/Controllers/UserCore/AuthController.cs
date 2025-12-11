@@ -48,7 +48,7 @@ public class AuthController(
                 .Select(e => e.ErrorMessage)
                 .Where(m => !string.IsNullOrEmpty(m))
                 .ToList();
-            
+
             throw ResponseFactory.Create<BadRequestResponse>(validationErrors.ToArray());
         }
 
@@ -63,7 +63,7 @@ public class AuthController(
 
                     await emailSenderService.SendEmailAsync(
                         user.Email,
-                        MailGunTemplates.confirmEmail,
+                        MailTemplates.confirmEmail,
                         new Dictionary<string, string>
                         {
                             { "route", "confirm-email" },
@@ -72,9 +72,6 @@ public class AuthController(
                         }
                     );
                 }
-
-                // Manual handling for avatar: only delete if not default (NoAction on FK)
-                // The deletion of avatar file/record should be done explicitly in service layer when removing user.
             });
 
         throw ResponseFactory.Create<OkResponse>(["Registration successful. Please check your email to confirm your account."]);
@@ -118,7 +115,7 @@ public class AuthController(
             string code = await userManager.GenerateTwoFactorTokenAsync(user, TokenOptions.DefaultEmailProvider);
             await emailSenderService.SendEmailAsync(
                 user.Email!,
-                MailGunTemplates.twoFA,
+                MailTemplates.twoFA,
                 new Dictionary<string, string>
                 {
                     { "code", code }
@@ -245,7 +242,7 @@ public class AuthController(
 
         await emailSenderService.SendEmailAsync(
             newEmail,
-            MailGunTemplates.confirmEmail,
+            MailTemplates.confirmEmail,
             new Dictionary<string, string>
             {
                 { "route", "confirm-email-change" },
@@ -375,7 +372,7 @@ public class AuthController(
         string resetToken = await userManager.GeneratePasswordResetTokenAsync(user);
         await emailSenderService.SendEmailAsync(
             user.Email,
-            MailGunTemplates.passwordRecovery,
+            MailTemplates.passwordRecovery,
             new Dictionary<string, string>
             {
                 { "route", $"approve-change/{resetToken}" }
@@ -404,7 +401,7 @@ public class AuthController(
             throw ResponseFactory.Create<BadRequestResponse>(["Email is required"]);
 
         User? user = await userManager.FindByEmailAsync(dto.Email);
-        
+
         // Для безопасности всегда возвращаем успешный ответ, даже если пользователь не найден
         if (user == null || !user.EmailConfirmed)
         {
@@ -413,10 +410,10 @@ public class AuthController(
         }
 
         string resetToken = await userManager.GeneratePasswordResetTokenAsync(user);
-        
+
         await emailSenderService.SendEmailAsync(
             user.Email!,
-            MailGunTemplates.passwordRecovery,
+            MailTemplates.passwordRecovery,
             new Dictionary<string, string>
             {
                 { "route", "reset-password" },
