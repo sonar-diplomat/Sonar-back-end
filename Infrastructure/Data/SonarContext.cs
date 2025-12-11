@@ -98,7 +98,15 @@ public class SonarContext(DbContextOptions<SonarContext> options)
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
-        builder.Entity<Queue>().HasMany(q => q.Tracks).WithMany(t => t.Queues);
+        builder.Entity<QueueTrack>()
+            .HasOne(qt => qt.Queue)
+            .WithMany(q => q.QueueTracks)
+            .HasForeignKey(qt => qt.QueueId);
+
+        builder.Entity<QueueTrack>()
+            .HasOne(qt => qt.Track)
+            .WithMany(t => t.QueueTracks)
+            .HasForeignKey(qt => qt.TrackId);
 
         builder.Entity<Track>().HasMany(t => t.QueuesWherePrimary)
             .WithOne(q => q.CurrentTrack)

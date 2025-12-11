@@ -28,5 +28,5 @@ public class Queue : BaseModel
     [JsonIgnore]
     public virtual UserState UserState { get; set; }
     [JsonIgnore]
-    public virtual ICollection<Track> Tracks { get; set; }
+    public virtual ICollection<QueueTrack> QueueTracks { get; set; }
 }

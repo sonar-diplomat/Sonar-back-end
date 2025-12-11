@@ -13,44 +13,49 @@ public class QueueService(
 )
     : GenericService<Queue>(repository), IQueueService
 {
-    public async Task AddTracksToQueueAsync(int queueId, IEnumerable<int> trackIds)
+    public async Task AddTrackToQueueAsync(int queueId, int trackId)
     {
         Queue queue = await GetQueueWithTracksAsync(queueId);
-        List<Track> tracksToAdd = new();
-        foreach (int trackId in trackIds)
+        Track track = await trackService.GetByIdValidatedAsync(trackId);
+        int maxOrder = queue.QueueTracks.Any() ? queue.QueueTracks.Max(qt => qt.Order) : -1;
+        QueueTrack queueTrack = new()
         {
-            Track track = await trackService.GetByIdValidatedAsync(trackId);
-            tracksToAdd.Add(track);
-        }
-
-        foreach (Track track in tracksToAdd)
-        {
-            if (queue.Tracks.All(t => t.Id != track.Id))
-            {
-                queue.Tracks.Add(track);
-            }
-        }
-
+            QueueId = queueId,
+            TrackId = trackId,
+            Order = maxOrder + 1,
+            IsManuallyAdded = true
+        };
+        queue.QueueTracks.Add(queueTrack);
         await repository.UpdateAsync(queue);
     }
 
-    public async Task RemoveTracksFromQueueAsync(int queueId, IEnumerable<int> trackIds)
+    public async Task RemoveTrackFromQueueAsync(int queueId, int trackId)
     {
         Queue queue = await GetQueueWithTracksAsync(queueId);
-        List<Track> tracksToRemove = queue.Tracks.Where(t => trackIds.Contains(t.Id)).ToList();
-        
-        foreach (Track track in tracksToRemove)
+        QueueTrack? queueTrack = queue.QueueTracks.FirstOrDefault(qt => qt.TrackId == trackId);
+        if (queueTrack != null)
         {
-            queue.Tracks.Remove(track);
+            queue.QueueTracks.Remove(queueTrack);
+            List<QueueTrack> remainingTracks = queue.QueueTracks
+                .Where(qt => qt.Order > queueTrack.Order)
+                .OrderBy(qt => qt.Order)
+                .ToList();
+            foreach (var qt in remainingTracks)
+            {
+                qt.Order--;
+            }
+            await repository.UpdateAsync(queue);
         }
-
-        await repository.UpdateAsync(queue);
     }
 
     public async Task<Queue> GetQueueWithTracksAsync(int queueId)
     {
-        return await repository.SnInclude(q => q.Tracks)
+        return await repository
+            .SnInclude(q => q.QueueTracks.OrderBy(qt => qt.Order))
+            .ThenInclude(qt => qt.Track)
             .ThenInclude(t => t.TrackArtists)
+            .Include(q => q.QueueTracks)
+            .ThenInclude(qt => qt.Track.Genre)
             .Include(q => q.CurrentTrack)
             .Include(q => q.Collection)
             .GetByIdValidatedAsync(queueId);
@@ -59,19 +64,20 @@ public class QueueService(
     public async Task SaveQueueAsync(int queueId, IEnumerable<int> trackIds)
     {
         Queue queue = await GetQueueWithTracksAsync(queueId);
-        queue.Tracks.Clear();
-        List<Track> tracksToAdd = new();
+        queue.QueueTracks.Clear();
+        int order = 0;
         foreach (int trackId in trackIds)
         {
             Track track = await trackService.GetByIdValidatedAsync(trackId);
-            tracksToAdd.Add(track);
+            QueueTrack queueTrack = new()
+            {
+                QueueId = queueId,
+                TrackId = trackId,
+                Order = order++,
+                IsManuallyAdded = false
+            };
+            queue.QueueTracks.Add(queueTrack);
         }
-
-        foreach (Track track in tracksToAdd)
-        {
-            queue.Tracks.Add(track);
-        }
-
         await repository.UpdateAsync(queue);
     }
 }
