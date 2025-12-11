@@ -11,9 +11,9 @@ using Entities.Models.File;
 using Entities.Models.Music;
 using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Http;
-using System.Security.Cryptography;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Cryptography;
 
 namespace Application.Services.UserCore;
 
@@ -236,6 +236,7 @@ public class UserService(
         Func<User, Task> sendConfirmationEmailAsync)
     {
         await using var transaction = await repository.BeginTransactionAsync();
+        bool rolledBack = false;
 
         try
         {
@@ -245,10 +246,23 @@ public class UserService(
             if (!result.Succeeded)
             {
                 await transaction.RollbackAsync();
+                rolledBack = true;
                 ThrowIdentityErrors(result, userManager);
             }
 
-            await sendConfirmationEmailAsync(user);
+            try
+            {
+                await sendConfirmationEmailAsync(user);
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                rolledBack = true;
+                throw ResponseFactory.Create<ExpectationFailedResponse>([
+                    "Не удалось отправить письмо для подтверждения почты. Попробуйте еще раз позже."
+                ]);
+            }
+
             await transaction.CommitAsync();
         }
         catch (DbUpdateException dbEx) when (dbEx.InnerException?.Message.Contains("duplicate") == true ||
@@ -256,7 +270,11 @@ public class UserService(
                                              dbEx.InnerException?.Message.Contains("UserNameIndex") == true ||
                                              dbEx.InnerException?.Message.Contains("EmailIndex") == true)
         {
-            await transaction.RollbackAsync();
+            if (!rolledBack)
+            {
+                await transaction.RollbackAsync();
+                rolledBack = true;
+            }
             string errorMessage = dbEx.InnerException?.Message ?? dbEx.Message;
 
             if (errorMessage.Contains("UserName") || errorMessage.Contains("UserNameIndex"))
@@ -267,10 +285,16 @@ public class UserService(
 
             throw ResponseFactory.Create<ConflictResponse>(["User with such data already exists"]);
         }
-        catch
+        catch (Exception ex)
         {
-            await transaction.RollbackAsync();
-            throw;
+            if (!rolledBack)
+            {
+                await transaction.RollbackAsync();
+                rolledBack = true;
+            }
+            throw ResponseFactory.Create<ExpectationFailedResponse>([
+                "Регистрация не завершена из-за ошибки. Попробуйте еще раз позже."
+            ]);
         }
     }
 
