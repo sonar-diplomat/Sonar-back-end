@@ -56,7 +56,7 @@ public class UserStateController(
     [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult>
-        UpdateListeningTarget(int trackId, int? collectionId)
+        UpdateListeningTarget(int trackId, int? collectionId = null)
     {
         UserState userState = await userStateService.GetByUserIdValidatedAsync((await CheckAccessFeatures([])).Id);
         await userStateService.UpdateListeningTargetAsync(userState.Id, trackId, collectionId);

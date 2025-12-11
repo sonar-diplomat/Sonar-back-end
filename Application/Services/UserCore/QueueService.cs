@@ -16,13 +16,47 @@ public class QueueService(
     public async Task AddTrackToQueueAsync(int queueId, int trackId)
     {
         Queue queue = await GetQueueWithTracksAsync(queueId);
-        Track track = await trackService.GetByIdValidatedAsync(trackId);
-        int maxOrder = queue.QueueTracks.Any() ? queue.QueueTracks.Max(qt => qt.Order) : -1;
+        await trackService.GetByIdValidatedAsync(trackId);
+        QueueTrack? currentQueueTrack = queue.QueueTracks.FirstOrDefault(qt => qt.TrackId == queue.CurrentTrackId);
+        List<QueueTrack> manuallyAddedTracks = queue.QueueTracks
+            .Where(qt => qt.IsManuallyAdded && qt.TrackId != queue.CurrentTrackId)
+            .ToList();
+        int newOrder;
+        if (manuallyAddedTracks.Any())
+        {
+            int maxManualOrder = manuallyAddedTracks.Max(qt => qt.Order);
+            newOrder = maxManualOrder + 1;
+            List<QueueTrack> tracksToShift = queue.QueueTracks
+                .Where(qt => qt.Order > maxManualOrder)
+                .ToList();
+            
+            foreach (var qt in tracksToShift)
+            {
+                qt.Order++;
+            }
+        }
+        else if (currentQueueTrack != null)
+        {
+            newOrder = 1;
+            foreach (var qt in queue.QueueTracks.Where(qt => qt.Order >= 1))
+            {
+                qt.Order++;
+            }
+        }
+        else
+        {
+            newOrder = 0;
+            foreach (var qt in queue.QueueTracks)
+            {
+                qt.Order++;
+            }
+        }
+        
         QueueTrack queueTrack = new()
         {
             QueueId = queueId,
             TrackId = trackId,
-            Order = maxOrder + 1,
+            Order = newOrder,
             IsManuallyAdded = true
         };
         queue.QueueTracks.Add(queueTrack);
