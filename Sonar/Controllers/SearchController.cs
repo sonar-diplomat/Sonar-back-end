@@ -20,16 +20,16 @@ public class SearchController(
     : BaseController(userManager)
 {
     /// <summary>
-    /// Универсальный поиск по всем типам контента.
+    /// Universal search across all content types.
     /// </summary>
-    /// <param name="query">Поисковый запрос.</param>
-    /// <param name="category">Категория поиска: "all" | "tracks" | "album" | "playlist" | "artist" | "users".</param>
-    /// <param name="limit">Количество результатов на категорию (по умолчанию: 20).</param>
-    /// <param name="offset">Смещение для пагинации (по умолчанию: 0).</param>
-    /// <returns>SearchResultDTO с результатами по всем категориям.</returns>
-    /// <response code="200">Поиск выполнен успешно.</response>
-    /// <response code="400">Неверные параметры запроса.</response>
-    /// <response code="401">Требуется авторизация (для некоторых категорий может быть опционально).</response>
+    /// <param name="query">Search query.</param>
+    /// <param name="category">Search category: "all" | "tracks" | "album" | "playlist" | "artist" | "users".</param>
+    /// <param name="limit">Number of results per category (default: 20).</param>
+    /// <param name="offset">Pagination offset (default: 0).</param>
+    /// <returns>SearchResultDTO with results across all categories.</returns>
+    /// <response code="200">Search completed successfully.</response>
+    /// <response code="400">Invalid request parameters.</response>
+    /// <response code="401">Authorization required (optional for some categories).</response>
     [HttpGet]
     [ProducesResponseType(typeof(OkResponse<SearchResultDTO>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(BadRequestResponse), StatusCodes.Status400BadRequest)]
@@ -51,43 +51,46 @@ public class SearchController(
         }
         catch
         {
-            // Пользователь не авторизован - это нормально для публичного поиска
+            // User is not authorized - this is normal for public search
         }
 
         SearchResultDTO result = await searchService.SearchAsync(query, category, limit, offset, userId);
 
-        // Отправка события Search в Analytics (асинхронно, без ожидания)
-        _ = Task.Run(async () =>
+        // Send Search event to Analytics (only for authorized users)
+        if (userId.HasValue)
         {
-            try
+            _ = Task.Run(async () =>
             {
-                await analyticsClient.AddUserEventAsync(new UserEventRequest
+                try
                 {
-                    UserId = userId ?? 0,
-                    EventType = EventType.Search,
-                    ContextType = ContextType.ContextSearch,
-                    Payload = JsonSerializer.Serialize(new { query, category }),
-                    Timestamp = Timestamp.FromDateTime(DateTime.UtcNow)
-                });
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Failed to send Search event to Analytics");
-            }
-        });
+                    await analyticsClient.AddUserEventAsync(new UserEventRequest
+                    {
+                        UserId = userId.Value,
+                        EventType = EventType.Search,
+                        ContextType = ContextType.ContextSearch,
+                        Payload = JsonSerializer.Serialize(new { query, category }),
+                        Timestamp = Timestamp.FromDateTime(DateTime.UtcNow)
+                    });
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Failed to send Search event to Analytics");
+                }
+            });
+        }
 
         throw ResponseFactory.Create<OkResponse<SearchResultDTO>>(result, ["Search completed successfully"]);
     }
 
     /// <summary>
-    /// Поиск треков.
+    /// Search tracks.
     /// </summary>
-    /// <param name="query">Поисковый запрос.</param>
-    /// <param name="limit">Количество результатов (по умолчанию: 20).</param>
-    /// <param name="offset">Смещение для пагинации (по умолчанию: 0).</param>
-    /// <returns>SearchTracksResultDTO с результатами поиска треков.</returns>
-    /// <response code="200">Поиск выполнен успешно.</response>
-    /// <response code="400">Неверные параметры запроса.</response>
+    /// <param name="query">Search query.</param>
+    /// <param name="limit">Number of results (default: 20).</param>
+    /// <param name="offset">Pagination offset (default: 0).</param>
+    /// <returns>SearchTracksResultDTO with track search results.</returns>
+    /// <response code="200">Search completed successfully.</response>
+    /// <response code="400">Invalid request parameters.</response>
     [HttpGet("tracks")]
     [ProducesResponseType(typeof(OkResponse<SearchTracksResultDTO>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(BadRequestResponse), StatusCodes.Status400BadRequest)]
@@ -107,22 +110,46 @@ public class SearchController(
         }
         catch
         {
-            // Пользователь не авторизован
+            // User is not authorized
         }
 
         SearchTracksResultDTO result = await searchService.SearchTracksAsync(query, limit, offset, userId);
+
+        // Send Search event to Analytics (only for authorized users)
+        if (userId.HasValue)
+        {
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await analyticsClient.AddUserEventAsync(new UserEventRequest
+                    {
+                        UserId = userId.Value,
+                        EventType = EventType.Search,
+                        ContextType = ContextType.ContextSearch,
+                        Payload = JsonSerializer.Serialize(new { query, category = "tracks" }),
+                        Timestamp = Timestamp.FromDateTime(DateTime.UtcNow)
+                    });
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Failed to send SearchTracks event to Analytics");
+                }
+            });
+        }
+
         throw ResponseFactory.Create<OkResponse<SearchTracksResultDTO>>(result, ["Tracks search completed successfully"]);
     }
 
     /// <summary>
-    /// Поиск альбомов.
+    /// Search albums.
     /// </summary>
-    /// <param name="query">Поисковый запрос.</param>
-    /// <param name="limit">Количество результатов (по умолчанию: 20).</param>
-    /// <param name="offset">Смещение для пагинации (по умолчанию: 0).</param>
-    /// <returns>SearchAlbumsResultDTO с результатами поиска альбомов.</returns>
-    /// <response code="200">Поиск выполнен успешно.</response>
-    /// <response code="400">Неверные параметры запроса.</response>
+    /// <param name="query">Search query.</param>
+    /// <param name="limit">Number of results (default: 20).</param>
+    /// <param name="offset">Pagination offset (default: 0).</param>
+    /// <returns>SearchAlbumsResultDTO with album search results.</returns>
+    /// <response code="200">Search completed successfully.</response>
+    /// <response code="400">Invalid request parameters.</response>
     [HttpGet("albums")]
     [ProducesResponseType(typeof(OkResponse<SearchAlbumsResultDTO>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(BadRequestResponse), StatusCodes.Status400BadRequest)]
@@ -142,22 +169,46 @@ public class SearchController(
         }
         catch
         {
-            // Пользователь не авторизован
+            // User is not authorized
         }
 
         SearchAlbumsResultDTO result = await searchService.SearchAlbumsAsync(query, limit, offset, userId);
+
+        // Send Search event to Analytics (only for authorized users)
+        if (userId.HasValue)
+        {
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await analyticsClient.AddUserEventAsync(new UserEventRequest
+                    {
+                        UserId = userId.Value,
+                        EventType = EventType.Search,
+                        ContextType = ContextType.ContextSearch,
+                        Payload = JsonSerializer.Serialize(new { query, category = "albums" }),
+                        Timestamp = Timestamp.FromDateTime(DateTime.UtcNow)
+                    });
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Failed to send SearchAlbums event to Analytics");
+                }
+            });
+        }
+
         throw ResponseFactory.Create<OkResponse<SearchAlbumsResultDTO>>(result, ["Albums search completed successfully"]);
     }
 
     /// <summary>
-    /// Поиск плейлистов.
+    /// Search playlists.
     /// </summary>
-    /// <param name="query">Поисковый запрос.</param>
-    /// <param name="limit">Количество результатов (по умолчанию: 20).</param>
-    /// <param name="offset">Смещение для пагинации (по умолчанию: 0).</param>
-    /// <returns>SearchPlaylistsResultDTO с результатами поиска плейлистов.</returns>
-    /// <response code="200">Поиск выполнен успешно.</response>
-    /// <response code="400">Неверные параметры запроса.</response>
+    /// <param name="query">Search query.</param>
+    /// <param name="limit">Number of results (default: 20).</param>
+    /// <param name="offset">Pagination offset (default: 0).</param>
+    /// <returns>SearchPlaylistsResultDTO with playlist search results.</returns>
+    /// <response code="200">Search completed successfully.</response>
+    /// <response code="400">Invalid request parameters.</response>
     [HttpGet("playlists")]
     [ProducesResponseType(typeof(OkResponse<SearchPlaylistsResultDTO>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(BadRequestResponse), StatusCodes.Status400BadRequest)]
@@ -177,22 +228,45 @@ public class SearchController(
         }
         catch
         {
-            // Пользователь не авторизован
+            // User is not authorized
         }
 
         SearchPlaylistsResultDTO result = await searchService.SearchPlaylistsAsync(query, limit, offset, userId);
+
+        if (userId.HasValue)
+        {
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await analyticsClient.AddUserEventAsync(new UserEventRequest
+                    {
+                        UserId = userId.Value,
+                        EventType = EventType.Search,
+                        ContextType = ContextType.ContextSearch,
+                        Payload = JsonSerializer.Serialize(new { query, category = "playlists" }),
+                        Timestamp = Timestamp.FromDateTime(DateTime.UtcNow)
+                    });
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Failed to send SearchPlaylists event to Analytics");
+                }
+            });
+        }
+
         throw ResponseFactory.Create<OkResponse<SearchPlaylistsResultDTO>>(result, ["Playlists search completed successfully"]);
     }
 
     /// <summary>
-    /// Поиск артистов.
+    /// Search artists.
     /// </summary>
-    /// <param name="query">Поисковый запрос.</param>
-    /// <param name="limit">Количество результатов (по умолчанию: 20).</param>
-    /// <param name="offset">Смещение для пагинации (по умолчанию: 0).</param>
-    /// <returns>SearchArtistsResultDTO с результатами поиска артистов.</returns>
-    /// <response code="200">Поиск выполнен успешно.</response>
-    /// <response code="400">Неверные параметры запроса.</response>
+    /// <param name="query">Search query.</param>
+    /// <param name="limit">Number of results (default: 20).</param>
+    /// <param name="offset">Pagination offset (default: 0).</param>
+    /// <returns>SearchArtistsResultDTO with artist search results.</returns>
+    /// <response code="200">Search completed successfully.</response>
+    /// <response code="400">Invalid request parameters.</response>
     [HttpGet("artists")]
     [ProducesResponseType(typeof(OkResponse<SearchArtistsResultDTO>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(BadRequestResponse), StatusCodes.Status400BadRequest)]
@@ -212,22 +286,44 @@ public class SearchController(
         }
         catch
         {
-            // Пользователь не авторизован
         }
 
         SearchArtistsResultDTO result = await searchService.SearchArtistsAsync(query, limit, offset, userId);
+
+        if (userId.HasValue)
+        {
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await analyticsClient.AddUserEventAsync(new UserEventRequest
+                    {
+                        UserId = userId.Value,
+                        EventType = EventType.Search,
+                        ContextType = ContextType.ContextSearch,
+                        Payload = JsonSerializer.Serialize(new { query, category = "artists" }),
+                        Timestamp = Timestamp.FromDateTime(DateTime.UtcNow)
+                    });
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Failed to send SearchArtists event to Analytics");
+                }
+            });
+        }
+
         throw ResponseFactory.Create<OkResponse<SearchArtistsResultDTO>>(result, ["Artists search completed successfully"]);
     }
 
     /// <summary>
-    /// Поиск пользователей.
+    /// Search users.
     /// </summary>
-    /// <param name="query">Поисковый запрос.</param>
-    /// <param name="limit">Количество результатов (по умолчанию: 20).</param>
-    /// <param name="offset">Смещение для пагинации (по умолчанию: 0).</param>
-    /// <returns>SearchUsersResultDTO с результатами поиска пользователей.</returns>
-    /// <response code="200">Поиск выполнен успешно.</response>
-    /// <response code="400">Неверные параметры запроса.</response>
+    /// <param name="query">Search query.</param>
+    /// <param name="limit">Number of results (default: 20).</param>
+    /// <param name="offset">Pagination offset (default: 0).</param>
+    /// <returns>SearchUsersResultDTO with user search results.</returns>
+    /// <response code="200">Search completed successfully.</response>
+    /// <response code="400">Invalid request parameters.</response>
     [HttpGet("users")]
     [ProducesResponseType(typeof(OkResponse<SearchUsersResultDTO>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(BadRequestResponse), StatusCodes.Status400BadRequest)]
@@ -247,21 +343,45 @@ public class SearchController(
         }
         catch
         {
-            // Пользователь не авторизован
+            // User is not authorized
         }
 
         SearchUsersResultDTO result = await searchService.SearchUsersAsync(query, limit, offset, userId);
+
+        // Send Search event to Analytics (only for authorized users)
+        if (userId.HasValue)
+        {
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await analyticsClient.AddUserEventAsync(new UserEventRequest
+                    {
+                        UserId = userId.Value,
+                        EventType = EventType.Search,
+                        ContextType = ContextType.ContextSearch,
+                        Payload = JsonSerializer.Serialize(new { query, category = "users" }),
+                        Timestamp = Timestamp.FromDateTime(DateTime.UtcNow)
+                    });
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Failed to send SearchUsers event to Analytics");
+                }
+            });
+        }
+
         throw ResponseFactory.Create<OkResponse<SearchUsersResultDTO>>(result, ["Users search completed successfully"]);
     }
 
     /// <summary>
-    /// Получение предложений для автодополнения поискового запроса.
+    /// Get suggestions for search query autocomplete.
     /// </summary>
-    /// <param name="query">Частичный поисковый запрос.</param>
-    /// <param name="limit">Количество предложений (по умолчанию: 10).</param>
-    /// <returns>Список предложений для автодополнения.</returns>
-    /// <response code="200">Предложения получены успешно.</response>
-    /// <response code="400">Неверные параметры запроса.</response>
+    /// <param name="query">Partial search query.</param>
+    /// <param name="limit">Number of suggestions (default: 10).</param>
+    /// <returns>List of autocomplete suggestions.</returns>
+    /// <response code="200">Suggestions retrieved successfully.</response>
+    /// <response code="400">Invalid request parameters.</response>
     [HttpGet("suggestions")]
     [ProducesResponseType(typeof(OkResponse<IEnumerable<string>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(BadRequestResponse), StatusCodes.Status400BadRequest)]
@@ -277,11 +397,11 @@ public class SearchController(
     }
 
     /// <summary>
-    /// Получение популярных поисковых запросов.
+    /// Get popular search queries.
     /// </summary>
-    /// <param name="limit">Количество популярных запросов (по умолчанию: 10).</param>
-    /// <returns>Список популярных поисковых запросов.</returns>
-    /// <response code="200">Популярные запросы получены успешно.</response>
+    /// <param name="limit">Number of popular queries (default: 10).</param>
+    /// <returns>List of popular search queries.</returns>
+    /// <response code="200">Popular queries retrieved successfully.</response>
     [HttpGet("popular")]
     [ProducesResponseType(typeof(OkResponse<IEnumerable<string>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetPopularQueries([FromQuery] int limit = 10)

@@ -95,3 +95,4 @@ jobs:
               -e ConnectionStrings__SonarContext='${{ secrets.CONNECTION_STRING_AWS }}' \
               -e AnalyticsService__BaseUrl='${{ vars.ANALYTICS_SERVICE_URL }}' \
               $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+              /usr/local/bin/cleanup-docker-images.sh
