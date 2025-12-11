@@ -78,7 +78,7 @@ public class Track : BaseModel
     [JsonIgnore]
     public virtual ICollection<Collection> Collections { get; set; }
     [JsonIgnore]
-    public virtual ICollection<Queue> Queues { get; set; }
+    public virtual ICollection<QueueTrack> QueueTracks { get; set; }
     [JsonIgnore]
     public virtual ICollection<TrackMoodTag> TrackMoodTags { get; set; }
 }

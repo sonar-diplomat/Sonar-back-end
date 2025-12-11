@@ -83,7 +83,7 @@ public class UserStateController(
     public async Task<IActionResult> AddToQueue([FromBody] int trackId)
     {
         User user = await CheckAccessFeatures([AccessFeatureStruct.ListenContent]);
-        await userStateService.AddTracksToUserQueueAsync(user.Id, [trackId]);
+        await userStateService.AddTrackToUserQueueAsync(user.Id, trackId);
         throw ResponseFactory.Create<OkResponse>(["Track added to queue successfully."]);
     }
 
@@ -107,7 +107,7 @@ public class UserStateController(
     public async Task<IActionResult> DeleteFromQueue([FromBody] int trackId)
     {
         User user = await CheckAccessFeatures([AccessFeatureStruct.ListenContent]);
-        await userStateService.RemoveTracksFromUserQueueAsync(user.Id, [trackId]);
+        await userStateService.RemoveTrackFromUserQueueAsync(user.Id, trackId);
         throw ResponseFactory.Create<OkResponse>(["Track removed from queue successfully."]);
     }
 
@@ -133,24 +133,24 @@ public class UserStateController(
             Position = queue.Position,
             CollectionId = queue.CollectionId,
             CurrentTrackId = queue.CurrentTrackId,
-            Tracks = queue.Tracks.Select(t => new TrackDTO
-            {
-                Id = t.Id,
-                Title = t.Title,
-                DurationInSeconds = (int)(t.Duration?.TotalSeconds ?? 0),
-                IsExplicit = t.IsExplicit,
-                DrivingDisturbingNoises = t.DrivingDisturbingNoises,
-                CoverId = t.CoverId,
-                AudioFileId = t.LowQualityAudioFileId,
-                Genre = t.Genre != null
-                    ? new GenreDTO { Id = t.Genre.Id, Name = t.Genre.Name }
-                    : new GenreDTO { Id = 0, Name = string.Empty },
-                Artists = t.TrackArtists.Select(ta => new AuthorDTO
+            Tracks = queue.QueueTracks
+                .OrderBy(qt => qt.Order)
+                .Select(qt => new TrackDTO
                 {
-                    Pseudonym = ta.Pseudonym,
-                    ArtistId = ta.ArtistId
+                    Id = qt.Track.Id,
+                    Title = qt.Track.Title,
+                    DurationInSeconds = (int)(qt.Track.Duration?.TotalSeconds ?? 0),
+                    IsExplicit = qt.Track.IsExplicit,
+                    DrivingDisturbingNoises = qt.Track.DrivingDisturbingNoises,
+                    CoverId = qt.Track.CoverId,
+                    AudioFileId = qt.Track.LowQualityAudioFileId,
+                    Genre = new GenreDTO { Id = qt.Track.Genre.Id, Name = qt.Track.Genre.Name },
+                    Artists = qt.Track.TrackArtists.Select(ta => new AuthorDTO
+                    {
+                        Pseudonym = ta.Pseudonym,
+                        ArtistId = ta.ArtistId
+                    }).ToList()
                 }).ToList()
-            }).ToList()
         };
         throw ResponseFactory.Create<OkResponse<QueueDTO>>(dto, ["Queue retrieved successfully."]);
     }
