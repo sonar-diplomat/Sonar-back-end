@@ -493,6 +493,12 @@ builder.Services.AddGrpcClient<Analytics.API.Analytics.AnalyticsClient>(o =>
         ?? throw new InvalidOperationException("Analytics:GrpcUrl not configured"));
 });
 
+builder.Services.AddGrpcClient<Analytics.API.Recommendations.RecommendationsClient>(o =>
+{
+    o.Address = new Uri(builder.Configuration["Analytics:GrpcUrl"]
+        ?? throw new InvalidOperationException("Analytics:GrpcUrl not configured"));
+});
+
 #endregion
 
 WebApplication app = builder.Build();
