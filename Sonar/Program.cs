@@ -436,7 +436,7 @@ builder.Services.AddScoped<SmtpSettings>(_ =>
     {
         // Gmail SMTP: smtp.gmail.com, Port 587 (TLS) or 465 (SSL)
         Host = builder.Configuration["Smtp:Host"] ?? string.Empty,
-        Port = builder.Configuration.GetValue<int>("Smtp:Port", 587),
+        Port = int.TryParse(builder.Configuration["Smtp:Port"], out int smtpPort) ? smtpPort : 587,
         Username = builder.Configuration["Smtp:Username"] ?? string.Empty,
         Password = builder.Configuration["Smtp:Password"] ?? string.Empty,
         From = builder.Configuration["Smtp:From"] ?? string.Empty,
