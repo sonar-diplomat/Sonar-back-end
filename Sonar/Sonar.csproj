@@ -32,9 +32,10 @@
         <ProjectReference Include="..\Logging\Logging.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-        <Protobuf Include="Protos\analytics.proto" GrpcServices="Client" />
-    </ItemGroup>
+  <ItemGroup>
+    <Protobuf Include="Protos\analytics.proto" GrpcServices="Client" />
+    <Protobuf Include="Protos\recommendations.proto" GrpcServices="Client" AdditionalImportDirs="Protos" />
+  </ItemGroup>
 
     <ItemGroup>
         <Folder Include="Controllers\Chat\" />

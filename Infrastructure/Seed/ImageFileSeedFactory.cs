@@ -15,6 +15,34 @@ public class ImageFileSeedFactory
                 // TODO: Add url to default user image
                 Url = ""
             },
+            new ImageFile
+            {
+                Id = 2,
+                ItemName = "Default playlist",
+                // TODO: Add url to default user image
+                Url = ""
+            },
+            new ImageFile
+            {
+                Id = 3,
+                ItemName = "Default track",
+                // TODO: Add url to default user image
+                Url = ""
+            },
+            new ImageFile
+            {
+                Id = 4,
+                ItemName = "Default playlist negative",
+                // TODO: Add url to default user image
+                Url = ""
+            },
+            new ImageFile
+            {
+                Id = 5,
+                ItemName = "Default track negative",
+                // TODO: Add url to default user image
+                Url = ""
+            },
             // Sticker Images
             new ImageFile { Id = 100, ItemName = "Happy Face Sticker", Url = "image/stickers/happy.png" },
             new ImageFile { Id = 101, ItemName = "Sad Face Sticker", Url = "image/stickers/sad.png" },
