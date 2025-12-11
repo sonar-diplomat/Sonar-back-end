@@ -55,7 +55,7 @@ public class RecommendationsController(
 
         var response = await recommendationsClient.GetRecentCollectionsAsync(new GetRecentCollectionsRequest
         {
-            UserId = user.Id.ToString(),
+            UserId = user.Id,
             Limit = limit,
             Cursor = cursor ?? string.Empty
         });
@@ -89,7 +89,7 @@ public class RecommendationsController(
 
         var response = await recommendationsClient.GetRecentTracksAsync(new GetRecentTracksRequest
         {
-            UserId = user.Id.ToString(),
+            UserId = user.Id,
             Limit = limit,
             Cursor = cursor ?? string.Empty
         });
@@ -98,7 +98,7 @@ public class RecommendationsController(
         {
             TrackId = t.TrackId,
             LastPlayedAtUtc = t.LastPlayedAt.ToDateTime().ToUniversalTime(),
-            ContextId = string.IsNullOrWhiteSpace(t.ContextId) ? null : t.ContextId,
+            ContextId = t.ContextId == 0 ? null : t.ContextId,
             ContextType = (int)t.ContextType
         }).ToList();
 
