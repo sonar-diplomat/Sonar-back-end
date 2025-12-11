@@ -6,4 +6,5 @@ public interface IImageFileRepository : IGenericRepository<ImageFile>
 {
     Task<ImageFile> GetDefaultAsync();
     Task<ImageFile> GetFavoriteDefaultAsync();
+    Task<ImageFile> GetPlaylistDefaultAsync();
 }

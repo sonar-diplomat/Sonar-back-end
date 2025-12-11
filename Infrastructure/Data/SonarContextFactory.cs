@@ -10,10 +10,8 @@ public class SonarContextFactory : IDesignTimeDbContextFactory<SonarContext>
     {
         IConfigurationRoot configuration = new ConfigurationBuilder()
             .SetBasePath(Path.Combine(Directory.GetCurrentDirectory(), "../Sonar"))
-            .AddJsonFile("appsettings.json", false, true)
-            .AddJsonFile("appsettings.Development.json", true, true)
             .AddUserSecrets<SonarContext>()
-            .AddEnvironmentVariables()
+            //.AddEnvironmentVariables()
             .Build();
 
         DbContextOptionsBuilder<SonarContext> optionsBuilder = new();
