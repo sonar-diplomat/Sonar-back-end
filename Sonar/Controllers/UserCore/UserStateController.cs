@@ -1,13 +1,15 @@
-using System.Security.Claims;
+using Analytics.API;
 using Application.Abstractions.Interfaces.Services;
 using Application.DTOs.Music;
 using Application.DTOs.User;
 using Application.Response;
 using Entities.Enums;
 using Entities.Models.UserCore;
+using Google.Protobuf.WellKnownTypes;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace Sonar.Controllers.UserCore;
 
@@ -16,7 +18,9 @@ namespace Sonar.Controllers.UserCore;
 public class UserStateController(
     UserManager<User> userManager,
     IUserStateService userStateService,
-    IUserSessionService userSessionService
+    IUserSessionService userSessionService,
+    Analytics.API.Analytics.AnalyticsClient analyticsClient,
+    ILogger<UserStateController> logger
 ) : BaseController(userManager)
 {
     /// <summary>
@@ -58,8 +62,31 @@ public class UserStateController(
     public async Task<IActionResult>
         UpdateListeningTarget(int trackId, int? collectionId)
     {
-        UserState userState = await userStateService.GetByUserIdValidatedAsync((await CheckAccessFeatures([])).Id);
+        User user = await CheckAccessFeatures([]);
+        UserState userState = await userStateService.GetByUserIdValidatedAsync(user.Id);
         await userStateService.UpdateListeningTargetAsync(userState.Id, trackId, collectionId);
+
+        // Отправка события PlayStart в Analytics (асинхронно, без ожидания)
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await analyticsClient.AddUserEventAsync(new UserEventRequest
+                {
+                    UserId = user.Id,
+                    TrackId = trackId,
+                    EventType = EventType.PlayStart,
+                    ContextType = collectionId.HasValue ? ContextType.ContextPlaylist : ContextType.ContextTrack,
+                    ContextId = collectionId ?? 0,
+                    Timestamp = Timestamp.FromDateTime(DateTime.UtcNow)
+                });
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to send PlayStart event to Analytics");
+            }
+        });
+
         throw ResponseFactory.Create<OkResponse>(["Listening target updated successfully."]);
     }
 

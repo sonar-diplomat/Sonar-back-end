@@ -27,23 +27,18 @@ public class ReportService(
 
     public async Task<ReportModel> CreateReportAsync(int userId, CreateReportDTO dto)
     {
-        List<ReportReasonType> reasonTypes = [];
-        foreach (int reasonTypeId in dto.ReportReasonTypeIds)
-        {
-            ReportReasonType? reasonType = await reportReasonTypeService.GetByIdAsync(reasonTypeId);
-            if (reasonType != null) reasonTypes.Add(reasonType);
-        }
-
-        //if (reasonTypes.Any(rt => rt == null))
-        //    throw ResponseFactory.Create<BadRequestResponse>();
+        ReportReasonType? reasonType = await reportReasonTypeService.GetByIdAsync(dto.ReportReasonTypeId);
+        if (reasonType == null)
+            throw new InvalidOperationException($"Report reason type with ID {dto.ReportReasonTypeId} not found");
 
         ReportModel report = new()
         {
             EntityIdentifier = dto.EntityIdentifier,
             ReportableEntityTypeId = dto.ReportableEntityTypeId,
             ReporterId = userId,
+            ReportReasonTypeId = dto.ReportReasonTypeId,
             IsClosed = false,
-            ReportReasonType = reasonTypes!
+            CreatedAt = DateTime.UtcNow
         };
 
         return await repository.AddAsync(report);

@@ -11,6 +11,6 @@ public class ReportDTO
     
     public UserResponseDTO Reporter { get; set; }
     public ReportableEntityTypeDTO EntityType { get; set; }
-    public List<ReportReasonTypeDTO> Reasons { get; set; }
+    public ReportReasonTypeDTO? ReportReasonType { get; set; }
 }
 
