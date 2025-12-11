@@ -259,7 +259,7 @@ public class UserService(
                 await transaction.RollbackAsync();
                 rolledBack = true;
                 throw ResponseFactory.Create<ExpectationFailedResponse>([
-                    "Не удалось отправить письмо для подтверждения почты. Попробуйте еще раз позже."
+                    "Failed to send confirmation email. Please try again later."
                 ]);
             }
 
@@ -293,7 +293,8 @@ public class UserService(
                 rolledBack = true;
             }
             throw ResponseFactory.Create<ExpectationFailedResponse>([
-                "Регистрация не завершена из-за ошибки. Попробуйте еще раз позже."
+                //"Registration could not be completed due to an error. Please try again later."
+                ex.Message
             ]);
         }
     }
