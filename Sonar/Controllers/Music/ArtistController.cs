@@ -58,7 +58,7 @@ public class ArtistController(
     /// <response code="200">Artist retrieved successfully.</response>
     /// <response code="404">Artist not found.</response>
     [HttpGet("{artistId:int}")]
-    [ProducesResponseType(typeof(ArtistDTO), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(OkResponse<ArtistDTO>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetArtistById(int artistId)
     {
@@ -87,7 +87,7 @@ public class ArtistController(
             } : null
         };
 
-        return Ok(artistDTO);
+        throw ResponseFactory.Create<OkResponse<ArtistDTO>>(artistDTO, ["Artist retrieved successfully"]);
     }
 
     /// <summary>
@@ -98,7 +98,7 @@ public class ArtistController(
     /// <response code="200">Posts retrieved successfully.</response>
     /// <response code="404">Artist not found.</response>
     [HttpGet("{artistId:int}/posts")]
-    [ProducesResponseType(typeof(IEnumerable<Post>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(OkResponse<IEnumerable<Post>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetArtistPosts(int artistId)
     {
@@ -107,7 +107,7 @@ public class ArtistController(
             throw ResponseFactory.Create<NotFoundResponse>([$"Artist with ID {artistId} not found"]);
 
         IEnumerable<Post> posts = await postService.GetByArtistIdAsync(artistId);
-        return Ok(posts);
+        throw ResponseFactory.Create<OkResponse<IEnumerable<Post>>>(posts, ["Artist posts retrieved successfully"]);
     }
 
     /// <summary>
