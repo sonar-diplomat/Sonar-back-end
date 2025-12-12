@@ -2,6 +2,7 @@ using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.Utilities;
 using Application.DTOs;
 using Application.DTOs.Music;
+using Application.DTOs.User;
 using Application.Response;
 using Entities.Enums;
 using Entities.Models.Chat;
@@ -70,17 +71,19 @@ public class ArtistController(
             Id = artist.Id,
             UserId = artist.UserId,
             ArtistName = artist.ArtistName,
-            User = artist.User != null ? new UserBasicDTO
+            User = artist.User != null ? new UserResponseDTO
             {
                 Id = artist.User.Id,
                 UserName = artist.User.UserName,
                 FirstName = artist.User.FirstName,
                 LastName = artist.User.LastName,
-                Email = artist.User.Email,
+                DateOfBirth = artist.User.DateOfBirth,
                 Login = artist.User.Login,
                 PublicIdentifier = artist.User.PublicIdentifier,
-                PhoneNumber = artist.User.PhoneNumber,
-                AvatarId = artist.User.AvatarImageId
+                Biography = artist.User.Biography,
+                RegistrationDate = artist.User.RegistrationDate,
+                AvailableCurrency = artist.User.AvailableCurrency,
+                AvatarImageId = artist.User.AvatarImageId
             } : null
         };
 
