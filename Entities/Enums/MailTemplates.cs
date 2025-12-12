@@ -1,6 +1,6 @@
 ﻿namespace Entities.Enums;
 
-public struct MailGunTemplates
+public struct MailTemplates
 {
     public const string twoFA = "2fa";
     public const string confirmEmail = "confirm-email";

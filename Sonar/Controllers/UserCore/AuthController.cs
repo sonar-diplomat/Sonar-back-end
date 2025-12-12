@@ -48,25 +48,22 @@ public class AuthController(
                 .Select(e => e.ErrorMessage)
                 .Where(m => !string.IsNullOrEmpty(m))
                 .ToList();
-            
+
             throw ResponseFactory.Create<BadRequestResponse>(validationErrors.ToArray());
         }
-        
-        try
-        {
-            User user = await userService.CreateUserShellAsync(model);
-            IdentityResult result = await userManager.CreateAsync(user, model.Password);
-            
-            if (result.Succeeded)
+
+        await userService.RegisterUserWithTransactionAsync(
+            model,
+            userManager,
+            async user =>
             {
-                // Отправляем письмо подтверждения email
                 if (!string.IsNullOrEmpty(user.Email))
                 {
                     string token = await userManager.GenerateEmailConfirmationTokenAsync(user);
-                    
+
                     await emailSenderService.SendEmailAsync(
                         user.Email,
-                        MailGunTemplates.confirmEmail,
+                        MailTemplates.confirmEmail,
                         new Dictionary<string, string>
                         {
                             { "route", "confirm-email" },
@@ -75,59 +72,9 @@ public class AuthController(
                         }
                     );
                 }
-                
-                throw ResponseFactory.Create<OkResponse>(["Registration successful. Please check your email to confirm your account."]);
-            }
-            
-            List<string> conflictErrors = new();
-            List<string> identityValidationErrors = new();
-            
-            foreach (IdentityError error in result.Errors)
-            {
-                string message = error.Code switch
-                {
-                    "DuplicateUserName" or "DuplicateNormalizedUserName" => "User with this username already exists",
-                    "DuplicateEmail" => "Email is already in use",
-                    "PasswordTooShort" => $"Password is too short. Minimum length: {userManager.Options.Password.RequiredLength} characters",
-                    "PasswordRequiresNonAlphanumeric" => "Password must contain at least one special character",
-                    "PasswordRequiresDigit" => "Password must contain at least one digit",
-                    "PasswordRequiresLower" => "Password must contain at least one lowercase letter",
-                    "PasswordRequiresUpper" => "Password must contain at least one uppercase letter",
-                    "InvalidEmail" => "Invalid email address",
-                    "InvalidUserName" => "Invalid username",
-                    _ => error.Description
-                };
-                
-                if (error.Code is "DuplicateUserName" or "DuplicateNormalizedUserName" or "DuplicateEmail")
-                    conflictErrors.Add(message);
-                else
-                    identityValidationErrors.Add(message);
-            }
-            
-            if (conflictErrors.Count > 0)
-                throw ResponseFactory.Create<ConflictResponse>(conflictErrors.ToArray());
-            
-            if (identityValidationErrors.Count > 0)
-                throw ResponseFactory.Create<BadRequestResponse>(identityValidationErrors.ToArray());
-            
-            throw ResponseFactory.Create<BadRequestResponse>(
-                result.Errors.Select(e => e.Description).ToArray());
-        }
-        catch (DbUpdateException dbEx) when (dbEx.InnerException?.Message.Contains("duplicate") == true ||
-                                             dbEx.InnerException?.Message.Contains("unique") == true ||
-                                             dbEx.InnerException?.Message.Contains("UserNameIndex") == true ||
-                                             dbEx.InnerException?.Message.Contains("EmailIndex") == true)
-        {
-            string errorMessage = dbEx.InnerException?.Message ?? dbEx.Message;
-            
-            if (errorMessage.Contains("UserName") || errorMessage.Contains("UserNameIndex"))
-                throw ResponseFactory.Create<ConflictResponse>(["User with this username already exists"]);
-            
-            if (errorMessage.Contains("Email") || errorMessage.Contains("EmailIndex"))
-                throw ResponseFactory.Create<ConflictResponse>(["Email is already in use"]);
-            
-            throw ResponseFactory.Create<ConflictResponse>(["User with such data already exists"]);
-        }
+            });
+
+        throw ResponseFactory.Create<OkResponse>(["Registration successful. Please check your email to confirm your account."]);
     }
 
     /// <summary>
@@ -168,7 +115,7 @@ public class AuthController(
             string code = await userManager.GenerateTwoFactorTokenAsync(user, TokenOptions.DefaultEmailProvider);
             await emailSenderService.SendEmailAsync(
                 user.Email!,
-                MailGunTemplates.twoFA,
+                MailTemplates.twoFA,
                 new Dictionary<string, string>
                 {
                     { "code", code }
@@ -295,7 +242,7 @@ public class AuthController(
 
         await emailSenderService.SendEmailAsync(
             newEmail,
-            MailGunTemplates.confirmEmail,
+            MailTemplates.confirmEmail,
             new Dictionary<string, string>
             {
                 { "route", "confirm-email-change" },
@@ -425,7 +372,7 @@ public class AuthController(
         string resetToken = await userManager.GeneratePasswordResetTokenAsync(user);
         await emailSenderService.SendEmailAsync(
             user.Email,
-            MailGunTemplates.passwordRecovery,
+            MailTemplates.passwordRecovery,
             new Dictionary<string, string>
             {
                 { "route", $"approve-change/{resetToken}" }
@@ -454,7 +401,7 @@ public class AuthController(
             throw ResponseFactory.Create<BadRequestResponse>(["Email is required"]);
 
         User? user = await userManager.FindByEmailAsync(dto.Email);
-        
+
         // Для безопасности всегда возвращаем успешный ответ, даже если пользователь не найден
         if (user == null || !user.EmailConfirmed)
         {
@@ -463,10 +410,10 @@ public class AuthController(
         }
 
         string resetToken = await userManager.GeneratePasswordResetTokenAsync(user);
-        
+
         await emailSenderService.SendEmailAsync(
             user.Email!,
-            MailGunTemplates.passwordRecovery,
+            MailTemplates.passwordRecovery,
             new Dictionary<string, string>
             {
                 { "route", "reset-password" },

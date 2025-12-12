@@ -9,6 +9,7 @@ using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Sonar.Controllers.Library;
 
@@ -18,7 +19,8 @@ public class FolderController(
     UserManager<User> userManager,
     IFolderService folderService,
     IFolderCollectionService folderCollectionService,
-    ILibraryService libraryService
+    ILibraryService libraryService,
+    IMemoryCache memoryCache
 ) : BaseController(userManager)
 {
     /// <summary>
@@ -175,6 +177,21 @@ public class FolderController(
 
         // Return only root folders (folders without parent)
         var rootFolders = folderDict.Values.Where(f => !f.ParentFolderId.HasValue).ToList();
+
+        // Save Favorites playlist ID to cache on first request
+        var cacheKey = $"favorites_playlist_{userId}";
+        if (!memoryCache.TryGetValue(cacheKey, out _))
+        {
+            try
+            {
+                Playlist favoritesPlaylist = await libraryService.GetFavoritesPlaylistByLibraryIdValidatedAsync(libraryId);
+                memoryCache.Set(cacheKey, favoritesPlaylist.Id, TimeSpan.FromHours(24));
+            }
+            catch
+            {
+                // Favorites playlist not found, skip caching
+            }
+        }
 
         throw ResponseFactory.Create<OkResponse<IEnumerable<FolderDTO>>>(rootFolders, ["Successfully retrieved all folders in hierarchical structure"]);
     }

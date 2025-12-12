@@ -1,13 +1,16 @@
-using System.Security.Claims;
+using Analytics.API;
+using Application;
 using Application.Abstractions.Interfaces.Services;
 using Application.DTOs.Music;
 using Application.DTOs.User;
 using Application.Response;
 using Entities.Enums;
 using Entities.Models.UserCore;
+using Google.Protobuf.WellKnownTypes;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace Sonar.Controllers.UserCore;
 
@@ -16,7 +19,10 @@ namespace Sonar.Controllers.UserCore;
 public class UserStateController(
     UserManager<User> userManager,
     IUserStateService userStateService,
-    IUserSessionService userSessionService
+    IUserSessionService userSessionService,
+    IAlbumService albumService,
+    Analytics.API.Analytics.AnalyticsClient analyticsClient,
+    ILogger<UserStateController> logger
 ) : BaseController(userManager)
 {
     /// <summary>
@@ -58,8 +64,74 @@ public class UserStateController(
     public async Task<IActionResult>
         UpdateListeningTarget(int trackId, int? collectionId = null)
     {
-        UserState userState = await userStateService.GetByUserIdValidatedAsync((await CheckAccessFeatures([])).Id);
+        User user = await CheckAccessFeatures([]);
+        UserState userState = await userStateService.GetByUserIdValidatedAsync(user.Id);
         await userStateService.UpdateListeningTargetAsync(userState.Id, trackId, collectionId);
+
+        // Validate album accessibility if collectionId is provided (could be album or playlist)
+        bool canAddEvent = true;
+        ContextType contextType = ContextType.ContextTrack;
+        
+        if (collectionId.HasValue)
+        {
+            try
+            {
+                // Try to get as album first
+                var album = await albumService.GetValidatedIncludeVisibilityStateAsync(collectionId.Value, user.Id);
+                if (album != null)
+                {
+                    // It's an album, check if it's accessible
+                    var authorIds = album.AlbumArtists?
+                        .Where(aa => aa.Artist != null)
+                        .Select(aa => aa.Artist!.UserId)
+                        .ToList();
+                    
+                    if (!VisibilityStateValidator.IsAccessible(album.VisibilityState, user.Id, authorIds))
+                    {
+                        canAddEvent = false;
+                    }
+                    else
+                    {
+                        contextType = ContextType.ContextAlbum;
+                    }
+                }
+                // If album is null or not found, it's a playlist or other collection type
+                else
+                {
+                    contextType = ContextType.ContextPlaylist;
+                }
+            }
+            catch
+            {
+                // Album not found, assume it's a playlist or other collection type
+                contextType = ContextType.ContextPlaylist;
+            }
+        }
+
+        // Send PlayStart event to Analytics (only if collection is accessible)
+        if (canAddEvent)
+        {
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await analyticsClient.AddUserEventAsync(new UserEventRequest
+                    {
+                        UserId = user.Id,
+                        TrackId = trackId,
+                        EventType = EventType.PlayStart,
+                        ContextType = contextType,
+                        ContextId = collectionId ?? 0,
+                        Timestamp = Timestamp.FromDateTime(DateTime.UtcNow)
+                    });
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Failed to send PlayStart event to Analytics");
+                }
+            });
+        }
+
         throw ResponseFactory.Create<OkResponse>(["Listening target updated successfully."]);
     }
 

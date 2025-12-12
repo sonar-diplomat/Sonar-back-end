@@ -173,15 +173,18 @@ public class SonarContext(DbContextOptions<SonarContext> options)
             .HasMany(l => l.Folders)
             .WithOne(f => f.Library)
             .HasForeignKey(f => f.LibraryId)
-            .OnDelete(DeleteBehavior.NoAction);
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder.Entity<Folder>()
             .HasOne(f => f.ParentFolder)
             .WithMany(f => f.SubFolders)
             .HasForeignKey(f => f.ParentFolderId)
-            .OnDelete(DeleteBehavior.NoAction);
+            .OnDelete(DeleteBehavior.Cascade);
 
-        builder.Entity<Chat>().HasOne(c => c.Creator).WithMany(u => u.ChatsWhereCreator);
+        builder.Entity<Chat>()
+            .HasOne(c => c.Creator)
+            .WithMany(u => u.ChatsWhereCreator)
+            .OnDelete(DeleteBehavior.Cascade);
         builder.Entity<Chat>().HasMany(c => c.Admins).WithMany(u => u.ChatsWhereAdmin)
             .UsingEntity(j => j.ToTable("ChatAdmins"));
         builder.Entity<Chat>().HasMany(c => c.Members).WithMany(u => u.ChatsWhereMember)
@@ -196,13 +199,13 @@ public class SonarContext(DbContextOptions<SonarContext> options)
             .HasOne(uf => uf.Follower)
             .WithMany(u => u.Following)
             .HasForeignKey(uf => uf.FollowerId)
-            .OnDelete(DeleteBehavior.NoAction);
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder.Entity<UserFollow>()
             .HasOne(uf => uf.Following)
             .WithMany(u => u.Followers)
             .HasForeignKey(uf => uf.FollowingId)
-            .OnDelete(DeleteBehavior.NoAction);
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder.Entity<NotificationType>()
             .HasData(NotificationTypeSeedFactory.CreateSeedData());
@@ -220,10 +223,25 @@ public class SonarContext(DbContextOptions<SonarContext> options)
             .HasData(VisibilityStatusSeedFactory.CreateSeedData());
         builder.Entity<GiftStyle>()
             .HasData(GiftStyleSeedFactory.CreateSeedData());
+        builder.Entity<Report>()
+            .HasOne(r => r.ReportReasonType)
+            .WithMany()
+            .HasForeignKey(r => r.ReportReasonTypeId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        // Configure many-to-many relationship between ReportReasonType and ReportableEntityType
+        builder.Entity<ReportReasonType>()
+            .HasMany(rrt => rrt.ApplicableEntityTypes)
+            .WithMany(ret => ret.ApplicableReportReasonTypes)
+            .UsingEntity(j => j.ToTable("ReportReasonTypeReportableEntityType"));
+
         builder.Entity<ReportableEntityType>()
             .HasData(ReportableEntityTypeSeedFactory.CreateSeedData());
         builder.Entity<ReportReasonType>()
             .HasData(ReportReasonTypeSeedFactory.CreateSeedData());
+        
+        // Configure mappings between report reason types and entity types
+        ReportReasonTypeEntityTypeMappingFactory.ConfigureMappings(builder);
         builder.Entity<AccessFeature>()
             .HasData(AccessFeatureSeedFactory.CreateSeedData());
         builder.Entity<UserPrivacyGroup>()

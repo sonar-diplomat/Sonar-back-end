@@ -86,5 +86,13 @@ jobs:
               -e Mailgun__ApiKey='${{ secrets.MAILGUN_API_KEY }}' \
               -e Mailgun__Domain='${{ secrets.MAILGUN_DOMAIN }}' \
               -e Mailgun__From='${{ secrets.MAILGUN_FROM }}' \
+              -e Smtp__Host='${{ vars.SMTP_HOST }}' \
+              -e Smtp__Port='${{ vars.SMTP_PORT }}' \
+              -e Smtp__From='${{ vars.SMTP_FROM }}' \
+              -e Smtp__FromName='${{ vars.SMTP_FROM_NAME }}' \
+              -e Smtp__Username='${{ secrets.SMTP_USERNAME }}' \
+              -e Smtp__Password='${{ secrets.SMTP_PASSWORD }}' \
               -e ConnectionStrings__SonarContext='${{ secrets.CONNECTION_STRING_AWS }}' \
+              -e AnalyticsService__BaseUrl='${{ vars.ANALYTICS_SERVICE_URL }}' \
               $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+              /usr/local/bin/cleanup-docker-images.sh

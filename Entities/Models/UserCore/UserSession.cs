@@ -48,7 +48,7 @@ public class UserSession : BaseModel
     /// </summary>
     [JsonIgnore]
     [ForeignKey("UserId")]
-    [DeleteBehavior(DeleteBehavior.NoAction)]
+    [DeleteBehavior(DeleteBehavior.Cascade)]
     public User User { get; set; }
 
     [NotMapped]

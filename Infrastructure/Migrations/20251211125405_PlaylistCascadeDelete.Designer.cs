@@ -3,6 +3,7 @@ using System;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(SonarContext))]
-    partial class SonarContextModelSnapshot : ModelSnapshot
+    [Migration("20251211125405_PlaylistCascadeDelete")]
+    partial class PlaylistCascadeDelete
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1683,35 +1686,6 @@ namespace Infrastructure.Migrations
                     b.ToTable("Queue");
                 });
 
-            modelBuilder.Entity("Entities.Models.UserCore.QueueTrack", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<bool>("IsManuallyAdded")
-                        .HasColumnType("boolean");
-
-                    b.Property<int>("Order")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("QueueId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("TrackId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("QueueId");
-
-                    b.HasIndex("TrackId");
-
-                    b.ToTable("QueueTrack");
-                });
-
             modelBuilder.Entity("Entities.Models.UserCore.User", b =>
                 {
                     b.Property<int>("Id")
@@ -2578,6 +2552,21 @@ namespace Infrastructure.Migrations
                     b.ToTable("NotificationTypeSettings");
                 });
 
+            modelBuilder.Entity("QueueTrack", b =>
+                {
+                    b.Property<int>("QueuesId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TracksId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("QueuesId", "TracksId");
+
+                    b.HasIndex("TracksId");
+
+                    b.ToTable("QueueTrack");
+                });
+
             modelBuilder.Entity("ReportReasonTypeReportableEntityType", b =>
                 {
                     b.Property<int>("ApplicableEntityTypesId")
@@ -3064,7 +3053,7 @@ namespace Infrastructure.Migrations
                     b.HasOne("Entities.Models.UserCore.User", "Creator")
                         .WithMany("ChatsWhereCreator")
                         .HasForeignKey("CreatorId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("Cover");
@@ -3095,7 +3084,7 @@ namespace Infrastructure.Migrations
                     b.HasOne("Entities.Models.Chat.Chat", "Chat")
                         .WithMany("Messages")
                         .HasForeignKey("ChatId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.HasOne("Entities.Models.Chat.Message", "ReplyMessage")
@@ -3106,7 +3095,7 @@ namespace Infrastructure.Migrations
                     b.HasOne("Entities.Models.UserCore.User", "Sender")
                         .WithMany("Messages")
                         .HasForeignKey("SenderId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("Chat");
@@ -3121,13 +3110,13 @@ namespace Infrastructure.Migrations
                     b.HasOne("Entities.Models.Chat.Message", "Message")
                         .WithMany("MessagesReads")
                         .HasForeignKey("MessageId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("Entities.Models.UserCore.User", "User")
                         .WithMany("MessagesReads")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("Message");
@@ -3291,13 +3280,13 @@ namespace Infrastructure.Migrations
                     b.HasOne("Entities.Models.Library.Library", "Library")
                         .WithMany("Folders")
                         .HasForeignKey("LibraryId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.HasOne("Entities.Models.Library.Folder", "ParentFolder")
                         .WithMany("SubFolders")
                         .HasForeignKey("ParentFolderId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.Navigation("Library");
 
@@ -3517,25 +3506,6 @@ namespace Infrastructure.Migrations
                     b.Navigation("CurrentTrack");
                 });
 
-            modelBuilder.Entity("Entities.Models.UserCore.QueueTrack", b =>
-                {
-                    b.HasOne("Entities.Models.UserCore.Queue", "Queue")
-                        .WithMany("QueueTracks")
-                        .HasForeignKey("QueueId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Entities.Models.Music.Track", "Track")
-                        .WithMany("QueueTracks")
-                        .HasForeignKey("TrackId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Queue");
-
-                    b.Navigation("Track");
-                });
-
             modelBuilder.Entity("Entities.Models.UserCore.User", b =>
                 {
                     b.HasOne("Entities.Models.File.ImageFile", "AvatarImage")
@@ -3602,13 +3572,13 @@ namespace Infrastructure.Migrations
                     b.HasOne("Entities.Models.UserCore.User", "Follower")
                         .WithMany("Following")
                         .HasForeignKey("FollowerId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.HasOne("Entities.Models.UserCore.User", "Following")
                         .WithMany("Followers")
                         .HasForeignKey("FollowingId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("Follower");
@@ -3621,7 +3591,7 @@ namespace Infrastructure.Migrations
                     b.HasOne("Entities.Models.UserCore.User", "User")
                         .WithMany("UserSessions")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("User");
@@ -3829,6 +3799,21 @@ namespace Infrastructure.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("QueueTrack", b =>
+                {
+                    b.HasOne("Entities.Models.UserCore.Queue", null)
+                        .WithMany()
+                        .HasForeignKey("QueuesId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Entities.Models.Music.Track", null)
+                        .WithMany()
+                        .HasForeignKey("TracksId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("ReportReasonTypeReportableEntityType", b =>
                 {
                     b.HasOne("Entities.Models.Report.ReportableEntityType", null)
@@ -4022,8 +4007,6 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Entities.Models.Music.Track", b =>
                 {
-                    b.Navigation("QueueTracks");
-
                     b.Navigation("QueuesWherePrimary");
 
                     b.Navigation("TrackArtists");
@@ -4048,8 +4031,6 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Entities.Models.UserCore.Queue", b =>
                 {
-                    b.Navigation("QueueTracks");
-
                     b.Navigation("UserState")
                         .IsRequired();
                 });

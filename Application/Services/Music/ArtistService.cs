@@ -75,4 +75,9 @@ public class ArtistService(
 
         return createdArtist;
     }
+
+    public async Task<Artist?> GetByIdWithUserAsync(int artistId)
+    {
+        return await repository.GetByIdWithUserAsync(artistId);
+    }
 }

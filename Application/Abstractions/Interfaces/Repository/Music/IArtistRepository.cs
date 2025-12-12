@@ -6,4 +6,5 @@ public interface IArtistRepository : IGenericRepository<Artist>
 {
     Task<Artist?> GetByNameAsync(string name);
     Task<IEnumerable<Artist>> SearchByNameAsync(string searchTerm);
+    Task<Artist?> GetByIdWithUserAsync(int artistId);
 }

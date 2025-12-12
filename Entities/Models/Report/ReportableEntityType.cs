@@ -15,4 +15,10 @@ public class ReportableEntityType : BaseModel
     /// </summary>
     [JsonIgnore]
     public virtual ICollection<Report> Reports { get; set; }
+
+    /// <summary>
+    /// Report reason types applicable to this entity type
+    /// </summary>
+    [JsonIgnore]
+    public virtual ICollection<ReportReasonType> ApplicableReportReasonTypes { get; set; }
 }

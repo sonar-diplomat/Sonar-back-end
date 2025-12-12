@@ -7,5 +7,5 @@ public class CreateReportDTO
 {
     public required int EntityIdentifier { get; set; }
     public required int ReportableEntityTypeId { get; set; }
-    public required List<int> ReportReasonTypeIds { get; set; } = [];
+    public required int ReportReasonTypeId { get; set; }
 }

@@ -1,3 +1,4 @@
+using Analytics.API;
 using Application;
 using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.Utilities;
@@ -7,9 +8,11 @@ using Application.Response;
 using Entities.Enums;
 using Entities.Models.Music;
 using Entities.Models.UserCore;
+using Google.Protobuf.WellKnownTypes;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Sonar.Controllers.Music;
 
@@ -19,7 +22,10 @@ public class PlaylistController(
     UserManager<User> userManager,
     IPlaylistService playlistService,
     ICollectionService<Playlist> collectionService,
-    IShareService shareService)
+    IShareService shareService,
+    Analytics.API.Analytics.AnalyticsClient analyticsClient,
+    ILogger<PlaylistController> logger,
+    IMemoryCache memoryCache)
     : CollectionController<Playlist>(userManager, collectionService, shareService)
 {
     /// <summary>
@@ -199,6 +205,27 @@ public class PlaylistController(
     {
         User user = await CheckAccessFeatures([]);
         await playlistService.AddTrackToPlaylistAsync(playlistId, trackId, user.Id);
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await analyticsClient.AddUserEventAsync(new UserEventRequest
+                {
+                    UserId = user.Id,
+                    TrackId = trackId,
+                    EventType = EventType.AddToPlaylist,
+                    ContextType = ContextType.ContextPlaylist,
+                    ContextId = playlistId,
+                    Timestamp = Timestamp.FromDateTime(DateTime.UtcNow)
+                });
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to send AddToPlaylist event to Analytics");
+            }
+        });
+
         throw ResponseFactory.Create<OkResponse>(["Track was added to playlist successfully"]);
     }
 
@@ -325,7 +352,7 @@ public class PlaylistController(
     [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ImportCollection(int playlistId, string collection, int collectionId)
     {
-        Type? T = CollectionStruct.IsValid(collection);
+        System.Type? T = CollectionStruct.IsValid(collection);
         if (T == null)
             throw ResponseFactory.Create<BadRequestResponse>(["Invalid collection type"]);
         if (T == typeof(Album))
@@ -338,5 +365,23 @@ public class PlaylistController(
             await playlistService.ImportCollectionToPlaylistAsync<Blend>(playlistId, collectionId,
                 (await CheckAccessFeatures([])).Id);
         throw ResponseFactory.Create<OkResponse>(["Collection was imported to playlist successfully"]);
+    }
+
+    /// <summary>
+    /// Checks if a track is in the user's Favorites playlist.
+    /// </summary>
+    /// <param name="trackId">The ID of the track to check.</param>
+    /// <returns>Boolean indicating if the track is in favorites.</returns>
+    /// <response code="200">Check completed successfully.</response>
+    /// <response code="401">User not authenticated.</response>
+    [HttpGet("is-favorite/{trackId:int}")]
+    [Authorize]
+    [ProducesResponseType(typeof(OkResponse<bool>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> IsFavorite(int trackId)
+    {
+        User user = await CheckAccessFeatures([]);
+        bool isFavorite = await playlistService.IsTrackInFavoritesAsync(trackId, user.Id);
+        throw ResponseFactory.Create<OkResponse<bool>>(isFavorite, ["Check completed successfully"]);
     }
 }
