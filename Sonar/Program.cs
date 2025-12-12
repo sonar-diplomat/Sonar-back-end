@@ -460,6 +460,7 @@ builder.Services.AddSingleton<IFileFormatInspector>(new FileFormatInspector(
 builder.Services.AddSingleton<IFileStorageService, FileStorageService>();
 builder.Services.AddHttpClient();
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddMemoryCache();
 
 // Add gRPC client for Analytics Service
 builder.Services.AddGrpcClient<Analytics.API.Analytics.AnalyticsClient>(o =>

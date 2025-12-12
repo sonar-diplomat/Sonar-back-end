@@ -254,6 +254,18 @@ public class PlaylistService(
             ]);
     }
 
+    public async Task<bool> IsTrackInFavoritesAsync(int trackId, int userId)
+    {
+        User user = await userService.GetByIdValidatedAsync(userId);
+        Playlist favoritesPlaylist = await libraryService.GetFavoritesPlaylistByLibraryIdValidatedAsync(user.LibraryId);
+        
+        Playlist playlistWithTracks = await repository
+            .SnInclude(p => p.Tracks)
+            .GetByIdValidatedAsync(favoritesPlaylist.Id);
+        
+        return playlistWithTracks.Tracks.Any(t => t.Id == trackId);
+    }
+
     private async Task<Playlist> VerifyAccessAsync(int playlistId, int userId, bool allowContributor = false)
     {
         Playlist playlist = allowContributor

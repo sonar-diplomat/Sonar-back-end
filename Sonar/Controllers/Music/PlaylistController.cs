@@ -12,6 +12,7 @@ using Google.Protobuf.WellKnownTypes;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Sonar.Controllers.Music;
 
@@ -23,7 +24,8 @@ public class PlaylistController(
     ICollectionService<Playlist> collectionService,
     IShareService shareService,
     Analytics.API.Analytics.AnalyticsClient analyticsClient,
-    ILogger<PlaylistController> logger)
+    ILogger<PlaylistController> logger,
+    IMemoryCache memoryCache)
     : CollectionController<Playlist>(userManager, collectionService, shareService)
 {
     /// <summary>
@@ -363,5 +365,23 @@ public class PlaylistController(
             await playlistService.ImportCollectionToPlaylistAsync<Blend>(playlistId, collectionId,
                 (await CheckAccessFeatures([])).Id);
         throw ResponseFactory.Create<OkResponse>(["Collection was imported to playlist successfully"]);
+    }
+
+    /// <summary>
+    /// Checks if a track is in the user's Favorites playlist.
+    /// </summary>
+    /// <param name="trackId">The ID of the track to check.</param>
+    /// <returns>Boolean indicating if the track is in favorites.</returns>
+    /// <response code="200">Check completed successfully.</response>
+    /// <response code="401">User not authenticated.</response>
+    [HttpGet("is-favorite/{trackId:int}")]
+    [Authorize]
+    [ProducesResponseType(typeof(OkResponse<bool>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> IsFavorite(int trackId)
+    {
+        User user = await CheckAccessFeatures([]);
+        bool isFavorite = await playlistService.IsTrackInFavoritesAsync(trackId, user.Id);
+        throw ResponseFactory.Create<OkResponse<bool>>(isFavorite, ["Check completed successfully"]);
     }
 }
