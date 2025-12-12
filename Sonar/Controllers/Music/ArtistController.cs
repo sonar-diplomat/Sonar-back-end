@@ -80,7 +80,7 @@ public class ArtistController(
                 Login = artist.User.Login,
                 PublicIdentifier = artist.User.PublicIdentifier,
                 PhoneNumber = artist.User.PhoneNumber,
-                AvatarId = artist.User.AvatarId
+                AvatarId = artist.User.AvatarImageId
             } : null
         };
 
