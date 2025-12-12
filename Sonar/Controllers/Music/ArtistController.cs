@@ -49,6 +49,44 @@ public class ArtistController(
     }
 
     /// <summary>
+    /// Gets an artist by their ID including user information.
+    /// </summary>
+    /// <param name="artistId">The ID of the artist to retrieve.</param>
+    /// <returns>Artist details with user information.</returns>
+    /// <response code="200">Artist retrieved successfully.</response>
+    /// <response code="404">Artist not found.</response>
+    [HttpGet("{artistId:int}")]
+    [ProducesResponseType(typeof(Artist), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetArtistById(int artistId)
+    {
+        Artist? artist = await artistService.GetByIdWithUserAsync(artistId);
+        if (artist == null)
+            throw ResponseFactory.Create<NotFoundResponse>([$"Artist with ID {artistId} not found"]);
+        return Ok(artist);
+    }
+
+    /// <summary>
+    /// Gets all posts for a specific artist.
+    /// </summary>
+    /// <param name="artistId">The ID of the artist whose posts to retrieve.</param>
+    /// <returns>Collection of posts for the specified artist.</returns>
+    /// <response code="200">Posts retrieved successfully.</response>
+    /// <response code="404">Artist not found.</response>
+    [HttpGet("{artistId:int}/posts")]
+    [ProducesResponseType(typeof(IEnumerable<Post>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetArtistPosts(int artistId)
+    {
+        Artist? artist = await artistService.GetByIdAsync(artistId);
+        if (artist == null)
+            throw ResponseFactory.Create<NotFoundResponse>([$"Artist with ID {artistId} not found"]);
+
+        IEnumerable<Post> posts = await postService.GetByArtistIdAsync(artistId);
+        return Ok(posts);
+    }
+
+    /// <summary>
     /// Updates the name of an artist profile.
     /// </summary>
     /// <param name="artistId">The ID of the artist to update.</param>
