@@ -24,11 +24,6 @@ public class FolderCollectionService(
     {
         Folder folder = await folderService.GetFolderByIdIncludeCollectionsValidatedAsync(folderId, libraryId);
 
-        // Нельзя добавлять коллекции в RootFolder (Favorites папку)
-        int? rootFolderId = await GetRootFolderIdAsync(libraryId);
-        if (rootFolderId.HasValue && folder.Id == rootFolderId.Value)
-            throw ResponseFactory.Create<ForbiddenResponse>(["Cannot add collections to the Favorites folder (Root folder)"]);
-
         // Пытаемся найти коллекцию во всех типах
         Collection? collection = await GetCollectionByIdAsync(collectionId);
         if (collection == null)
@@ -67,10 +62,6 @@ public class FolderCollectionService(
 
         // Получаем RootFolderId для проверки
         int? rootFolderId = await GetRootFolderIdAsync(libraryId);
-
-        // Нельзя перемещать коллекции в RootFolder (Favorites папку)
-        if (rootFolderId.HasValue && targetFolderId == rootFolderId.Value)
-            throw ResponseFactory.Create<ForbiddenResponse>(["Cannot move collections to the Favorites folder (Root folder)"]);
 
         // Находим все папки библиотеки с коллекциями (включая целевую)
         IQueryable<Folder> allFolders = await folderRepository.GetAllAsync();
