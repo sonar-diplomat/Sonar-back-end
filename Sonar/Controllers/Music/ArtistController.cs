@@ -1,6 +1,7 @@
 using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.Utilities;
 using Application.DTOs;
+using Application.DTOs.Music;
 using Application.Response;
 using Entities.Enums;
 using Entities.Models.Chat;
@@ -56,14 +57,34 @@ public class ArtistController(
     /// <response code="200">Artist retrieved successfully.</response>
     /// <response code="404">Artist not found.</response>
     [HttpGet("{artistId:int}")]
-    [ProducesResponseType(typeof(Artist), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ArtistDTO), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetArtistById(int artistId)
     {
         Artist? artist = await artistService.GetByIdWithUserAsync(artistId);
         if (artist == null)
             throw ResponseFactory.Create<NotFoundResponse>([$"Artist with ID {artistId} not found"]);
-        return Ok(artist);
+
+        var artistDTO = new ArtistDTO
+        {
+            Id = artist.Id,
+            UserId = artist.UserId,
+            ArtistName = artist.ArtistName,
+            User = artist.User != null ? new UserBasicDTO
+            {
+                Id = artist.User.Id,
+                UserName = artist.User.UserName,
+                FirstName = artist.User.FirstName,
+                LastName = artist.User.LastName,
+                Email = artist.User.Email,
+                Login = artist.User.Login,
+                PublicIdentifier = artist.User.PublicIdentifier,
+                PhoneNumber = artist.User.PhoneNumber,
+                AvatarId = artist.User.AvatarId
+            } : null
+        };
+
+        return Ok(artistDTO);
     }
 
     /// <summary>
