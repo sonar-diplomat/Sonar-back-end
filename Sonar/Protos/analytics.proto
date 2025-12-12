@@ -6,6 +6,8 @@ import "google/protobuf/timestamp.proto";
 
 service Analytics {
   rpc AddUserEvent (UserEventRequest) returns (AddUserEventResponse);
+  rpc GetTopTracks (GetTopTracksRequest) returns (GetTopTracksResponse);
+  rpc GetTopArtists (GetTopArtistsRequest) returns (GetTopArtistsResponse);
 }
 
 message UserEventRequest {
@@ -41,5 +43,33 @@ enum ContextType {
   CONTEXT_ALBUM = 3;
   CONTEXT_RADIO = 4;
   CONTEXT_SEARCH = 5;
+}
+
+message GetTopTracksRequest {
+  int32 user_id = 1;
+  int32 limit = 2;
+}
+
+message TopTrack {
+  int32 track_id = 1;
+  int64 play_count = 2;
+}
+
+message GetTopTracksResponse {
+  repeated TopTrack tracks = 1;
+}
+
+message GetTopArtistsRequest {
+  int32 user_id = 1;
+  int32 limit = 2;
+}
+
+message TopArtist {
+  int32 artist_id = 1;
+  int64 play_count = 2;
+}
+
+message GetTopArtistsResponse {
+  repeated TopArtist artists = 1;
 }
 
