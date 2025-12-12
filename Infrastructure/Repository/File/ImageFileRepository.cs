@@ -16,7 +16,7 @@ public class ImageFileRepository(SonarContext dbContext)
 
     public async Task<ImageFile> GetFavoriteDefaultAsync()
     {
-        return (await context.ImageFiles.FirstOrDefaultAsync(f => f.Id == 2))!;
+        return (await context.ImageFiles.FirstOrDefaultAsync(f => f.Id == 6))!;
     }
 
     public async Task<ImageFile> GetPlaylistDefaultAsync()

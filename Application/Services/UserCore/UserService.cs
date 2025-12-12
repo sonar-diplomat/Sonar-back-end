@@ -109,7 +109,7 @@ public class UserService(
         {
             Name = "Favorites",
             VisibilityState = await visibilityStateService.CreateDefaultAsync(),
-            Cover = await imageFileService.GetDefaultAsync(),
+            Cover = await imageFileService.GetFavoriteDefaultAsync(),
             Creator = user
         };
 
