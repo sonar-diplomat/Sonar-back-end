@@ -72,4 +72,9 @@ public class PostService(IPostRepository repository, IVisibilityStateService vis
         }
         await UpdateAsync(post);
     }
+
+    public async Task<IEnumerable<Post>> GetByArtistIdAsync(int artistId)
+    {
+        return await repository.GetByArtistIdAsync(artistId);
+    }
 }

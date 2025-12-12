@@ -55,4 +55,9 @@ public class ArtistService(IArtistRepository repository, IPostService postServic
         };
         return await repository.AddAsync(artist);
     }
+
+    public async Task<Artist?> GetByIdWithUserAsync(int artistId)
+    {
+        return await repository.GetByIdWithUserAsync(artistId);
+    }
 }
