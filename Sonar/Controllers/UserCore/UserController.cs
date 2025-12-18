@@ -15,6 +15,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Analytics.API;
+using Grpc.Core;
 
 namespace Sonar.Controllers.UserCore;
 
@@ -369,13 +370,25 @@ public class UserController(
     {
         User user = await CheckAccessFeatures([]);
         
-        // TODO: Call analytics service to get top track IDs
-        var topTracksRequest = new GetTopTracksRequest
+        GetTopTracksResponse topTracksResponse;
+        try
         {
-            UserId = user.Id,
-            Limit = 5
-        };
-        var topTracksResponse = await analyticsClient.GetTopTracksAsync(topTracksRequest);
+            // TODO: Call analytics service to get top track IDs
+            var topTracksRequest = new GetTopTracksRequest
+            {
+                UserId = user.Id,
+                Limit = 5
+            };
+            topTracksResponse = await analyticsClient.GetTopTracksAsync(topTracksRequest);
+        }
+        catch (RpcException ex) when (ex.StatusCode == Grpc.Core.StatusCode.Unimplemented)
+        {
+            // Analytics service method is not implemented yet, return empty list
+            throw ResponseFactory.Create<OkResponse<IEnumerable<TopTrackDTO>>>(
+                new List<TopTrackDTO>(),
+                ["Analytics service is not available"]
+            );
+        }
         
         if (topTracksResponse.Tracks == null || !topTracksResponse.Tracks.Any())
         {
@@ -441,15 +454,27 @@ public class UserController(
     {
         User user = await CheckAccessFeatures([]);
         
-        // TODO: Call analytics service to get top artist IDs
-        var topArtistsRequest = new GetTopArtistsRequest
+        // Get top tracks from analytics service
+        GetTopTracksResponse topTracksResponse;
+        try
         {
-            UserId = user.Id,
-            Limit = 5
-        };
-        var topArtistsResponse = await analyticsClient.GetTopArtistsAsync(topArtistsRequest);
+            var topTracksRequest = new GetTopTracksRequest
+            {
+                UserId = user.Id,
+                Limit = 50 // Get more tracks to aggregate artists properly
+            };
+            topTracksResponse = await analyticsClient.GetTopTracksAsync(topTracksRequest);
+        }
+        catch (RpcException ex) when (ex.StatusCode == Grpc.Core.StatusCode.Unimplemented)
+        {
+            // Analytics service method is not implemented yet, return empty list
+            throw ResponseFactory.Create<OkResponse<IEnumerable<TopArtistDTO>>>(
+                new List<TopArtistDTO>(),
+                ["Analytics service is not available"]
+            );
+        }
         
-        if (topArtistsResponse.Artists == null || !topArtistsResponse.Artists.Any())
+        if (topTracksResponse.Tracks == null || !topTracksResponse.Tracks.Any())
         {
             throw ResponseFactory.Create<OkResponse<IEnumerable<TopArtistDTO>>>(
                 new List<TopArtistDTO>(),
@@ -457,25 +482,73 @@ public class UserController(
             );
         }
         
-        // Get artist IDs from the response
-        var artistIds = topArtistsResponse.Artists.Select(a => a.ArtistId).ToList();
-        var playCountsByArtistId = topArtistsResponse.Artists.ToDictionary(a => a.ArtistId, a => a.PlayCount);
+        // Get track IDs and their play counts
+        var trackIds = topTracksResponse.Tracks.Select(t => t.TrackId).ToList();
+        var playCountsByTrackId = topTracksResponse.Tracks.ToDictionary(t => t.TrackId, t => t.PlayCount);
         
-        // Fetch artists from repository
-        var artists = await artistRepository.GetAllAsync();
-        var topArtists = await artists
-            .Where(a => artistIds.Contains(a.Id))
-            .SnInclude(a => a.User)
+        // Fetch tracks with their artists from repository
+        var tracks = await trackRepository.GetAllAsync();
+        var topTracks = await tracks
+            .Where(t => trackIds.Contains(t.Id))
+            .SnInclude(t => t.TrackArtists)
+            .ThenInclude(ta => ta.Artist)
+            .ThenInclude(a => a.User)
             .ToListAsync();
         
-        // Build DTOs
-        var topArtistDtos = topArtists.Select(a => new TopArtistDTO
+        // Aggregate play counts by artist
+        var artistPlayCounts = new Dictionary<int, long>();
+        var artistData = new Dictionary<int, Artist>();
+        
+        foreach (var track in topTracks)
         {
-            Id = a.Id,
-            ArtistName = a.ArtistName,
-            UserId = a.UserId,
-            AvatarImageId = a.User?.AvatarImageId,
-            PlayCount = playCountsByArtistId.GetValueOrDefault(a.Id, 0)
+            long trackPlayCount = playCountsByTrackId.GetValueOrDefault(track.Id, 0);
+            
+            if (track.TrackArtists != null)
+            {
+                foreach (var trackArtist in track.TrackArtists)
+                {
+                    if (trackArtist.ArtistId.HasValue && trackArtist.Artist != null)
+                    {
+                        int artistId = trackArtist.ArtistId.Value;
+                        
+                        // Sum play counts for this artist
+                        if (artistPlayCounts.ContainsKey(artistId))
+                        {
+                            artistPlayCounts[artistId] += trackPlayCount;
+                        }
+                        else
+                        {
+                            artistPlayCounts[artistId] = trackPlayCount;
+                            artistData[artistId] = trackArtist.Artist;
+                        }
+                    }
+                }
+            }
+        }
+        
+        if (!artistPlayCounts.Any())
+        {
+            throw ResponseFactory.Create<OkResponse<IEnumerable<TopArtistDTO>>>(
+                new List<TopArtistDTO>(),
+                ["No top artists found"]
+            );
+        }
+        
+        // Get top 5 artists by play count
+        var topArtistIds = artistPlayCounts
+            .OrderByDescending(kvp => kvp.Value)
+            .Take(5)
+            .Select(kvp => kvp.Key)
+            .ToList();
+        
+        // Build DTOs
+        var topArtistDtos = topArtistIds.Select(artistId => new TopArtistDTO
+        {
+            Id = artistId,
+            ArtistName = artistData[artistId].ArtistName,
+            UserId = artistData[artistId].UserId,
+            AvatarImageId = artistData[artistId].User?.AvatarImageId,
+            PlayCount = artistPlayCounts[artistId]
         })
         .OrderByDescending(a => a.PlayCount)
         .ToList();
