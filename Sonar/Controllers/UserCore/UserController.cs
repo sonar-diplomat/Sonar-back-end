@@ -4,14 +4,17 @@ using Application.Abstractions.Interfaces.Services.UserCore;
 using Application.Abstractions.Interfaces.Services.Utilities;
 using Application.Abstractions.Interfaces.Repository.Music;
 using Application.DTOs.User;
+using Application.DTOs.Music;
 using Application.Response;
 using Application.Extensions;
 using Entities.Enums;
 using Entities.Models.UserCore;
+using Entities.Models.Music;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Analytics.API;
 
 namespace Sonar.Controllers.UserCore;
 
@@ -22,7 +25,11 @@ public class UserController(
     UserManager<User> userManager,
     IShareService shareService,
     IUserFollowService userFollowService,
-    IPlaylistRepository playlistRepository
+    IPlaylistRepository playlistRepository,
+    Analytics.API.Analytics.AnalyticsClient analyticsClient,
+    Recommendations.RecommendationsClient recommendationsClient,
+    ITrackRepository trackRepository,
+    IArtistRepository artistRepository
 )
     : ShareController<User>(userManager, shareService)
 {
@@ -346,5 +353,136 @@ public class UserController(
             AvatarImageId = f.AvatarImageId
         });
         throw ResponseFactory.Create<OkResponse<IEnumerable<UserFriendDTO>>>(dtos, ["Friends retrieved successfully"]);
+    }
+
+    /// <summary>
+    /// Retrieves the top 5 most frequently listened to tracks for the authenticated user.
+    /// </summary>
+    /// <returns>List of top track DTOs with play counts.</returns>
+    /// <response code="200">Top tracks retrieved successfully.</response>
+    /// <response code="401">User not authenticated.</response>
+    [HttpGet("top-tracks")]
+    [Authorize]
+    [ProducesResponseType(typeof(OkResponse<IEnumerable<TopTrackDTO>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> GetTopTracks()
+    {
+        User user = await CheckAccessFeatures([]);
+        
+        // TODO: Call analytics service to get top track IDs
+        var topTracksRequest = new GetTopTracksRequest
+        {
+            UserId = user.Id,
+            Limit = 5
+        };
+        var topTracksResponse = await analyticsClient.GetTopTracksAsync(topTracksRequest);
+        
+        if (topTracksResponse.Tracks == null || !topTracksResponse.Tracks.Any())
+        {
+            throw ResponseFactory.Create<OkResponse<IEnumerable<TopTrackDTO>>>(
+                new List<TopTrackDTO>(),
+                ["No top tracks found"]
+            );
+        }
+        
+        // Get track IDs from the response
+        var trackIds = topTracksResponse.Tracks.Select(t => t.TrackId).ToList();
+        var playCountsByTrackId = topTracksResponse.Tracks.ToDictionary(t => t.TrackId, t => t.PlayCount);
+        
+        // Fetch tracks from repository
+        var tracks = await trackRepository.GetAllAsync();
+        var topTracks = await tracks
+            .Where(t => trackIds.Contains(t.Id))
+            .SnInclude(t => t.TrackArtists)
+            .ThenInclude(ta => ta.Artist)
+            .SnInclude(t => t.Collections)
+            .ToListAsync();
+        
+        // Build DTOs
+        var topTrackDtos = topTracks.Select(t =>
+        {
+            Album? album = t.Collections?.OfType<Album>().FirstOrDefault();
+            return new TopTrackDTO
+            {
+                Id = t.Id,
+                Title = t.Title,
+                DurationInSeconds = (int)(t.Duration?.TotalSeconds ?? 0),
+                CoverId = t.CoverId,
+                Artists = t.TrackArtists?.Select(ta => new AuthorDTO
+                {
+                    Pseudonym = ta.Pseudonym,
+                    ArtistId = ta.ArtistId
+                }) ?? new List<AuthorDTO>(),
+                AlbumId = album?.Id,
+                AlbumName = album?.Name,
+                PlayCount = playCountsByTrackId.GetValueOrDefault(t.Id, 0)
+            };
+        })
+        .OrderByDescending(t => t.PlayCount)
+        .ToList();
+        
+        throw ResponseFactory.Create<OkResponse<IEnumerable<TopTrackDTO>>>(
+            topTrackDtos,
+            ["Top tracks retrieved successfully"]
+        );
+    }
+
+    /// <summary>
+    /// Retrieves the top 5 most frequently listened to artists for the authenticated user.
+    /// </summary>
+    /// <returns>List of top artist DTOs with play counts.</returns>
+    /// <response code="200">Top artists retrieved successfully.</response>
+    /// <response code="401">User not authenticated.</response>
+    [HttpGet("top-artists")]
+    [Authorize]
+    [ProducesResponseType(typeof(OkResponse<IEnumerable<TopArtistDTO>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> GetTopArtists()
+    {
+        User user = await CheckAccessFeatures([]);
+        
+        // TODO: Call analytics service to get top artist IDs
+        var topArtistsRequest = new GetTopArtistsRequest
+        {
+            UserId = user.Id,
+            Limit = 5
+        };
+        var topArtistsResponse = await analyticsClient.GetTopArtistsAsync(topArtistsRequest);
+        
+        if (topArtistsResponse.Artists == null || !topArtistsResponse.Artists.Any())
+        {
+            throw ResponseFactory.Create<OkResponse<IEnumerable<TopArtistDTO>>>(
+                new List<TopArtistDTO>(),
+                ["No top artists found"]
+            );
+        }
+        
+        // Get artist IDs from the response
+        var artistIds = topArtistsResponse.Artists.Select(a => a.ArtistId).ToList();
+        var playCountsByArtistId = topArtistsResponse.Artists.ToDictionary(a => a.ArtistId, a => a.PlayCount);
+        
+        // Fetch artists from repository
+        var artists = await artistRepository.GetAllAsync();
+        var topArtists = await artists
+            .Where(a => artistIds.Contains(a.Id))
+            .SnInclude(a => a.User)
+            .ToListAsync();
+        
+        // Build DTOs
+        var topArtistDtos = topArtists.Select(a => new TopArtistDTO
+        {
+            Id = a.Id,
+            ArtistName = a.ArtistName,
+            UserId = a.UserId,
+            AvatarImageId = a.User?.AvatarImageId,
+            PlayCount = playCountsByArtistId.GetValueOrDefault(a.Id, 0)
+        })
+        .OrderByDescending(a => a.PlayCount)
+        .ToList();
+        
+        throw ResponseFactory.Create<OkResponse<IEnumerable<TopArtistDTO>>>(
+            topArtistDtos,
+            ["Top artists retrieved successfully"]
+        );
     }
 }
