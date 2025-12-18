@@ -1,4 +1,4 @@
-﻿namespace Application.Abstractions.Interfaces.Services;
+namespace Application.Abstractions.Interfaces.Services;
 
 public interface IChatNotifier
 {
@@ -13,6 +13,8 @@ public interface IChatNotifier
 
     Task MessageDeleted(MessageDeletedEvent payload);
     Task MessageUpdated(MessageUpdatedEvent payload);
+    
+    Task ChatDeleted(ChatDeletedEvent payload);
 }
 
 public sealed record MessageCreatedEvent(
@@ -52,3 +54,5 @@ public sealed record ChatCoverUpdatedEvent(int ChatId, int CoverId);
 public sealed record UserAddedToChatEvent(int ChatId, int UserId);
 
 public sealed record UserRemovedFromChatEvent(int ChatId, int UserId);
+
+public sealed record ChatDeletedEvent(int ChatId, int InitiatorId);

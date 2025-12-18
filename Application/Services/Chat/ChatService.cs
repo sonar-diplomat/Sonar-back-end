@@ -1,4 +1,4 @@
-﻿using Application.Abstractions.Interfaces.Repository.Chat;
+using Application.Abstractions.Interfaces.Repository.Chat;
 using Application.Abstractions.Interfaces.Repository.UserCore;
 using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.File;
@@ -377,6 +377,44 @@ public class ChatService(
             UserIds = chat.Members.Select(m => m.Id).ToArray(),
             LastMessage = lastMessagesDict.GetValueOrDefault(chat.Id)
         });
+    }
+
+    public async Task DeleteChatAsync(int userId, int chatId)
+    {
+        ChatModel chat = await repository
+            .SnInclude(c => c.Members)
+            .SnInclude(c => c.Messages)
+            .GetByIdValidatedAsync(chatId);
+
+        // For group chats, only the creator can delete
+        // For personal chats, either participant can delete
+        if (chat.IsGroup)
+        {
+            if (chat.CreatorId != userId)
+                throw ResponseFactory.Create<ForbiddenResponse>(["Only the chat creator can delete the chat"]);
+        }
+        else
+        {
+            // Check if user is a member of the personal chat
+            bool isMember = chat.Members != null && chat.Members.Any(m => m.Id == userId);
+            if (!isMember)
+                throw ResponseFactory.Create<ForbiddenResponse>(["User is not a member of the chat"]);
+        }
+
+        // Delete all message reads for messages in this chat
+        if (chat.Messages != null && chat.Messages.Any())
+        {
+            List<int> messageIds = chat.Messages.Select(m => m.Id).ToList();
+            foreach (int messageId in messageIds)
+            {
+                await messageReadService.DeleteByMessageIdAsync(messageId);
+            }
+        }
+
+        // Delete the chat (messages will be deleted by cascade)
+        await DeleteAsync(chat);
+
+        await notifier.ChatDeleted(new ChatDeletedEvent(chatId, userId));
     }
 
     private async Task<ChatModel> CheckUserCanManageChatAsync(int userId, int chatId)

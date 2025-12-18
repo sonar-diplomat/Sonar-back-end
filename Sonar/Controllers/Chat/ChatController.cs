@@ -316,4 +316,26 @@ public class ChatController(
         await chatService.ReadAllMessagesAsync(user.Id, chatId);
         throw ResponseFactory.Create<OkResponse>(["All messages marked as read"]);
     }
+
+    /// <summary>
+    /// Deletes a chat. For group chats, only the creator can delete. For personal chats, either participant can delete.
+    /// </summary>
+    /// <param name="chatId">The ID of the chat to delete.</param>
+    /// <returns>Success response upon chat deletion.</returns>
+    /// <response code="200">Chat deleted successfully.</response>
+    /// <response code="401">User not authenticated.</response>
+    /// <response code="403">User does not have permission to delete the chat.</response>
+    /// <response code="404">Chat not found.</response>
+    [HttpDelete("{chatId:int}")]
+    [Authorize]
+    [ProducesResponseType(typeof(OkResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ForbiddenResponse), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteChat(int chatId)
+    {
+        User user = await CheckAccessFeatures([]);
+        await chatService.DeleteChatAsync(user.Id, chatId);
+        throw ResponseFactory.Create<OkResponse>(["Chat deleted successfully"]);
+    }
 }

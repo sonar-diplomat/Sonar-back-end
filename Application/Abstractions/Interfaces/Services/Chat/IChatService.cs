@@ -1,4 +1,4 @@
-﻿using Application.DTOs;
+using Application.DTOs;
 using Application.DTOs.Chat;
 using Entities.Models.Chat;
 using Microsoft.AspNetCore.Http;
@@ -23,4 +23,5 @@ public interface IChatService : IGenericService<ChatModel>
     Task LeaveChat(int userId, int chatId);
     Task<ChatModel> CreateChatAsync(int userId, CreateChatDTO chat);
     Task<IEnumerable<ChatListItemDTO>> GetUserChatsAsync(int userId);
+    Task DeleteChatAsync(int userId, int chatId);
 }

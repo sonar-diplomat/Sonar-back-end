@@ -1,4 +1,4 @@
-﻿using Application.Abstractions.Interfaces.Services;
+using Application.Abstractions.Interfaces.Services;
 using Microsoft.AspNetCore.SignalR;
 
 namespace Sonar.Hubs;
@@ -43,6 +43,11 @@ public sealed class ChatNotifier(IHubContext<ChatHub> hub) : IChatNotifier
     public Task MessageUpdated(MessageUpdatedEvent payload)
     {
         return hub.Clients.Group(G(payload.ChatId)).SendAsync("message.updated", payload);
+    }
+
+    public Task ChatDeleted(ChatDeletedEvent payload)
+    {
+        return hub.Clients.Group(G(payload.ChatId)).SendAsync("chat.deleted", payload);
     }
 
     private static string G(int chatId)
