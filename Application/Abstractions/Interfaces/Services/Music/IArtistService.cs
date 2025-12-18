@@ -11,6 +11,7 @@ public interface IArtistService : IGenericService<Artist>
     Task DeleteArtistAsync(int artistId);
     Task CreatePostAsync(int artistId, PostDTO dto);
     Task UpdatePostAsync(int postId, int artistId, PostDTO dto);
-    
+
     Task<Artist> RegisterArtistAsync(int userId, string artistName);
+    Task<Artist?> GetByIdWithUserAsync(int artistId);
 }

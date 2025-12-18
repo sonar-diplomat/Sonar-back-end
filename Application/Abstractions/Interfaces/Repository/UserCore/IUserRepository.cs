@@ -16,4 +16,5 @@ public interface IUserRepository
     Task SaveChangesAsync();
     Task<bool> CheckExists(string publicIdentifier);
     Task<User?> GetByPublicIdentifierAsync(string publicIdentifier);
+    Task<Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction> BeginTransactionAsync();
 }

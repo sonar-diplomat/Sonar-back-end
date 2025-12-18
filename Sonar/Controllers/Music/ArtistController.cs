@@ -1,6 +1,8 @@
 using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.Utilities;
 using Application.DTOs;
+using Application.DTOs.Music;
+using Application.DTOs.User;
 using Application.Response;
 using Entities.Enums;
 using Entities.Models.Chat;
@@ -46,6 +48,66 @@ public class ArtistController(
     public async Task<IActionResult> RegisterArtist()
     {
         throw new NotImplementedException();
+    }
+
+    /// <summary>
+    /// Gets an artist by their ID including user information.
+    /// </summary>
+    /// <param name="artistId">The ID of the artist to retrieve.</param>
+    /// <returns>Artist details with user information.</returns>
+    /// <response code="200">Artist retrieved successfully.</response>
+    /// <response code="404">Artist not found.</response>
+    [HttpGet("{artistId:int}")]
+    [ProducesResponseType(typeof(OkResponse<ArtistDTO>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetArtistById(int artistId)
+    {
+        Artist? artist = await artistService.GetByIdWithUserAsync(artistId);
+        if (artist == null)
+            throw ResponseFactory.Create<NotFoundResponse>([$"Artist with ID {artistId} not found"]);
+
+        var artistDTO = new ArtistDTO
+        {
+            Id = artist.Id,
+            UserId = artist.UserId,
+            ArtistName = artist.ArtistName,
+            User = artist.User != null ? new UserResponseDTO
+            {
+                Id = artist.User.Id,
+                UserName = artist.User.UserName,
+                FirstName = artist.User.FirstName,
+                LastName = artist.User.LastName,
+                DateOfBirth = artist.User.DateOfBirth,
+                Login = artist.User.Login,
+                PublicIdentifier = artist.User.PublicIdentifier,
+                Biography = artist.User.Biography,
+                RegistrationDate = artist.User.RegistrationDate,
+                AvailableCurrency = artist.User.AvailableCurrency,
+                AvatarImageId = artist.User.AvatarImageId
+            } : null
+        };
+
+        throw ResponseFactory.Create<OkResponse<ArtistDTO>>(artistDTO, ["Artist retrieved successfully"]);
+    }
+
+    /// <summary>
+    /// Gets all posts for a specific artist.
+    /// </summary>
+    /// <param name="artistId">The ID of the artist whose posts to retrieve.</param>
+    /// <returns>Collection of posts for the specified artist.</returns>
+    /// <response code="200">Posts retrieved successfully.</response>
+    /// <response code="404">Artist not found.</response>
+    [HttpGet("{artistId:int}/posts")]
+    [ProducesResponseType(typeof(OkResponse<IEnumerable<Post>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetArtistPosts(int artistId)
+    {
+        Artist? artist = await artistService.GetByIdAsync(artistId);
+        if (artist == null)
+            throw ResponseFactory.Create<NotFoundResponse>([$"Artist with ID {artistId} not found"]);
+
+        IEnumerable<Post> posts = await postService.GetByArtistIdAsync(artistId);
+        throw ResponseFactory.Create<OkResponse<IEnumerable<Post>>>(posts, ["Artist posts retrieved successfully"]);
     }
 
     /// <summary>

@@ -1,0 +1,72 @@
+syntax = "proto3";
+
+option csharp_namespace = "Analytics.API";
+
+import "google/protobuf/timestamp.proto";
+import "analytics.proto";
+
+service Recommendations {
+  rpc GetPopularCollections (GetPopularCollectionsRequest) returns (GetPopularCollectionsResponse);
+  rpc GetRecentCollections (GetRecentCollectionsRequest) returns (GetRecentCollectionsResponse);
+  rpc GetRecentTracks (GetRecentTracksRequest) returns (GetRecentTracksResponse);
+}
+
+message GetPopularCollectionsRequest {
+  int32 limit = 1;
+}
+
+message PopularCollection {
+  int32 collection_id = 1;
+  CollectionType collection_type = 2;
+  double score = 3;
+  int64 plays = 4;
+  int64 likes = 5;
+  int64 adds = 6;
+}
+
+message GetPopularCollectionsResponse {
+  repeated PopularCollection collections = 1;
+}
+
+message GetRecentCollectionsRequest {
+  int32 user_id = 1;
+  int32 limit = 2;
+  string cursor = 3;
+}
+
+message RecentCollection {
+  int32 collection_id = 1;
+  CollectionType collection_type = 2;
+  google.protobuf.Timestamp last_played_at = 3;
+}
+
+message GetRecentCollectionsResponse {
+  repeated RecentCollection collections = 1;
+  string next_cursor = 2;
+}
+
+message GetRecentTracksRequest {
+  int32 user_id = 1;
+  int32 limit = 2;
+  string cursor = 3;
+}
+
+message RecentTrack {
+  int32 track_id = 1;
+  google.protobuf.Timestamp last_played_at = 2;
+  int32 context_id = 3;
+  ContextType context_type = 4;
+}
+
+message GetRecentTracksResponse {
+  repeated RecentTrack tracks = 1;
+  string next_cursor = 2;
+}
+
+enum CollectionType {
+  COLLECTION_UNKNOWN = 0;
+  COLLECTION_ALBUM = 1;
+  COLLECTION_PLAYLIST = 2;
+}
+
+

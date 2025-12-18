@@ -15,7 +15,7 @@ public class Playlist : Collection
     /// </summary>
     [JsonIgnore]
     [ForeignKey("CreatorId")]
-    [DeleteBehavior(DeleteBehavior.NoAction)]
+    [DeleteBehavior(DeleteBehavior.Cascade)]
     public virtual User Creator { get; set; }
 
     [JsonIgnore]

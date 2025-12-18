@@ -28,7 +28,6 @@ public class UserServiceTests
         var stateServiceMock = new Mock<IUserStateService>();
         var imageFileServiceMock = new Mock<IImageFileService>();
         var libraryServiceMock = new Mock<ILibraryService>();
-        var friendRequestServiceMock = new Mock<IUserFriendRequestService>();
         
         _service = new UserService(
             _userRepositoryMock.Object,
@@ -39,7 +38,6 @@ public class UserServiceTests
             stateServiceMock.Object,
             imageFileServiceMock.Object,
             libraryServiceMock.Object,
-            friendRequestServiceMock.Object,
             _userFollowServiceMock.Object
         );
     }

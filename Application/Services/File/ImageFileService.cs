@@ -43,4 +43,20 @@ public class ImageFileService(
     {
         return repository.GetFavoriteDefaultAsync();
     }
+
+    public Task<ImageFile> GetPlaylistDefaultAsync()
+    {
+        return repository.GetPlaylistDefaultAsync();
+    }
+
+    public async Task<ImageFile?> GetByIdAsync(int id)
+    {
+        return await repository.GetByIdAsync(id);
+    }
+
+    public async Task<ImageFile> GetByIdValidatedAsync(int id)
+    {
+        ImageFile? entity = await repository.GetByIdAsync(id);
+        return entity ?? throw ResponseFactory.Create<NotFoundResponse>([$"ImageFile not found"]);
+    }
 }

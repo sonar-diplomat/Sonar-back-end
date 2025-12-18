@@ -11,8 +11,9 @@ using Entities.Models.File;
 using Entities.Models.Music;
 using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Http;
-using System.Security.Cryptography;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Cryptography;
 
 namespace Application.Services.UserCore;
 
@@ -108,7 +109,7 @@ public class UserService(
         {
             Name = "Favorites",
             VisibilityState = await visibilityStateService.CreateDefaultAsync(),
-            Cover = await imageFileService.GetDefaultAsync(),
+            Cover = await imageFileService.GetFavoriteDefaultAsync(),
             Creator = user
         };
 
@@ -227,6 +228,121 @@ public class UserService(
     public async Task<IEnumerable<User>> GetFriendsAsync(int userId)
     {
         return await userFollowService.GetMutualFollowsAsync(userId);
+    }
+
+    public async Task RegisterUserWithTransactionAsync(
+        UserRegisterDTO model,
+        UserManager<User> userManager,
+        Func<User, Task> sendConfirmationEmailAsync)
+    {
+        await using var transaction = await repository.BeginTransactionAsync();
+        bool rolledBack = false;
+
+        try
+        {
+            User user = await CreateUserShellAsync(model);
+            IdentityResult result = await userManager.CreateAsync(user, model.Password);
+
+            if (!result.Succeeded)
+            {
+                await transaction.RollbackAsync();
+                rolledBack = true;
+                ThrowIdentityErrors(result, userManager);
+            }
+
+            try
+            {
+                await sendConfirmationEmailAsync(user);
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                rolledBack = true;
+                throw ResponseFactory.Create<ExpectationFailedResponse>([
+                    $"Failed to send confirmation email. Please try again later. Details: {ex.Message}"
+                ]);
+            }
+
+            await transaction.CommitAsync();
+        }
+        catch (DbUpdateException dbEx) when (dbEx.InnerException?.Message.Contains("duplicate") == true ||
+                                             dbEx.InnerException?.Message.Contains("unique") == true ||
+                                             dbEx.InnerException?.Message.Contains("UserNameIndex") == true ||
+                                             dbEx.InnerException?.Message.Contains("EmailIndex") == true)
+        {
+            if (!rolledBack)
+            {
+                await transaction.RollbackAsync();
+                rolledBack = true;
+            }
+            string errorMessage = dbEx.InnerException?.Message ?? dbEx.Message;
+
+            if (errorMessage.Contains("UserName") || errorMessage.Contains("UserNameIndex"))
+                throw ResponseFactory.Create<ConflictResponse>(["User with this username already exists"]);
+
+            if (errorMessage.Contains("Email") || errorMessage.Contains("EmailIndex"))
+                throw ResponseFactory.Create<ConflictResponse>(["Email is already in use"]);
+
+            throw ResponseFactory.Create<ConflictResponse>(["User with such data already exists"]);
+        }
+        catch (Exception ex) when (ex is Application.Response.Response)
+        {
+            if (!rolledBack)
+            {
+                await transaction.RollbackAsync();
+                rolledBack = true;
+            }
+            // Re-throw known response exceptions to preserve their status/message.
+            throw;
+        }
+        catch (Exception ex)
+        {
+            if (!rolledBack)
+            {
+                await transaction.RollbackAsync();
+                rolledBack = true;
+            }
+            throw ResponseFactory.Create<ExpectationFailedResponse>([
+                $"Registration could not be completed. Details: {ex.Message}"
+            ]);
+        }
+    }
+
+    private static void ThrowIdentityErrors(IdentityResult result, UserManager<User> userManager)
+    {
+        List<string> conflictErrors = new();
+        List<string> identityValidationErrors = new();
+
+        foreach (IdentityError error in result.Errors)
+        {
+            string message = error.Code switch
+            {
+                "DuplicateUserName" or "DuplicateNormalizedUserName" => "User with this username already exists",
+                "DuplicateEmail" => "Email is already in use",
+                "PasswordTooShort" => $"Password is too short. Minimum length: {userManager.Options.Password.RequiredLength} characters",
+                "PasswordRequiresNonAlphanumeric" => "Password must contain at least one special character",
+                "PasswordRequiresDigit" => "Password must contain at least one digit",
+                "PasswordRequiresLower" => "Password must contain at least one lowercase letter",
+                "PasswordRequiresUpper" => "Password must contain at least one uppercase letter",
+                "InvalidEmail" => "Invalid email address",
+                "InvalidUserName" => "Invalid username",
+                _ => error.Description
+            };
+
+            if (error.Code is "DuplicateUserName" or "DuplicateNormalizedUserName" or "DuplicateEmail")
+                conflictErrors.Add(message);
+            else
+                identityValidationErrors.Add(message);
+        }
+
+        if (conflictErrors.Count > 0)
+            throw ResponseFactory.Create<ConflictResponse>(conflictErrors.ToArray());
+
+        if (identityValidationErrors.Count > 0)
+            throw ResponseFactory.Create<BadRequestResponse>(identityValidationErrors.ToArray());
+
+        throw ResponseFactory.Create<BadRequestResponse>(
+            result.Errors.Select(e => e.Description).ToArray());
     }
 
     private async Task<string> GenerateUniqueUserPublicIdentifierAsync()

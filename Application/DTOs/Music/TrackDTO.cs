@@ -10,4 +10,6 @@ public class TrackDTO
     public required int CoverId { get; set; }
     public required int AudioFileId { get; set; }
     public required IEnumerable<AuthorDTO> Artists { get; set; }
+    public required GenreDTO Genre { get; set; }
+    public IEnumerable<MoodTagDTO> MoodTags { get; set; } = new List<MoodTagDTO>();
 }

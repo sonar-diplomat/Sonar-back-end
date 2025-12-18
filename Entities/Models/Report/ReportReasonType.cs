@@ -14,8 +14,9 @@ public class ReportReasonType : BaseModel
     [Required]
     public TimeSpan RecommendedSuspensionDuration { get; set; }
 
-    /// <summary>
-    /// </summary>
     [JsonIgnore]
     public virtual ICollection<Report> Reports { get; set; }
+
+    [JsonIgnore]
+    public virtual ICollection<ReportableEntityType> ApplicableEntityTypes { get; set; }
 }

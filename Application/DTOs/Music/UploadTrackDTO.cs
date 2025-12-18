@@ -11,4 +11,6 @@ public class UploadTrackDTO
     public required IFormFile? MediumQualityAudioFile { get; set; }
     public required IFormFile? HighQualityAudioFile { get; set; }
     public IEnumerable<AuthorDTO>? AdditionalArtists { get; set; }
+    public required int GenreId { get; set; }
+    public IEnumerable<int>? MoodTagIds { get; set; }
 }

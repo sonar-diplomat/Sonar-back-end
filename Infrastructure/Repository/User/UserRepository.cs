@@ -2,6 +2,7 @@ using Application.Abstractions.Interfaces.Repository.UserCore;
 using Entities.Models.UserCore;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Sonar.Infrastructure.Repository.UserCore;
 
@@ -80,5 +81,10 @@ public class UserRepository(SonarContext context) : IUserRepository
             .Include(u => u.AccessFeatures)
             .Include(u => u.AvatarImage)
             .FirstOrDefaultAsync(u => u.PublicIdentifier == publicIdentifier);
+    }
+
+    public Task<IDbContextTransaction> BeginTransactionAsync()
+    {
+        return context.Database.BeginTransactionAsync();
     }
 }

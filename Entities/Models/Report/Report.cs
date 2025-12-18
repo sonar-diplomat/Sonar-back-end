@@ -25,6 +25,9 @@ public class Report : BaseModel
     [Required]
     public DateTime CreatedAt { get; set; }
 
+    [Required]
+    public int ReportReasonTypeId { get; set; }
+
     /// <summary>
     /// </summary>
     [JsonIgnore]
@@ -38,7 +41,10 @@ public class Report : BaseModel
     public virtual User Reporter { get; set; }
 
     [JsonIgnore]
-    public virtual ICollection<ReportReasonType> ReportReasonType { get; set; }
+    [ForeignKey("ReportReasonTypeId")]
+    [DeleteBehavior(DeleteBehavior.NoAction)]
+    public virtual ReportReasonType ReportReasonType { get; set; }
+
     [JsonIgnore]
     public virtual ICollection<Suspension> Suspensions { get; set; }
 }

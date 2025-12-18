@@ -1111,6 +1111,29 @@ namespace Infrastructure.Migrations
                     b.ToTable("AlbumArtists");
                 });
 
+            modelBuilder.Entity("Entities.Models.Music.AlbumMoodTag", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AlbumId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("MoodTagId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AlbumId");
+
+                    b.HasIndex("MoodTagId");
+
+                    b.ToTable("AlbumMoodTag");
+                });
+
             modelBuilder.Entity("Entities.Models.Music.Artist", b =>
                 {
                     b.Property<int>("Id")
@@ -1165,6 +1188,151 @@ namespace Infrastructure.Migrations
                     b.UseTptMappingStrategy();
                 });
 
+            modelBuilder.Entity("Entities.Models.Music.Genre", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Genre");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "Undefined"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Rock"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "Pop"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Name = "Hip-Hop"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Name = "Electronic"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Name = "Jazz"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Name = "Classical"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Name = "Country"
+                        },
+                        new
+                        {
+                            Id = 9,
+                            Name = "R&B"
+                        },
+                        new
+                        {
+                            Id = 10,
+                            Name = "Metal"
+                        },
+                        new
+                        {
+                            Id = 11,
+                            Name = "Folk"
+                        });
+                });
+
+            modelBuilder.Entity("Entities.Models.Music.MoodTag", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("MoodTag");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "Happy"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Sad"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "Energetic"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Name = "Relaxed"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Name = "Melancholic"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Name = "Upbeat"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Name = "Calm"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Name = "Aggressive"
+                        },
+                        new
+                        {
+                            Id = 9,
+                            Name = "Romantic"
+                        },
+                        new
+                        {
+                            Id = 10,
+                            Name = "Nostalgic"
+                        });
+                });
+
             modelBuilder.Entity("Entities.Models.Music.Track", b =>
                 {
                     b.Property<int>("Id")
@@ -1181,6 +1349,9 @@ namespace Infrastructure.Migrations
 
                     b.Property<TimeSpan?>("Duration")
                         .HasColumnType("interval");
+
+                    b.Property<int>("GenreId")
+                        .HasColumnType("integer");
 
                     b.Property<int?>("HighQualityAudioFileId")
                         .HasColumnType("integer");
@@ -1208,6 +1379,8 @@ namespace Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CoverId");
+
+                    b.HasIndex("GenreId");
 
                     b.HasIndex("HighQualityAudioFileId");
 
@@ -1250,6 +1423,29 @@ namespace Infrastructure.Migrations
                     b.ToTable("TrackArtists");
                 });
 
+            modelBuilder.Entity("Entities.Models.Music.TrackMoodTag", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("MoodTagId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TrackId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MoodTagId");
+
+                    b.HasIndex("TrackId");
+
+                    b.ToTable("TrackMoodTag");
+                });
+
             modelBuilder.Entity("Entities.Models.Report.Report", b =>
                 {
                     b.Property<int>("Id")
@@ -1267,6 +1463,12 @@ namespace Infrastructure.Migrations
                     b.Property<bool>("IsClosed")
                         .HasColumnType("boolean");
 
+                    b.Property<int>("ReportReasonTypeId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("ReportReasonTypeId1")
+                        .HasColumnType("integer");
+
                     b.Property<int>("ReportableEntityTypeId")
                         .HasColumnType("integer");
 
@@ -1274,6 +1476,10 @@ namespace Infrastructure.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ReportReasonTypeId");
+
+                    b.HasIndex("ReportReasonTypeId1");
 
                     b.HasIndex("ReportableEntityTypeId");
 
@@ -1326,6 +1532,78 @@ namespace Infrastructure.Migrations
                             Id = 4,
                             Name = "Inappropriate Content",
                             RecommendedSuspensionDuration = new TimeSpan(14, 0, 0, 0, 0)
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Name = "Copyright infringement",
+                            RecommendedSuspensionDuration = new TimeSpan(30, 0, 0, 0, 0)
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Name = "Explicit content without marking",
+                            RecommendedSuspensionDuration = new TimeSpan(7, 0, 0, 0, 0)
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Name = "Spam audio / noise",
+                            RecommendedSuspensionDuration = new TimeSpan(3, 0, 0, 0, 0)
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Name = "Incorrect tags/metadata",
+                            RecommendedSuspensionDuration = new TimeSpan(1, 0, 0, 0, 0)
+                        },
+                        new
+                        {
+                            Id = 9,
+                            Name = "Copyrighted cover without permission",
+                            RecommendedSuspensionDuration = new TimeSpan(30, 0, 0, 0, 0)
+                        },
+                        new
+                        {
+                            Id = 10,
+                            Name = "Inappropriate playlist name",
+                            RecommendedSuspensionDuration = new TimeSpan(7, 0, 0, 0, 0)
+                        },
+                        new
+                        {
+                            Id = 11,
+                            Name = "Abusive behavior",
+                            RecommendedSuspensionDuration = new TimeSpan(14, 0, 0, 0, 0)
+                        },
+                        new
+                        {
+                            Id = 12,
+                            Name = "Fake identity",
+                            RecommendedSuspensionDuration = new TimeSpan(30, 0, 0, 0, 0)
+                        },
+                        new
+                        {
+                            Id = 13,
+                            Name = "Bot account",
+                            RecommendedSuspensionDuration = new TimeSpan(90, 0, 0, 0, 0)
+                        },
+                        new
+                        {
+                            Id = 14,
+                            Name = "Inappropriate bio",
+                            RecommendedSuspensionDuration = new TimeSpan(7, 0, 0, 0, 0)
+                        },
+                        new
+                        {
+                            Id = 15,
+                            Name = "Scam attempts / phishing",
+                            RecommendedSuspensionDuration = new TimeSpan(90, 0, 0, 0, 0)
+                        },
+                        new
+                        {
+                            Id = 16,
+                            Name = "Spam messaging",
+                            RecommendedSuspensionDuration = new TimeSpan(7, 0, 0, 0, 0)
                         });
                 });
 
@@ -1366,6 +1644,16 @@ namespace Infrastructure.Migrations
                         {
                             Id = 4,
                             Name = "Comment"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Name = "Playlist"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Name = "Artist"
                         });
                 });
 
@@ -1393,6 +1681,35 @@ namespace Infrastructure.Migrations
                     b.HasIndex("CurrentTrackId");
 
                     b.ToTable("Queue");
+                });
+
+            modelBuilder.Entity("Entities.Models.UserCore.QueueTrack", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("IsManuallyAdded")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("QueueId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TrackId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("QueueId");
+
+                    b.HasIndex("TrackId");
+
+                    b.ToTable("QueueTrack");
                 });
 
             modelBuilder.Entity("Entities.Models.UserCore.User", b =>
@@ -1569,38 +1886,6 @@ namespace Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("UserFollows");
-                });
-
-            modelBuilder.Entity("Entities.Models.UserCore.UserFriendRequest", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("FromUserId")
-                        .HasColumnType("integer");
-
-                    b.Property<bool?>("IsAccepted")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTime>("RequestedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("ResolvedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("ToUserId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("FromUserId");
-
-                    b.HasIndex("ToUserId");
-
-                    b.ToTable("UserFriendRequests");
                 });
 
             modelBuilder.Entity("Entities.Models.UserCore.UserPrivacyGroup", b =>
@@ -2293,34 +2578,156 @@ namespace Infrastructure.Migrations
                     b.ToTable("NotificationTypeSettings");
                 });
 
-            modelBuilder.Entity("QueueTrack", b =>
+            modelBuilder.Entity("ReportReasonTypeReportableEntityType", b =>
                 {
-                    b.Property<int>("QueuesId")
+                    b.Property<int>("ApplicableEntityTypesId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("TracksId")
+                    b.Property<int>("ApplicableReportReasonTypesId")
                         .HasColumnType("integer");
 
-                    b.HasKey("QueuesId", "TracksId");
+                    b.HasKey("ApplicableEntityTypesId", "ApplicableReportReasonTypesId");
 
-                    b.HasIndex("TracksId");
+                    b.HasIndex("ApplicableReportReasonTypesId");
 
-                    b.ToTable("QueueTrack");
-                });
+                    b.ToTable("ReportReasonTypeReportableEntityType", (string)null);
 
-            modelBuilder.Entity("ReportReportReasonType", b =>
-                {
-                    b.Property<int>("ReportReasonTypeId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("ReportsId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("ReportReasonTypeId", "ReportsId");
-
-                    b.HasIndex("ReportsId");
-
-                    b.ToTable("ReportReportReasonType");
+                    b.HasData(
+                        new
+                        {
+                            ApplicableEntityTypesId = 1,
+                            ApplicableReportReasonTypesId = 1
+                        },
+                        new
+                        {
+                            ApplicableEntityTypesId = 2,
+                            ApplicableReportReasonTypesId = 1
+                        },
+                        new
+                        {
+                            ApplicableEntityTypesId = 3,
+                            ApplicableReportReasonTypesId = 1
+                        },
+                        new
+                        {
+                            ApplicableEntityTypesId = 4,
+                            ApplicableReportReasonTypesId = 1
+                        },
+                        new
+                        {
+                            ApplicableEntityTypesId = 5,
+                            ApplicableReportReasonTypesId = 1
+                        },
+                        new
+                        {
+                            ApplicableEntityTypesId = 6,
+                            ApplicableReportReasonTypesId = 1
+                        },
+                        new
+                        {
+                            ApplicableEntityTypesId = 1,
+                            ApplicableReportReasonTypesId = 2
+                        },
+                        new
+                        {
+                            ApplicableEntityTypesId = 2,
+                            ApplicableReportReasonTypesId = 3
+                        },
+                        new
+                        {
+                            ApplicableEntityTypesId = 3,
+                            ApplicableReportReasonTypesId = 3
+                        },
+                        new
+                        {
+                            ApplicableEntityTypesId = 1,
+                            ApplicableReportReasonTypesId = 4
+                        },
+                        new
+                        {
+                            ApplicableEntityTypesId = 2,
+                            ApplicableReportReasonTypesId = 4
+                        },
+                        new
+                        {
+                            ApplicableEntityTypesId = 3,
+                            ApplicableReportReasonTypesId = 4
+                        },
+                        new
+                        {
+                            ApplicableEntityTypesId = 4,
+                            ApplicableReportReasonTypesId = 4
+                        },
+                        new
+                        {
+                            ApplicableEntityTypesId = 5,
+                            ApplicableReportReasonTypesId = 4
+                        },
+                        new
+                        {
+                            ApplicableEntityTypesId = 6,
+                            ApplicableReportReasonTypesId = 4
+                        },
+                        new
+                        {
+                            ApplicableEntityTypesId = 2,
+                            ApplicableReportReasonTypesId = 5
+                        },
+                        new
+                        {
+                            ApplicableEntityTypesId = 2,
+                            ApplicableReportReasonTypesId = 6
+                        },
+                        new
+                        {
+                            ApplicableEntityTypesId = 2,
+                            ApplicableReportReasonTypesId = 7
+                        },
+                        new
+                        {
+                            ApplicableEntityTypesId = 2,
+                            ApplicableReportReasonTypesId = 8
+                        },
+                        new
+                        {
+                            ApplicableEntityTypesId = 3,
+                            ApplicableReportReasonTypesId = 9
+                        },
+                        new
+                        {
+                            ApplicableEntityTypesId = 5,
+                            ApplicableReportReasonTypesId = 10
+                        },
+                        new
+                        {
+                            ApplicableEntityTypesId = 1,
+                            ApplicableReportReasonTypesId = 11
+                        },
+                        new
+                        {
+                            ApplicableEntityTypesId = 1,
+                            ApplicableReportReasonTypesId = 12
+                        },
+                        new
+                        {
+                            ApplicableEntityTypesId = 1,
+                            ApplicableReportReasonTypesId = 13
+                        },
+                        new
+                        {
+                            ApplicableEntityTypesId = 1,
+                            ApplicableReportReasonTypesId = 14
+                        },
+                        new
+                        {
+                            ApplicableEntityTypesId = 1,
+                            ApplicableReportReasonTypesId = 15
+                        },
+                        new
+                        {
+                            ApplicableEntityTypesId = 1,
+                            ApplicableReportReasonTypesId = 16
+                        });
                 });
 
             modelBuilder.Entity("SettingsUser", b =>
@@ -2386,6 +2793,30 @@ namespace Infrastructure.Migrations
                         {
                             Id = 1,
                             ItemName = "Default avatar",
+                            Url = ""
+                        },
+                        new
+                        {
+                            Id = 2,
+                            ItemName = "Default playlist",
+                            Url = ""
+                        },
+                        new
+                        {
+                            Id = 3,
+                            ItemName = "Default track",
+                            Url = ""
+                        },
+                        new
+                        {
+                            Id = 4,
+                            ItemName = "Default playlist negative",
+                            Url = ""
+                        },
+                        new
+                        {
+                            Id = 5,
+                            ItemName = "Default track negative",
                             Url = ""
                         },
                         new
@@ -2458,7 +2889,12 @@ namespace Infrastructure.Migrations
                     b.Property<int>("DistributorId")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("GenreId")
+                        .HasColumnType("integer");
+
                     b.HasIndex("DistributorId");
+
+                    b.HasIndex("GenreId");
 
                     b.ToTable("Album");
                 });
@@ -2628,7 +3064,7 @@ namespace Infrastructure.Migrations
                     b.HasOne("Entities.Models.UserCore.User", "Creator")
                         .WithMany("ChatsWhereCreator")
                         .HasForeignKey("CreatorId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Cover");
@@ -2659,7 +3095,7 @@ namespace Infrastructure.Migrations
                     b.HasOne("Entities.Models.Chat.Chat", "Chat")
                         .WithMany("Messages")
                         .HasForeignKey("ChatId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Entities.Models.Chat.Message", "ReplyMessage")
@@ -2670,7 +3106,7 @@ namespace Infrastructure.Migrations
                     b.HasOne("Entities.Models.UserCore.User", "Sender")
                         .WithMany("Messages")
                         .HasForeignKey("SenderId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Chat");
@@ -2685,13 +3121,13 @@ namespace Infrastructure.Migrations
                     b.HasOne("Entities.Models.Chat.Message", "Message")
                         .WithMany("MessagesReads")
                         .HasForeignKey("MessageId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Entities.Models.UserCore.User", "User")
                         .WithMany("MessagesReads")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Message");
@@ -2855,13 +3291,13 @@ namespace Infrastructure.Migrations
                     b.HasOne("Entities.Models.Library.Library", "Library")
                         .WithMany("Folders")
                         .HasForeignKey("LibraryId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Entities.Models.Library.Folder", "ParentFolder")
                         .WithMany("SubFolders")
                         .HasForeignKey("ParentFolderId")
-                        .OnDelete(DeleteBehavior.NoAction);
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("Library");
 
@@ -2893,6 +3329,25 @@ namespace Infrastructure.Migrations
                     b.Navigation("Album");
 
                     b.Navigation("Artist");
+                });
+
+            modelBuilder.Entity("Entities.Models.Music.AlbumMoodTag", b =>
+                {
+                    b.HasOne("Entities.Models.Music.Album", "Album")
+                        .WithMany("AlbumMoodTags")
+                        .HasForeignKey("AlbumId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Entities.Models.Music.MoodTag", "MoodTag")
+                        .WithMany("AlbumMoodTags")
+                        .HasForeignKey("MoodTagId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Album");
+
+                    b.Navigation("MoodTag");
                 });
 
             modelBuilder.Entity("Entities.Models.Music.Artist", b =>
@@ -2933,6 +3388,12 @@ namespace Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Entities.Models.Music.Genre", "Genre")
+                        .WithMany("Tracks")
+                        .HasForeignKey("GenreId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
                     b.HasOne("Entities.Models.File.AudioFile", "HighQualityAudioFile")
                         .WithMany()
                         .HasForeignKey("HighQualityAudioFileId")
@@ -2961,6 +3422,8 @@ namespace Infrastructure.Migrations
 
                     b.Navigation("Cover");
 
+                    b.Navigation("Genre");
+
                     b.Navigation("HighQualityAudioFile");
 
                     b.Navigation("LowQualityAudioFile");
@@ -2987,8 +3450,37 @@ namespace Infrastructure.Migrations
                     b.Navigation("Track");
                 });
 
+            modelBuilder.Entity("Entities.Models.Music.TrackMoodTag", b =>
+                {
+                    b.HasOne("Entities.Models.Music.MoodTag", "MoodTag")
+                        .WithMany("TrackMoodTags")
+                        .HasForeignKey("MoodTagId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Entities.Models.Music.Track", "Track")
+                        .WithMany("TrackMoodTags")
+                        .HasForeignKey("TrackId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("MoodTag");
+
+                    b.Navigation("Track");
+                });
+
             modelBuilder.Entity("Entities.Models.Report.Report", b =>
                 {
+                    b.HasOne("Entities.Models.Report.ReportReasonType", "ReportReasonType")
+                        .WithMany()
+                        .HasForeignKey("ReportReasonTypeId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("Entities.Models.Report.ReportReasonType", null)
+                        .WithMany("Reports")
+                        .HasForeignKey("ReportReasonTypeId1");
+
                     b.HasOne("Entities.Models.Report.ReportableEntityType", "ReportableEntityType")
                         .WithMany("Reports")
                         .HasForeignKey("ReportableEntityTypeId")
@@ -3000,6 +3492,8 @@ namespace Infrastructure.Migrations
                         .HasForeignKey("ReporterId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
+
+                    b.Navigation("ReportReasonType");
 
                     b.Navigation("ReportableEntityType");
 
@@ -3021,6 +3515,25 @@ namespace Infrastructure.Migrations
                     b.Navigation("Collection");
 
                     b.Navigation("CurrentTrack");
+                });
+
+            modelBuilder.Entity("Entities.Models.UserCore.QueueTrack", b =>
+                {
+                    b.HasOne("Entities.Models.UserCore.Queue", "Queue")
+                        .WithMany("QueueTracks")
+                        .HasForeignKey("QueueId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Entities.Models.Music.Track", "Track")
+                        .WithMany("QueueTracks")
+                        .HasForeignKey("TrackId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Queue");
+
+                    b.Navigation("Track");
                 });
 
             modelBuilder.Entity("Entities.Models.UserCore.User", b =>
@@ -3089,13 +3602,13 @@ namespace Infrastructure.Migrations
                     b.HasOne("Entities.Models.UserCore.User", "Follower")
                         .WithMany("Following")
                         .HasForeignKey("FollowerId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Entities.Models.UserCore.User", "Following")
                         .WithMany("Followers")
                         .HasForeignKey("FollowingId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Follower");
@@ -3103,31 +3616,12 @@ namespace Infrastructure.Migrations
                     b.Navigation("Following");
                 });
 
-            modelBuilder.Entity("Entities.Models.UserCore.UserFriendRequest", b =>
-                {
-                    b.HasOne("Entities.Models.UserCore.User", "FromUser")
-                        .WithMany("SentFriendRequests")
-                        .HasForeignKey("FromUserId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.HasOne("Entities.Models.UserCore.User", "ToUser")
-                        .WithMany("ReceivedFriendRequests")
-                        .HasForeignKey("ToUserId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.Navigation("FromUser");
-
-                    b.Navigation("ToUser");
-                });
-
             modelBuilder.Entity("Entities.Models.UserCore.UserSession", b =>
                 {
                     b.HasOne("Entities.Models.UserCore.User", "User")
                         .WithMany("UserSessions")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("User");
@@ -3335,32 +3829,17 @@ namespace Infrastructure.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("QueueTrack", b =>
+            modelBuilder.Entity("ReportReasonTypeReportableEntityType", b =>
                 {
-                    b.HasOne("Entities.Models.UserCore.Queue", null)
+                    b.HasOne("Entities.Models.Report.ReportableEntityType", null)
                         .WithMany()
-                        .HasForeignKey("QueuesId")
+                        .HasForeignKey("ApplicableEntityTypesId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Entities.Models.Music.Track", null)
-                        .WithMany()
-                        .HasForeignKey("TracksId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("ReportReportReasonType", b =>
-                {
                     b.HasOne("Entities.Models.Report.ReportReasonType", null)
                         .WithMany()
-                        .HasForeignKey("ReportReasonTypeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Entities.Models.Report.Report", null)
-                        .WithMany()
-                        .HasForeignKey("ReportsId")
+                        .HasForeignKey("ApplicableReportReasonTypesId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -3418,6 +3897,11 @@ namespace Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
+                    b.HasOne("Entities.Models.Music.Genre", "Genre")
+                        .WithMany("Albums")
+                        .HasForeignKey("GenreId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.HasOne("Entities.Models.Music.Collection", null)
                         .WithOne()
                         .HasForeignKey("Entities.Models.Music.Album", "Id")
@@ -3425,6 +3909,8 @@ namespace Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Distributor");
+
+                    b.Navigation("Genre");
                 });
 
             modelBuilder.Entity("Entities.Models.Music.Blend", b =>
@@ -3441,7 +3927,7 @@ namespace Infrastructure.Migrations
                     b.HasOne("Entities.Models.UserCore.User", "Creator")
                         .WithMany()
                         .HasForeignKey("CreatorId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Entities.Models.Music.Collection", null)
@@ -3520,16 +4006,39 @@ namespace Infrastructure.Migrations
                     b.Navigation("TrackArtists");
                 });
 
+            modelBuilder.Entity("Entities.Models.Music.Genre", b =>
+                {
+                    b.Navigation("Albums");
+
+                    b.Navigation("Tracks");
+                });
+
+            modelBuilder.Entity("Entities.Models.Music.MoodTag", b =>
+                {
+                    b.Navigation("AlbumMoodTags");
+
+                    b.Navigation("TrackMoodTags");
+                });
+
             modelBuilder.Entity("Entities.Models.Music.Track", b =>
                 {
+                    b.Navigation("QueueTracks");
+
                     b.Navigation("QueuesWherePrimary");
 
                     b.Navigation("TrackArtists");
+
+                    b.Navigation("TrackMoodTags");
                 });
 
             modelBuilder.Entity("Entities.Models.Report.Report", b =>
                 {
                     b.Navigation("Suspensions");
+                });
+
+            modelBuilder.Entity("Entities.Models.Report.ReportReasonType", b =>
+                {
+                    b.Navigation("Reports");
                 });
 
             modelBuilder.Entity("Entities.Models.Report.ReportableEntityType", b =>
@@ -3539,6 +4048,8 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Entities.Models.UserCore.Queue", b =>
                 {
+                    b.Navigation("QueueTracks");
+
                     b.Navigation("UserState")
                         .IsRequired();
                 });
@@ -3564,10 +4075,6 @@ namespace Infrastructure.Migrations
 
                     b.Navigation("MessagesReads");
 
-                    b.Navigation("ReceivedFriendRequests");
-
-                    b.Navigation("SentFriendRequests");
-
                     b.Navigation("Tracks");
 
                     b.Navigation("UserSessions");
@@ -3582,6 +4089,8 @@ namespace Infrastructure.Migrations
             modelBuilder.Entity("Entities.Models.Music.Album", b =>
                 {
                     b.Navigation("AlbumArtists");
+
+                    b.Navigation("AlbumMoodTags");
                 });
 
             modelBuilder.Entity("Entities.Models.Music.Playlist", b =>

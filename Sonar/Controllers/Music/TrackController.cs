@@ -1,3 +1,4 @@
+using Analytics.API;
 using Application.Abstractions.Interfaces.Services;
 using Application.Abstractions.Interfaces.Services.Utilities;
 using Application.DTOs.Music;
@@ -7,6 +8,7 @@ using Entities.Models.ClientSettings;
 using Entities.Models.Distribution;
 using Entities.Models.Music;
 using Entities.Models.UserCore;
+using Google.Protobuf.WellKnownTypes;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -23,7 +25,9 @@ public class TrackController(
     IAlbumService albumService,
     ISettingsService settingsService,
     IShareService shareService,
-    IUserStateService userStateService) : ShareController<Track>(userManager, shareService)
+    IUserStateService userStateService,
+    Analytics.API.Analytics.AnalyticsClient analyticsClient,
+    ILogger<TrackController> logger) : ShareController<Track>(userManager, shareService)
 {
 
     /// <summary>
@@ -79,6 +83,26 @@ public class TrackController(
             // TODO: Validate User pack
             Response.Headers.Append("Content-Disposition", "attachment; filename=random-track.mp3");
 
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await analyticsClient.AddUserEventAsync(new UserEventRequest
+                {
+                    UserId = user.Id,
+                    TrackId = trackId,
+                    EventType = EventType.PlayStart,
+                    ContextType = ContextType.ContextTrack,
+                    PositionMs = (long)(startPosition?.TotalMilliseconds ?? 0),
+                    Timestamp = Timestamp.FromDateTime(DateTime.UtcNow)
+                });
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to send PlayStart event to Analytics");
+            }
+        });
+
         return File(stream, contentType, enableRangeProcessing);
     }
 
@@ -123,6 +147,25 @@ public class TrackController(
         track.Title = dto.Title ?? track.Title;
         track.IsExplicit = dto.IsExplicit ?? track.IsExplicit;
         track.DrivingDisturbingNoises = dto.DrivingDisturbingNoises ?? track.DrivingDisturbingNoises;
+
+        // Update Genre if provided
+        if (dto.GenreId.HasValue)
+        {
+            track.GenreId = dto.GenreId.Value;
+        }
+
+        // Update MoodTags if provided
+        if (dto.MoodTagIds != null)
+        {
+            // Validate mood tag count (0-3)
+            if (dto.MoodTagIds.Count() > 3)
+            {
+                throw ResponseFactory.Create<BadRequestResponse>(["Mood tags cannot exceed 3"]);
+            }
+
+            await trackService.UpdateMoodTagsAsync(trackId, dto.MoodTagIds);
+        }
+
         // TODO: create DTO
         track = await trackService.UpdateAsync(track);
         throw ResponseFactory.Create<OkResponse<Track>>(track, ["Track updated successfully"]);
@@ -216,6 +259,27 @@ public class TrackController(
         User user = await CheckAccessFeatures([]);
         bool isFavorite = await trackService.ToggleFavoriteAsync(trackId, user.LibraryId);
         string message = isFavorite ? "Track added to favorites" : "Track removed from favorites";
+
+        //_ = Task.Run(async () =>
+        //{
+        try
+        {
+            await analyticsClient.AddUserEventAsync(new UserEventRequest
+            {
+                UserId = user.Id,
+                TrackId = trackId,
+                EventType = EventType.Like,
+                ContextType = ContextType.ContextTrack,
+                Timestamp = Timestamp.FromDateTime(DateTime.UtcNow)
+            });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to send Like event to Analytics");
+        }
+        finally { logger.LogInformation("Analytics updated."); }
+        //});
+
         throw ResponseFactory.Create<OkResponse>([message]);
     }
 
@@ -271,5 +335,80 @@ public class TrackController(
 
         await trackService.AssignArtistToTrackAsync(trackId, authorDto);
         throw ResponseFactory.Create<OkResponse>(["Artist assigned to track successfully"]);
+    }
+
+    /// <summary>
+    /// Streams a track's audio content for distributors, ignoring visibility state.
+    /// </summary>
+    /// <param name="trackId">The ID of the track to stream.</param>
+    /// <param name="startPosition">Optional. The start position as TimeSpan (e.g., "00:01:30" for 1 minute 30 seconds).</param>
+    /// <param name="length">Optional. The length to stream as TimeSpan. If not provided, streams from startPosition to end.</param>
+    /// <param name="download">Optional. If true, sets Content-Disposition to attachment for download.</param>
+    /// <returns>Audio file stream with appropriate content type.</returns>
+    /// <response code="200">Full audio stream returned.</response>
+    /// <response code="206">Partial content returned (range request).</response>
+    /// <response code="404">Track not found.</response>
+    /// <response code="401">User not authenticated or track does not belong to distributor.</response>
+    /// <remarks>
+    /// Requires distributor authentication. Only tracks belonging to the authenticated distributor can be streamed.
+    /// Visibility state is ignored for distributors.
+    /// </remarks>
+    [HttpGet("distributor/{trackId}/stream")]
+    [Authorize]
+    [ProducesResponseType(typeof(FileStreamResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(FileStreamResult), StatusCodes.Status206PartialContent)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> StreamMusicForDistributor(
+        int trackId,
+        [FromQuery] TimeSpan? startPosition = null,
+        [FromQuery] TimeSpan? length = null,
+        [FromQuery] bool download = false)
+    {
+        Distributor distributor = await this.CheckDistributorAsync();
+
+        // Use default playback quality (medium quality = 2) for distributors
+        const int defaultPlaybackQualityId = 2;
+
+        MusicStreamResultDTO? result = await trackService.GetMusicStreamForDistributorAsync(
+            trackId,
+            startPosition,
+            length,
+            defaultPlaybackQualityId,
+            distributor.Id);
+
+        if (result == null)
+            throw ResponseFactory.Create<NotFoundResponse>([$"Track with ID {trackId} not found"]);
+
+        result.GetStreamDetails(out Stream stream, out string contentType, out bool enableRangeProcessing);
+
+        if (download)
+            Response.Headers.Append("Content-Disposition", "attachment; filename=track.mp3");
+
+        return File(stream, contentType, enableRangeProcessing);
+    }
+
+    /// <summary>
+    /// Retrieves detailed information about a specific track for distributors, ignoring visibility state.
+    /// </summary>
+    /// <param name="trackId">The ID of the track to retrieve.</param>
+    /// <returns>Track DTO with full details.</returns>
+    /// <response code="200">Track retrieved successfully.</response>
+    /// <response code="404">Track not found.</response>
+    /// <response code="401">User not authenticated or track does not belong to distributor.</response>
+    /// <remarks>
+    /// Requires distributor authentication. Only tracks belonging to the authenticated distributor can be retrieved.
+    /// Visibility state is ignored for distributors.
+    /// </remarks>
+    [HttpGet("distributor/{trackId:int}")]
+    [Authorize]
+    [ProducesResponseType(typeof(OkResponse<TrackDTO>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> GetTrackByIdForDistributor(int trackId)
+    {
+        Distributor distributor = await this.CheckDistributorAsync();
+        TrackDTO trackDto = await trackService.GetTrackDtoForDistributorAsync(trackId, distributor.Id);
+        throw ResponseFactory.Create<OkResponse<TrackDTO>>(trackDto, ["Track successfully retrieved"]);
     }
 }

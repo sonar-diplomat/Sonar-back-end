@@ -5,10 +5,12 @@ using Application.DTOs;
 using Application.DTOs.Music;
 using Application.Extensions;
 using Application.Response;
+using Entities.Models.File;
 using Entities.Models.Library;
 using Entities.Models.Music;
 using Entities.Models.UserCore;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using System.Text;
 
 namespace Application.Services.Music;
@@ -36,7 +38,7 @@ public class PlaylistService(
             CreatorId = creatorId,
             Cover = dto.Cover != null
                 ? await imageFileService.UploadFileAsync(dto.Cover)
-                : await imageFileService.GetDefaultAsync(),
+                : await imageFileService.GetPlaylistDefaultAsync(),
             VisibilityState = await visibilityStateService.CreateDefaultAsync()
         };
         playlist = await repository.AddAsync(playlist);
@@ -103,7 +105,19 @@ public class PlaylistService(
         CheckForFavorites(playlist.Name);
         if (playlist.Tracks.Any(t => t.Id == trackId))
             throw ResponseFactory.Create<ConflictResponse>(["Track is already in the playlist."]);
-        playlist.Tracks.Add(await trackService.GetByIdValidatedAsync(trackId));
+        
+        Track track = await trackService.GetByIdValidatedAsync(trackId);
+        
+        // Если плейлист пустой, обложка трека становится обложкой плейлиста
+        bool isPlaylistEmpty = !playlist.Tracks.Any();
+        if (isPlaylistEmpty)
+        {
+            // Загружаем обложку трека
+            ImageFile trackCover = await imageFileService.GetByIdValidatedAsync(track.CoverId);
+            playlist.Cover = trackCover;
+        }
+        
+        playlist.Tracks.Add(track);
         await repository.UpdateAsync(playlist);
     }
 
@@ -135,14 +149,12 @@ public class PlaylistService(
 
         List<Track> tracks = await repository.GetTracksFromPlaylistAfterAsync(playlistId, afterId, limit);
 
-        // Filter out tracks that are not accessible (Hidden or not yet public), but allow if user is author
         List<TrackDTO> items = tracks
             .Where(t =>
             {
                 if (t.VisibilityState == null)
                     return false;
 
-                // Get author user IDs from TrackArtists
                 IEnumerable<int>? trackAuthorIds = t.TrackArtists?
                     .Where(ta => ta.Artist?.UserId != null)
                     .Select(ta => ta.Artist!.UserId!)
@@ -163,7 +175,17 @@ public class PlaylistService(
                 {
                     Pseudonym = ta.Pseudonym,
                     ArtistId = ta.ArtistId
-                }).ToList() ?? new List<AuthorDTO>()
+                }).ToList() ?? new List<AuthorDTO>(),
+                Genre = t.Genre != null ? new GenreDTO
+                {
+                    Id = t.Genre.Id,
+                    Name = t.Genre.Name
+                } : throw ResponseFactory.Create<BadRequestResponse>(["Track must have a genre"]),
+                MoodTags = t.TrackMoodTags?.Select(tmt => new MoodTagDTO
+                {
+                    Id = tmt.MoodTag.Id,
+                    Name = tmt.MoodTag.Name
+                }).ToList() ?? new List<MoodTagDTO>()
             }).ToList();
 
         string? nextCursor = null;
@@ -197,10 +219,30 @@ public class PlaylistService(
             _ => throw ResponseFactory.Create<BadRequestResponse>(["Collection failed to import"])
         });
 
+        bool isPlaylistEmpty = !playlist.Tracks.Any();
+        Track? firstTrack = null;
+        
         HashSet<int> existingIds = new(playlist.Tracks.Select(t => t.Id));
         foreach (Track track in tracks)
+        {
             if (existingIds.Add(track.Id))
+            {
+                // Если плейлист пустой и это первый трек, сохраняем его для установки обложки
+                if (isPlaylistEmpty && firstTrack == null)
+                {
+                    firstTrack = track;
+                }
                 playlist.Tracks.Add(track);
+            }
+        }
+        
+        // Если плейлист был пустой и мы добавили треки, устанавливаем обложку первого трека
+        if (isPlaylistEmpty && firstTrack != null)
+        {
+            ImageFile trackCover = await imageFileService.GetByIdValidatedAsync(firstTrack.CoverId);
+            playlist.Cover = trackCover;
+        }
+        
         await repository.UpdateAsync(playlist);
     }
 
@@ -210,6 +252,18 @@ public class PlaylistService(
             throw ResponseFactory.Create<BadRequestResponse>([
                 "The name 'Favorites' is reserved and cannot be used for playlists."
             ]);
+    }
+
+    public async Task<bool> IsTrackInFavoritesAsync(int trackId, int userId)
+    {
+        User user = await userService.GetByIdValidatedAsync(userId);
+        Playlist favoritesPlaylist = await libraryService.GetFavoritesPlaylistByLibraryIdValidatedAsync(user.LibraryId);
+        
+        Playlist playlistWithTracks = await repository
+            .SnInclude(p => p.Tracks)
+            .GetByIdValidatedAsync(favoritesPlaylist.Id);
+        
+        return playlistWithTracks.Tracks.Any(t => t.Id == trackId);
     }
 
     private async Task<Playlist> VerifyAccessAsync(int playlistId, int userId, bool allowContributor = false)

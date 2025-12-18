@@ -15,19 +15,9 @@ public class FolderCollectionService(
     ICollectionService<Blend> blendCollectionService
 ) : IFolderCollectionService
 {
-    private async Task<int?> GetRootFolderIdAsync(int libraryId)
-    {
-        return await folderRepository.GetRootFolderIdByLibraryIdAsync(libraryId);
-    }
-
     public async Task AddCollectionToFolderAsync(int libraryId, int folderId, int collectionId)
     {
         Folder folder = await folderService.GetFolderByIdIncludeCollectionsValidatedAsync(folderId, libraryId);
-
-        // Нельзя добавлять коллекции в RootFolder (Favorites папку)
-        int? rootFolderId = await GetRootFolderIdAsync(libraryId);
-        if (rootFolderId.HasValue && folder.Id == rootFolderId.Value)
-            throw ResponseFactory.Create<ForbiddenResponse>(["Cannot add collections to the Favorites folder (Root folder)"]);
 
         // Пытаемся найти коллекцию во всех типах
         Collection? collection = await GetCollectionByIdAsync(collectionId);
@@ -47,15 +37,15 @@ public class FolderCollectionService(
     {
         Folder folder = await folderService.GetFolderByIdIncludeCollectionsValidatedAsync(folderId, libraryId);
 
-        // Нельзя удалять коллекции из защищенных папок
-        if (folder.IsProtected)
-            throw ResponseFactory.Create<ForbiddenResponse>(["Cannot remove collections from protected system folders"]);
-
-        Collection? collection = folder.Collections?.FirstOrDefault(c => c.Id == collectionId);
+        Collection? collection = folder.Collections.FirstOrDefault(c => c.Id == collectionId);
+        
         if (collection == null)
             throw ResponseFactory.Create<NotFoundResponse>(["Collection not found in this folder"]);
+        
+        if (collection.Name == "Favorites")
+            throw ResponseFactory.Create<ForbiddenResponse>(["Cannot remove the Favorites collection"]);
 
-        folder.Collections!.Remove(collection);
+        folder.Collections.Remove(collection);
         await folderRepository.UpdateAsync(folder);
     }
 
@@ -64,13 +54,9 @@ public class FolderCollectionService(
         Collection? collection = await GetCollectionByIdAsync(collectionId);
         if (collection == null)
             throw ResponseFactory.Create<NotFoundResponse>(["Collection not found"]);
-
-        // Получаем RootFolderId для проверки
-        int? rootFolderId = await GetRootFolderIdAsync(libraryId);
-
-        // Нельзя перемещать коллекции в RootFolder (Favorites папку)
-        if (rootFolderId.HasValue && targetFolderId == rootFolderId.Value)
-            throw ResponseFactory.Create<ForbiddenResponse>(["Cannot move collections to the Favorites folder (Root folder)"]);
+        
+        if (collection.Name == "Favorites")
+            throw ResponseFactory.Create<ForbiddenResponse>(["Cannot move the Favorites collection"]);
 
         // Находим все папки библиотеки с коллекциями (включая целевую)
         IQueryable<Folder> allFolders = await folderRepository.GetAllAsync();
@@ -86,22 +72,15 @@ public class FolderCollectionService(
 
         // Фильтруем папки, содержащие эту коллекцию (в памяти)
         List<Folder> foldersWithCollection = allLibraryFolders
-            .Where(f => f.Collections != null && f.Collections.Any(c => c.Id == collectionId))
+            .Where(f => f.Collections.Any(c => c.Id == collectionId))
             .ToList();
-
-        // Удаляем коллекцию из всех текущих папок (кроме защищенных папок, которые не являются RootFolder, и целевой)
+        
         foreach (Folder folder in foldersWithCollection)
         {
             // Пропускаем целевую папку (если коллекция уже там, она останется)
             if (folder.Id == targetFolderId)
                 continue;
-
-            // Пропускаем защищенные папки, КРОМЕ RootFolder (Favorites)
-            // RootFolder может быть защищенной, но мы должны удалить из неё коллекцию при перемещении
-            if (folder.IsProtected && (!rootFolderId.HasValue || folder.Id != rootFolderId.Value))
-                continue;
-
-            // Удаляем коллекцию из папки (включая RootFolder, если коллекция там находится)
+            
             Collection? col = folder.Collections?.FirstOrDefault(c => c.Id == collectionId);
             if (col != null)
             {
@@ -111,8 +90,7 @@ public class FolderCollectionService(
         }
 
         // Добавляем коллекцию в целевую папку, если её там еще нет
-        targetFolder.Collections ??= new List<Collection>();
-        if (!targetFolder.Collections.Any(c => c.Id == collectionId))
+        if (targetFolder.Collections.All(c => c.Id != collectionId))
         {
             targetFolder.Collections.Add(collection);
             await folderRepository.UpdateAsync(targetFolder);
@@ -124,15 +102,15 @@ public class FolderCollectionService(
     /// </summary>
     private async Task<Collection?> GetCollectionByIdAsync(int collectionId)
     {
-        Collection? collection = await playlistCollectionService.GetByIdAsync(collectionId) as Collection;
+        Collection? collection = await playlistCollectionService.GetByIdAsync(collectionId);
         if (collection != null)
             return collection;
 
-        collection = await albumCollectionService.GetByIdAsync(collectionId) as Collection;
+        collection = await albumCollectionService.GetByIdAsync(collectionId);
         if (collection != null)
             return collection;
 
-        collection = await blendCollectionService.GetByIdAsync(collectionId) as Collection;
+        collection = await blendCollectionService.GetByIdAsync(collectionId);
         return collection;
     }
 }

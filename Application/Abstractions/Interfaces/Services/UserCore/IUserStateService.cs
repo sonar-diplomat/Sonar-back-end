@@ -10,4 +10,8 @@ public interface IUserStateService : IGenericService<UserState>
     Task UpdatePrimarySessionAsync(int userId, string deviceId);
     Task UpdateListeningTargetAsync(int stateId, int trackId, int? collectionId);
     Task<UserState> GetByUserIdValidatedAsync(int userId);
+    Task AddTrackToUserQueueAsync(int userId, int trackId);
+    Task RemoveTrackFromUserQueueAsync(int userId, int trackId);
+    Task<Queue> GetUserQueueAsync(int userId);
+    Task SaveUserQueueAsync(int userId, IEnumerable<int> trackIds);
 }

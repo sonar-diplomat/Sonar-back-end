@@ -39,7 +39,9 @@ public class TestController(
     SonarContext dbContext,
     IFileStorageService fileStorageService,
     IAccessFeatureService accessFeatureService,
-    IEmailSenderService emailSenderService
+    IEmailSenderService emailSenderService,
+    Analytics.API.Analytics.AnalyticsClient analyticsClient,
+    Application.Abstractions.Interfaces.Repository.Music.IArtistRepository artistRepository
 ) : BaseController(userManager)
 {
     #region dist
@@ -1098,6 +1100,128 @@ public class TestController(
         await emailSenderService.SendEmailAsync(email, template, variables);
 
         throw ResponseFactory.Create<OkResponse>([$"Test email sent successfully to {email} using template '{template}'"]);
+    }
+
+    /// <summary>
+    /// Test endpoint to retrieve top tracks and artists for a random user.
+    /// </summary>
+    /// <returns>Combined response with top tracks and top artists data.</returns>
+    /// <response code="200">Test data retrieved successfully.</response>
+    [HttpGet("top-user-stats")]
+    [ProducesResponseType(typeof(OkResponse<object>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> TestTopUserStats()
+    {
+        // Get a random user from the database
+        var users = await dbContext.Users.ToListAsync();
+        if (!users.Any())
+        {
+            throw ResponseFactory.Create<BadRequestResponse>(["No users found in database"]);
+        }
+
+        var randomUser = users[new Random().Next(users.Count)];
+
+        try
+        {
+            // TODO: Call analytics service to get top track IDs
+            var topTracksRequest = new Analytics.API.GetTopTracksRequest
+            {
+                UserId = randomUser.Id,
+                Limit = 5
+            };
+            var topTracksResponse = await analyticsClient.GetTopTracksAsync(topTracksRequest);
+
+            // TODO: Call analytics service to get top artist IDs
+            var topArtistsRequest = new Analytics.API.GetTopArtistsRequest
+            {
+                UserId = randomUser.Id,
+                Limit = 5
+            };
+            var topArtistsResponse = await analyticsClient.GetTopArtistsAsync(topArtistsRequest);
+
+            // Process top tracks
+            var topTrackDtos = new List<object>();
+            if (topTracksResponse.Tracks != null && topTracksResponse.Tracks.Any())
+            {
+                var trackIds = topTracksResponse.Tracks.Select(t => t.TrackId).ToList();
+                var playCountsByTrackId = topTracksResponse.Tracks.ToDictionary(t => t.TrackId, t => t.PlayCount);
+
+                var tracks = await trackRepository.GetAllAsync();
+                var topTracks = await tracks
+                    .Where(t => trackIds.Contains(t.Id))
+                    .SnInclude(t => t.TrackArtists)
+                    .ThenInclude(ta => ta.Artist)
+                    .SnInclude(t => t.Collections)
+                    .ToListAsync();
+
+                topTrackDtos = topTracks.Select(t =>
+                {
+                    var album = t.Collections?.OfType<Entities.Models.Music.Album>().FirstOrDefault();
+                    return new
+                    {
+                        Id = t.Id,
+                        Title = t.Title,
+                        DurationInSeconds = (int)(t.Duration?.TotalSeconds ?? 0),
+                        CoverId = t.CoverId,
+                        Artists = (t.TrackArtists?.Select(ta => new
+                        {
+                            Pseudonym = ta.Pseudonym,
+                            ArtistId = ta.ArtistId
+                        }) ?? Enumerable.Empty<object>()).ToList(),
+                        AlbumId = album?.Id,
+                        AlbumName = album?.Name,
+                        PlayCount = playCountsByTrackId.GetValueOrDefault(t.Id, 0)
+                    };
+                })
+                .OrderByDescending(t => t.PlayCount)
+                .Cast<object>()
+                .ToList();
+            }
+
+            // Process top artists
+            var topArtistDtos = new List<object>();
+            if (topArtistsResponse.Artists != null && topArtistsResponse.Artists.Any())
+            {
+                var artistIds = topArtistsResponse.Artists.Select(a => a.ArtistId).ToList();
+                var playCountsByArtistId = topArtistsResponse.Artists.ToDictionary(a => a.ArtistId, a => a.PlayCount);
+
+                var artists = await artistRepository.GetAllAsync();
+                var topArtists = await artists
+                    .Where(a => artistIds.Contains(a.Id))
+                    .SnInclude(a => a.User)
+                    .ToListAsync();
+
+                topArtistDtos = topArtists.Select(a => new
+                {
+                    Id = a.Id,
+                    ArtistName = a.ArtistName,
+                    UserId = a.UserId,
+                    AvatarImageId = a.User?.AvatarImageId,
+                    PlayCount = playCountsByArtistId.GetValueOrDefault(a.Id, 0)
+                })
+                .OrderByDescending(a => a.PlayCount)
+                .Cast<object>()
+                .ToList();
+            }
+
+            var result = new
+            {
+                TestUser = new
+                {
+                    randomUser.Id,
+                    randomUser.UserName,
+                    randomUser.PublicIdentifier
+                },
+                TopTracks = topTrackDtos,
+                TopArtists = topArtistDtos,
+                Message = "Data retrieved from analytics service for random user"
+            };
+
+            throw ResponseFactory.Create<OkResponse<object>>(result, ["Top user stats test completed successfully"]);
+        }
+        catch (Exception ex)
+        {
+            throw ResponseFactory.Create<BadRequestResponse>([$"Error calling analytics service: {ex.Message}"]);
+        }
     }
 
     # endregion

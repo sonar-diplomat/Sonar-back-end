@@ -16,5 +16,6 @@ public record UserProfileDTO
     public int FollowersCount { get; set; }
     public int FollowingCount { get; set; }
     public ICollection<AccessFeatureDTO> AccessFeatures { get; set; }
+    public ICollection<UserPlaylistDTO> PublicPlaylists { get; set; }
 }
 

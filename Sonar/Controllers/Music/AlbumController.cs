@@ -57,7 +57,17 @@ public class AlbumController(
             {
                 Pseudonym = aa.Pseudonym,
                 ArtistId = aa.ArtistId
-            }).ToList() ?? new List<AuthorDTO>()
+            }).ToList() ?? new List<AuthorDTO>(),
+            Genre = a.Genre != null ? new GenreDTO
+            {
+                Id = a.Genre.Id,
+                Name = a.Genre.Name
+            } : null,
+            MoodTags = a.AlbumMoodTags?.Select(amt => new MoodTagDTO
+            {
+                Id = amt.MoodTag.Id,
+                Name = amt.MoodTag.Name
+            }).ToList() ?? new List<MoodTagDTO>()
         });
 
         throw ResponseFactory.Create<OkResponse<IEnumerable<AlbumResponseDTO>>>(albumDTOs);
@@ -211,6 +221,7 @@ public class AlbumController(
         VisibilityStateValidator.IsAccessible(album.VisibilityState, userId, authorIds, "Album", albumId);
 
         Album albumWithDistributor = await albumService.GetValidatedIncludeDistributorAsync(albumId);
+        // album already has Genre and MoodTags loaded from GetValidatedIncludeVisibilityStateAsync
 
         AlbumResponseDTO responseDto = new()
         {
@@ -223,7 +234,17 @@ public class AlbumController(
             {
                 Pseudonym = aa.Pseudonym,
                 ArtistId = aa.ArtistId
-            }).ToList() ?? new List<AuthorDTO>()
+            }).ToList() ?? new List<AuthorDTO>(),
+            Genre = album.Genre != null ? new GenreDTO
+            {
+                Id = album.Genre.Id,
+                Name = album.Genre.Name
+            } : null,
+            MoodTags = album.AlbumMoodTags?.Select(amt => new MoodTagDTO
+            {
+                Id = amt.MoodTag.Id,
+                Name = amt.MoodTag.Name
+            }).ToList() ?? new List<MoodTagDTO>()
         };
         throw ResponseFactory.Create<OkResponse<AlbumResponseDTO>>(responseDto, ["Album retrieved successfully"]);
     }
@@ -289,6 +310,54 @@ public class AlbumController(
         ImageFile image = await imageFileService.UploadFileAsync(file);
         await albumService.UpdateCoverAsync(albumId, image.Id);
         throw ResponseFactory.Create<OkResponse>(["Album cover was updated successfully"]);
+    }
+
+    /// <summary>
+    /// Retrieves detailed information about a specific album for distributors, ignoring visibility state.
+    /// </summary>
+    /// <param name="albumId">The ID of the album to retrieve.</param>
+    /// <returns>Album response DTO with full details.</returns>
+    /// <response code="200">Album retrieved successfully.</response>
+    /// <response code="404">Album not found.</response>
+    /// <response code="401">User not authenticated or album does not belong to distributor.</response>
+    /// <remarks>
+    /// Requires distributor authentication. Only albums belonging to the authenticated distributor can be retrieved.
+    /// Visibility state is ignored for distributors.
+    /// </remarks>
+    [HttpGet("distributor/{albumId:int}")]
+    [Authorize]
+    [ProducesResponseType(typeof(OkResponse<AlbumResponseDTO>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> GetAlbumByIdForDistributor(int albumId)
+    {
+        Distributor distributor = await this.CheckDistributorAsync();
+        AlbumResponseDTO albumDto = await albumService.GetAlbumDtoForDistributorAsync(albumId, distributor.Id);
+        throw ResponseFactory.Create<OkResponse<AlbumResponseDTO>>(albumDto, ["Album retrieved successfully"]);
+    }
+
+    /// <summary>
+    /// Gets all tracks in an album for distributors, ignoring visibility state.
+    /// </summary>
+    /// <param name="albumId">The ID of the album.</param>
+    /// <returns>List of track DTOs.</returns>
+    /// <response code="200">Album tracks retrieved successfully.</response>
+    /// <response code="404">Album not found.</response>
+    /// <response code="401">User not authenticated or album does not belong to distributor.</response>
+    /// <remarks>
+    /// Requires distributor authentication. Only albums belonging to the authenticated distributor can be accessed.
+    /// Visibility state is ignored for distributors.
+    /// </remarks>
+    [HttpGet("distributor/{albumId:int}/tracks")]
+    [Authorize]
+    [ProducesResponseType(typeof(OkResponse<IEnumerable<TrackDTO>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(NotFoundResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> GetAlbumTracksForDistributor(int albumId)
+    {
+        Distributor distributor = await this.CheckDistributorAsync();
+        IEnumerable<TrackDTO> tracks = await albumService.GetAlbumTracksForDistributorAsync(albumId, distributor.Id);
+        throw ResponseFactory.Create<OkResponse<IEnumerable<TrackDTO>>>(tracks, ["Album tracks retrieved successfully"]);
     }
 
     private async Task MatchAlbumAndDistributor(int albumId)

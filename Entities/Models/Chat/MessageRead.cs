@@ -21,11 +21,11 @@ public class MessageRead : BaseModel
     /// </summary>
     [JsonIgnore]
     [ForeignKey("MessageId")]
-    [DeleteBehavior(DeleteBehavior.Restrict)]
+    [DeleteBehavior(DeleteBehavior.Cascade)]
     public virtual Message Message { get; set; }
 
     [JsonIgnore]
     [ForeignKey("UserId")]
-    [DeleteBehavior(DeleteBehavior.NoAction)]
+    [DeleteBehavior(DeleteBehavior.Cascade)]
     public virtual User User { get; set; }
 }

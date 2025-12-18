@@ -43,6 +43,8 @@ using Infrastructure.Repository.UserCore;
 using Infrastructure.Repository.UserExperience;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -63,9 +65,12 @@ using Sonar.Infrastructure.Repository.UserCore;
 using Sonar.Infrastructure.Repository.UserExperience;
 using Sonar.Middleware;
 using System.Text;
+using System.Text.Json;
 using Application.Abstractions.Interfaces.Services.Chat;
 using Sonar.HealthChecks;
 using Flac = Application.Services.File.Flac;
+using Microsoft.Extensions.DependencyInjection;
+using Application.Response;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -206,6 +211,41 @@ builder.Services.AddAuthentication(options =>
                 if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs/chat"))
                     ctx.Token = accessToken;
                 return Task.CompletedTask;
+            },
+            OnChallenge = context =>
+            {
+                // Проверяем, требует ли endpoint аутентификации
+                // Если endpoint имеет [AllowAnonymous], не обрабатываем challenge
+                var endpoint = context.HttpContext.GetEndpoint();
+                if (endpoint?.Metadata.GetMetadata<Microsoft.AspNetCore.Authorization.IAllowAnonymous>() != null)
+                {
+                    // Позволяем стандартному поведению работать для анонимных endpoints
+                    return Task.CompletedTask;
+                }
+                
+                // Предотвращаем стандартный ответ 401 от JWT Bearer
+                // HandleResponse() останавливает дальнейшую обработку запроса
+                context.HandleResponse();
+                
+                // Проверяем, что ответ еще не начат
+                if (context.Response.HasStarted)
+                {
+                    return Task.CompletedTask;
+                }
+                
+                // Устанавливаем правильный формат ответа
+                context.Response.StatusCode = 401;
+                context.Response.ContentType = "application/json";
+                
+                var unauthorizedResponse = new UnauthorizedResponse();
+                var serializerOptions = new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                    Converters = { new ResponseJsonConverter() }
+                };
+                
+                string json = JsonSerializer.Serialize(unauthorizedResponse, serializerOptions);
+                return context.Response.WriteAsync(json);
             }
         };
     });
@@ -270,6 +310,10 @@ builder.Services.AddScoped<IPlaylistRepository, PlaylistRepository>();
 builder.Services.AddScoped<ITrackRepository, TrackRepository>();
 builder.Services.AddScoped<IAlbumArtistRepository, AlbumArtistRepository>();
 builder.Services.AddScoped<ITrackArtistRepository, TrackArtistRepository>();
+builder.Services.AddScoped<ITrackMoodTagRepository, TrackMoodTagRepository>();
+builder.Services.AddScoped<IAlbumMoodTagRepository, AlbumMoodTagRepository>();
+builder.Services.AddScoped<IGenreRepository, GenreRepository>();
+builder.Services.AddScoped<IMoodTagRepository, MoodTagRepository>();
 
 // Report Repositories
 builder.Services.AddScoped<IReportableEntityTypeRepository, ReportableEntityTypeRepository>();
@@ -343,6 +387,7 @@ builder.Services.AddScoped<IFolderCollectionService, FolderCollectionService>();
 builder.Services.AddScoped<ILibraryService, LibraryService>();
 
 // Music Services
+builder.Services.AddScoped<ITrackAlbumService, TrackAlbumService>();
 builder.Services.AddScoped<IAlbumService, AlbumService>();
 builder.Services.AddScoped<IBlendService, BlendService>();
 builder.Services.AddScoped<IPlaylistService, PlaylistService>();
@@ -386,23 +431,12 @@ builder.Services.AddScoped<ISubscriptionFeatureService, SubscriptionFeatureServi
 builder.Services.AddScoped<ISubscriptionPackService, SubscriptionPackService>();
 builder.Services.AddScoped<ISubscriptionPaymentService, SubscriptionPaymentService>();
 
-builder.Services.AddScoped<MailgunSettings>(_ =>
-    new MailgunSettings
-    {
-        ApiKey = builder.Configuration["Mailgun:ApiKey"] ??
-                 throw new InvalidOperationException("Mailgun ApiKey not found."),
-        Domain = builder.Configuration["Mailgun:Domain"] ??
-                 throw new InvalidOperationException("Mailgun Domain not found."),
-        From = builder.Configuration["Mailgun:From"] ?? throw new InvalidOperationException("Mailgun From not found.")
-    }
-);
-
 builder.Services.AddScoped<SmtpSettings>(_ =>
     new SmtpSettings
     {
         // Gmail SMTP: smtp.gmail.com, Port 587 (TLS) or 465 (SSL)
         Host = builder.Configuration["Smtp:Host"] ?? string.Empty,
-        Port = builder.Configuration.GetValue<int>("Smtp:Port", 587),
+        Port = int.TryParse(builder.Configuration["Smtp:Port"], out int smtpPort) ? smtpPort : 587,
         Username = builder.Configuration["Smtp:Username"] ?? string.Empty,
         Password = builder.Configuration["Smtp:Password"] ?? string.Empty,
         From = builder.Configuration["Smtp:From"] ?? string.Empty,
@@ -416,22 +450,8 @@ builder.Services.AddSingleton<IChatNotifier, ChatNotifier>();
 
 
 // Utility Services
-// Switch between MailgunEmailService and SmtpEmailService based on configuration
-// Default to MailgunEmailService if Smtp:Host is not configured
-bool useSmtp = !string.IsNullOrEmpty(builder.Configuration["Smtp:Host"]);
-if (useSmtp)
-{
-    builder.Services.AddScoped<IEmailSenderService>(sp => 
-        new SmtpEmailService(sp.GetRequiredService<SmtpSettings>(), builder.Configuration));
-}
-else
-{
-    builder.Services.AddScoped<IEmailSenderService>(sp => 
-        new MailgunEmailService(
-            sp.GetRequiredService<MailgunSettings>(), 
-            sp.GetRequiredService<HttpClient>(), 
-            builder.Configuration));
-}
+builder.Services.AddScoped<IEmailSenderService>(sp =>
+    new SmtpEmailService(sp.GetRequiredService<SmtpSettings>(), builder.Configuration));
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddSingleton<QRCodeGenerator>();
 builder.Services.AddSingleton<IShareService, ShareService>();
@@ -440,6 +460,20 @@ builder.Services.AddSingleton<IFileFormatInspector>(new FileFormatInspector(
 builder.Services.AddSingleton<IFileStorageService, FileStorageService>();
 builder.Services.AddHttpClient();
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddMemoryCache();
+
+// Add gRPC client for Analytics Service
+builder.Services.AddGrpcClient<Analytics.API.Analytics.AnalyticsClient>(o =>
+{
+    o.Address = new Uri(builder.Configuration["Analytics:GrpcUrl"] 
+        ?? throw new InvalidOperationException("Analytics:GrpcUrl not configured"));
+});
+
+builder.Services.AddGrpcClient<Analytics.API.Recommendations.RecommendationsClient>(o =>
+{
+    o.Address = new Uri(builder.Configuration["Analytics:GrpcUrl"]
+        ?? throw new InvalidOperationException("Analytics:GrpcUrl not configured"));
+});
 
 #endregion
 
