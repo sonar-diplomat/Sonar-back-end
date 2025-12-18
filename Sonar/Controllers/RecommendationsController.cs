@@ -30,15 +30,22 @@ public class RecommendationsController(
     {
         limit = Math.Clamp(limit, 1, 50);
 
+        // Request more collections to account for filtering (request 2x to ensure we get enough after filtering)
+        int requestLimit = Math.Min(limit * 2, 100);
+
         var response = await recommendationsClient.GetPopularCollectionsAsync(new GetPopularCollectionsRequest
         {
-            Limit = limit
+            Limit = requestLimit
         });
 
         var filteredItems = new List<PopularCollectionDTO>();
 
         foreach (var c in response.Collections)
         {
+            // Stop if we have enough items
+            if (filteredItems.Count >= limit)
+                break;
+
             // Check visibility state for albums and playlists
             bool isAccessible = false;
             if (c.CollectionType == CollectionType.CollectionAlbum)
@@ -97,7 +104,10 @@ public class RecommendationsController(
             }
         }
 
-        throw ResponseFactory.Create<OkResponse<IEnumerable<PopularCollectionDTO>>>(filteredItems);
+        // Take only the requested limit
+        var result = filteredItems.Take(limit).ToList();
+
+        throw ResponseFactory.Create<OkResponse<IEnumerable<PopularCollectionDTO>>>(result);
     }
 
     [HttpGet("recent-collections")]
