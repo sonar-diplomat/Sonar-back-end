@@ -1,4 +1,4 @@
-﻿using Application.Abstractions.Interfaces.Services;
+using Application.Abstractions.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -74,6 +74,9 @@ public sealed class ChatEventsTestController(IChatNotifier notifier) : Controlle
             1001,
             chatId,
             userId,
+            "Test User",
+            1,
+            "test-user",
             "🔥 Test message from dev endpoint",
             null,
             now

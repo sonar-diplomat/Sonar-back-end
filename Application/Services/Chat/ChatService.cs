@@ -335,10 +335,17 @@ public class ChatService(
         await CheckUserIsMemberAsync(userId, chatId);
         Message created = await messageService.CreateAsync(chatId, userId, message);
 
+        // Load sender information for group chats
+        User sender = await userService.GetByIdValidatedAsync(userId);
+        string senderName = sender.UserName ?? $"{sender.FirstName} {sender.LastName}".Trim();
+
         await notifier.MessageCreated(new MessageCreatedEvent(
             created.Id,
             created.ChatId,
             created.SenderId,
+            senderName,
+            sender.AvatarImageId,
+            sender.PublicIdentifier,
             created.TextContent,
             created.ReplyMessageId,
             created.CreatedAt

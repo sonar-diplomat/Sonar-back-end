@@ -21,6 +21,9 @@ public sealed record MessageCreatedEvent(
     int Id,
     int ChatId,
     int SenderId,
+    string SenderName,
+    int SenderAvatarImageId,
+    string SenderPublicIdentifier,
     string TextContent,
     int? ReplyMessageId,
     DateTime CreatedAtUtc

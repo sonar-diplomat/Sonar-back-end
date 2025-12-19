@@ -1,5 +1,6 @@
-﻿using System.Globalization;
+using System.Globalization;
 using Application.Abstractions.Interfaces.Repository.Chat;
+using Application.Abstractions.Interfaces.Repository.UserCore;
 using Application.Abstractions.Interfaces.Services;
 using Application.DTOs;
 using Application.DTOs.Chat;
@@ -11,7 +12,8 @@ namespace Application.Services.Chat;
 
 public class MessageService(
     IMessageRepository repository,
-    IMessageReadService messageReadService
+    IMessageReadService messageReadService,
+    IUserRepository userRepository
 ) : GenericService<Message>(repository), IMessageService
 {
     public async Task<Message> CreateAsync(int chatId, int userId, MessageDTO dto)
@@ -100,15 +102,45 @@ public class MessageService(
             .GroupBy(mr => mr.MessageId)
             .ToDictionary(g => g.Key, g => g.ToList());
 
-        // Map to DTOs with read records
-        var dtos = raw.Select(x => new MessageDTO
+        // Load sender information for all unique senders
+        List<int> uniqueSenderIds = raw.Select(x => x.SenderId).Distinct().ToList();
+        var senders = await userRepository
+            .Query()
+            .Where(u => uniqueSenderIds.Contains(u.Id))
+            .Select(u => new
+            {
+                u.Id,
+                u.UserName,
+                u.FirstName,
+                u.LastName,
+                u.AvatarImageId,
+                u.PublicIdentifier
+            })
+            .ToListAsync();
+
+        var senderDict = senders.ToDictionary(s => s.Id, s => new
         {
-            Id = x.Id,
-            CreatedAt = x.CreatedAt,
-            SenderId = x.SenderId,
-            TextContent = x.TextContent,
-            ReplyMessageId = x.ReplyMessageId,
-            ReadBy = readsByMessageId.GetValueOrDefault(x.Id)
+            Name = s.UserName ?? $"{s.FirstName} {s.LastName}".Trim(),
+            AvatarImageId = s.AvatarImageId,
+            PublicIdentifier = s.PublicIdentifier
+        });
+
+        // Map to DTOs with read records and sender information
+        var dtos = raw.Select(x =>
+        {
+            var senderInfo = senderDict.GetValueOrDefault(x.SenderId);
+            return new MessageDTO
+            {
+                Id = x.Id,
+                CreatedAt = x.CreatedAt,
+                SenderId = x.SenderId,
+                SenderName = senderInfo?.Name,
+                SenderAvatarImageId = senderInfo?.AvatarImageId,
+                SenderPublicIdentifier = senderInfo?.PublicIdentifier,
+                TextContent = x.TextContent,
+                ReplyMessageId = x.ReplyMessageId,
+                ReadBy = readsByMessageId.GetValueOrDefault(x.Id)
+            };
         }).ToList();
 
         return new CursorPageDTO<MessageDTO>
