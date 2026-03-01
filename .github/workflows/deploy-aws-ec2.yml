@@ -1,4 +1,4 @@
-name: Deploy to Test Server (AWS EC2 + ECR)
+name: Deploy Backend to AWS EC2
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
 
 env:
   AWS_REGION: ${{ secrets.AWS_REGION }}
-  ECR_REPOSITORY: sonar/backend                 # имя репозитория в ECR
+  ECR_REPOSITORY: sonar/backend
   IMAGE_TAG: ${{ github.sha }}
 
 jobs:
@@ -36,63 +36,56 @@ jobs:
           docker build \
             -f Sonar/Dockerfile \
             -t $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }} \
+            -t $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:latest \
             .
-
           docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
-
-          docker tag \
-            $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }} \
-            $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:latest
-
           docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:latest
 
       - name: Deploy on EC2 via SSH
         uses: appleboy/ssh-action@v1.2.0
         with:
-          host: ${{ secrets.EC2_HOST }}        # ← здесь твой DNS
-          username: ${{ secrets.EC2_USER }}    # ubuntu
-          key: ${{ secrets.EC2_SSH_KEY }}      # .pem
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             set -e
 
-            AWS_REGION=${{ env.AWS_REGION }}
-            ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }}
-            ECR_REPOSITORY=${{ env.ECR_REPOSITORY }}
+            AWS_REGION=${{ secrets.AWS_REGION }}
+            ECR_REGISTRY=$(aws sts get-caller-identity --query Account --output text).dkr.ecr.$AWS_REGION.amazonaws.com
+            ECR_REPOSITORY=sonar/backend
             IMAGE_TAG=${{ env.IMAGE_TAG }}
 
-            # логин в ECR (на EC2 должен быть awscli)
-            docker login \
-              --username AWS \
-              --password $(aws ecr get-login-password --region $AWS_REGION) \
-              $ECR_REGISTRY
+            # Login to ECR
+            aws ecr get-login-password --region $AWS_REGION | \
+              docker login --username AWS --password-stdin $ECR_REGISTRY
 
-            # подтягиваем образ
+            # Pull new image
             docker pull $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
-            # создаём директорию для аплоадов и даём права
-            sudo mkdir -p /opt/sonar/uploads
-            sudo chmod 777 /opt/sonar/uploads
-
+            # Stop and remove old container
             docker stop sonar-app || true
             docker rm sonar-app || true
 
+            # Run with docker-compose network
             docker run -d --name sonar-app \
-              --network sonar-network \
-              -p 8080:8080 -p 8081:8081 \
+              --network sonar_default \
+              -p 8080:8080 \
               -v /opt/sonar/uploads:/app/wwwroot/uploads \
+              -e ASPNETCORE_ENVIRONMENT=Production \
+              -e ASPNETCORE_URLS=http://+:8080 \
+              -e ConnectionStrings__SonarContext='Host=sonar-db;Port=5432;Database=sonardb;Username=sonaruser;Password=SonarPass2025!' \
+              -e Analytics__GrpcUrl='http://sonar-analytics:5000' \
+              -e FrontEnd-Url='http://${{ secrets.EC2_HOST }}' \
               -e Jwt__Key='${{ secrets.JWT_KEY }}' \
               -e Jwt__Issuer='${{ secrets.JWT_ISSUER }}' \
               -e Jwt__Audience='${{ secrets.JWT_AUDIENCE }}' \
-              -e Mailgun__ApiKey='${{ secrets.MAILGUN_API_KEY }}' \
-              -e Mailgun__Domain='${{ secrets.MAILGUN_DOMAIN }}' \
-              -e Mailgun__From='${{ secrets.MAILGUN_FROM }}' \
               -e Smtp__Host='${{ vars.SMTP_HOST }}' \
               -e Smtp__Port='${{ vars.SMTP_PORT }}' \
               -e Smtp__From='${{ vars.SMTP_FROM }}' \
               -e Smtp__FromName='${{ vars.SMTP_FROM_NAME }}' \
               -e Smtp__Username='${{ secrets.SMTP_USERNAME }}' \
               -e Smtp__Password='${{ secrets.SMTP_PASSWORD }}' \
-              -e ConnectionStrings__SonarContext='${{ secrets.CONNECTION_STRING_AWS }}' \
-              -e AnalyticsService__BaseUrl='${{ vars.ANALYTICS_SERVICE_URL }}' \
               $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-              /usr/local/bin/cleanup-docker-images.sh
+
+            # Cleanup old images
+            docker image prune -af --filter "until=24h" || true
