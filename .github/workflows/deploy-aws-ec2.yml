@@ -75,7 +75,7 @@ jobs:
               -e ASPNETCORE_URLS=http://+:8080 \
               -e ConnectionStrings__SonarContext='Host=sonar-db;Port=5432;Database=sonardb;Username=sonaruser;Password=SonarPass2025!' \
               -e Analytics__GrpcUrl='http://sonar-analytics:5000' \
-              -e FrontEnd-Url='http://${{ secrets.EC2_HOST }}' \
+              -e "FrontEnd-Url=${{ secrets.FRONTEND_URL }}" \
               -e Jwt__Key='${{ secrets.JWT_KEY }}' \
               -e Jwt__Issuer='${{ secrets.JWT_ISSUER }}' \
               -e Jwt__Audience='${{ secrets.JWT_AUDIENCE }}' \
