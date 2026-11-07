@@ -26,6 +26,7 @@ using Microsoft.EntityFrameworkCore;
 using Moq;
 using Sonar.Controllers.Test;
 using Sonar.Hubs;
+using Sonar.Tests.Services.Chat;
 using Xunit;
 using ChatModel = Entities.Models.Chat.Chat;
 
@@ -180,21 +181,10 @@ public sealed class ChatRealtimeAuthorizationTests : ChatControllerTestsBase
         context.Chats.Add(chat);
         await context.SaveChangesAsync();
 
-        var repository = new Mock<IChatRepository>(MockBehavior.Strict);
-        repository.Setup(repo => repo.Query()).Returns(() => context.Chats);
-        repository.Setup(repo => repo.UpdateAsync(It.IsAny<ChatModel>())).Returns(async (ChatModel value) =>
-        {
-            await context.SaveChangesAsync();
-            return value;
-        });
-        repository.Setup(repo => repo.RemoveAsync(It.IsAny<ChatModel>())).Returns(async (ChatModel value) =>
-        {
-            context.Chats.Remove(value);
-            await context.SaveChangesAsync();
-        });
+        var repository = new SequentialChatRepository(context);
         var transport = new RecordingTransport();
-        var notifier = new ChatNotifier(transport.HubContext.Object, repository.Object);
-        var service = new ChatService(repository.Object, Mock.Of<IImageFileService>(), Mock.Of<IMessageService>(),
+        var notifier = new ChatNotifier(transport.HubContext.Object, repository);
+        var service = new ChatService(repository, Mock.Of<IImageFileService>(), Mock.Of<IMessageService>(),
             Mock.Of<IMessageReadService>(), Mock.Of<IUserService>(), notifier,
             Mock.Of<IUserFollowService>(), Mock.Of<IUserRepository>());
         return new Fixture(context, CreateUserManager(context), service, notifier, transport, chat,

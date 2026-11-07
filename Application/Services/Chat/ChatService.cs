@@ -29,21 +29,29 @@ public class ChatService(
 {
     public async Task UpdateChatCoverAsync(int userId, int chatId, IFormFile file)
     {
-        ChatModel chat = await CheckUserIsMemberAsync(userId, chatId, true);
-        ImageFile image = await imageFileService.UploadFileAsync(file);
-        chat.CoverId = image.Id;
-        await repository.UpdateAsync(chat);
+        var coverId = await repository.ExecuteLockedAsync(chatId, async () =>
+        {
+            ChatModel chat = await CheckUserIsMemberAsync(userId, chatId, true);
+            ImageFile image = await imageFileService.UploadFileAsync(file);
+            chat.CoverId = image.Id;
+            await repository.SaveChangesAsync();
+            return image.Id;
+        });
 
-        await notifier.ChatCoverUpdated(new ChatCoverUpdatedEvent(chatId, chat.CoverId));
+        await notifier.ChatCoverUpdated(new ChatCoverUpdatedEvent(chatId, coverId));
     }
 
     public async Task UpdateChatNameAsync(int userId, int chatId, string newName)
     {
-        ChatModel chat = await CheckUserIsMemberAsync(userId, chatId, true);
-        chat.Name = newName;
-        await repository.UpdateAsync(chat);
+        await repository.ExecuteLockedAsync(chatId, async () =>
+        {
+            ChatModel chat = await CheckUserIsMemberAsync(userId, chatId, true);
+            chat.Name = newName;
+            await repository.SaveChangesAsync();
+            return true;
+        });
 
-        await notifier.ChatNameUpdated(new ChatNameUpdatedEvent(chatId, chat.Name));
+        await notifier.ChatNameUpdated(new ChatNameUpdatedEvent(chatId, newName));
     }
 
     public async Task<Message> GetMessageByIdAsync(int userId, int messageId)
@@ -237,34 +245,52 @@ public class ChatService(
 
     public async Task AddUserToChat(int memberId, int chatId, int userId)
     {
-        ChatModel chat = await CheckUserIsMemberAsync(memberId, chatId, true);
-        if (!chat.IsGroup)
-            throw ResponseFactory.Create<ForbiddenResponse>(["User is not the member of the chat"]);
-        User user = await userService.GetByIdValidatedAsync(userId);
-        if (chat.Members.Any(u => u.Id == userId))
-            throw ResponseFactory.Create<BadRequestResponse>(["User is the member of the chat"]);
-        chat.Members.Add(user);
-        await repository.UpdateAsync(chat);
+        await repository.ExecuteLockedAsync(chatId, async () =>
+        {
+            ChatModel chat = await CheckUserIsMemberAsync(memberId, chatId, true);
+            User user = await userService.GetByIdValidatedAsync(userId);
+            if (chat.Members.Any(u => u.Id == userId))
+                throw ResponseFactory.Create<BadRequestResponse>(["User is the member of the chat"]);
+            chat.Members.Add(user);
+            await repository.SaveChangesAsync();
+            return true;
+        });
 
         await notifier.UserAdded(new UserAddedToChatEvent(chatId, userId));
     }
 
     public async Task RemoveUserFromChat(int initiatorId, int userId, int chatId)
     {
-        ChatModel chat = await CheckUserCanManageChatAsync(initiatorId, chatId);
-        if (initiatorId != userId && (chat.CreatorId == userId ||
-            (chat.Admins.Any(a => a.Id == userId) && chat.CreatorId != initiatorId)))
-            throw ResponseFactory.Create<ForbiddenResponse>(["Only the creator can remove an administrator; the creator must leave voluntarily"]);
-        await RemoveMemberAsync(chat, userId, initiatorId);
+        var deletedMemberIds = await repository.ExecuteLockedAsync(chatId, async () =>
+        {
+            ChatModel chat = await CheckUserCanManageChatAsync(initiatorId, chatId);
+            if (initiatorId != userId && (chat.CreatorId == userId ||
+                (chat.Admins.Any(a => a.Id == userId) && chat.CreatorId != initiatorId)))
+                throw ResponseFactory.Create<ForbiddenResponse>(["Only the creator can remove an administrator; the creator must leave voluntarily"]);
+            return await RemoveMemberAsync(chat, userId);
+        });
+        await NotifyMemberRemovalAsync(chatId, userId, initiatorId, deletedMemberIds);
     }
 
     public async Task LeaveChat(int userId, int chatId)
     {
-        ChatModel chat = await CheckUserIsMemberAsync(userId, chatId, true);
-        await RemoveMemberAsync(chat, userId, userId);
+        var deletedMemberIds = await repository.ExecuteLockedAsync(chatId, async () =>
+        {
+            ChatModel chat = await CheckUserIsMemberAsync(userId, chatId, true);
+            return await RemoveMemberAsync(chat, userId);
+        });
+        await NotifyMemberRemovalAsync(chatId, userId, userId, deletedMemberIds);
     }
 
-    private async Task RemoveMemberAsync(ChatModel chat, int userId, int initiatorId)
+    private async Task NotifyMemberRemovalAsync(int chatId, int userId, int initiatorId, int[]? deletedMemberIds)
+    {
+        // ExecuteLockedAsync has committed before any notification is sent.
+        if (deletedMemberIds != null)
+            await notifier.ChatDeleted(new ChatDeletedEvent(chatId, initiatorId), deletedMemberIds);
+        await notifier.UserRemoved(new UserRemovedFromChatEvent(chatId, userId));
+    }
+
+    private async Task<int[]?> RemoveMemberAsync(ChatModel chat, int userId)
     {
         User? member = chat.Members.SingleOrDefault(user => user.Id == userId);
         if (member == null)
@@ -277,9 +303,8 @@ public class ChatService(
 
         if (chat.Members.Count == 0)
         {
-            await DeleteChatAndNotifyAsync(chat, initiatorId, previousMemberIds);
-            await notifier.UserRemoved(new UserRemovedFromChatEvent(chat.Id, userId));
-            return;
+            await DeleteChatDataAsync(chat);
+            return previousMemberIds;
         }
 
         if (chat.CreatorId == userId)
@@ -290,8 +315,8 @@ public class ChatService(
             chat.CreatorId = chat.Creator.Id;
         }
 
-        await repository.UpdateAsync(chat);
-        await notifier.UserRemoved(new UserRemovedFromChatEvent(chat.Id, userId));
+        await repository.SaveChangesAsync();
+        return null;
     }
 
     public async Task<ChatModel> CreateChatAsync(int userId, CreateChatDTO dto)
@@ -308,8 +333,7 @@ public class ChatService(
                 CreatorId = userId,
                 Members = new List<User> { creator }
             };
-            await repository.AddAsync(groupChat);
-            return await repository.UpdateAsync(groupChat);
+            return await repository.AddAsync(groupChat);
         }
         
         if (dto.UserId == null)
@@ -334,8 +358,7 @@ public class ChatService(
             CreatorId = userId,
             Members = new List<User> { creator, otherUser }
         };
-        await repository.AddAsync(personalChat);
-        return await repository.UpdateAsync(personalChat);
+        return await repository.AddAsync(personalChat);
     }
 
     public async Task<Message> SendMessageAsync(int userId, int chatId, MessageDTO message)
@@ -396,41 +419,28 @@ public class ChatService(
 
     public async Task DeleteChatAsync(int userId, int chatId)
     {
-        ChatModel chat = await repository
-            .SnInclude(c => c.Members)
-            .SnInclude(c => c.Messages)
-            .GetByIdValidatedAsync(chatId);
-
-        if (!chat.Members.Any(member => member.Id == userId))
-            throw ResponseFactory.Create<ForbiddenResponse>(["User is not a member of the chat"]);
-
-        // For group chats, only the creator can delete
-        // For personal chats, either participant can delete
-        if (chat.IsGroup)
+        var memberIds = await repository.ExecuteLockedAsync(chatId, async () =>
         {
-            if (chat.CreatorId != userId)
+            ChatModel chat = await CheckUserIsMemberAsync(userId, chatId);
+            // For group chats only the current creator can delete; either personal
+            // chat participant may delete. Authorization uses the locked state.
+            if (chat.IsGroup && chat.CreatorId != userId)
                 throw ResponseFactory.Create<ForbiddenResponse>(["Only the chat creator can delete the chat"]);
-        }
-        else
-        {
-            // Check if user is a member of the personal chat
-            bool isMember = chat.Members != null && chat.Members.Any(m => m.Id == userId);
-            if (!isMember)
-                throw ResponseFactory.Create<ForbiddenResponse>(["User is not a member of the chat"]);
-        }
-
-        await DeleteChatAndNotifyAsync(chat, userId, chat.Members.Select(member => member.Id).ToArray());
+            var previousMemberIds = chat.Members.Select(member => member.Id).ToArray();
+            await DeleteChatDataAsync(chat);
+            return previousMemberIds;
+        });
+        await notifier.ChatDeleted(new ChatDeletedEvent(chatId, userId), memberIds);
     }
 
-    private async Task DeleteChatAndNotifyAsync(ChatModel chat, int initiatorId, IReadOnlyCollection<int> memberIds)
+    private async Task DeleteChatDataAsync(ChatModel chat)
     {
         var messageIds = await repository.Query().Where(item => item.Id == chat.Id)
             .SelectMany(item => item.Messages.Select(message => message.Id)).ToListAsync();
         foreach (int messageId in messageIds)
             await messageReadService.DeleteByMessageIdAsync(messageId);
 
-        await DeleteAsync(chat);
-        await notifier.ChatDeleted(new ChatDeletedEvent(chat.Id, initiatorId), memberIds);
+        await repository.RemoveAsync(chat);
     }
 
     private async Task<ChatModel> CheckUserCanManageChatAsync(int userId, int chatId)

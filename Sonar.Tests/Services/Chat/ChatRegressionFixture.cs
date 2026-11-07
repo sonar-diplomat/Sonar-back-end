@@ -32,7 +32,7 @@ internal sealed class ChatRegressionFixture : ChatControllerTestsBase, IDisposab
             .Returns((int id) => Db.Users.SingleAsync(user => user.Id == id));
         var reads = new MessageReadService(new MessageReadRepository(Db));
         var messages = new MessageService(new MessageRepository(Db), reads, users.Object);
-        Service = new ChatService(new ChatRepository(Db), Mock.Of<IImageFileService>(),
+        Service = new ChatService(new SequentialChatRepository(Db), Mock.Of<IImageFileService>(),
             messages, reads, userService.Object, Notifier.Object, Mock.Of<IUserFollowService>(), users.Object);
     }
 
