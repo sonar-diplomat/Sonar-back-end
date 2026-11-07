@@ -293,7 +293,7 @@ public class ChatController(
     public async Task<IActionResult> ReadMessages(int chatId, [FromBody] IEnumerable<int> messageIds)
     {
         User user = await CheckAccessFeatures([]);
-        await chatService.ReadMessagesAsync(user.Id, chatId, messageIds);
+        await chatService.ReadMessagesAsync(chatId: chatId, userId: user.Id, messageIds: messageIds);
         throw ResponseFactory.Create<OkResponse>(["Messages read successfully"]);
     }
 

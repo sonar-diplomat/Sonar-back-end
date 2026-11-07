@@ -485,12 +485,9 @@ public class ChatControllerTests : ChatControllerTestsBase, IDisposable
     {
         // Arrange
         SetupCheckAccessFeatures();
-        var chatId = 1;
+        var chatId = 7;
         var messageIds = new List<int> { 1, 2, 3 };
         
-        // В контроллере вызывается: ReadMessagesAsync(user.Id, chatId, messageIds)
-        // Но в интерфейсе сигнатура: ReadMessagesAsync(int chatId, int userId, ...)
-        // Проверяем фактический вызов из контроллера
         _chatServiceMock
             .Setup(x => x.ReadMessagesAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<IEnumerable<int>>()))
             .Returns(Task.CompletedTask);
@@ -499,8 +496,8 @@ public class ChatControllerTests : ChatControllerTestsBase, IDisposable
         var exception = await Assert.ThrowsAsync<OkResponse>(async () => await _controller.ReadMessages(chatId, messageIds));
         
         _chatServiceMock.Verify(x => x.ReadMessagesAsync(
-            It.Is<int>(id => id == _testUser.Id), 
-            It.Is<int>(id => id == chatId), 
+            It.Is<int>(id => id == chatId),
+            It.Is<int>(id => id == _testUser.Id),
             It.Is<IEnumerable<int>>(ids => ids.SequenceEqual(messageIds))), 
             Times.Once);
         exception.Should().NotBeNull();
@@ -512,7 +509,7 @@ public class ChatControllerTests : ChatControllerTestsBase, IDisposable
     {
         // Arrange
         SetupCheckAccessFeatures();
-        var chatId = 1;
+        var chatId = 7;
         var messageIds = new List<int>();
         
         _chatServiceMock
@@ -523,8 +520,8 @@ public class ChatControllerTests : ChatControllerTestsBase, IDisposable
         var exception = await Assert.ThrowsAsync<OkResponse>(async () => await _controller.ReadMessages(chatId, messageIds));
         
         _chatServiceMock.Verify(x => x.ReadMessagesAsync(
-            It.Is<int>(id => id == _testUser.Id), 
-            It.Is<int>(id => id == chatId), 
+            It.Is<int>(id => id == chatId),
+            It.Is<int>(id => id == _testUser.Id),
             It.Is<IEnumerable<int>>(ids => !ids.Any())), 
             Times.Once);
         exception.Should().NotBeNull();
