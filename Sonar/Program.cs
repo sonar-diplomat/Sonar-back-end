@@ -54,6 +54,7 @@ using Microsoft.IdentityModel.Tokens;
 using QRCoder;
 using Sonar.Controllers;
 using Sonar.Hubs;
+using Sonar.Services.Authentication;
 using Sonar.Infrastructure.Repository;
 using Sonar.Infrastructure.Repository.Access;
 using Sonar.Infrastructure.Repository.Chat;
@@ -446,13 +447,15 @@ builder.Services.AddScoped<SmtpSettings>(_ =>
     }
 );
 
-builder.Services.AddSingleton<IChatNotifier, ChatNotifier>();
+builder.Services.AddScoped<IChatNotifier, ChatNotifier>();
 
 
 // Utility Services
 builder.Services.AddScoped<IEmailSenderService>(sp =>
     new SmtpEmailService(sp.GetRequiredService<SmtpSettings>(), builder.Configuration));
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddSingleton<TwoFactorChallengeStore>();
 builder.Services.AddSingleton<QRCodeGenerator>();
 builder.Services.AddSingleton<IShareService, ShareService>();
 builder.Services.AddSingleton<IFileFormatInspector>(new FileFormatInspector(

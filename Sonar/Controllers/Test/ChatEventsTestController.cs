@@ -1,14 +1,20 @@
 using Application.Abstractions.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace Sonar.Controllers.Test;
 
 [ApiController]
 [Route("api/dev/chat-test")]
-[AllowAnonymous]
-public sealed class ChatEventsTestController(IChatNotifier notifier) : ControllerBase
+[Authorize]
+public sealed class ChatEventsTestController(IChatNotifier notifier, IWebHostEnvironment environment) : Controller
 {
+    public override void OnActionExecuting(ActionExecutingContext context)
+    {
+        if (!environment.IsDevelopment()) context.Result = NotFound();
+        base.OnActionExecuting(context);
+    }
 
     [HttpGet("ping")]
     public IActionResult Ping()

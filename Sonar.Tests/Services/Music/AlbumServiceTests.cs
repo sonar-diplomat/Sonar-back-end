@@ -107,6 +107,8 @@ public class AlbumServiceTests : MusicServiceTestsBase
             .Setup(x => x.AddAsync(It.IsAny<Album>()))
             .ReturnsAsync((Album album) =>
             {
+                // Fixture helpers detach the cover that the upload mock already persisted.
+                Context.ImageFiles.Attach(album.Cover);
                 Context.Albums.Add(album);
                 Context.SaveChanges();
                 Context.ChangeTracker.Clear();
@@ -363,6 +365,10 @@ public class AlbumServiceTests : MusicServiceTestsBase
         Context.ChangeTracker.Clear();
 
         _albumRepositoryMock
+            .Setup(x => x.GetByIdAsync(It.IsAny<int?>()))
+            .Returns((int? albumId) => Context.Albums.FirstOrDefaultAsync(a => a.Id == albumId));
+
+        _albumRepositoryMock
             .Setup(x => x.Query())
             .Returns(() => Context.Set<Album>().AsQueryable());
 
@@ -476,9 +482,9 @@ public class AlbumServiceTests : MusicServiceTestsBase
 
     private Track CreateTrackInAlbum(int id, int albumId, int genreId, int[] moodTagIds)
     {
-        var album = Context.Albums.First(a => a.Id == albumId);
         var visibilityState = CreateVisibilityState(id + 1000);
         var audioFile = CreateAudioFile(id * 1000 + 1);
+        var album = Context.Albums.Include(a => a.Tracks).First(a => a.Id == albumId);
 
         var track = new Track
         {

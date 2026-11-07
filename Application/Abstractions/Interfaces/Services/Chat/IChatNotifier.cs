@@ -14,7 +14,7 @@ public interface IChatNotifier
     Task MessageDeleted(MessageDeletedEvent payload);
     Task MessageUpdated(MessageUpdatedEvent payload);
     
-    Task ChatDeleted(ChatDeletedEvent payload);
+    Task ChatDeleted(ChatDeletedEvent payload, IReadOnlyCollection<int> memberIds);
 }
 
 public sealed record MessageCreatedEvent(

@@ -397,23 +397,14 @@ public class ChatServiceTests : IDisposable
             Enabled2FA = false
         };
         
-        // Add users to InMemory database
-        // Note: recipient must be added with Settings = null (no privacy settings)
-        // We need to ensure the user is properly saved and can be queried
+        // Keep a known recipient whose required privacy relationship is missing.
+        // A denied create must not misclassify this as an unknown user or create a chat.
         _context.Users.Add(sender);
         _context.Users.Add(recipient);
         await _context.SaveChangesAsync();
         
-        // IMPORTANT: InMemory database has known issues with Include when navigation properties are null
-        // The query userRepository.SnInclude(u => u.Settings).ThenInclude(s => s.UserPrivacy) may not work correctly
-        // because Settings is null. We need to test the actual behavior.
-        // 
-        // The real issue: When Settings is null, Include(u => u.Settings) in InMemory database
-        // may filter out the user entirely instead of returning the user with Settings = null.
-        // This is a limitation of InMemory database provider.
-        //
-        // Solution: We'll verify the user exists without Include, and the actual service code
-        // will handle the null Settings case correctly in production (with real database).
+        (await _context.Users.AnyAsync(user => user.Id == recipientId)).Should().BeTrue();
+        (await _context.UserPrivacySettings.AnyAsync()).Should().BeFalse();
         
         _userServiceMock
             .Setup(x => x.GetByIdValidatedAsync(senderId))
@@ -428,6 +419,9 @@ public class ChatServiceTests : IDisposable
         
         exception.Should().NotBeNull();
         exception.StatusCode.Should().Be(400);
+        exception.GetSerializableProperties()["errors"].Should().Be("Recipient privacy settings not found");
+        _chatRepositoryMock.Verify(x => x.AddAsync(It.IsAny<ChatModel>()), Times.Never);
+        _chatRepositoryMock.Verify(x => x.UpdateAsync(It.IsAny<ChatModel>()), Times.Never);
         _userServiceMock.Verify(x => x.GetByIdValidatedAsync(senderId), Times.Once);
         _userServiceMock.Verify(x => x.GetByIdValidatedAsync(recipientId), Times.Exactly(2));
         _userFollowServiceMock.Verify(x => x.GetMutualFollowsAsync(It.IsAny<int>()), Times.Never);

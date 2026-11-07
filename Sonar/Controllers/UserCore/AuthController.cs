@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Sonar.Services.Authentication;
 using SignInResult = Microsoft.AspNetCore.Identity.SignInResult;
 
 namespace Sonar.Controllers.UserCore;
@@ -21,7 +22,8 @@ public class AuthController(
     IUserService userService,
     IEmailSenderService emailSenderService,
     IUserSessionService userSessionService,
-    AuthService authService
+    AuthService authService,
+    TwoFactorChallengeStore challenges
 )
     : BaseController(userManager)
 {
@@ -82,7 +84,7 @@ public class AuthController(
     /// </summary>
     /// <param name="userIdentifier">Username or email address.</param>
     /// <param name="password">User password.</param>
-    /// <returns>Login response containing access token, refresh token, and session ID. If 2FA is enabled, returns confirmation message.</returns>
+    /// <returns>Session credentials, or a short-lived challenge after password verification when 2FA is enabled.</returns>
     /// <response code="200">Login successful or 2FA code sent.</response>
     /// <response code="400">User not found or email not confirmed.</response>
     /// <response code="417">Invalid credentials.</response>
@@ -92,6 +94,7 @@ public class AuthController(
     /// </remarks>
     [HttpPost("login")]
     [ProducesResponseType(typeof(OkResponse<LoginResponseDTO>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(OkResponse<TwoFactorChallengeDTO>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(BadRequestResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ExpectationFailedResponse), StatusCodes.Status417ExpectationFailed)]
     public async Task<IActionResult> Login(string userIdentifier, string password)
@@ -112,95 +115,83 @@ public class AuthController(
 
         if (user!.Enabled2FA)
         {
-            string code = await userManager.GenerateTwoFactorTokenAsync(user, TokenOptions.DefaultEmailProvider);
-            await emailSenderService.SendEmailAsync(
-                user.Email!,
-                MailTemplates.twoFA,
-                new Dictionary<string, string>
-                {
-                    { "code", code }
-                });
-
-            throw ResponseFactory.Create<OkResponse>(["2FA code sent to email"]);
+            if (string.IsNullOrWhiteSpace(user.Email))
+                throw ResponseFactory.Create<BadRequestResponse>(["A confirmed email is required for two-factor sign-in"]);
+            var challenge = challenges.Issue(new TwoFactorChallengeStore.Identity(
+                user.Id, user.SecurityStamp, user.Email, Request.Headers["X-Device-Name"].ToString()));
+            if (challenge is null)
+                return StatusCode(StatusCodes.Status503ServiceUnavailable, new { success = false, message = "Two-factor sign-in is temporarily unavailable" });
+            try
+            {
+                await emailSenderService.SendEmailAsync(user.Email, MailTemplates.twoFA,
+                    new Dictionary<string, string> { ["code"] = challenge.Code });
+            }
+            catch
+            {
+                challenges.Revoke(challenge.Token);
+                throw;
+            }
+            throw ResponseFactory.Create<OkResponse<TwoFactorChallengeDTO>>(
+                new TwoFactorChallengeDTO(true, challenge.Token, challenge.ExpiresAt), ["2FA code sent to email"]);
         }
 
-        // Generate both tokens
-        string accessToken = authService.GenerateJwtToken(user, Request.Headers["X-Device-Name"].ToString());
-        string refreshToken = authService.GenerateRefreshToken();
-
-        UserSession session = new()
-        {
-            UserId = user.Id,
-            DeviceName = Request.Headers["X-Device-Name"].ToString(),
-            UserAgent = Request.Headers["User-Agent"].ToString(),
-            IPAddress = HttpContext.Connection.RemoteIpAddress!,
-            RefreshTokenHash = authService.ComputeSha256(refreshToken),
-            ExpiresAt = DateTime.UtcNow.AddDays(30),
-            CreatedAt = DateTime.UtcNow,
-            LastActive = DateTime.UtcNow,
-            Revoked = false
-        };
-
-        // Save refresh token to user
-        await userSessionService.CreateAsync(session);
         throw ResponseFactory.Create<OkResponse<LoginResponseDTO>>(
-            new LoginResponseDTO(accessToken, refreshToken, session.Id), ["Login successful"]);
+            await CreateLoginSession(user, Request.Headers["X-Device-Name"].ToString()), ["Login successful"]);
     }
 
     /// <summary>
     /// Verifies two-factor authentication code and completes the login process.
     /// </summary>
-    /// <param name="dto">Verification DTO containing the 2FA code.</param>
-    /// <returns>Access and refresh tokens upon successful verification.</returns>
+    /// <param name="dto">Password-verified challenge and its one-use email code.</param>
+    /// <returns>Access token, refresh token and session ID upon successful verification.</returns>
     /// <response code="200">2FA verification successful.</response>
     /// <response code="400">Invalid or expired code, or email not confirmed.</response>
-    /// <response code="401">User not authenticated.</response>
     /// <remarks>
     /// Email must be confirmed before completing 2FA verification.
     /// </remarks>
     [HttpPost("verify-2fa")]
-    [Authorize]
-    [ProducesResponseType(typeof(OkResponse<RefreshTokenResponse>), StatusCodes.Status200OK)]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(OkResponse<LoginResponseDTO>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(BadRequestResponse), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(UnauthorizedResponse), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Verify2Fa([FromBody] Verify2FaDTO dto)
     {
-        User user = await CheckAccessFeatures([]);
+        const string invalid = "Invalid or expired two-factor challenge or code";
+        if (!challenges.TryConsume(dto.ChallengeToken, dto.Code, out var identity))
+            throw ResponseFactory.Create<BadRequestResponse>([invalid]);
+        // Resolve identity only from the password-verified challenge. Recheck changes since login.
+        var user = await userManager.Users.Include(u => u.AccessFeatures)
+            .FirstOrDefaultAsync(u => u.Id == identity!.UserId);
+        if (user is null || !user.EmailConfirmed || !user.Enabled2FA ||
+            !string.Equals(user.SecurityStamp, identity!.SecurityStamp, StringComparison.Ordinal) ||
+            !string.Equals(user.Email, identity.Email, StringComparison.OrdinalIgnoreCase) ||
+            !user.AccessFeatures.Any(feature => feature.Name is AccessFeatureStruct.UserLogin or AccessFeatureStruct.IamAGod))
+            throw ResponseFactory.Create<BadRequestResponse>([invalid]);
+        if (await userManager.IsLockedOutAsync(user))
+            throw ResponseFactory.Create<BadRequestResponse>([invalid]);
 
-        // Проверяем, подтвержден ли email
-        if (!user.EmailConfirmed)
-            throw ResponseFactory.Create<BadRequestResponse>(["Please confirm your email address before logging in. Check your email for the confirmation link."]);
+        throw ResponseFactory.Create<OkResponse<LoginResponseDTO>>(
+            await CreateLoginSession(user, identity.DeviceName), ["Login successful"]);
+    }
 
-        bool isValid = await userManager.VerifyTwoFactorTokenAsync(
-            user,
-            TokenOptions.DefaultEmailProvider,
-            dto.Code);
-
-        if (!isValid)
-            throw ResponseFactory.Create<BadRequestResponse>(["Invalid or expired code"]);
-
-        // Generate both tokens
-        string accessToken =
-            authService.GenerateJwtToken(user, Request.Headers["X-Device-Name"].ToString() ?? "Unknown device");
+    private async Task<LoginResponseDTO> CreateLoginSession(User user, string deviceName)
+    {
+        string accessToken = authService.GenerateJwtToken(user, deviceName);
         string refreshToken = authService.GenerateRefreshToken();
-
+        var now = DateTime.UtcNow;
         UserSession session = new()
         {
             UserId = user.Id,
-            DeviceName = Request.Headers["X-Device-Name"].ToString() ?? "Unknown device",
-            UserAgent = Request.Headers["User-Agent"].ToString() ?? "Unknown",
-            IPAddress = HttpContext.Connection.RemoteIpAddress!,
+            DeviceName = deviceName,
+            UserAgent = Request.Headers["User-Agent"].ToString(),
+            IPAddress = HttpContext.Connection.RemoteIpAddress ?? System.Net.IPAddress.None,
             RefreshTokenHash = authService.ComputeSha256(refreshToken),
-            ExpiresAt = DateTime.UtcNow.AddDays(30),
-            CreatedAt = DateTime.UtcNow,
-            LastActive = DateTime.UtcNow,
+            ExpiresAt = now.AddDays(30),
+            CreatedAt = now,
+            LastActive = now,
             Revoked = false
         };
-
-        // Save refresh token to user
         await userSessionService.CreateAsync(session);
-        throw ResponseFactory.Create<OkResponse<RefreshTokenResponse>>(
-            new RefreshTokenResponse(accessToken, refreshToken), ["Login successful"]);
+        return new LoginResponseDTO(accessToken, refreshToken, session.Id);
     }
 
     /// <summary>

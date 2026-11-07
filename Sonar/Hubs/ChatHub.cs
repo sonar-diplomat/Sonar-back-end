@@ -21,18 +21,25 @@ public class ChatHub(
 {
     public async Task JoinChat(int chatId)
     {
-        await Groups.AddToGroupAsync(Context.ConnectionId, ChatGroup(chatId));
+        User user = await CheckAccessFeatures([]);
+        await chatService.GetChatInfoAsync(user.Id, chatId);
+        await Groups.AddToGroupAsync(Context.ConnectionId, ChatGroups.ForMember(chatId, user.Id));
     }
 
     public async Task LeaveChat(int chatId)
     {
-        await Groups.RemoveFromGroupAsync(Context.ConnectionId, ChatGroup(chatId));
+        // Unsubscribe still works after the user has been removed from the chat.
+        User user = await GetUserByJwt();
+        await Groups.RemoveFromGroupAsync(Context.ConnectionId, ChatGroups.ForMember(chatId, user.Id));
     }
 
     public async Task Typing(int chatId)
     {
         User user = await CheckAccessFeatures([AccessFeatureStruct.SendMessage]);
-        await Clients.OthersInGroup(ChatGroup(chatId)).SendAsync("Typing", new
+        var chat = await chatService.GetChatInfoAsync(user.Id, chatId);
+        var recipients = chat.UserIds.Where(id => id != user.Id)
+            .Select(id => ChatGroups.ForMember(chatId, id)).ToList();
+        await Clients.Groups(recipients).SendAsync("Typing", new
         {
             ChatId = chatId,
             UserId = user.Id
@@ -163,11 +170,6 @@ public class ChatHub(
         }
     }
 
-    private static string ChatGroup(int chatId)
-    {
-        return $"chat:{chatId}";
-    }
-
     [Authorize]
     protected async Task<User> GetUserByJwt()
     {
@@ -227,8 +229,8 @@ public class ChatHub(
 
         string[] baseRoles = [AccessFeatureStruct.UserLogin];
         IEnumerable<string> features = baseRoles.Concat(feature);
-        return user.AccessFeatures.All(af => !features.Contains(af.Name))
-            ? throw ResponseFactory.Create<ForbiddenResponse>(["You do not have permission to perform this action"])
-            : user;
+        return features.All(featureName => user.AccessFeatures.Any(af => af.Name == featureName))
+            ? user
+            : throw ResponseFactory.Create<ForbiddenResponse>(["You do not have permission to perform this action"]);
     }
 }

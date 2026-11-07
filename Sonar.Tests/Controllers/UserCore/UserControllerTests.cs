@@ -49,6 +49,10 @@ public class UserControllerTests : ChatControllerTestsBase, IDisposable
         var userFollowServiceMock = new Mock<IUserFollowService>();
         var shareServiceMock = new Mock<IShareService>();
         var playlistRepositoryMock = new Mock<Application.Abstractions.Interfaces.Repository.Music.IPlaylistRepository>();
+        var analyticsClientMock = new Mock<Analytics.API.Analytics.AnalyticsClient>(MockBehavior.Strict);
+        var recommendationsClientMock = new Mock<Analytics.API.Recommendations.RecommendationsClient>(MockBehavior.Strict);
+        var trackRepositoryMock = new Mock<Application.Abstractions.Interfaces.Repository.Music.ITrackRepository>(MockBehavior.Strict);
+        var artistRepositoryMock = new Mock<Application.Abstractions.Interfaces.Repository.Music.IArtistRepository>(MockBehavior.Strict);
         
         _userServiceMock = new Mock<IUserService>();
         _controller = new UserController(
@@ -56,7 +60,11 @@ public class UserControllerTests : ChatControllerTestsBase, IDisposable
             _userManager,
             shareServiceMock.Object,
             userFollowServiceMock.Object,
-            playlistRepositoryMock.Object
+            playlistRepositoryMock.Object,
+            analyticsClientMock.Object,
+            recommendationsClientMock.Object,
+            trackRepositoryMock.Object,
+            artistRepositoryMock.Object
         );
         
         var httpContext = new DefaultHttpContext

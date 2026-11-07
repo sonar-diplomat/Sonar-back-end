@@ -6,6 +6,9 @@ on:
       - main
       - master
       - dev
+  pull_request:
+    branches:
+      - audit/2026-11-07-integration
 
 concurrency:
   group: backend-build-${{ github.ref }}
@@ -13,9 +16,9 @@ concurrency:
 
 jobs:
   build:
-    name: Build Backend
+    name: Build and Test Backend
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 15
 
     steps:
       - name: Checkout repository
@@ -41,3 +44,6 @@ jobs:
 
       - name: Build
         run: dotnet build Sonar/Sonar.csproj --configuration Release --no-restore --nologo /m
+
+      - name: Test
+        run: dotnet test Sonar.Tests/Sonar.Tests.csproj --configuration Release --no-restore --nologo
